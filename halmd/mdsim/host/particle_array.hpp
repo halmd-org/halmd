@@ -72,12 +72,21 @@ public:
      * @return RTTI typeid of the stored data
      */
     virtual std::type_info const& type() const = 0;
+
+    /**
+    * query cache observer
+    *
+    * @return a cache observer reflecting the current state of the cache
+    */
+    virtual cache<> cache_observer() const = 0;
+
     /**
      * set data from lua table
      *
      * @param object lua table containing the data
      */
     virtual void set_lua(luaponte::object object) = 0;
+
     /**
      * convert data to lua table
      *
@@ -116,6 +125,16 @@ public:
     {
         return typeid(T);
     }
+
+    /**
+     * query cache observer
+     *
+     * @return a cache observer reflecting the current state of the cache
+     */
+    virtual cache<> cache_observer() const {
+        return cache<>(data_);
+    }
+
 
     /**
      * obtain non-const reference to the stored data

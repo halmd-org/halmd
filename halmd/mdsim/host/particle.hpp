@@ -138,7 +138,7 @@ public:
     template<typename T, typename iterator_type>
     iterator_type get_data(std::string const& name, iterator_type const& first) const
     {
-        return particle_array::cast<T>(get_array_(name))->get_data(first);
+        return particle_array::cast<T>(get_array(name))->get_data(first);
     }
 
     /**
@@ -154,7 +154,7 @@ public:
     template<typename T, typename iterator_type>
     iterator_type get_data(std::string const& name, std::shared_ptr<particle_group> group, iterator_type const& first) const
     {
-        return particle_array::cast<T>(get_array_(name))->get_data(group, first);
+        return particle_array::cast<T>(get_array(name))->get_data(group, first);
     }
 
 
@@ -170,7 +170,7 @@ public:
     template <typename T, typename iterator_type>
     iterator_type set_data(std::string const& name, iterator_type const& first)
     {
-        return particle_array::cast<T>(get_array_(name))->set_data(first);
+        return particle_array::cast<T>(get_array(name))->set_data(first);
     }
 
     /**
@@ -186,7 +186,7 @@ public:
     template <typename T, typename iterator_type>
     iterator_type set_data(const std::string &name, std::shared_ptr<particle_group> group, iterator_type const& first)
     {
-        return particle_array::cast<T>(get_array_(name))->set_data(group, first);
+        return particle_array::cast<T>(get_array(name))->set_data(group, first);
     }
 
 
@@ -201,7 +201,7 @@ public:
     template<typename T>
     cache<raw_array<T>> const& data(std::string const& name) const
     {
-        return particle_array::cast<T>(get_array_(name))->data();
+        return particle_array::cast<T>(get_array(name))->data();
     }
 
     /**
@@ -215,7 +215,7 @@ public:
     template<typename T>
     cache<raw_array<T>>& mutable_data(std::string const& name)
     {
-        return particle_array::cast<T>(get_array_(name))->mutable_data();
+        return particle_array::cast<T>(get_array(name))->mutable_data();
     }
 
     /**
@@ -443,22 +443,34 @@ public:
     }
 
     luaponte::object get_lua(lua_State* L, std::string const& name) {
-        return get_array_(name)->get_lua(L);
+        return get_array(name)->get_lua(L);
     }
 
     luaponte::object get_lua_with_group(lua_State* L, std::string const& name, std::shared_ptr<particle_group> group)
     {
-        return get_array_(name)->get_lua(L, group);
+        return get_array(name)->get_lua(L, group);
     }
 
     void set_lua(std::string const& name, luaponte::object object)
     {
-        get_array_(name)->set_lua(object);
+        get_array(name)->set_lua(object);
     }
 
     void set_lua_with_group(std::string const &name, std::shared_ptr<particle_group> group, luaponte::object object)
     {
-        get_array_(name)->set_lua(group, object);
+        get_array(name)->set_lua(group, object);
+    }
+
+    std::shared_ptr<particle_array> const& get_array(std::string const& name) const {
+        auto it = data_.find(name);
+        if(it == data_.end()) {
+            throw std::invalid_argument("particle array \"" + name + "\" not registered");
+        }
+        return it->second;
+    }
+
+    bool has_array(std::string const& name) const {
+        return data_.find(name) != data_.end();
     }
 
     /**
@@ -483,14 +495,6 @@ private:
     bool aux_dirty_;
     /** flag that the computation of auxiliary variables is requested */
     bool aux_enabled_;
-
-    std::shared_ptr<particle_array> const& get_array_(std::string const &name) const {
-        auto it = data_.find(name);
-        if(it == data_.end()) {
-            throw std::invalid_argument("particle array \"" + name + "\" not registered");
-        }
-        return it->second;
-    }
 
     /**
      * Update all forces and auxiliary variables if needed. The auxiliary

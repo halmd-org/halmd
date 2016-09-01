@@ -137,7 +137,7 @@ void lattice<modules_type>::test()
 
     // acquire phase space samples
     BOOST_TEST_MESSAGE("acquire phase space sample");
-    std::shared_ptr<position_sample_type const> position_sample = phase_space->acquire_position();
+    auto position_sample = phase_space->template acquire<position_sample_type>("position");
 
     // compute static structure factors for a set of wavenumbers
     // which are points of the reciprocal lattice

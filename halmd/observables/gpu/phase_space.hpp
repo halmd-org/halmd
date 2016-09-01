@@ -39,6 +39,28 @@ namespace gpu {
 template <typename sample_type>
 class phase_space;
 
+class phase_space_sampler {
+public:
+    virtual std::shared_ptr<host::samples::sample_base> acquire(void) = 0;
+    virtual void set(std::shared_ptr<host::samples::sample_base const> sample) = 0;
+    virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) = 0;
+    virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) = 0;
+    virtual void set_lua(luaponte::object sample) = 0;
+};
+
+class phase_space_host_cache {
+public:
+    phase_space_host_cache(std::shared_ptr<mdsim::gpu::particle_array const> array);
+    bool up_to_date() const {
+        return array_->cache_observer() == cache_observer_;
+    }
+    cuda::host::vector<uint8_t>& acquire(void);
+private:
+    cuda::host::vector<uint8_t> data_;
+    cache<> cache_observer_;
+    std::shared_ptr<mdsim::gpu::particle_array const> array_;
+};
+
 /**
  * Sample phase_space from GPU memory to GPU memory
  */
@@ -126,10 +148,6 @@ class phase_space<host_sample<dimension, float_type> >
 {
 public:
     typedef host_sample<dimension, float_type> sample_type;
-    typedef typename sample_type::position_sample_type position_sample_type;
-    typedef typename sample_type::velocity_sample_type velocity_sample_type;
-    typedef typename sample_type::species_sample_type species_sample_type;
-    typedef typename sample_type::mass_sample_type mass_sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;
@@ -147,42 +165,21 @@ public:
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
-    /**
-     * Acquire position sample.
-     */
-    std::shared_ptr<position_sample_type const> acquire_position();
+    void set(std::string const& name, std::shared_ptr<host::samples::sample_base const> sample) {
+        get_sampler(name)->set(sample);
+    }
 
-    /**
-     * Acquire velocity sample.
-     */
-    std::shared_ptr<velocity_sample_type const> acquire_velocity();
+    template<typename sample_type>
+    std::shared_ptr<sample_type const> acquire(std::string const& name)
+    {
+        auto sample = get_sampler(name)->acquire();
+        if (sample->type() != typeid(typename sample_type::data_type)) {
+            throw std::runtime_error("invalid sample data type");
+        }
+        return std::static_pointer_cast<sample_type const>(sample);
+    }
 
-    /**
-     * Acquire species sample.
-     */
-    std::shared_ptr<species_sample_type const> acquire_species();
-
-    /**
-     * Acquire mass sample.
-     */
-    std::shared_ptr<mass_sample_type const> acquire_mass();
-
-    /**
-     * Set particle position from sample.
-     */
-    void set_position(std::shared_ptr<position_sample_type const> position);
-    /**
-     * Set particle velocity from sample.
-     */
-    void set_velocity(std::shared_ptr<velocity_sample_type const> velocity);
-    /**
-     * Set particle mass from sample.
-     */
-    void set_mass(std::shared_ptr<mass_sample_type const> mass);
-    /**
-     * Set particle species from sample.
-     */
-    void set_species(std::shared_ptr<species_sample_type const> species);
+    std::shared_ptr<phase_space_sampler> get_sampler(std::string const& name);
 
     /**
      * Bind class to Lua.
@@ -190,11 +187,6 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    typedef typename particle_type::position_array_type position_array_type;
-    typedef typename particle_type::image_array_type image_array_type;
-    typedef typename particle_type::velocity_array_type velocity_array_type;
-    typedef typename particle_group_type::array_type group_array_type;
-
     /** particle instance to particle group */
     std::shared_ptr<particle_type> particle_;
     /** particle group */
@@ -205,43 +197,10 @@ private:
     std::shared_ptr<clock_type const> clock_;
     /** logger instance */
     std::shared_ptr<logger> logger_;
-    /** cached periodically extended particle positions */
-    std::shared_ptr<host::samples::sample<dimension, float_type>> position_;
-    /** position cache observer */
-    cache<> position_observer_;
-    cache<> image_observer_;
-    /** cached particle velocities */
-    std::shared_ptr<host::samples::sample<dimension, float_type>> velocity_;
-    /** velocity cache observer */
-    cache<> velocity_observer_;
-    /** cached particle species */
-    std::shared_ptr<host::samples::sample<1, unsigned int>> species_;
-    /** cached particle mass */
-    std::shared_ptr<host::samples::sample<1, float_type>> mass_;
 
-    /** group cache observer */
-    cache<> group_observer_;
+    std::unordered_map<std::string, std::shared_ptr<phase_space_sampler>> samplers_;
 
-    /** buffered positions in page-locked host memory */
-    cuda::host::vector<float4> h_r_;
-    /** buffered periodic image vectors in page-locked host memory */
-    cuda::host::vector<typename particle_type::gpu_vector_type> h_image_;
-    /** buffered velocities in page-locked host memory */
-    cuda::host::vector<float4> h_v_;
-    /** GPU threads per block */
-    unsigned int threads_;
-
-    /**
-     * Acquire position and species sample.
-     */
-    void acquire_position_species_();
-    /**
-     * Acquire velocity and mass sample.
-     */
-    void acquire_velocity_mass_();
-
-
-    group_array_type const& read_group_cache_();
+    std::map<mdsim::gpu::particle_array*, std::shared_ptr<phase_space_host_cache>> host_cache_;
 
     typedef halmd::utility::profiler::accumulator_type accumulator_type;
     typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;

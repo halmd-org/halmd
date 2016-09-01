@@ -78,10 +78,10 @@ struct copy_samples
     copy(typename modules_type::output_phase_space_type&& phase_space)
     {
         auto sample = std::make_shared<typename modules_type::output_sample_type>();
-        sample->position_sample = phase_space.acquire_position();
-        sample->velocity_sample = phase_space.acquire_velocity();
-        sample->species_sample = phase_space.acquire_species();
-        sample->mass_sample = phase_space.acquire_mass();
+        sample->position_sample = phase_space.template acquire<typename modules_type::input_sample_type::position_sample_type>("position");
+        sample->velocity_sample = phase_space.template acquire<typename modules_type::input_sample_type::velocity_sample_type>("velocity");
+        sample->species_sample = phase_space.template acquire<typename modules_type::input_sample_type::species_sample_type>("species");
+        sample->mass_sample = phase_space.template acquire<typename modules_type::input_sample_type::mass_sample_type>("mass");
         return sample;
     }
 };
@@ -243,10 +243,10 @@ void phase_space<modules_type>::test()
     std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
     {
         auto phase_space = input_phase_space_type(particle, particle_group, box, clock);
-        phase_space.set_position(input_position_sample);
-        phase_space.set_velocity(input_velocity_sample);
-        phase_space.set_species(input_species_sample);
-        phase_space.set_mass(input_mass_sample);
+        phase_space.set("position", input_position_sample);
+        phase_space.set("velocity", input_velocity_sample);
+        phase_space.set("species", input_species_sample);
+        phase_space.set("mass", input_mass_sample);
     }
 
     // randomly permute particles in memory, do it three times since permutations are

@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include <typeindex>
 
 #include <halmd/observables/host/phase_space.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -31,6 +32,205 @@
 namespace halmd {
 namespace observables {
 namespace host {
+
+template<int dimension, typename scalar_type>
+class phase_space_sampler_typed : public phase_space_sampler
+{
+public:
+    typedef samples::sample<dimension, scalar_type> sample_type;
+    typedef mdsim::host::particle_group particle_group_type;
+    typedef mdsim::host::particle_array_typed<typename sample_type::data_type> particle_array_type;
+
+    static std::shared_ptr<phase_space_sampler_typed> create(std::shared_ptr<particle_group_type> group
+                                               , std::shared_ptr<mdsim::host::particle_array> array)
+    {
+        return std::make_shared<phase_space_sampler_typed>(group, array);
+    }
+
+    phase_space_sampler_typed(std::shared_ptr<particle_group_type> group
+            , std::shared_ptr<mdsim::host::particle_array> array)
+            : particle_group_(group), array_(mdsim::host::particle_array::cast<typename sample_type::data_type>(array)) {
+    }
+
+    virtual std::shared_ptr<samples::sample_base> acquire() {
+        if (!(group_observer_ == particle_group_->ordered()) || !(array_observer_ == array_->cache_observer())) {
+            auto const& group = read_cache(particle_group_->ordered());
+            group_observer_ = particle_group_->ordered();
+
+            auto const& data = read_cache(array_->data());
+
+            sample_ = std::make_shared<sample_type>(group.size());
+
+            auto& sample_data = sample_->data();
+            // copy velocities using index map
+            std::size_t tag = 0;
+            for (std::size_t i : group) {
+                sample_data[tag] = data[i];
+                ++tag;
+            }
+            array_observer_ = array_->cache_observer();
+        }
+        return sample_;
+    }
+    virtual void set(std::shared_ptr<samples::sample_base const> sample) {
+        if(sample->type() != typeid(typename sample_type::data_type)) {
+            throw std::runtime_error("invalid sample data type");
+        }
+        auto const& group = read_cache(particle_group_->ordered());
+        auto data = make_cache_mutable(array_->mutable_data());
+        auto const& sample_data = std::static_pointer_cast<sample_type const>(sample)->data();
+
+        std::size_t tag = 0;
+        for (std::size_t i : group) {
+            (*data)[i] = sample_data[tag];
+            ++tag;
+        }
+    }
+
+    virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) {
+        std::function<std::shared_ptr<sample_type const>()> fn = [self]() -> std::shared_ptr<sample_type const> {
+            return std::static_pointer_cast<sample_type const>(std::static_pointer_cast<phase_space_sampler_typed>(self)->acquire());
+        };
+        luaponte::default_converter<std::function<std::shared_ptr<sample_type const>()>>().apply(L, fn);
+        luaponte::object result(luaponte::from_stack(L, -1));
+        lua_pop(L, 1);
+        return result;
+    }
+    virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) {
+        std::function<typename sample_type::array_type const&()> fn = [self]() -> typename sample_type::array_type const& {
+            return std::static_pointer_cast<sample_type const>(std::static_pointer_cast<phase_space_sampler_typed>(self)->acquire())->data();
+        };
+        luaponte::default_converter<std::function<typename sample_type::array_type const&()>>().apply(L, fn);
+        luaponte::object result(luaponte::from_stack(L, -1));
+        lua_pop(L, 1);
+        return result;
+    }
+    virtual void set_lua(luaponte::object sample) {
+        set(luaponte::object_cast<std::shared_ptr<sample_type const>>(sample));
+    }
+protected:
+    std::shared_ptr<particle_group_type> particle_group_;
+    std::shared_ptr<particle_array_type> array_;
+    std::shared_ptr<sample_type> sample_;
+    cache<> array_observer_;
+    cache<> group_observer_;
+};
+
+static const std::unordered_map<std::type_index,
+    std::function<std::shared_ptr<phase_space_sampler>(std::shared_ptr<mdsim::host::particle_group>
+                                                     , std::shared_ptr<mdsim::host::particle_array>)>>
+phase_space_sampler_typed_create_map = {
+        { typeid(float), phase_space_sampler_typed<1, float>::create },
+        { typeid(fixed_vector<float, 2>), phase_space_sampler_typed<2, float>::create },
+        { typeid(fixed_vector<float, 3>), phase_space_sampler_typed<3, float>::create },
+        { typeid(fixed_vector<float, 4>), phase_space_sampler_typed<4, float>::create },
+
+        { typeid(double), phase_space_sampler_typed<1, double>::create },
+        { typeid(fixed_vector<double, 2>), phase_space_sampler_typed<2, double>::create },
+        { typeid(fixed_vector<double, 3>), phase_space_sampler_typed<3, double>::create },
+        { typeid(fixed_vector<double, 4>), phase_space_sampler_typed<4, double>::create },
+
+        { typeid(int), phase_space_sampler_typed<1, int>::create },
+        { typeid(fixed_vector<int, 2>), phase_space_sampler_typed<2, int>::create },
+        { typeid(fixed_vector<int, 3>), phase_space_sampler_typed<3, int>::create },
+        { typeid(fixed_vector<int, 4>), phase_space_sampler_typed<4, int>::create },
+
+        { typeid(unsigned int), phase_space_sampler_typed<1, unsigned int>::create },
+        { typeid(fixed_vector<unsigned int, 2>), phase_space_sampler_typed<2, unsigned int>::create },
+        { typeid(fixed_vector<unsigned int, 3>), phase_space_sampler_typed<3, unsigned int>::create },
+        { typeid(fixed_vector<unsigned int, 4>), phase_space_sampler_typed<4, unsigned int>::create },
+};
+
+
+template<int dimension, typename scalar_type>
+class phase_space_sampler_position : public phase_space_sampler_typed<dimension, scalar_type>
+{
+public:
+    typedef samples::sample<dimension, scalar_type> sample_type;
+    typedef mdsim::host::particle_group particle_group_type;
+    typedef mdsim::box<dimension> box_type;
+    typedef mdsim::host::particle_array_typed<typename sample_type::data_type> particle_array_type;
+
+    static std::shared_ptr<phase_space_sampler_position> create(std::shared_ptr<particle_group_type> group
+            , std::shared_ptr<box_type const> box
+            , std::shared_ptr<mdsim::host::particle_array> position_array
+            , std::shared_ptr<mdsim::host::particle_array> image_array)
+    {
+        return std::make_shared<phase_space_sampler_position>(group, box, position_array, image_array);
+    }
+
+    phase_space_sampler_position(std::shared_ptr<particle_group_type> group
+    , std::shared_ptr<box_type const> box
+    , std::shared_ptr<mdsim::host::particle_array> position_array
+    , std::shared_ptr<mdsim::host::particle_array> image_array)
+    : phase_space_sampler_typed<dimension, scalar_type>(group, position_array), box_(box),
+      image_array_(mdsim::host::particle_array::cast<typename sample_type::data_type>(image_array)) {
+    }
+
+    virtual std::shared_ptr<samples::sample_base> acquire() {
+        if (!(this->group_observer_ == this->particle_group_->ordered())
+            || !(this->array_observer_ == this->array_->cache_observer())
+            || !(image_array_observer_ == image_array_->cache_observer())) {
+            auto const& group = read_cache(this->particle_group_->ordered());
+            this->group_observer_ = this->particle_group_->ordered();
+
+            auto const& particle_position = read_cache(this->array_->data());
+            auto const& particle_image = read_cache(image_array_->data());
+
+            this->sample_ = std::make_shared<sample_type>(group.size());
+
+            auto& sample_position = this->sample_->data();
+
+            // copy and periodically extend positions using index map
+            std::size_t tag = 0;
+            for (std::size_t i : group) {
+                auto& r = sample_position[tag];
+                r = particle_position[i];
+                box_->extend_periodic(r, particle_image[i]);
+                ++tag;
+            }
+
+            this->array_observer_ = this->array_->cache_observer();
+            image_array_observer_ = image_array_->cache_observer();
+        }
+        return this->sample_;
+    }
+    virtual void set(std::shared_ptr<samples::sample_base const> sample) {
+        if(sample->type() != typeid(typename sample_type::data_type)) {
+            throw std::runtime_error("invalid sample data type");
+        }
+
+        auto const& group = read_cache(this->particle_group_->ordered());
+        auto particle_position = make_cache_mutable(this->array_->mutable_data());
+        auto particle_image = make_cache_mutable(image_array_->mutable_data());
+
+        auto const& sample_position = std::static_pointer_cast<sample_type const>(sample)->data();
+
+        std::size_t tag = 0;
+        for (std::size_t i : group) {
+            auto& r = (*particle_position)[i];
+            r = sample_position[tag];
+            auto& image = (*particle_image)[i];
+            image = 0;
+
+            // The host implementation of reduce_periodic wraps the position at
+            // most once around the box. This is more efficient during the
+            // simulation. For setting arbitrary particle positions, however,
+            // we must ensure that the final position is actually inside the
+            // periodic box.
+            typedef typename sample_type::data_type vector_type;
+            vector_type shift;
+            do {
+                image += (shift = box_->reduce_periodic(r));
+            } while (shift != vector_type(0));
+            ++tag;
+        }
+    }
+private:
+    std::shared_ptr<box_type const> box_;
+    std::shared_ptr<particle_array_type> image_array_;
+    cache<> image_array_observer_;
+};
 
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
@@ -46,193 +246,30 @@ phase_space<dimension, float_type>::phase_space(
   , clock_(clock)
   , logger_(logger) {}
 
-
-template <int dimension, typename float_type>
-typename phase_space<dimension, float_type>::group_array_type const&
-phase_space<dimension, float_type>::read_group_cache_()
-{
-    // if the indices changed invalidate everything must be renewed
-    if (!(group_observer_ == particle_group_->ordered())) {
-        position_observer_ = cache<>();
-        image_observer_ = cache<>();
-        velocity_observer_ = cache<>();
-        species_observer_ = cache<>();
-        mass_observer_ = cache<>();
-    }
-
-    group_array_type const& group = read_cache(particle_group_->ordered());
-    group_observer_ = particle_group_->ordered();
-
-    return group;
-}
-
 /**
- * Sample position
+ * Get phase space sampler implementation.
  */
 template <int dimension, typename float_type>
-std::shared_ptr<typename phase_space<dimension, float_type>::position_sample_type const>
-phase_space<dimension, float_type>::acquire_position()
+std::shared_ptr<phase_space_sampler>
+phase_space<dimension, float_type>::get_sampler(std::string const& name)
 {
-    group_array_type const& group = read_group_cache_();
-    if (!(position_observer_ == particle_->position()) || !(image_observer_ == particle_->image())) {
-        position_array_type const& particle_position = read_cache(particle_->position());
-        image_array_type const& particle_image = read_cache(particle_->image());
-
-        // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
-        // to hold a previous copy of the sample
-        position_ = std::make_shared<position_sample_type>(group.size());
-
-        auto& sample_position = position_->data();
-        // copy and periodically extend positions using index map
-        std::size_t tag = 0;
-        for (std::size_t i : group) {
-            auto& r = sample_position[tag];
-            r = particle_position[i];
-            box_->extend_periodic(r, particle_image[i]);
-            ++tag;
+    auto it = samplers_.find(name);
+    if (it != samplers_.end()) {
+        return it->second;
+    } else {
+        auto array = particle_->get_array(name);
+        if(!name.compare("position")) {
+            auto image = particle_->get_array("image");
+            auto sampler = phase_space_sampler_position<dimension, float_type>::create(particle_group_, box_, array, image);
+            return (samplers_[name] = sampler);
+        } else {
+            auto it = phase_space_sampler_typed_create_map.find(array->type());
+            if(it == phase_space_sampler_typed_create_map.end()) {
+                throw std::runtime_error("invalid sample type");
+            }
+            return (samplers_[name] = it->second(particle_group_, array));
         }
-
-        position_observer_ = particle_->position();
     }
-    return position_;
-}
-
-/**
- * Sample velocity
- */
-template <int dimension, typename float_type>
-std::shared_ptr<typename phase_space<dimension, float_type>::velocity_sample_type const>
-phase_space<dimension, float_type>::acquire_velocity()
-{
-    group_array_type const& group = read_group_cache_();
-    if(!(velocity_observer_ == particle_->velocity())) {
-        velocity_array_type const& particle_velocity = read_cache(particle_->velocity());
-
-        // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
-        // to hold a previous copy of the sample
-        velocity_ = std::make_shared<velocity_sample_type>(group.size());
-
-        auto& sample_velocity = velocity_->data();
-        // copy velocities using index map
-        std::size_t tag = 0;
-        for (std::size_t i : group) {
-            sample_velocity[tag] = particle_velocity[i];
-            ++tag;
-        }
-
-        velocity_observer_ = particle_->velocity();
-    }
-    return velocity_;
-}
-
-/**
- * Sample species
- */
-template <int dimension, typename float_type>
-std::shared_ptr<typename phase_space<dimension, float_type>::species_sample_type const>
-phase_space<dimension, float_type>::acquire_species()
-{
-    group_array_type const& group = read_group_cache_();
-    if(!(species_observer_ == particle_->species())) {
-        species_array_type const& particle_species = read_cache(particle_->species());
-
-        // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
-        // to hold a previous copy of the sample
-        species_ = std::make_shared<species_sample_type>(group.size());
-
-        auto& sample_species = species_->data();
-        // copy species using index map
-        std::size_t tag = 0;
-        for (std::size_t i : group) {
-            sample_species[tag] = particle_species[i];
-            ++tag;
-        }
-
-        species_observer_ = particle_->species();
-    }
-    return species_;
-}
-
-/**
- * Sample mass
- */
-template <int dimension, typename float_type>
-std::shared_ptr<typename phase_space<dimension, float_type>::mass_sample_type const>
-phase_space<dimension, float_type>::acquire_mass()
-{
-    group_array_type const& group = read_group_cache_();
-    if(!(mass_observer_ == particle_->mass())) {
-        mass_array_type const& particle_mass = read_cache(particle_->mass());
-
-        // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
-        // to hold a previous copy of the sample
-
-        mass_ = std::make_shared<mass_sample_type>(group.size());
-
-        auto& sample_mass = mass_->data();
-        // copy masses using index map
-        std::size_t tag = 0;
-        for (std::size_t i : group) {
-            sample_mass[tag] = particle_mass[i];
-            ++tag;
-        }
-
-        mass_observer_ = particle_->mass();
-    }
-    return mass_;
-}
-
-template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::set_position(std::shared_ptr<position_sample_type const> sample) {
-    group_array_type const& group = read_cache(particle_group_->ordered());
-    auto particle_position = make_cache_mutable(particle_->position());
-    auto particle_image = make_cache_mutable(particle_->image());
-
-    auto const& sample_position = sample->data();
-
-    size_type tag = 0;
-    for (size_type i : group) {
-        auto& r = (*particle_position)[i];
-        r = sample_position[tag];
-        auto& image = (*particle_image)[i];
-        image = 0;
-
-        // The host implementation of reduce_periodic wraps the position at
-        // most once around the box. This is more efficient during the
-        // simulation. For setting arbitrary particle positions, however,
-        // we must ensure that the final position is actually inside the
-        // periodic box.
-        typedef typename position_sample_type::data_type vector_type;
-        vector_type shift;
-        do {
-            image += (shift = box_->reduce_periodic(r));
-        } while (shift != vector_type(0));
-        ++tag;
-    }
-}
-
-template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::set_species(std::shared_ptr<species_sample_type const> sample) {
-    particle_->template set_data<typename particle_type::species_type>("species", particle_group_, sample->data().begin());
-}
-
-template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::set_velocity(std::shared_ptr<velocity_sample_type const> sample) {
-    particle_->template set_data<typename particle_type::velocity_type>("velocity", particle_group_, sample->data().begin());
-}
-
-template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::set_mass(std::shared_ptr<mass_sample_type const> sample) {
-    particle_->template set_data<typename particle_type::mass_type>("mass", particle_group_, sample->data().begin());
-}
-
-template <typename phase_space_type>
-static std::function<std::shared_ptr<typename phase_space_type::sample_type const> ()>
-wrap_acquire(std::shared_ptr<phase_space_type> self)
-{
-    return [=]() {
-        return self->acquire();
-    };
 }
 
 template <typename phase_space_type>
@@ -309,6 +346,26 @@ wrap_mass(std::shared_ptr<phase_space_type> self)
 }
 
 template <typename phase_space_type>
+static luaponte::object wrap_acquire(lua_State* L, std::shared_ptr<phase_space_type> self, std::string const& name)
+{
+    auto sampler = self->get_sampler(name);
+    return sampler->acquire_lua(L, sampler);
+}
+
+template <typename phase_space_type>
+static luaponte::object wrap_data(lua_State* L, std::shared_ptr<phase_space_type> self, std::string const& name)
+{
+    auto sampler = self->get_sampler(name);
+    return sampler->data_lua(L, sampler);
+}
+
+template <typename phase_space_type>
+static void wrap_set(std::shared_ptr<phase_space_type> self, std::string const& name, luaponte::object sample)
+{
+    self->get_sampler(name)->set_lua(sample);
+}
+
+template <typename phase_space_type>
 static int wrap_dimension(phase_space_type const&)
 {
     return phase_space_type::particle_type::vector_type::static_size;
@@ -325,19 +382,10 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
             namespace_("host")
             [
                 class_<phase_space>()
-                    .property("acquire_position", &wrap_acquire_position<phase_space>)
-                    .property("acquire_velocity", &wrap_acquire_velocity<phase_space>)
-                    .property("acquire_species", &wrap_acquire_species<phase_space>)
-                    .property("acquire_mass", &wrap_acquire_mass<phase_space>)
-                    .property("position", &wrap_position<phase_space>)
-                    .property("velocity", &wrap_velocity<phase_space>)
-                    .property("species", &wrap_species<phase_space>)
-                    .property("mass", &wrap_mass<phase_space>)
+                    .def("acquire", &wrap_acquire<phase_space>)
+                    .def("data", &wrap_data<phase_space>)
+                    .def("set", &wrap_set<phase_space>)
                     .property("dimension", &wrap_dimension<phase_space>)
-                    .def("set_position", &phase_space::set_position)
-                    .def("set_species", &phase_space::set_species)
-                    .def("set_velocity", &phase_space::set_velocity)
-                    .def("set_mass", &phase_space::set_mass)
                     .scope
                     [
                         class_<runtime>("runtime")

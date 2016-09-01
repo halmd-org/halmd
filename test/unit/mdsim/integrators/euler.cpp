@@ -123,8 +123,8 @@ template <typename modules_type>
 void test_euler<modules_type>::linear_motion()
 {
     // copy initial positions and velocities from particle to host sample
-    std::shared_ptr<position_sample_type const> initial_position_sample = phase_space->acquire_position();
-    std::shared_ptr<velocity_sample_type const> initial_velocity_sample = phase_space->acquire_velocity();
+    auto initial_position_sample = phase_space->template acquire<position_sample_type>("position");
+    auto initial_velocity_sample = phase_space->template acquire<velocity_sample_type>("velocity");
 
     // perform integration
     BOOST_TEST_MESSAGE("running Euler integration for linear motion over " << steps << " steps");
@@ -135,7 +135,7 @@ void test_euler<modules_type>::linear_motion()
     }
 
     // acquire sample with final positions and velocities
-    std::shared_ptr<position_sample_type const> position_sample = phase_space->acquire_position();
+    auto position_sample = phase_space->template acquire<position_sample_type>("position");
 
     typename position_sample_type::array_type const& initial_position = initial_position_sample->data();
     typename velocity_sample_type::array_type const& initial_velocity = initial_velocity_sample->data();
@@ -166,7 +166,7 @@ template <typename modules_type>
 void test_euler<modules_type>::overdamped_motion()
 {
     // copy initial positions from particle to host sample
-    std::shared_ptr<position_sample_type const> initial_position_sample = phase_space->acquire_position();
+    auto initial_position_sample = phase_space->template acquire<position_sample_type>("position");
 
     // reduce number of steps as the test runs much slower
     // and the outcome can't be well represented by float
@@ -182,7 +182,7 @@ void test_euler<modules_type>::overdamped_motion()
     }
 
     // acquire sample with final positions
-    std::shared_ptr<position_sample_type const> position_sample = phase_space->acquire_position();
+    auto position_sample = phase_space->template acquire<position_sample_type>("position");
 
     // particlewise comparison with analytic solution
     // r_n = r_0 * (1 - Δt)^n → r_0 * exp(-n Δt)

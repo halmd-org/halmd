@@ -168,35 +168,35 @@ local M = module(function(args)
     end
 
     self.acquire_position = function(self)
-        return assert(samplers.host.acquire_position)
+        return samplers.host:acquire("position")
     end
 
     self.acquire_velocity = function(self)
-        return assert(samplers.host.acquire_velocity)
+        return samplers.host:acquire("velocity")
     end
 
     self.acquire_species = function(self)
-        return assert(samplers.host.acquire_species)
+        return samplers.host:acquire("species")
     end
 
     self.acquire_mass = function(self)
-        return assert(samplers.host.acquire_mass)
+        return samplers.host:acquire("mass")
     end
 
     self.position = function(self)
-        return assert(samplers.host.position)
+        return samplers.host:data("position")
     end
 
     self.velocity = function(self)
-        return assert(samplers.host.velocity)
+        return samplers.host:data("velocity")
     end
 
     self.species = function(self)
-        return assert(samplers.host.species)
+        return samplers.host:data("species")
     end
 
     self.mass = function(self)
-        return assert(samplers.host.mass)
+        return samplers.host:data("mass")
     end
 
     self.writer = function(self, args)
@@ -214,11 +214,7 @@ local M = module(function(args)
         -- in the latter case, the value string is assigned to the group name
         for k,v in pairs(fields) do
             local name = (type(k) == "string") and k or v
-            if v == "position" then
-              writer:on_write(assert(self[v])(), {name})
-            else
-              writer:on_write(particle:get(name,group), {name})
-            end
+            writer:on_write(samplers.host:data(v), {name})
         end
 
         -- store box information
@@ -243,7 +239,7 @@ local M = module(function(args)
     self.set = function(self, samples)
         logger:info(("setting particles from phase space sample"):format(label))
         for name,sample in pairs(samples) do
-            assert(samplers.host["set_"..name])(samplers.host, sample)
+            samplers.host:set(name, sample)
         end
     end
 

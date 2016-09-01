@@ -95,6 +95,7 @@ void sample<dimension, scalar_type>::luaopen(lua_State* L)
                         .property("dimension", &wrap_dimension<sample>)
                         .def("data_setter", &wrap_data_setter<sample>)
                         .def("maximum", &wrap_maximum<sample>)
+                        .def("data", (sample::array_type const& (sample::*)() const) &sample::data)
                 ]
             ]
         ]

@@ -142,6 +142,14 @@ public:
         return count_.lock() == c.count_ && initial_ == *c.count_;
     }
 
+    /**
+     * Returns true if cache observers have same state, false otherwise
+     */
+    bool operator==(cache<> const& c) const
+    {
+        return count_.lock() == c.count_.lock() && initial_ == c.initial_;
+    }
+
 private:
     /** cache identity */
     std::weak_ptr<void> count_;
