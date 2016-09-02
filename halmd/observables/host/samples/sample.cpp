@@ -56,11 +56,17 @@ wrap_data_setter(std::shared_ptr<sample_type> self)
 
 template <typename sample_type>
 static std::function<typename sample_type::array_type const&()>
-wrap_data_getter(std::shared_ptr<sample_type> self)
+wrap_get(std::shared_ptr<sample_type> self)
 {
     return [self]() -> typename sample_type::array_type const& {
         return self->data();
     };
+}
+
+template <typename sample_type>
+static void wrap_set(std::shared_ptr<sample_type> self, std::vector<typename sample_type::data_type> const& data)
+{
+    std::copy(data.begin(), data.end(), self->data().begin());
 }
 
 template <typename sample_type>
@@ -95,7 +101,8 @@ void sample<dimension, scalar_type>::luaopen(lua_State* L)
                         .property("dimension", &wrap_dimension<sample>)
                         .def("data_setter", &wrap_data_setter<sample>)
                         .def("maximum", &wrap_maximum<sample>)
-                        .def("data", (sample::array_type const& (sample::*)() const) &sample::data)
+                        .def("get", &wrap_get<sample>)
+                        .def("set", &wrap_set<sample>)
                 ]
             ]
         ]
