@@ -24,7 +24,6 @@
 #include <typeinfo>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/mdsim/gpu/particle_group.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -178,15 +177,6 @@ public:
      * @return lua table containing a copy of the data
      */
     virtual luaponte::object get_lua(lua_State* L) const = 0;
-    /**
-     * convert data according to index map to a slot function
-     *
-     * @param L lua state (passed in by luaponte)
-     * @param group particle group containing the index map
-     * @return lua table containing a slot function to the data
-     */
-    virtual luaponte::object get_lua(lua_State* L, std::shared_ptr<particle_group> group) const = 0;
-    virtual void set_lua(std::shared_ptr<particle_group> particle_group, luaponte::object table) = 0;
 
     /**
      * get memory
@@ -283,6 +273,7 @@ public:
         for(size_t i = offset_; i < mem.size(); i += stride_) {
             converter.set(mem, i, *it++);
         }
+        // TODO: handle dsfloat data correctly here for tuple arrays
         set_gpu_data(mem);
         return it;
     }
@@ -299,52 +290,6 @@ public:
         }
         return it;
     }
-    /**
-     * get data from particle group with iterator
-     */
-    template <typename iterator_type>
-    iterator_type get_data(std::shared_ptr<particle_group> particle_group, iterator_type const& first) const
-    {
-        auto const& group = particle_group->ordered_host_cached();
-        auto data = get_gpu_data();
-        auto it = first;
-        for (size_t i : group) {
-            *it++ = converter.get(data, offset_ + i * stride_);
-        }
-        return it;
-    }
-
-    /**
-     * set data with particle group from iterator
-     */
-    template<typename iterator_type>
-    iterator_type set_data(std::shared_ptr<particle_group> particle_group, iterator_type const& first)
-    {
-        auto const& group = particle_group->ordered_host_cached();
-        auto memory = get_gpu_memory();
-        auto it = first;
-        for (size_t i : group) {
-            converter.set(memory, offset_ + i * stride_, *it++);
-        }
-        set_gpu_data(memory);
-        return it;
-    }
-
-    /**
-     * get a slot function of the data according to an index map
-     *
-     * @param particle_group particle group containing the index map
-     * @return a slot function that can be used to retrieve the data
-     */
-    std::function<std::vector<T>()> get_data(std::shared_ptr<particle_group> particle_group) const {
-        auto self = std::static_pointer_cast<particle_array_typed<T> const>(shared_from_this());
-        return [self, particle_group]() -> std::vector<T> {
-            std::vector<T> data;
-            data.reserve(self->n_elems_);
-            self->get_data(particle_group, std::back_inserter(data));
-            return data;
-        };
-    }
 
     /**
      * set data from lua table
@@ -356,16 +301,6 @@ public:
         size_t j = 1;
         for(size_t i = offset_; i < mem.size(); i += stride_) {
             converter.set(mem, i, luaponte::object_cast<T>(table[j++]));
-        }
-        set_gpu_data(mem);
-    }
-
-    virtual void set_lua(std::shared_ptr<particle_group> particle_group, luaponte::object table) {
-        auto mem = get_gpu_memory();
-        auto const& group = particle_group->ordered_host_cached();
-        size_t j = 1;
-        for(size_t i : group) {
-            converter.set(mem, offset_ + i * stride_, luaponte::object_cast<T>(table[j++]));
         }
         set_gpu_data(mem);
     }
@@ -385,19 +320,6 @@ public:
             table[j++] = boost::cref(value);
         }
         return table;
-    }
-    /**
-     * get a slot function containing the data according to an index map
-     *
-     * @param L lua state (passed in by luaponte)
-     * @param particle_group particle group containing the index map
-     * @return slot function to retrieve the data
-     */
-    virtual luaponte::object get_lua(lua_State* L, std::shared_ptr<particle_group> particle_group) const {
-        luaponte::default_converter<std::function<std::vector<T>()>>().apply(L, get_data(particle_group));
-        luaponte::object result(luaponte::from_stack(L, -1));
-        lua_pop(L, 1);
-        return result;
     }
 
     size_t stride() const {

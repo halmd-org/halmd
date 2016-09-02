@@ -155,6 +155,17 @@ static int wrap_dimension(particle<dimension, float_type> const&)
     return dimension;
 }
 
+template <typename particle_type>
+static luaponte::object wrap_get(particle_type const& particle, lua_State* L, std::string const& name) {
+    return particle.get_array(name)->get_lua(L);
+}
+
+template <typename particle_type>
+static void wrap_set(particle_type const& particle, std::string const& name, luaponte::object object)
+{
+    particle.get_array(name)->set_lua(object);
+}
+
 template <typename T>
 static bool equal(std::shared_ptr<T const> self, std::shared_ptr<T const> other)
 {
@@ -178,10 +189,8 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .def(constructor<size_type, unsigned int>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
-                    .def("get", &particle::get_lua)
-                    .def("get", &particle::get_lua_with_group)
-                    .def("set", &particle::set_lua)
-                    .def("set", &particle::set_lua_with_group)
+                    .def("get", &wrap_get<particle>)
+                    .def("set", &wrap_set<particle>)
                     .def("shift_velocity", &shift_velocity<particle>)
                     .def("shift_velocity_group", &shift_velocity_group<particle>)
                     .def("rescale_velocity", &rescale_velocity<particle>)

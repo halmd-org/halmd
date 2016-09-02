@@ -190,22 +190,6 @@ public:
     }
 
     /**
-     * get data from named particle array with iterator
-     *
-     * @param name identifier of the particle array
-     * @param group particle group used as index map
-     * @param first output iterator
-     * @return output iterator
-     *
-     * throws an exception if the array does not exist or has an invalid type
-     */
-    template<typename T, typename iterator_type>
-    iterator_type get_data(std::string const& name, std::shared_ptr<particle_group> group, iterator_type const& first) const
-    {
-        return particle_array::cast<T>(get_array(name))->get_data(group, first);
-    }
-
-    /**
      * set data in named particle array with iterator
      *
      * @param name identifier of the particle array
@@ -218,22 +202,6 @@ public:
     iterator_type set_data(const std::string &name, iterator_type const& first)
     {
         return particle_array::cast<T>(get_array(name))->set_data(first);
-    }
-
-    /**
-     * set data in named particle array with iterator
-     *
-     * @param name identifier of the particle array
-     * @param group particle group used as index map
-     * @param first input iterator
-     * @return input iterator
-     *
-     * throws an exception if the array does not exist or has an invalid type
-     */
-    template <typename T, typename iterator_type>
-    iterator_type set_data(const std::string &name, std::shared_ptr<particle_group> group, iterator_type const& first)
-    {
-        return particle_array::cast<T>(get_array(name))->set_data(group, first);
     }
 
     /**
@@ -453,23 +421,6 @@ public:
     connection on_append_force(slot_function_type const& slot)
     {
         return on_append_force_.connect(slot);
-    }
-
-    luaponte::object get_lua(lua_State *L, std::string const& name) {
-        return get_array(name)->get_lua(L);
-    }
-
-    luaponte::object get_lua_with_group(lua_State* L, std::string const& name, std::shared_ptr<particle_group> group) {
-        return get_array(name)->get_lua(L, group);
-    }
-
-    void set_lua(std::string const& name, luaponte::object object) {
-        get_array(name)->set_lua(object);
-    }
-
-    void set_lua_with_group(std::string const &name, std::shared_ptr<particle_group> group, luaponte::object object)
-    {
-        get_array(name)->set_lua(group, object);
     }
 
     std::shared_ptr<particle_array> const& get_array(std::string const& name) const {

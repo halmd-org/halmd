@@ -25,7 +25,6 @@
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
-#include <halmd/mdsim/host/particle_group.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -94,8 +93,6 @@ public:
      * @return lua table containing a copy of the data
      */
     virtual luaponte::object get_lua(lua_State* L) const = 0;
-    virtual luaponte::object get_lua(lua_State* L, std::shared_ptr<particle_group> group) const = 0;
-    virtual void set_lua(std::shared_ptr<particle_group> group, luaponte::object table) = 0;
 };
 
 template<typename T>
@@ -206,59 +203,6 @@ public:
             table[i++] = boost::cref(x);
         }
         return table;
-    }
-
-    /**
-     * get data from particle group with iterator
-     */
-    template <typename iterator_type>
-    iterator_type get_data(std::shared_ptr<particle_group> particle_group, iterator_type const& first) const
-    {
-        auto const& group = read_cache(particle_group->ordered());
-        auto const& input = read_cache(data());
-        auto it = first;
-        for(size_t i : group) {
-            *it++ = input[i];
-        }
-        return it;
-    }
-
-    /**
-     * set data from particle group with iterator
-     */
-    template <typename iterator_type>
-    iterator_type set_data(std::shared_ptr<particle_group> particle_group, iterator_type const& first)
-    {
-        auto const& group = read_cache(particle_group->ordered());
-        auto output = make_cache_mutable(mutable_data());
-        auto it = first;
-        for(size_t i : group) {
-            (*output)[i] = *it++;
-        }
-        return it;
-    }
-
-    virtual void set_lua(std::shared_ptr<particle_group> particle_group, luaponte::object table) {
-        auto const& group = read_cache(particle_group->ordered());
-        auto output = make_cache_mutable(mutable_data());
-        size_t j = 1;
-        for(size_t i : group) {
-            (*output)[i] = luaponte::object_cast<T>(table[j++]);
-        }
-    }
-
-    virtual luaponte::object get_lua(lua_State* L, std::shared_ptr<particle_group> particle_group) const {
-        auto self = std::static_pointer_cast<particle_array_typed<T> const>(shared_from_this());
-        std::function<std::vector<T>()> fn = [self, particle_group]() -> std::vector<T> {
-            std::vector<T> data;
-            data.reserve(self->data_->size());
-            self->get_data(particle_group, std::back_inserter(data));
-            return data;
-        };
-        luaponte::default_converter<std::function<std::vector<T>()>>().apply(L, fn);
-        luaponte::object result(luaponte::from_stack(L, -1));
-        lua_pop(L, 1);
-        return result;
     }
 private:
     /** cached raw_array */
