@@ -32,7 +32,6 @@
 #include <numeric>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
@@ -94,7 +93,6 @@ struct lattice
     typedef typename vector_type::value_type float_type;
     static unsigned int const dimension = vector_type::static_size;
     static bool const gpu = modules_type::gpu;
-    typedef mdsim::clock clock_type;
 
     fixed_vector<unsigned, dimension> ncell;
     unsigned nunit_cell;
@@ -107,7 +105,6 @@ struct lattice
     std::shared_ptr<particle_type> particle;
     std::shared_ptr<position_type> position;
     std::shared_ptr<phase_space_type> phase_space;
-    std::shared_ptr<clock_type> clock;
 
     void test();
     lattice();
@@ -224,9 +221,8 @@ lattice<modules_type>::lattice()
     particle = std::make_shared<particle_type>(npart, 1);
     box = std::make_shared<box_type>(edges);
     position = std::make_shared<position_type>(particle, box, slab);
-    clock = std::make_shared<clock_type>();
     std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
-    phase_space = std::make_shared<phase_space_type>(particle, particle_group, box, clock);
+    phase_space = std::make_shared<phase_space_type>(particle, particle_group, box);
 }
 
 template <int dimension, typename float_type>

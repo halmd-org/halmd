@@ -30,7 +30,6 @@
 #include <numeric>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/integrators/euler.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_groups/all.hpp>
@@ -84,7 +83,6 @@ struct test_euler
     typedef typename modules_type::position_type position_type;
     typedef typename modules_type::random_type random_type;
     typedef typename modules_type::velocity_type velocity_type;
-    typedef mdsim::clock clock_type;
     typedef typename modules_type::position_sample_type position_sample_type;
     typedef typename modules_type::velocity_sample_type velocity_sample_type;
     typedef typename modules_type::phase_space_type phase_space_type;
@@ -110,7 +108,6 @@ struct test_euler
     std::shared_ptr<random_type> random;
     std::shared_ptr<position_type> position;
     std::shared_ptr<velocity_type> velocity;
-    std::shared_ptr<clock_type> clock;
     std::shared_ptr<phase_space_type> phase_space;
 
     test_euler();
@@ -128,10 +125,8 @@ void test_euler<modules_type>::linear_motion()
 
     // perform integration
     BOOST_TEST_MESSAGE("running Euler integration for linear motion over " << steps << " steps");
-    clock->set_timestep(integrator->timestep());
     for (size_t i = 0; i < steps; ++i) {
         integrator->integrate();
-        clock->advance();
     }
 
     // acquire sample with final positions and velocities
@@ -174,11 +169,9 @@ void test_euler<modules_type>::overdamped_motion()
 
     // perform integration
     BOOST_TEST_MESSAGE("running Euler integration for overdamped motion over " << steps << " steps");
-    clock->set_timestep(integrator->timestep());
     for (size_t i = 0; i < steps; ++i) {
         modules_type::set_velocity(particle); // set particle velocity: v = -r
         integrator->integrate();
-        clock->advance();
     }
 
     // acquire sample with final positions
@@ -240,9 +233,8 @@ test_euler<modules_type>::test_euler()
     random = std::make_shared<random_type>();
     position = std::make_shared<position_type>(particle, box, slab);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
-    clock = std::make_shared<clock_type>();
     std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
-    phase_space = std::make_shared<phase_space_type>(particle, particle_group, box, clock);
+    phase_space = std::make_shared<phase_space_type>(particle, particle_group, box);
 
     // set positions and velocities
     BOOST_TEST_MESSAGE("position particles on lattice");

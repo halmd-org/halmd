@@ -29,7 +29,6 @@
 #include <numeric>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -153,7 +152,6 @@ struct phase_space
     typedef typename modules_type::random_type random_type;
     static bool const gpu = modules_type::gpu;
 
-    typedef halmd::mdsim::clock clock_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     enum { dimension = vector_type::static_size };
@@ -166,7 +164,6 @@ struct phase_space
     std::vector<unsigned int> npart;
 
     std::shared_ptr<box_type> box;
-    std::shared_ptr<clock_type> clock;
     std::shared_ptr<particle_type> particle;
     std::shared_ptr<input_position_sample_type> input_position_sample;
     std::shared_ptr<input_velocity_sample_type> input_velocity_sample;
@@ -209,7 +206,7 @@ void phase_space<modules_type>::test()
     // copy input sample to particle
     std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
     {
-        auto phase_space = phase_space_type(particle, particle_group, box, clock);
+        auto phase_space = phase_space_type(particle, particle_group, box);
         phase_space.set("position", input_position_sample);
         phase_space.set("velocity", input_velocity_sample);
         phase_space.set("species", input_species_sample);
@@ -222,12 +219,8 @@ void phase_space<modules_type>::test()
     shuffle(particle, random);
     shuffle(particle, random);
 
-    // acquire sample from particle, construct temporary sampler module
-    clock->set_timestep(0); // bogus time-step
-    clock->advance();
-
     // compare output and input, copy GPU sample to host before
-    typename modules_type::samples_type result(phase_space_type(particle, particle_group, box, clock));
+    typename modules_type::samples_type result(phase_space_type(particle, particle_group, box));
     auto const& result_position = result.position->data();
     auto const& result_velocity = result.velocity->data();
     auto const& result_species = result.species->data();
@@ -281,7 +274,6 @@ phase_space<modules_type>::phase_space()
     input_species_sample = std::make_shared<input_species_sample_type>(particle->nparticle());
     input_mass_sample = std::make_shared<input_mass_sample_type>(particle->nparticle());
 
-    clock = std::make_shared<clock_type>();
     random = std::make_shared<random_type>();
 }
 

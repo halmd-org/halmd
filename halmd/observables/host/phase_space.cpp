@@ -268,13 +268,11 @@ phase_space<dimension, float_type>::phase_space(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<particle_group_type> particle_group
   , std::shared_ptr<box_type const> box
-  , std::shared_ptr<clock_type const> clock
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
   , particle_group_(particle_group)
   , box_(box)
-  , clock_(clock)
   , logger_(logger) {}
 
 /**
@@ -355,7 +353,6 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                , std::shared_ptr<particle_type>
                , std::shared_ptr<particle_group_type>
                , std::shared_ptr<box_type const>
-               , std::shared_ptr<clock_type const>
                , std::shared_ptr<logger>
             >)
         ]

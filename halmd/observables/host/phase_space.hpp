@@ -25,7 +25,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_group.hpp>
 #include <halmd/observables/host/samples/sample.hpp>
@@ -57,7 +56,6 @@ public:
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::clock clock_type;
 
     /**
      * Construct phase_space sampler from particle group.
@@ -66,7 +64,6 @@ public:
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<particle_group_type> particle_group
       , std::shared_ptr<box_type const> box
-      , std::shared_ptr<clock_type const> clock
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -107,8 +104,6 @@ private:
     std::shared_ptr<particle_group_type> particle_group_;
     /** simulation box */
     std::shared_ptr<box_type const> box_;
-    /** simulation clock */
-    std::shared_ptr<clock_type const> clock_;
     /** logger instance */
     std::shared_ptr<logger> logger_;
 

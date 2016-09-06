@@ -142,7 +142,7 @@ local M = module(function(args)
     local logger = log.logger({label = ("phase_space (%s)"):format(label)})
 
     -- construct phase space samplers
-    local phase_space = phase_space(particle, group, box, clock, logger)
+    local phase_space = phase_space(particle, group, box, logger)
 
     -- construct unified Lua object for host and gpu sampler
     local self = {group = group}
