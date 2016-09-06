@@ -319,7 +319,7 @@ struct gpu_modules
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
     typedef observables::host::samples::sample<dimension, float_type> position_sample_type;
     typedef observables::host::samples::sample<dimension, float_type> velocity_sample_type;
-    typedef observables::gpu::phase_space<observables::gpu::host_sample<dimension, float_type>> phase_space_type;
+    typedef observables::gpu::phase_space<dimension, float_type> phase_space_type;
 
     static bool const gpu = true;
 

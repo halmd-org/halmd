@@ -27,10 +27,7 @@ local sampler  = require("halmd.observables.sampler")
 local utility  = require("halmd.utility")
 
 -- grab C++ classes
-local phase_space = {host = assert(libhalmd.observables.host.phase_space)}
-if device.gpu then
-    phase_space.gpu = assert(libhalmd.observables.gpu.phase_space)
-end
+local phase_space = assert(libhalmd.observables.phase_space)
 
 ---
 -- Phase Space
@@ -145,58 +142,55 @@ local M = module(function(args)
     local logger = log.logger({label = ("phase_space (%s)"):format(label)})
 
     -- construct phase space samplers
-    local samplers = {}
-    samplers.host = phase_space.host(particle, group, box, clock, logger)
-    if particle.memory == "gpu" then
-        samplers.gpu = phase_space.gpu(particle, group, box, clock, logger)
-    end
+    local phase_space = phase_space(particle, group, box, clock, logger)
 
     -- construct unified Lua object for host and gpu sampler
     local self = {group = group}
 
-    -- TODO: this only exists for gpu samples
-    self.acquire = function(self, args)
-        local memory = args and args.memory
-        if not memory then
-            memory = samplers.gpu and "gpu" or "host"
-        end
-        local sampler = samplers[memory]
-        if not sampler then
-            error(("unsupported phase_space memory type '%s'"):format(memory), 2)
-        end
-        return assert(sampler.acquire)
+    self.acquire = function(self, name)
+        return phase_space:acquire(name)
     end
 
-    self.acquire_position = function(self)
-        return samplers.host:acquire("position")
-    end
+    if particle.memory == "gpu" then
+        self.acquire_position = function(self)
+            return phase_space:acquire("g_position")
+        end
 
-    self.acquire_velocity = function(self)
-        return samplers.host:acquire("velocity")
+        self.acquire_velocity = function(self)
+            return phase_space:acquire("g_velocity")
+        end
+    else
+        self.acquire_position = function(self)
+            return phase_space:acquire("position")
+        end
+
+        self.acquire_velocity = function(self)
+            return phase_space:acquire("velocity")
+        end
     end
 
     self.acquire_species = function(self)
-        return samplers.host:acquire("species")
+        return phase_space:acquire("species")
     end
 
     self.acquire_mass = function(self)
-        return samplers.host:acquire("mass")
+        return phase_space:acquire("mass")
     end
 
     self.position = function(self)
-        return samplers.host:data("position")
+        return phase_space:data("position")
     end
 
     self.velocity = function(self)
-        return samplers.host:data("velocity")
+        return phase_space:data("velocity")
     end
 
     self.species = function(self)
-        return samplers.host:data("species")
+        return phase_space:data("species")
     end
 
     self.mass = function(self)
-        return samplers.host:data("mass")
+        return phase_space:data("mass")
     end
 
     self.writer = function(self, args)
@@ -214,7 +208,7 @@ local M = module(function(args)
         -- in the latter case, the value string is assigned to the group name
         for k,v in pairs(fields) do
             local name = (type(k) == "string") and k or v
-            writer:on_write(samplers.host:data(v), {name})
+            writer:on_write(phase_space:data(v), {name})
         end
 
         -- store box information
@@ -239,7 +233,7 @@ local M = module(function(args)
     self.set = function(self, samples)
         logger:info(("setting particles from phase space sample"):format(label))
         for name,sample in pairs(samples) do
-            samplers.host:set(name, sample)
+            phase_space:set(name, sample)
         end
     end
 
@@ -248,13 +242,11 @@ local M = module(function(args)
     self.disconnect = utility.signal.disconnect(conn, "phase_space sampler")
 
     -- connect runtime accumulators to profiler
-    for memory, sampler in pairs(samplers) do
-        local label = assert(self.group.label)
-        local desc = ("phase space sample of %s particles on %s"):format(label, memory)
-        local runtime = assert(sampler.runtime)
-        table.insert(conn, profiler:on_profile(runtime.acquire, ("acquisition of %s"):format(desc)))
-        table.insert(conn, profiler:on_profile(runtime.reset, ("reset %s"):format(desc)))
-    end
+    local label = assert(self.group.label)
+    local desc = ("phase space sample of %s particles on %s"):format(label, particle.memory)
+    local runtime = assert(phase_space.runtime)
+    table.insert(conn, profiler:on_profile(runtime.acquire, ("acquisition of %s"):format(desc)))
+    table.insert(conn, profiler:on_profile(runtime.reset, ("reset %s"):format(desc)))
 
     return self
 end)
@@ -342,9 +334,6 @@ function M.reader(args)
     local location = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
 
     local memory = args and args.memory or (device.gpu and "gpu" or "host")
-    if not phase_space[memory] then
-        error(("unsupported phase space memory type '%s'"):format(memory), 2)
-    end
 
     local self = file:reader({location = location, mode = "append"})
     local group = assert(#fields > 0) and ({next(fields)})[2] -- some field name

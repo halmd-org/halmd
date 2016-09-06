@@ -40,16 +40,24 @@ struct phase_space_wrapper
     cuda::texture<float4> r;
     /** minimum image vectors */
     cuda::texture<coalesced_vector_type> image;
-    /** velocities, tags */
-    cuda::texture<float4> v;
-    /** sample phase space for all particle of a single species */
-    cuda::function<void (unsigned int const*, float4*, float4*, vector_type, unsigned int)> sample;
+    /** sample position for all particle of a single species */
+    cuda::function<void (unsigned int const*, float4*, vector_type, unsigned int)> sample_position;
     /** shift particle positions to range (-L/2, L/2) */
     cuda::function<void (unsigned int const*, float4*, coalesced_vector_type*, vector_type, unsigned int)> reduce_periodic;
-    /** copy particle group from GPU to host memory */
-    cuda::function<void (unsigned int const*, unsigned int*, unsigned int size)> copy_particle_group;
 
     static phase_space_wrapper const kernel;
+};
+
+template<typename T>
+struct phase_space_sample_wrapper
+{
+    typedef T type;
+
+    cuda::texture<T> input;
+    cuda::function<void (unsigned int const*, T*, unsigned int)> sample;
+    cuda::function<void (unsigned int const*, T*, unsigned int)> set;
+
+    static phase_space_sample_wrapper const kernel;
 };
 
 template <int dimension>

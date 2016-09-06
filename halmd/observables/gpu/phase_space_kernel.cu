@@ -23,6 +23,7 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/gpu/phase_space_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
+#include "phase_space_kernel.hpp"
 
 using namespace halmd::mdsim::gpu; //< namespace box_kernel
 
@@ -33,8 +34,6 @@ namespace phase_space_kernel {
 
 /** positions, types */
 texture<float4> r_;
-/** velocities, tags */
-texture<float4> v_;
 
 /** minimum image vectors */
 template<int dimension>
@@ -51,10 +50,9 @@ template<int dimension> image<dimension>::type image<dimension>::tex_;
  * sample phase space for all particle of a single species
  */
 template <typename vector_type, typename T>
-__global__ void sample(
+__global__ void sample_position(
     unsigned int const* g_reverse_tag
   , T* g_r
-  , T* g_v
   , vector_type box_length
   , unsigned int npart
 )
@@ -66,16 +64,14 @@ __global__ void sample(
         // permutation index
         uint const rtag = g_reverse_tag[GTID];
         // fetch particle from texture caches
-        unsigned int tag, type;
-        vector_type r, v;
+        unsigned int type;
+        vector_type r;
         tie(r, type) <<= tex1Dfetch(r_, rtag);
-        tie(v, tag) <<= tex1Dfetch(v_, rtag);
         // extend particle positions in periodic box
         vector_type img = tex1Dfetch(image<dimension>::tex_, rtag);
         box_kernel::extend_periodic(r, img, box_length);
         // store particle in global memory
         g_r[GTID] <<= tie(r, type);
-        g_v[GTID] <<= tie(v, type);
     }
 }
 
@@ -106,34 +102,66 @@ __global__ void reduce_periodic(
     }
 }
 
-/**
- * copy particle group from GPU to host memory
- */
-__global__ void copy_particle_group(
-    unsigned int const* g_group
-  , unsigned int* h_group
-  , unsigned int size
-)
-{
-    if (GTID < size) {
-        h_group[GTID] = g_group[GTID];
-    }
-}
-
 } // namespace phase_space_kernel
 
 template <int dimension>
 phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
     phase_space_kernel::r_
   , phase_space_kernel::image<dimension>::tex_
-  , phase_space_kernel::v_
-  , phase_space_kernel::sample<fixed_vector<float, dimension> >
+  , phase_space_kernel::sample_position<fixed_vector<float, dimension> >
   , phase_space_kernel::reduce_periodic<fixed_vector<float, dimension> >
-  , phase_space_kernel::copy_particle_group
 };
 
 template class phase_space_wrapper<3>;
 template class phase_space_wrapper<2>;
+
+namespace phase_space_sample_kernel {
+
+/** minimum image vectors */
+template<typename T>
+struct input
+{
+    // instantiate a separate texture for each vector type
+    typedef texture<T> type;
+    static type tex_;
+};
+// instantiate static members
+template<typename T> input<T>::type input<T>::tex_;
+
+template <typename T>
+__global__ void sample(
+        unsigned int const* g_reverse_tag
+        , T *data
+        , unsigned int npart
+) {
+    if (GTID < npart) {
+        // permutation index
+        uint const rtag = g_reverse_tag[GTID];
+        // fetch particle data from texture caches
+        data[GTID] = tex1Dfetch(input<T>::tex_, rtag);
+    }
+}
+
+} // namespace phase_space_sample_kernel
+
+template <typename T>
+phase_space_sample_wrapper<T> const phase_space_sample_wrapper<T>::kernel = {
+        phase_space_sample_kernel::input<T>::tex_,
+        phase_space_sample_kernel::sample<T>,
+        phase_space_sample_kernel::sample<T>
+};
+
+template class phase_space_sample_wrapper<float>;
+template class phase_space_sample_wrapper<float2>;
+template class phase_space_sample_wrapper<float4>;
+
+template class phase_space_sample_wrapper<int>;
+template class phase_space_sample_wrapper<int2>;
+template class phase_space_sample_wrapper<int4>;
+
+template class phase_space_sample_wrapper<unsigned int>;
+template class phase_space_sample_wrapper<uint2>;
+template class phase_space_sample_wrapper<uint4>;
 
 } // namespace gpu
 } // namespace observables

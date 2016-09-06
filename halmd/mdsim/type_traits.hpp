@@ -68,6 +68,13 @@ template <int dimension, typename value_type>
 struct type_traits;
 
 template <typename value_type>
+struct type_traits<4, value_type>
+{
+    typedef typename basic_vector_type<4, value_type>::type coalesced_vector_type;
+    typedef typename basic_vector_type<4, value_type>::type vector_type;
+};
+
+template <typename value_type>
 struct type_traits<3, value_type>
 {
     typedef typename basic_vector_type<4, value_type>::type coalesced_vector_type;
@@ -79,6 +86,13 @@ struct type_traits<2, value_type>
 {
     typedef typename basic_vector_type<2, value_type>::type coalesced_vector_type;
     typedef typename basic_vector_type<2, value_type>::type vector_type;
+};
+
+template <typename value_type>
+struct type_traits<1, value_type>
+{
+    typedef value_type coalesced_vector_type;
+    typedef value_type vector_type;
 };
 
 }} // namespace detail::gpu

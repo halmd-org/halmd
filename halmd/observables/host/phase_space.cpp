@@ -33,6 +33,12 @@ namespace halmd {
 namespace observables {
 namespace host {
 
+/**
+ * phase space sampler implementation for typed samples
+ *
+ * copies the data to a host sample and provides the actual implementation
+ * for the sample related interface of phase_space
+ */
 template<int dimension, typename scalar_type>
 class phase_space_sampler_typed : public phase_space_sampler
 {
@@ -52,7 +58,13 @@ public:
             : particle_group_(group), array_(mdsim::host::particle_array::cast<typename sample_type::data_type>(array)) {
     }
 
-    virtual std::shared_ptr<samples::sample_base> acquire() {
+    /**
+     * acquire a sample
+     *
+     * copies the data to a new sample if the data is not up to date,
+     * returns the stored sample otherwise
+     */
+    virtual std::shared_ptr<sample_base> acquire() {
         if (!(group_observer_ == particle_group_->ordered()) || !(array_observer_ == array_->cache_observer())) {
             auto const& group = read_cache(particle_group_->ordered());
             group_observer_ = particle_group_->ordered();
@@ -72,7 +84,10 @@ public:
         }
         return sample_;
     }
-    virtual void set(std::shared_ptr<samples::sample_base const> sample) {
+    /**
+     * copies the data of a sample to the particle array
+     */
+    virtual void set(std::shared_ptr<sample_base const> sample) {
         if(sample->type() != typeid(typename sample_type::data_type)) {
             throw std::runtime_error("invalid sample data type");
         }
@@ -87,6 +102,9 @@ public:
         }
     }
 
+    /**
+     * returns a lua slot function to be used to acquire a host sample
+     */
     virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) {
         std::function<std::shared_ptr<sample_type const>()> fn = [self]() -> std::shared_ptr<sample_type const> {
             return std::static_pointer_cast<sample_type const>(std::static_pointer_cast<phase_space_sampler_typed>(self)->acquire());
@@ -96,6 +114,10 @@ public:
         lua_pop(L, 1);
         return result;
     }
+
+    /**
+     * returns a lua slot function to be used to directly acquire the data of a host sample
+     */
     virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) {
         std::function<typename sample_type::array_type const&()> fn = [self]() -> typename sample_type::array_type const& {
             return std::static_pointer_cast<sample_type const>(std::static_pointer_cast<phase_space_sampler_typed>(self)->acquire())->data();
@@ -105,6 +127,10 @@ public:
         lua_pop(L, 1);
         return result;
     }
+
+    /**
+     * wrapper to export the set member to lua
+     */
     virtual void set_lua(luaponte::object sample) {
         set(luaponte::object_cast<std::shared_ptr<sample_type const>>(sample));
     }
@@ -116,6 +142,11 @@ protected:
     cache<> group_observer_;
 };
 
+/**
+ * associative map from typeid's to typed phase space sampler create functions
+ *
+ * used to create the correct phase space sampler based on the typeid of a particle array
+ */
 static const std::unordered_map<std::type_index,
     std::function<std::shared_ptr<phase_space_sampler>(std::shared_ptr<mdsim::host::particle_group>
                                                      , std::shared_ptr<mdsim::host::particle_array>)>>
@@ -167,7 +198,7 @@ public:
       image_array_(mdsim::host::particle_array::cast<typename sample_type::data_type>(image_array)) {
     }
 
-    virtual std::shared_ptr<samples::sample_base> acquire() {
+    virtual std::shared_ptr<sample_base> acquire() {
         if (!(this->group_observer_ == this->particle_group_->ordered())
             || !(this->array_observer_ == this->array_->cache_observer())
             || !(image_array_observer_ == image_array_->cache_observer())) {
@@ -195,7 +226,7 @@ public:
         }
         return this->sample_;
     }
-    virtual void set(std::shared_ptr<samples::sample_base const> sample) {
+    virtual void set(std::shared_ptr<sample_base const> sample) {
         if(sample->type() != typeid(typename sample_type::data_type)) {
             throw std::runtime_error("invalid sample data type");
         }
@@ -273,79 +304,6 @@ phase_space<dimension, float_type>::get_sampler(std::string const& name)
 }
 
 template <typename phase_space_type>
-static std::function<std::shared_ptr<typename phase_space_type::position_sample_type const> ()>
-wrap_acquire_position(std::shared_ptr<phase_space_type> self)
-{
-    return [=]() {
-        return self->acquire_position();
-    };
-}
-
-template <typename phase_space_type>
-static std::function<std::shared_ptr<typename phase_space_type::velocity_sample_type const> ()>
-wrap_acquire_velocity(std::shared_ptr<phase_space_type> self)
-{
-    return [=]() {
-        return self->acquire_velocity();
-    };
-}
-
-template <typename phase_space_type>
-static std::function<std::shared_ptr<typename phase_space_type::species_sample_type const> ()>
-wrap_acquire_species(std::shared_ptr<phase_space_type> self)
-{
-    return [=]() {
-        return self->acquire_species();
-    };
-}
-
-template <typename phase_space_type>
-static std::function<std::shared_ptr<typename phase_space_type::mass_sample_type const> ()>
-wrap_acquire_mass(std::shared_ptr<phase_space_type> self)
-{
-    return [=]() {
-        return self->acquire_mass();
-    };
-}
-
-
-template <typename phase_space_type>
-static std::function<typename phase_space_type::position_sample_type::array_type const& ()>
-wrap_position(std::shared_ptr<phase_space_type> self)
-{
-    return [=]() -> typename phase_space_type::position_sample_type::array_type const& {
-        return self->acquire_position()->data();
-    };
-}
-
-template <typename phase_space_type>
-static std::function<typename phase_space_type::velocity_sample_type::array_type const& ()>
-wrap_velocity(std::shared_ptr<phase_space_type> self)
-{
-    return [=]() -> typename phase_space_type::velocity_sample_type::array_type const& {
-        return self->acquire_velocity()->data();
-    };
-}
-
-template <typename phase_space_type>
-static std::function<typename phase_space_type::species_sample_type::array_type const& ()>
-wrap_species(std::shared_ptr<phase_space_type> self)
-{
-    return [=]() -> typename phase_space_type::species_sample_type::array_type const& {
-        return self->acquire_species()->data();
-    };
-}
-
-template <typename phase_space_type>
-static std::function<typename phase_space_type::mass_sample_type::array_type const& ()>
-wrap_mass(std::shared_ptr<phase_space_type> self)
-{
-    return [=]() -> typename phase_space_type::mass_sample_type::array_type const& {
-        return self->acquire_mass()->data();
-    };
-}
-
-template <typename phase_space_type>
 static luaponte::object wrap_acquire(lua_State* L, std::shared_ptr<phase_space_type> self, std::string const& name)
 {
     auto sampler = self->get_sampler(name);
@@ -379,30 +337,27 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            namespace_("host")
-            [
-                class_<phase_space>()
-                    .def("acquire", &wrap_acquire<phase_space>)
-                    .def("data", &wrap_data<phase_space>)
-                    .def("set", &wrap_set<phase_space>)
-                    .property("dimension", &wrap_dimension<phase_space>)
-                    .scope
-                    [
-                        class_<runtime>("runtime")
-                            .def_readonly("acquire", &runtime::acquire)
-                            .def_readonly("reset", &runtime::reset)
-                            .def_readonly("set", &runtime::set)
-                    ]
-                    .def_readonly("runtime", &phase_space::runtime_)
+            class_<phase_space>()
+                .def("acquire", &wrap_acquire<phase_space>)
+                .def("data", &wrap_data<phase_space>)
+                .def("set", &wrap_set<phase_space>)
+                .property("dimension", &wrap_dimension<phase_space>)
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("acquire", &runtime::acquire)
+                        .def_readonly("reset", &runtime::reset)
+                        .def_readonly("set", &runtime::set)
+                ]
+                .def_readonly("runtime", &phase_space::runtime_)
 
-              , def("phase_space", &std::make_shared<phase_space
-                   , std::shared_ptr<particle_type>
-                   , std::shared_ptr<particle_group_type>
-                   , std::shared_ptr<box_type const>
-                   , std::shared_ptr<clock_type const>
-                   , std::shared_ptr<logger>
-                >)
-            ]
+          , def("phase_space", &std::make_shared<phase_space
+               , std::shared_ptr<particle_type>
+               , std::shared_ptr<particle_group_type>
+               , std::shared_ptr<box_type const>
+               , std::shared_ptr<clock_type const>
+               , std::shared_ptr<logger>
+            >)
         ]
     ];
 }

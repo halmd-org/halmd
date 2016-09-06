@@ -17,35 +17,36 @@
  * along with HALMD.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_HOST_SAMPLES_SAMPLE_HPP
-#define HALMD_OBSERVABLES_HOST_SAMPLES_SAMPLE_HPP
+#ifndef HALMD_OBSERVABLES_GPU_SAMPLES_SAMPLE_HPP
+#define HALMD_OBSERVABLES_GPU_SAMPLES_SAMPLE_HPP
 
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/observables/sample.hpp>
-#include <halmd/utility/raw_array.hpp>
 
 namespace halmd {
 namespace observables {
-namespace host {
+namespace gpu {
 namespace samples {
 
-template<int dimension_, typename scalar_type>
+template<int dimension_, typename data_type_>
 class sample : public sample_base {
 public:
     static constexpr int dimension = dimension_;
-    static constexpr bool gpu = false;
+    static constexpr bool gpu = true;
 
-    typedef typename std::conditional<dimension == 1, scalar_type, fixed_vector<scalar_type, dimension>>::type data_type;
-    typedef raw_array<data_type> array_type;
+    typedef data_type_ data_type;
+    typedef cuda::vector<data_type> array_type;
 
     sample(std::size_t nparticles) : data_(nparticles)
     {
     }
 
     virtual std::type_info const& type() const {
-        return typeid(data_type);
+        return typeid(gpu_sample<data_type>);
     }
 
     array_type const& data() const {
@@ -54,10 +55,6 @@ public:
 
     array_type& data() {
         return data_;
-    }
-
-    data_type const& maximum() const {
-        return *std::max_element(data_.begin(), data_.end());
     }
 
     /**
@@ -70,8 +67,8 @@ private:
 };
 
 } // namespace samples
-} // namespace host
+} // namespace gpu
 } // namespace observables
 } // namespace halmd
 
-#endif /* !defined HALMD_OBSERVABLES_HOST_SAMPLES_SAMPLE_HPP */
+#endif /* !defined HALMD_OBSERVABLES_GPU_SAMPLES_SAMPLE_HPP */

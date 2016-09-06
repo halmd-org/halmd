@@ -257,7 +257,7 @@ struct gpu_modules
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef observables::host::samples::sample<dimension, float_type> position_sample_type;
-    typedef observables::gpu::phase_space<observables::gpu::host_sample<dimension, float_type>> phase_space_type;
+    typedef observables::gpu::phase_space<dimension, float_type> phase_space_type;
     static bool const gpu = true;
 };
 

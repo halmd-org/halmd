@@ -35,10 +35,16 @@ namespace halmd {
 namespace observables {
 namespace host {
 
+/**
+ * phase space sampler abstraction
+ *
+ * abstract base class defining the interface for the actual sampling implementation
+ * this interface is implemented for each data type
+ */
 class phase_space_sampler {
 public:
-    virtual std::shared_ptr<samples::sample_base> acquire(void) = 0;
-    virtual void set(std::shared_ptr<samples::sample_base const> sample) = 0;
+    virtual std::shared_ptr<sample_base> acquire(void) = 0;
+    virtual void set(std::shared_ptr<sample_base const> sample) = 0;
     virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) = 0;
     virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) = 0;
     virtual void set_lua(luaponte::object sample) = 0;
@@ -64,7 +70,7 @@ public:
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
-    void set(std::string const& name, std::shared_ptr<samples::sample_base const> sample) {
+    void set(std::string const& name, std::shared_ptr<sample_base const> sample) {
         get_sampler(name)->set(sample);
     }
 

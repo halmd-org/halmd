@@ -31,8 +31,8 @@ namespace observables {
 namespace gpu {
 namespace dynamics {
 
-template <int dimension, typename float_type>
-mean_quartic_displacement<dimension, float_type>::mean_quartic_displacement(
+template <int dimension, typename data_type>
+mean_quartic_displacement<dimension, data_type>::mean_quartic_displacement(
     unsigned int blocks
   , unsigned int threads
 )
@@ -41,25 +41,25 @@ mean_quartic_displacement<dimension, float_type>::mean_quartic_displacement(
 {
 }
 
-template <int dimension, typename float_type>
-unsigned int mean_quartic_displacement<dimension, float_type>::defaults::blocks() {
+template <int dimension, typename data_type>
+unsigned int mean_quartic_displacement<dimension, data_type>::defaults::blocks() {
     return 32;
 }
 
-template <int dimension, typename float_type>
-unsigned int mean_quartic_displacement<dimension, float_type>::defaults::threads() {
+template <int dimension, typename data_type>
+unsigned int mean_quartic_displacement<dimension, data_type>::defaults::threads() {
     return 32 << DEVICE_SCALE;
 }
 
-template <int dimension, typename float_type>
-void mean_quartic_displacement<dimension, float_type>::operator() (
+template <int dimension, typename data_type>
+void mean_quartic_displacement<dimension, data_type>::operator() (
     sample_type const& first
   , sample_type const& second
   , accumulator<result_type>& result
 )
 {
-    typename sample_type::position_array_type const& position1 = first.position();
-    typename sample_type::position_array_type const& position2 = second.position();
+    auto const& position1 = first.data();
+    auto const& position2 = second.data();
     accumulator<result_type> acc = compute_mqd_(
         std::make_tuple(&*position1.begin(), &*position2.begin())
       , std::make_tuple(&*position1.end())
@@ -94,16 +94,16 @@ void mean_quartic_displacement<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_observables_gpu_dynamics_mean_quartic_displacement(lua_State* L)
 {
-    mean_quartic_displacement<3, float>::luaopen(L);
-    mean_quartic_displacement<2, float>::luaopen(L);
-    observables::dynamics::correlation<mean_quartic_displacement<3, float> >::luaopen(L);
-    observables::dynamics::correlation<mean_quartic_displacement<2, float> >::luaopen(L);
+    mean_quartic_displacement<3, float4>::luaopen(L);
+    mean_quartic_displacement<2, float4>::luaopen(L);
+    observables::dynamics::correlation<mean_quartic_displacement<3, float4> >::luaopen(L);
+    observables::dynamics::correlation<mean_quartic_displacement<2, float4> >::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
-template class mean_quartic_displacement<3, float>;
-template class mean_quartic_displacement<2, float>;
+template class mean_quartic_displacement<3, float4>;
+template class mean_quartic_displacement<2, float4>;
 
 } // namespace dynamics
 } // namespace gpu
@@ -112,8 +112,8 @@ namespace dynamics
 {
 
 // explicit instantiation
-template class correlation<gpu::dynamics::mean_quartic_displacement<3, float> >;
-template class correlation<gpu::dynamics::mean_quartic_displacement<2, float> >;
+template class correlation<gpu::dynamics::mean_quartic_displacement<3, float4> >;
+template class correlation<gpu::dynamics::mean_quartic_displacement<2, float4> >;
 
 } // namespace dynamics
 } // namespace observables

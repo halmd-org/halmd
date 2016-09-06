@@ -41,7 +41,7 @@
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
-# include <halmd/observables/gpu/samples/phase_space.hpp>
+# include <halmd/observables/gpu/samples/sample.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
@@ -51,90 +51,58 @@
  * test acquisition of phase space samples
  */
 
-/**
- * helper structure to capture all host phase space samples
- */
-template<int dimension, typename float_type>
-struct host_samples
-{
-    typedef halmd::observables::host::samples::sample<dimension, float_type> position_sample_type;
-    typedef halmd::observables::host::samples::sample<dimension, float_type> velocity_sample_type;
-    typedef halmd::observables::host::samples::sample<1, unsigned int> species_sample_type;
-    typedef halmd::observables::host::samples::sample<1, float_type> mass_sample_type;
+template<typename modules_type>
+struct host_samples {
+    typedef typename modules_type::input_position_sample_type position_sample_type;
+    typedef typename modules_type::input_velocity_sample_type velocity_sample_type;
+    typedef typename modules_type::input_species_sample_type species_sample_type;
 
-    std::shared_ptr<position_sample_type const> position_sample;
-    std::shared_ptr<velocity_sample_type const> velocity_sample;
-    std::shared_ptr<species_sample_type const> species_sample;
-    std::shared_ptr<mass_sample_type const> mass_sample;
-};
-
-/**
- * do nothing if input is host sample
- */
-template<typename phase_space_type, typename modules_type>
-struct copy_samples
-{
-    static std::shared_ptr<typename modules_type::input_sample_type const>
-    copy(typename modules_type::output_phase_space_type&& phase_space)
-    {
-        auto sample = std::make_shared<typename modules_type::output_sample_type>();
-        sample->position_sample = phase_space.template acquire<typename modules_type::input_sample_type::position_sample_type>("position");
-        sample->velocity_sample = phase_space.template acquire<typename modules_type::input_sample_type::velocity_sample_type>("velocity");
-        sample->species_sample = phase_space.template acquire<typename modules_type::input_sample_type::species_sample_type>("species");
-        sample->mass_sample = phase_space.template acquire<typename modules_type::input_sample_type::mass_sample_type>("mass");
-        return sample;
+    host_samples(typename modules_type::phase_space_type&& phase_space) {
+        position = phase_space.template acquire<position_sample_type>("position");
+        velocity = phase_space.template acquire<velocity_sample_type>("velocity");
+        species = phase_space.template acquire<species_sample_type>("species");
     }
+
+    std::shared_ptr<position_sample_type const> position;
+    std::shared_ptr<velocity_sample_type const> velocity;
+    std::shared_ptr<species_sample_type const> species;
 };
 
 #ifdef HALMD_WITH_GPU
 /**
  * copy GPU sample to host sample
  */
-template<int dimension, typename float_type, typename modules_type>
-struct copy_samples<halmd::observables::gpu::phase_space<halmd::observables::gpu::samples::phase_space<dimension, float_type>>, modules_type>
-{
-    static std::shared_ptr<typename modules_type::input_sample_type const>
-    copy(typename modules_type::output_phase_space_type&& phase_space)
-    {
-        auto sample = phase_space.acquire();
-        BOOST_CHECK(sample->step() == 1);
+template<typename modules_type>
+struct gpu_samples {
+    typedef typename modules_type::input_position_sample_type position_sample_type;
+    typedef typename modules_type::input_velocity_sample_type velocity_sample_type;
+    typedef typename modules_type::input_species_sample_type species_sample_type;
 
-        typedef host_samples<dimension, float_type> host_sample_type;
-        typedef typename host_sample_type::position_sample_type host_position_sample_type;
-        typedef typename host_sample_type::velocity_sample_type host_velocity_sample_type;
-        typedef typename host_sample_type::species_sample_type host_species_sample_type;
-        typedef typename host_sample_type::mass_sample_type host_mass_sample_type;
-        typedef halmd::observables::gpu::samples::phase_space<dimension, float_type> gpu_sample_type;
-        typedef typename gpu_sample_type::position_array_type::value_type gpu_vector_type;
+    typedef typename halmd::observables::gpu::samples::sample<modules_type::dimension, float4> gpu_sample_type;
 
-        // allocate memory
-        std::shared_ptr<host_position_sample_type> result_position = std::make_shared<host_position_sample_type>(sample->position().size());
-        std::shared_ptr<host_velocity_sample_type> result_velocity = std::make_shared<host_velocity_sample_type>(sample->position().size());
-        std::shared_ptr<host_species_sample_type> result_species = std::make_shared<host_species_sample_type>(sample->position().size());
-        std::shared_ptr<host_mass_sample_type> result_mass = std::make_shared<host_mass_sample_type>(sample->position().size());
-        std::shared_ptr<host_sample_type> result = std::make_shared<host_sample_type>();
-        result->position_sample = result_position;
-        result->velocity_sample = result_velocity;
-        result->species_sample = result_species;
-        result->mass_sample = result_mass;
-        cuda::host::vector<gpu_vector_type> h_buf(sample->position().size());
+    gpu_samples(typename modules_type::phase_space_type&& phase_space) {
+        auto g_position = phase_space.template acquire<gpu_sample_type>("g_position");
+        auto g_velocity = phase_space.template acquire<gpu_sample_type>("g_velocity");
 
-        // copy from GPU to host via page-locked memory
+        cuda::host::vector<float4> h_buf(g_position->data().size());
+        position = std::make_shared<position_sample_type>(g_position->data().size());
+        species = std::make_shared<species_sample_type>(g_position->data().size());
+        velocity = std::make_shared<velocity_sample_type>(g_velocity->data().size());
 
-        // positions and types
-        cuda::copy(sample->position(), h_buf);
+        cuda::copy(g_position->data(), h_buf);
         cuda::thread::synchronize();
-        for (size_t i = 0; i < h_buf.size(); ++i) {
-            tie(result_position->data()[i], result_species->data()[i]) <<= h_buf[i];
+        for(size_t i = 0; i < h_buf.size(); ++i) {
+            tie(position->data()[i], species->data()[i]) <<= h_buf[i];
         }
 
-        // velocities
-        cuda::copy(sample->velocity(), h_buf);
+        cuda::copy(g_velocity->data(), h_buf);
         cuda::thread::synchronize();
-        std::copy(h_buf.begin(), h_buf.end(), result_velocity->data().begin());
-
-        return result;
+        std::copy(h_buf.begin(), h_buf.end(), velocity->data().begin());
     }
+
+    std::shared_ptr<position_sample_type> position;
+    std::shared_ptr<velocity_sample_type> velocity;
+    std::shared_ptr<species_sample_type> species;
 };
 #endif
 
@@ -181,14 +149,7 @@ struct phase_space
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::particle_type particle_type;
     typedef typename modules_type::particle_group_type particle_group_type;
-    typedef typename modules_type::input_phase_space_type input_phase_space_type;
-    typedef typename modules_type::input_sample_type input_sample_type;
-    typedef typename input_sample_type::position_sample_type input_position_sample_type;
-    typedef typename input_sample_type::velocity_sample_type input_velocity_sample_type;
-    typedef typename input_sample_type::species_sample_type input_species_sample_type;
-    typedef typename input_sample_type::mass_sample_type input_mass_sample_type;
-    typedef typename modules_type::output_phase_space_type output_phase_space_type;
-    typedef typename modules_type::output_sample_type output_sample_type;
+    typedef typename modules_type::phase_space_type phase_space_type;
     typedef typename modules_type::random_type random_type;
     static bool const gpu = modules_type::gpu;
 
@@ -196,6 +157,11 @@ struct phase_space
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     enum { dimension = vector_type::static_size };
+
+    typedef typename modules_type::input_position_sample_type input_position_sample_type;
+    typedef typename modules_type::input_velocity_sample_type input_velocity_sample_type;
+    typedef typename modules_type::input_species_sample_type input_species_sample_type;
+    typedef typename modules_type::input_mass_sample_type input_mass_sample_type;
 
     std::vector<unsigned int> npart;
 
@@ -209,6 +175,7 @@ struct phase_space
     std::shared_ptr<random_type> random;
 
     void test();
+
     phase_space();
 };
 
@@ -217,9 +184,9 @@ void phase_space<modules_type>::test()
 {
     float_type const epsilon = std::numeric_limits<float_type>::epsilon();
 
-    typename input_position_sample_type::array_type& input_position = input_position_sample->data();
-    typename input_velocity_sample_type::array_type& input_velocity = input_velocity_sample->data();
-    typename input_species_sample_type::array_type& input_species = input_species_sample->data();
+    auto& input_position = input_position_sample->data();
+    auto& input_velocity = input_velocity_sample->data();
+    auto& input_species = input_species_sample->data();
 
     // prepare input sample
     BOOST_CHECK_EQUAL(input_position.size(), accumulate(npart.begin(), npart.end(), 0u));
@@ -242,7 +209,7 @@ void phase_space<modules_type>::test()
     // copy input sample to particle
     std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
     {
-        auto phase_space = input_phase_space_type(particle, particle_group, box, clock);
+        auto phase_space = phase_space_type(particle, particle_group, box, clock);
         phase_space.set("position", input_position_sample);
         phase_space.set("velocity", input_velocity_sample);
         phase_space.set("species", input_species_sample);
@@ -260,11 +227,10 @@ void phase_space<modules_type>::test()
     clock->advance();
 
     // compare output and input, copy GPU sample to host before
-    std::shared_ptr<input_sample_type const> result = copy_samples<output_phase_space_type, modules_type>::copy
-                    (output_phase_space_type(particle, particle_group, box, clock));
-    typename input_position_sample_type::array_type const& result_position = result->position_sample->data();
-    typename input_velocity_sample_type::array_type const& result_velocity = result->velocity_sample->data();
-    typename input_species_sample_type::array_type const& result_species = result->species_sample->data();
+    typename modules_type::samples_type result(phase_space_type(particle, particle_group, box, clock));
+    auto const& result_position = result.position->data();
+    auto const& result_velocity = result.velocity->data();
+    auto const& result_species = result.species->data();
 
     BOOST_CHECK_EQUAL(result_position.size(), accumulate(npart.begin(), npart.end(), 0u));
     for (unsigned int i = 0, n = 0; i < npart.size(); ++i) { // iterate over particle species
@@ -314,20 +280,24 @@ phase_space<modules_type>::phase_space()
     input_velocity_sample = std::make_shared<input_velocity_sample_type>(particle->nparticle());
     input_species_sample = std::make_shared<input_species_sample_type>(particle->nparticle());
     input_mass_sample = std::make_shared<input_mass_sample_type>(particle->nparticle());
+
     clock = std::make_shared<clock_type>();
     random = std::make_shared<random_type>();
 }
 
-template <int dimension, typename float_type>
+template <int dimension_, typename float_type>
 struct host_modules
 {
+    static constexpr int dimension = dimension_;
     typedef halmd::mdsim::box<dimension> box_type;
     typedef halmd::mdsim::host::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::host::particle_groups::all<particle_type> particle_group_type;
-    typedef halmd::observables::host::phase_space<dimension, float_type> input_phase_space_type;
-    typedef host_samples<dimension, float_type> input_sample_type;
-    typedef input_phase_space_type output_phase_space_type;
-    typedef input_sample_type output_sample_type;
+    typedef halmd::observables::host::phase_space<dimension, float_type> phase_space_type;
+    typedef typename halmd::observables::host::samples::sample<dimension, float_type> input_position_sample_type;
+    typedef typename halmd::observables::host::samples::sample<dimension, float_type> input_velocity_sample_type;
+    typedef typename halmd::observables::host::samples::sample<1, unsigned int> input_species_sample_type;
+    typedef typename halmd::observables::host::samples::sample<1, float_type> input_mass_sample_type;
+    typedef host_samples<host_modules> samples_type;
     typedef halmd::random::host::random random_type;
     static bool const gpu = false;
 };
@@ -340,30 +310,37 @@ BOOST_AUTO_TEST_CASE( phase_space_host_3d ) {
 }
 
 #ifdef HALMD_WITH_GPU
-template <int dimension, typename float_type>
+
+template <int dimension_, typename float_type>
 struct gpu_host_modules
 {
+    static constexpr int dimension = dimension_;
     typedef halmd::mdsim::box<dimension> box_type;
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
-    typedef halmd::observables::gpu::phase_space<halmd::observables::gpu::host_sample<dimension, float_type> > input_phase_space_type;
-    typedef host_samples<dimension, float_type> input_sample_type;
-    typedef input_phase_space_type output_phase_space_type;
-    typedef input_sample_type output_sample_type;
+    typedef halmd::observables::gpu::phase_space<dimension, float_type> phase_space_type;
+    typedef typename halmd::observables::host::samples::sample<dimension, float_type> input_position_sample_type;
+    typedef typename halmd::observables::host::samples::sample<dimension, float_type> input_velocity_sample_type;
+    typedef typename halmd::observables::host::samples::sample<1, unsigned int> input_species_sample_type;
+    typedef typename halmd::observables::host::samples::sample<1, float_type> input_mass_sample_type;
+    typedef host_samples<gpu_host_modules> samples_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     static bool const gpu = true;
 };
 
-template <int dimension, typename float_type>
+template <int dimension_, typename float_type>
 struct gpu_gpu_modules
 {
+    static constexpr int dimension = dimension_;
     typedef halmd::mdsim::box<dimension> box_type;
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
-    typedef halmd::observables::gpu::phase_space<halmd::observables::gpu::host_sample<dimension, float_type> > input_phase_space_type;
-    typedef host_samples<dimension, float_type> input_sample_type;
-    typedef halmd::observables::gpu::phase_space<halmd::observables::gpu::samples::phase_space<dimension, float_type> > output_phase_space_type;
-    typedef typename output_phase_space_type::sample_type output_sample_type;
+    typedef halmd::observables::gpu::phase_space<dimension, float_type> phase_space_type;
+    typedef typename halmd::observables::host::samples::sample<dimension, float_type> input_position_sample_type;
+    typedef typename halmd::observables::host::samples::sample<dimension, float_type> input_velocity_sample_type;
+    typedef typename halmd::observables::host::samples::sample<1, unsigned int> input_species_sample_type;
+    typedef typename halmd::observables::host::samples::sample<1, float_type> input_mass_sample_type;
+    typedef gpu_samples<gpu_gpu_modules> samples_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     static bool const gpu = true;
 };
