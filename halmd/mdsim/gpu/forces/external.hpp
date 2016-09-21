@@ -145,7 +145,7 @@ external<dimension, float_type, potential_type>::external(
   , box_(box)
   , logger_(logger)
 {
-    if (potential_->size() < particle_->nspecies()) {
+    if (potential_->epsilon().size2() < particle_->nspecies()) {
         throw std::invalid_argument("size of potential coefficients less than number of particle species");
     }
 }
