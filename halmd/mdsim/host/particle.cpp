@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2010-2016 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
  *
@@ -56,11 +56,12 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , force_(nparticle)
   , en_pot_(nparticle)
   , stress_pot_(nparticle)
-  // enable auxiliary variables by default to allow sampling of initial state
+  // set internal flags
+  , force_in_progress_(false)
   , force_zero_(true)
   , force_dirty_(true)
   , aux_dirty_(true)
-  , aux_enabled_(true)
+  , aux_enabled_(true) // enable auxiliary variables by default to allow sampling of initial state
 {
     auto position = make_cache_mutable(position_);
     auto image = make_cache_mutable(image_);
@@ -130,6 +131,14 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::update_force_(bool with_aux)
 {
+    // break loop if update_force_() is called recursively,
+    // e.g., due to a slot function calling particle->force()
+    if (force_in_progress_) {
+        LOG_WARNING_ONCE("Force update is already in progress, breaking recursion.");
+        return;
+    }
+    force_in_progress_ = true;
+
     on_prepend_force_();          // ask force modules whether force/aux cache is dirty
 
     if (force_dirty_ || (with_aux && aux_dirty_)) {
@@ -150,6 +159,8 @@ void particle<dimension, float_type>::update_force_(bool with_aux)
         aux_enabled_ = false;     // disable aux variables for next call
     }
     on_append_force_();
+
+    force_in_progress_ = false;
 }
 
 template <typename particle_type>
