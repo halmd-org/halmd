@@ -80,6 +80,11 @@ local h5 = assert(libhalmd.h5)
 --    Returns the instantaneous temperature as given by the kinetic energy:
 --    :math:`k_B T = 2 u_{\text{kin}} / d`.
 --
+-- .. method:: total_force()
+--
+--    Returns the total force:
+--    :math:`\vec F_{\text{tot}} = \sum_{i=1}^N \vec F_i`.
+--
 -- .. method:: center_of_mass_velocity()
 --
 --    Returns the centre-of-mass velocity:
@@ -259,6 +264,7 @@ function M.profile(self, profiler)
         end
     end
     profile("en_kin"       , "kinetic energy"         )
+    profile("force"        , "total force"            )
     profile("v_cm"         , "centre-of-mass velocity")
     profile("r_cm"         , "centre-of-mass"         )
     profile("en_pot"       , "potential energy"       )

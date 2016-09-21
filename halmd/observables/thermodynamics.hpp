@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Felix Höfling
+ * Copyright © 2010-2016  Felix Höfling
  * Copyright © 2013       Nicolas Höft
  *
  * This file is part of HALMD.
@@ -60,6 +60,8 @@ public:
     virtual double en_pot() = 0;
     /** kinetic energy per particle */
     virtual double en_kin() = 0;
+    /** total force */
+    virtual vector_type const& total_force() = 0;
     /** mean velocity per particle */
     virtual vector_type const& v_cm() = 0;
     /** centre of mass */

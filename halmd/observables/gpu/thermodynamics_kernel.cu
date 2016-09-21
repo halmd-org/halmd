@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2016      Felix Höfling
  * Copyright © 2013-2015 Nicolas Höft
  * Copyright © 2012      Peter Colberg
  *
@@ -38,11 +39,26 @@ static texture<float> en_pot_;
 /** potential parts of stress tensor */
 static texture<float> stress_pot_;
 
-/** minimum image vectors */
+/** force vectors
+ *
+ *  instantiate a separate texture for each aligned vector type
+ */
+template<int dimension>
+struct force
+{
+    typedef texture<typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type> type;
+    static type tex_;
+};
+// instantiate static members
+template<int dimension> force<dimension>::type force<dimension>::tex_;
+
+/** minimum image vectors
+ *
+ * instantiate a separate texture for each aligned vector type
+ */
 template<int dimension>
 struct image
 {
-    // instantiate a separate texture for each aligned vector type
     typedef texture<typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type> type;
     static type tex_;
 };
@@ -56,6 +72,13 @@ __device__ void kinetic_energy<dimension, float_type>::operator()(size_type i)
     float mass;
     tie(v, mass) <<= tex1Dfetch(velocity_, i);
     mv2_ += mass * inner_prod(v, v);
+}
+
+template <int dimension, typename float_type>
+__device__ void total_force<dimension, float_type>::operator()(size_type i)
+{
+    fixed_vector<float, dimension> f = tex1Dfetch(force<dimension>::tex_, i);
+    force_ += f;
 }
 
 template <int dimension, typename float_type>
@@ -120,6 +143,10 @@ cuda::texture<float4> const
 kinetic_energy<dimension, float_type>::texture_ = velocity_;
 
 template <int dimension, typename float_type>
+cuda::texture<typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type> const
+total_force<dimension, float_type>::texture_ = force<dimension>::tex_;
+
+template <int dimension, typename float_type>
 cuda::texture<float4> const
 centre_of_mass<dimension, float_type>::position_texture_ = position_;
 
@@ -153,6 +180,8 @@ stress_tensor<dimension, float_type>::velocity_texture_ = velocity_;
 
 template class observables::gpu::kinetic_energy<3, dsfloat>;
 template class observables::gpu::kinetic_energy<2, dsfloat>;
+template class observables::gpu::total_force<3, dsfloat>;
+template class observables::gpu::total_force<2, dsfloat>;
 template class observables::gpu::centre_of_mass<3, dsfloat>;
 template class observables::gpu::centre_of_mass<2, dsfloat>;
 template class observables::gpu::velocity_of_centre_of_mass<3, dsfloat>;
@@ -168,6 +197,8 @@ template class observables::gpu::stress_tensor<2, dsfloat>;
 
 template class reduction_kernel<observables::gpu::kinetic_energy<3, dsfloat> >;
 template class reduction_kernel<observables::gpu::kinetic_energy<2, dsfloat> >;
+template class reduction_kernel<observables::gpu::total_force<3, dsfloat> >;
+template class reduction_kernel<observables::gpu::total_force<2, dsfloat> >;
 template class reduction_kernel<observables::gpu::centre_of_mass<3, dsfloat> >;
 template class reduction_kernel<observables::gpu::centre_of_mass<2, dsfloat> >;
 template class reduction_kernel<observables::gpu::velocity_of_centre_of_mass<3, dsfloat> >;

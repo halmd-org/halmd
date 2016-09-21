@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2013 Felix Höfling
+ * Copyright © 2012-2016 Felix Höfling
  * Copyright © 2013-2015 Nicolas Höft
  * Copyright © 2012      Peter Colberg
  *
@@ -160,6 +160,23 @@ fixed_vector<double, particle_type::velocity_type::static_size>
 get_v_cm(particle_type const& particle, particle_group& group)
 {
     return std::get<0>(get_v_cm_and_mean_mass(particle, group));
+}
+
+/**
+ * Compute total force on all particles.
+ */
+template <typename particle_type>
+fixed_vector<double, particle_type::force_type::static_size>
+get_total_force(particle_type& particle, particle_group& group)
+{
+    auto const& unordered = read_cache(group.unordered());
+    auto const& force = read_cache(particle.force());
+
+    fixed_vector<double, particle_type::force_type::static_size> sum = 0;
+    for (particle_group::size_type i : unordered) {
+        sum += force[i];
+    }
+    return sum;
 }
 
 /**

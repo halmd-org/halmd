@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2010-2016 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2010-2012 Peter Colberg
  *
@@ -72,6 +72,25 @@ double thermodynamics<dimension, float_type>::en_kin()
         en_kin_cache_ = std::tie(velocity_cache, group_cache);
     }
     return en_kin_;
+}
+
+/**
+ * compute total force
+ */
+template <int dimension, typename float_type>
+typename thermodynamics<dimension, float_type>::vector_type const&
+thermodynamics<dimension, float_type>::total_force()
+{
+    cache<force_array_type> const& force_cache = particle_->force();
+    cache<size_type> const& group_cache = group_->size();
+
+    if (force_cache_ != std::tie(force_cache, group_cache)) {
+        LOG_TRACE("acquire total force");
+        scoped_timer_type timer(runtime_.force);
+        force_ = get_total_force(*particle_, *group_);
+        force_cache_ = std::tie(force_cache, group_cache);
+    }
+    return force_;
 }
 
 /**
@@ -202,6 +221,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                     [
                         class_<runtime>("runtime")
                             .def_readonly("en_kin", &runtime::en_kin)
+                            .def_readonly("force", &runtime::force)
                             .def_readonly("v_cm", &runtime::v_cm)
                             .def_readonly("r_cm", &runtime::r_cm)
                             .def_readonly("en_pot", &runtime::en_pot)

@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2016  Felix Höfling
  * Copyright © 2013  Nicolas Höft
  * Copyright © 2012  Peter Colberg
  *
@@ -228,6 +229,64 @@ private:
     float_type m_;
     /** texture with velocities and masses */
     static cuda::texture<float4> const texture_;
+};
+
+/**
+ * Compute total force.
+ */
+template <int dimension, typename float_type>
+class total_force
+{
+private:
+    typedef unsigned int size_type;
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type gpu_force_type;
+
+public:
+    /** element pointer type of input array */
+    typedef size_type const* iterator;
+
+    /**
+     * Initialise force to zero.
+     */
+    total_force() : force_(0) {}
+
+    /**
+     * Add force of particle i.
+     */
+    inline HALMD_GPU_ENABLED void operator()(size_type i);
+
+    /**
+     * Add forces of another accumulator.
+     */
+    HALMD_GPU_ENABLED void operator()(total_force const& acc)
+    {
+        force_ += acc.force_;
+    }
+
+#ifndef __CUDACC__
+    /**
+     * Returns total force.
+     */
+    HALMD_GPU_ENABLED fixed_vector<double, dimension> operator()() const
+    {
+        return fixed_vector<double, dimension>(force_);
+    }
+#endif
+
+    /**
+     * Returns reference to texture with forces.
+     */
+    static cuda::texture<gpu_force_type> const& get()
+    {
+        return texture_;
+    }
+
+private:
+    /** total force */
+    vector_type force_;
+    /** texture with forces */
+    static cuda::texture<gpu_force_type> const texture_;
 };
 
 /**
