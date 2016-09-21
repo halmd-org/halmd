@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010-2013 Felix Höfling
+ * Copyright © 2016      Sutapa Roy
  * Copyright © 2013-2014 Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
  *
@@ -46,6 +47,8 @@ class pair_full
 public:
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
+    typedef halmd::signal<void ()> signal_type;
+    typedef signal_type::slot_function_type slot_function_type;
 
     pair_full(
         std::shared_ptr<potential_type const> potential
@@ -67,6 +70,18 @@ public:
      */
     void apply();
 
+    /**
+     * Connect slot functions to signals
+     */
+    connection on_prepend_apply(slot_function_type const& slot)
+    {
+        return on_prepend_apply_.connect(slot);
+    }
+
+    connection on_append_apply(slot_function_type const& slot)
+    {
+        return on_append_apply_.connect(slot);
+    }
 
     /**
      * Bind class to Lua.
@@ -106,6 +121,10 @@ private:
     std::tuple<cache<>, cache<>> force_cache_;
     /** cache observer of auxiliary variables */
     std::tuple<cache<>, cache<>> aux_cache_;
+
+    /** store signal connections */
+    signal_type on_prepend_apply_;
+    signal_type on_append_apply_;
 
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;
@@ -161,6 +180,9 @@ inline void pair_full<dimension, float_type, potential_type>::check_cache()
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_full<dimension, float_type, potential_type>::apply()
 {
+    // process slot functions associated with signal
+    on_prepend_apply_();
+
     cache<position_array_type> const& position1_cache = particle1_->position();
     cache<position_array_type> const& position2_cache = particle2_->position();
 
@@ -176,6 +198,9 @@ inline void pair_full<dimension, float_type, potential_type>::apply()
         force_cache_ = current_state;
     }
     particle1_->force_zero_disable();
+
+    // process slot functions associated with signal
+    on_append_apply_();
 }
 
 template <int dimension, typename float_type, typename potential_type>
@@ -258,6 +283,8 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
                 class_<pair_full>()
                     .def("check_cache", &pair_full::check_cache)
                     .def("apply", &pair_full::apply)
+                    .def("on_prepend_apply", &pair_full::on_prepend_apply)
+                    .def("on_append_apply", &pair_full::on_append_apply)
                     .scope
                     [
                         class_<runtime>("runtime")

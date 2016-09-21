@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010-2014 Felix Höfling
+ * Copyright © 2016      Sutapa Roy
  * Copyright © 2013-2014 Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
  *
@@ -47,6 +48,8 @@ class external
 public:
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
+    typedef halmd::signal<void ()> signal_type;
+    typedef signal_type::slot_function_type slot_function_type;
 
     external(
         std::shared_ptr<potential_type const> potential
@@ -65,6 +68,19 @@ public:
      * Compute and apply the force to the particles.
      */
     void apply();
+
+    /**
+     * Connect slot functions to signals
+     */
+    connection on_prepend_apply(slot_function_type const& slot)
+    {
+        return on_prepend_apply_.connect(slot);
+    }
+
+    connection on_append_apply(slot_function_type const& slot)
+    {
+        return on_append_apply_.connect(slot);
+    }
 
     /**
      * Bind class to Lua.
@@ -100,6 +116,10 @@ private:
     /** cache observer of auxiliary variables: (position, species) */
     std::tuple<cache<>, cache<>> aux_cache_;
 
+    /** store signal connections */
+    signal_type on_prepend_apply_;
+    signal_type on_append_apply_;
+
     typedef utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
@@ -107,6 +127,7 @@ private:
         utility::profiler::accumulator_type compute;
         utility::profiler::accumulator_type compute_aux;
     };
+
     /** profiling runtime accumulators */
     runtime runtime_;
 };
@@ -148,6 +169,9 @@ inline void external<dimension, float_type, potential_type>::check_cache()
 template <int dimension, typename float_type, typename potential_type>
 inline void external<dimension, float_type, potential_type>::apply()
 {
+    // process slot functions associated with signal
+    on_prepend_apply_();
+
     cache<position_array_type> const& position_cache = particle_->position();
     cache<species_array_type> const& species_cache = particle_->species();
 
@@ -163,6 +187,9 @@ inline void external<dimension, float_type, potential_type>::apply()
         force_cache_ = current_state;
     }
     particle_->force_zero_disable();
+
+    // process slot functions associated with signal
+    on_append_apply_();
 }
 
 template <int dimension, typename float_type, typename potential_type>
@@ -259,6 +286,8 @@ void external<dimension, float_type, potential_type>::luaopen(lua_State* L)
                 class_<external>()
                     .def("check_cache", &external::check_cache)
                     .def("apply", &external::apply)
+                    .def("on_prepend_apply", &external::on_prepend_apply)
+                    .def("on_append_apply", &external::on_append_apply)
                     .scope
                     [
                         class_<runtime>("runtime")

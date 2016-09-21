@@ -1,5 +1,6 @@
 --
 -- Copyright © 2010-2014 Felix Höfling
+-- Copyright © 2016      Sutapa Roy
 -- Copyright © 2013      Nicolas Höft
 -- Copyright © 2010-2011 Peter Colberg
 --
@@ -69,6 +70,20 @@ local pair_full = assert(libhalmd.mdsim.forces.pair_full)
 -- .. method:: disconnect()
 --
 --    Disconnect force from profiler and particle module.
+--
+-- .. method:: on_prepend_apply(slot)
+--
+--    Connect nullary slot function to signal. The signal is emitted before the
+--    force computation.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_append_apply(slot)
+--
+--    Connect nullary slot function to signal. The signal is emitted after the
+--    force computation.
+--
+--    :returns: signal connection
 --
 --
 local M = module(function(args)
