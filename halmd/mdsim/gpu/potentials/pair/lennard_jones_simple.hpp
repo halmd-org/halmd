@@ -41,13 +41,14 @@ namespace pair {
  *
  * The usual LJ units are employed, the only parameter is the potential cutoff.
  */
-template <typename float_type>
+template <typename float_type_>
 class lennard_jones_simple
 {
 private:
-    typedef boost::numeric::ublas::scalar_matrix<float_type> scalar_matrix_type;
+    typedef boost::numeric::ublas::scalar_matrix<float_type_> scalar_matrix_type;
 
 public:
+    typedef float_type_ float_type;
     typedef lennard_jones_simple_kernel::lennard_jones_simple gpu_potential_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
 

@@ -31,12 +31,13 @@
 #include <limits>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 #include <halmd/mdsim/host/potentials/pair/lennard_jones.hpp>
+#include <halmd/mdsim/host/potentials/pair/local_r4.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/lennard_jones.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/local_r4.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
 # include <test/tools/cuda.hpp>
 #endif
@@ -46,8 +47,8 @@ BOOST_AUTO_TEST_SUITE( host )
 
 BOOST_AUTO_TEST_CASE( local_r4 )
 {
-    typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> potential_type;
-    typedef halmd::mdsim::forces::trunc::local_r4<double> trunc_type;
+    typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> base_potential_type;
+    typedef halmd::mdsim::host::potentials::pair::local_r4<base_potential_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
 
     float wca_cut = std::pow(2., 1 / 6.);
@@ -70,8 +71,7 @@ BOOST_AUTO_TEST_CASE( local_r4 )
     double const h = 1. / 256;
 
     // construct potential module
-    potential_type potential(cutoff_array, epsilon_array, sigma_array);
-    trunc_type trunc(h);
+    potential_type potential(h, cutoff_array, epsilon_array, sigma_array);
 
     double const eps = std::numeric_limits<double>::epsilon();
     typedef std::array<double, 3> row_type;
@@ -92,8 +92,6 @@ BOOST_AUTO_TEST_CASE( local_r4 )
         double fval, en_pot;
         // AA interaction
         std::tie(fval, en_pot) = potential(rr, 0, 0);
-
-        trunc(row[0], rcut, fval, en_pot);
 
         double const tolerance = 8 * eps * (1 + rcut / (rcut - row[0]));
 
@@ -117,8 +115,6 @@ BOOST_AUTO_TEST_CASE( local_r4 )
         // AB interaction
         std::tie(fval, en_pot) = potential(rr, 0, 1);
 
-        trunc(row[0], rcut, fval, en_pot);
-
         double const tolerance = 8 * eps * (1 + rcut / (rcut - row[0]));
 
         BOOST_CHECK_CLOSE_FRACTION(fval, row[1], tolerance);
@@ -141,7 +137,6 @@ BOOST_AUTO_TEST_CASE( local_r4 )
         std::tie(fval, en_pot) = potential(rr, 1, 1);
         double const rcut = potential.r_cut(1, 1);
 
-        trunc(row[0], rcut, fval, en_pot);
         double const tolerance = 9 * eps * (1 + rcut / (rcut - row[0]));
 
         BOOST_CHECK_CLOSE_FRACTION(fval, row[1], 2 * tolerance);
@@ -161,12 +156,12 @@ struct test_local_r4
     enum { dimension = 2 };
 
     typedef halmd::mdsim::box<dimension> box_type;
-    typedef halmd::mdsim::forces::trunc::local_r4<float_type> trunc_type;
-    typedef halmd::mdsim::forces::trunc::local_r4<double> host_trunc_type;
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef halmd::mdsim::gpu::potentials::pair::lennard_jones<float_type> potential_type;
-    typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> host_potential_type;
-    typedef halmd::mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type, trunc_type> force_type;
+    typedef halmd::mdsim::gpu::potentials::pair::lennard_jones<float_type> base_potential_type;
+    typedef halmd::mdsim::gpu::potentials::pair::local_r4<base_potential_type> potential_type;
+    typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> host_base_potential_type;
+    typedef halmd::mdsim::host::potentials::pair::local_r4<host_base_potential_type> host_potential_type;
+    typedef halmd::mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;
 
     typedef typename particle_type::vector_type vector_type;
@@ -174,8 +169,6 @@ struct test_local_r4
     std::vector<unsigned int> npart_list;
     std::shared_ptr<box_type> box;
     std::shared_ptr<potential_type> potential;
-    std::shared_ptr<trunc_type> trunc;
-    std::shared_ptr<host_trunc_type> host_trunc;
     std::shared_ptr<force_type> force;
     std::shared_ptr<neighbour_type> neighbour;
     std::shared_ptr<particle_type> particle;
@@ -225,7 +218,6 @@ void test_local_r4<float_type>::test()
 
         if (rr < host_potential->rr_cut(type1, type2)) {
             double rcut = host_potential->r_cut(type1, type2);
-            (*host_trunc)(std::sqrt(rr), rcut, fval, en_pot_);
             // the GPU force module stores only a fraction of these values
             en_pot_ /= 2;
 
@@ -282,12 +274,10 @@ test_local_r4<float_type>::test_local_r4()
     // create modules
     particle = std::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
     box = std::make_shared<box_type>(edges);
-    potential = std::make_shared<potential_type>(cutoff_array, epsilon_array, sigma_array);
-    host_potential = std::make_shared<host_potential_type>(cutoff_array, epsilon_array, sigma_array);
+    potential = std::make_shared<potential_type>(h, cutoff_array, epsilon_array, sigma_array);
+    host_potential = std::make_shared<host_potential_type>(h, cutoff_array, epsilon_array, sigma_array);
     neighbour = std::make_shared<neighbour_type>(particle);
-    trunc = std::make_shared<trunc_type>(h);
-    host_trunc = std::make_shared<host_trunc_type>(h);
-    force = std::make_shared<force_type>(potential, particle, particle, box, neighbour, 1, trunc);
+    force = std::make_shared<force_type>(potential, particle, particle, box, neighbour, 1);
     particle->on_prepend_force([=](){force->check_cache();});
     particle->on_force([=](){force->apply();});
 }

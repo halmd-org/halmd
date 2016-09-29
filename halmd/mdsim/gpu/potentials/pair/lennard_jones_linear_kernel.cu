@@ -24,7 +24,6 @@
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_linear_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
-#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -121,7 +120,6 @@ cuda::texture<float> lennard_jones_linear_wrapper::rr_cut = lennard_jones_linear
 namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::lennard_jones_linear_kernel;
-using namespace halmd::mdsim::forces::trunc;
 
 template class pair_full_wrapper<3, lennard_jones_linear>;
 template class pair_full_wrapper<2, lennard_jones_linear>;

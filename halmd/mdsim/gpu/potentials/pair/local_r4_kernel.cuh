@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2016 Daniel Kirchner
  *
  * This file is part of HALMD.
  *
@@ -18,10 +18,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_LOCAL_R4_KERNEL_CUH
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_LOCAL_R4_KERNEL_CUH
+
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/lennard_jones_simple_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/local_r4_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/local_r4_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
 
@@ -30,28 +32,27 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace lennard_jones_simple_kernel {
+namespace local_r4_kernel {
 
-/** Lennard-Jones potential parameters: rr_cut, en_cut */
-static __constant__ float rr_cut_;
-static __constant__ float en_cut_;
+static __constant__ float rri_smooth_;
 
-/**
- * Lennard-Jones interaction for a simple fluid of a single species.
- */
-class lennard_jones_simple
+template<typename parent_kernel>
+class local_r4 : public parent_kernel
 {
 public:
     /**
      * Construct Lennard-Jones pair interaction potential.
      *
+     * Fetch potential parameters from texture cache for particle pair.
+     *
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED lennard_jones_simple(
+    HALMD_GPU_ENABLED local_r4(
         unsigned int type1, unsigned int type2
       , unsigned int ntype1, unsigned int ntype2
     )
+      : parent_kernel(type1, type2, ntype1, ntype2)
     {}
 
     /**
@@ -59,7 +60,7 @@ public:
      */
     HALMD_GPU_ENABLED float rr_cut() const
     {
-        return rr_cut_;
+        return parent_kernel::rr_cut();
     }
 
     /**
@@ -70,7 +71,7 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED bool within_range(float_type rr) const
     {
-        return (rr < rr_cut_);
+        return parent_kernel::within_range (rr);
     }
 
     /**
@@ -82,43 +83,38 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
-        const float_type sigma2 = 1;
-        const float_type epsilon = 1;
-        float_type rri = sigma2 / rr;
-        float_type ri6 = rri * rri * rri;
-        float_type eps_ri6 = epsilon * ri6;
-        float_type fval = 48 * rri * eps_ri6 * (ri6 - 0.5f) / sigma2;
-        float_type en_pot = 4 * eps_ri6 * (ri6 - 1) - en_cut_;
+        float_type f_abs, pot;
+        tie(f_abs, pot) = parent_kernel::operator()(rr);
+        float_type r = sqrt(rr);
+        float_type r_cut = sqrt(rr_cut());
+        float_type dr = r - r_cut;
+        float_type x2 = dr * dr * rri_smooth_;
+        float_type x4 = x2 * x2;
+        float_type x4i = 1 / (1 + x4);
+        // smoothing function
+        float_type h0_r = x4 * x4i;
+        // first derivative
+        float_type h1_r = 4 * dr * rri_smooth_ * x2 * x4i * x4i;
+        // apply smoothing function to obtain C¹ force function
+        f_abs = h0_r * f_abs - h1_r * (pot / r);
+        // apply smoothing function to obtain C² potential function
+        pot = h0_r * pot;
 
-        return make_tuple(fval, en_pot);
+        return make_tuple(f_abs, pot);
     }
+
+private:
 };
 
-} // namespace lennard_jones_simple_kernel
+} // namespace local_r4_kernel
 
-cuda::symbol<float> lennard_jones_simple_wrapper::rr_cut = lennard_jones_simple_kernel::rr_cut_;
-cuda::symbol<float> lennard_jones_simple_wrapper::en_cut = lennard_jones_simple_kernel::en_cut_;
-
-template class local_r4_wrapper<lennard_jones_simple_kernel::lennard_jones_simple>;
+template<typename parent_kernel>
+cuda::symbol<float> local_r4_wrapper<parent_kernel>::rri_smooth = local_r4_kernel::rri_smooth_;
 
 } // namespace pair
 } // namespace potentials
-
-// explicit instantiation of force kernels
-namespace forces {
-
-using namespace halmd::mdsim::gpu::potentials::pair::lennard_jones_simple_kernel;
-using namespace halmd::mdsim::gpu::potentials::pair::local_r4_kernel;
-
-template class pair_full_wrapper<3, lennard_jones_simple>;
-template class pair_full_wrapper<2, lennard_jones_simple>;
-template class pair_trunc_wrapper<3, lennard_jones_simple>;
-template class pair_trunc_wrapper<2, lennard_jones_simple>;
-template class pair_trunc_wrapper<3, local_r4<lennard_jones_simple> >;
-template class pair_trunc_wrapper<2, local_r4<lennard_jones_simple> >;
-
-} // namespace forces
-
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
+
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_LOCAL_R4_KERNEL_CUH */

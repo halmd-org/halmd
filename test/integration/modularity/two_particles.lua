@@ -107,7 +107,7 @@ local function restore(args)
     }
     -- define interaction forces with smoothly truncated potential
     local force = {}
-    local trunc = mdsim.forces.trunc.local_r4({h = 0.005})
+    potential = potential:truncate({h = 0.005})
     for label1, p1 in pairs(particle) do
         for label2, p2 in pairs(particle) do
             local neighbour = mdsim.neighbour({
@@ -119,7 +119,7 @@ local function restore(args)
             force[label1 .. label2] = mdsim.forces.pair_trunc({
                 box = box
               , particle = { p1, p2 }
-              , potential = potential, trunc = trunc
+              , potential = potential
               , label = label1 .. label2 -- FIXME do not infer logger from potential
               , neighbour = neighbour
             })

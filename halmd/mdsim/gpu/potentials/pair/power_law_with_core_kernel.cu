@@ -20,11 +20,11 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/local_r4_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_with_core_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 #include <halmd/utility/tuple.hpp>
-#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -121,6 +121,7 @@ private:
 
 cuda::texture<float4> power_law_with_core_wrapper::param = power_law_with_core_kernel::param_;
 cuda::texture<float2> power_law_with_core_wrapper::rr_en_cut = power_law_with_core_kernel::rr_en_cut_;
+template class local_r4_wrapper<power_law_with_core_kernel::power_law_with_core>;
 
 } // namespace pair
 } // namespace potentials
@@ -129,15 +130,15 @@ cuda::texture<float2> power_law_with_core_wrapper::rr_en_cut = power_law_with_co
 namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::power_law_with_core_kernel;
-using namespace halmd::mdsim::forces::trunc;
+using namespace halmd::mdsim::gpu::potentials::pair::local_r4_kernel;
 
 template class pair_full_wrapper<3, power_law_with_core>;
 template class pair_full_wrapper<2, power_law_with_core>;
 
 template class pair_trunc_wrapper<3, power_law_with_core>;
 template class pair_trunc_wrapper<2, power_law_with_core>;
-template class pair_trunc_wrapper<3, power_law_with_core, local_r4<float> >;
-template class pair_trunc_wrapper<2, power_law_with_core, local_r4<float> >;
+template class pair_trunc_wrapper<3, local_r4<power_law_with_core> >;
+template class pair_trunc_wrapper<2, local_r4<power_law_with_core> >;
 
 } // namespace forces
 

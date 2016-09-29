@@ -25,9 +25,9 @@
 #include <stdexcept>
 #include <string>
 
-#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 #include <halmd/mdsim/gpu/forces/pair_full.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/local_r4.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/modified_lennard_jones.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/modified_lennard_jones_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -167,17 +167,19 @@ void modified_lennard_jones<float_type>::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_modified_lennard_jones(lua_State* L)
 {
     modified_lennard_jones<float>::luaopen(L);
+    local_r4<modified_lennard_jones<float>>::luaopen(L);
     forces::pair_full<3, float, modified_lennard_jones<float> >::luaopen(L);
     forces::pair_full<2, float, modified_lennard_jones<float> >::luaopen(L);
     forces::pair_trunc<3, float, modified_lennard_jones<float> >::luaopen(L);
     forces::pair_trunc<2, float, modified_lennard_jones<float> >::luaopen(L);
-    forces::pair_trunc<3, float, modified_lennard_jones<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
-    forces::pair_trunc<2, float, modified_lennard_jones<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
+    forces::pair_trunc<3, float, local_r4<modified_lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, local_r4<modified_lennard_jones<float> > >::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class modified_lennard_jones<float>;
+template class local_r4<modified_lennard_jones<float>>;
 
 } // namespace pair
 } // namespace potentials
@@ -189,8 +191,8 @@ template class pair_full<3, float, potentials::pair::modified_lennard_jones<floa
 template class pair_full<2, float, potentials::pair::modified_lennard_jones<float> >;
 template class pair_trunc<3, float, potentials::pair::modified_lennard_jones<float> >;
 template class pair_trunc<2, float, potentials::pair::modified_lennard_jones<float> >;
-template class pair_trunc<3, float, potentials::pair::modified_lennard_jones<float>, mdsim::forces::trunc::local_r4<float> >;
-template class pair_trunc<2, float, potentials::pair::modified_lennard_jones<float>, mdsim::forces::trunc::local_r4<float> >;
+template class pair_trunc<3, float, potentials::pair::local_r4<potentials::pair::modified_lennard_jones<float> > >;
+template class pair_trunc<2, float, potentials::pair::local_r4<potentials::pair::modified_lennard_jones<float> > >;
 
 } // namespace forces
 } // namespace gpu

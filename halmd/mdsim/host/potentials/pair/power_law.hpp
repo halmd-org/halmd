@@ -42,10 +42,11 @@ namespace pair {
  * its scale invariance (in the absence of a cutoff).
  */
 
-template <typename float_type>
+template <typename float_type_>
 class power_law
 {
 public:
+    typedef float_type_ float_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef boost::numeric::ublas::matrix<unsigned int> uint_matrix_type;
 

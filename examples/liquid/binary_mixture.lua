@@ -87,13 +87,12 @@ local function liquid(args)
       , cutoff = 2.5
     })
     -- smoothing at potential cutoff
-    local trunc = mdsim.forces.trunc.local_r4({h = 0.005})
+    potential = potential:truncate({h = 0.005})
     -- compute forces
     local force = mdsim.forces.pair_trunc({
         box = box
       , particle = particle
       , potential = potential
-      , trunc = trunc
     })
     -- add velocity-Verlet integrator
     local integrator = mdsim.integrators.verlet({

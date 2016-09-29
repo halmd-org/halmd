@@ -20,10 +20,10 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/local_r4_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/morse_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
-#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -107,6 +107,7 @@ private:
 
 cuda::texture<float4> morse_wrapper::param = morse_kernel::param_;
 cuda::texture<float> morse_wrapper::rr_cut = morse_kernel::rr_cut_;
+template class local_r4_wrapper<morse_kernel::morse>;
 
 } // namespace pair
 } // namespace potentials
@@ -115,15 +116,15 @@ cuda::texture<float> morse_wrapper::rr_cut = morse_kernel::rr_cut_;
 namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::morse_kernel;
-using namespace halmd::mdsim::forces::trunc;
+using namespace halmd::mdsim::gpu::potentials::pair::local_r4_kernel;
 
 template class pair_full_wrapper<3, morse>;
 template class pair_full_wrapper<2, morse>;
 
 template class pair_trunc_wrapper<3, morse>;
 template class pair_trunc_wrapper<2, morse>;
-template class pair_trunc_wrapper<3, morse, local_r4<float> >;
-template class pair_trunc_wrapper<2, morse, local_r4<float> >;
+template class pair_trunc_wrapper<3, local_r4<morse> >;
+template class pair_trunc_wrapper<2, local_r4<morse> >;
 
 } // namespace forces
 

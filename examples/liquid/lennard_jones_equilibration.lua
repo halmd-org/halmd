@@ -71,13 +71,12 @@ local function liquid(args)
     -- smoothly truncated Lennard-Jones potential
     local potential = mdsim.potentials.pair.lennard_jones({cutoff = args.cutoff, species = particle.nspecies})
     -- smooth truncation
-    local trunc = nil
     if args.smoothing > 0 then
-        trunc = mdsim.forces.trunc.local_r4({h = args.smoothing})
+        potential = potential:truncate({h = args.smoothing})
     end
     -- compute forces
     local force = mdsim.forces.pair_trunc({
-        box = box, particle = particle, potential = potential, trunc = trunc
+        box = box, particle = particle, potential = potential
     })
 
     -- convert integration time to number of steps

@@ -21,9 +21,9 @@
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/local_r4_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
-#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -101,6 +101,7 @@ private:
 } // namespace lennard_jones_kernel
 
 cuda::texture<float4> lennard_jones_wrapper::param = lennard_jones_kernel::param_;
+template class local_r4_wrapper<lennard_jones_kernel::lennard_jones>;
 
 } // namespace pair
 } // namespace potentials
@@ -109,15 +110,16 @@ cuda::texture<float4> lennard_jones_wrapper::param = lennard_jones_kernel::param
 namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::lennard_jones_kernel;
-using namespace halmd::mdsim::forces::trunc;
+using namespace halmd::mdsim::gpu::potentials::pair::local_r4_kernel;
 
 template class pair_full_wrapper<3, lennard_jones>;
 template class pair_full_wrapper<2, lennard_jones>;
 
 template class pair_trunc_wrapper<3, lennard_jones>;
 template class pair_trunc_wrapper<2, lennard_jones>;
-template class pair_trunc_wrapper<3, lennard_jones, local_r4<float> >;
-template class pair_trunc_wrapper<2, lennard_jones, local_r4<float> >;
+
+template class pair_trunc_wrapper<3, local_r4<lennard_jones> >;
+template class pair_trunc_wrapper<2, local_r4<lennard_jones> >;
 
 } // namespace forces
 

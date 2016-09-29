@@ -22,7 +22,6 @@
 #define HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd {
@@ -30,7 +29,7 @@ namespace mdsim {
 namespace gpu {
 namespace forces {
 
-template <int dimension, typename potential_type, typename smooth_type = mdsim::forces::trunc::discontinuous>
+template <int dimension, typename potential_type>
 struct pair_trunc_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
@@ -48,7 +47,6 @@ struct pair_trunc_wrapper
       , unsigned int
       , unsigned int
       , vector_type
-      , smooth_type const
       , bool
       , float
     )> compute;
@@ -64,7 +62,6 @@ struct pair_trunc_wrapper
       , unsigned int
       , unsigned int
       , vector_type
-      , smooth_type const
       , bool
       , float
     )> compute_aux;

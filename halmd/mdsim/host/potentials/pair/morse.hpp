@@ -38,10 +38,11 @@ namespace pair {
 /**
  * define Morse potential and parameters
  */
-template <typename float_type>
+template <typename float_type_>
 class morse
 {
 public:
+    typedef float_type_ float_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
 
     morse(

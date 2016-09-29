@@ -43,10 +43,11 @@ namespace pair {
  * (finite) r_core (parameter): @f$ (r-r_\mathrm{core})^{-n} @f$
  */
 
-template <typename float_type>
+template <typename float_type_>
 class power_law_with_core
 {
 public:
+    typedef float_type_ float_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef boost::numeric::ublas::matrix<unsigned int> uint_matrix_type;
 

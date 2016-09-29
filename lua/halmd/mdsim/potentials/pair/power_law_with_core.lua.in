@@ -46,9 +46,11 @@ local module            = require("halmd.utility.module")
 local power_law_with_core = {
     host = libhalmd.mdsim.host.potentials.pair.power_law_with_core
 }
+local local_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.local_r4) }
 
 if libhalmd.mdsim.gpu then
     power_law_with_core.gpu = libhalmd.mdsim.gpu.potentials.pair.power_law_with_core
+    local_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.local_r4)
 end
 
 ---
@@ -180,6 +182,20 @@ local M = module(function(args)
     self.logger = property(function()
         return logger
     end)
+
+    self.truncate = function(self, args)
+        local h = args.h
+        if type(h) ~= "number" then
+            error("bad argument 'h'", 2)
+        end
+
+        local newpot = local_r4[memory](h, self)
+        newpot.description = "truncated "..self.description
+        newpot.memory = self.memory
+        newpot.logger = self.logger
+        newpot.truncate = self.truncate
+        return newpot
+    end
 
     return self
 end)

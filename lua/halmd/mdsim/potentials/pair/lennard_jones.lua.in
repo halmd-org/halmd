@@ -43,12 +43,13 @@ local module            = require("halmd.utility.module")
 
 -- grab C++ wrappers
 local lennard_jones = { host = assert(libhalmd.mdsim.host.potentials.pair.lennard_jones) }
+local local_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.local_r4) }
 local lennard_jones_simple
 if device.gpu then
     lennard_jones.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.lennard_jones)
+    local_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.local_r4)
     lennard_jones_simple = assert(libhalmd.mdsim.gpu.potentials.pair.lennard_jones_simple)
 end
-
 ---
 -- Construct Lennard-Jones potential.
 --
@@ -160,6 +161,20 @@ local M = module(function(args)
     self.logger = property(function()
         return logger
     end)
+
+    self.truncate = function(self, args)
+        local h = args.h
+        if type(h) ~= "number" then
+            error("bad argument 'h'", 2)
+        end
+
+        local newpot = local_r4[memory](h, self)
+        newpot.description = "truncated "..self.description
+        newpot.memory = self.memory
+        newpot.logger = self.logger
+        newpot.truncate = self.truncate
+        return newpot
+    end
 
     return self
 end)

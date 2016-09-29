@@ -42,10 +42,11 @@ namespace pair {
  *
  * @f$ m, n @f$ must be even and @f$ m > n @f$.
  */
-template <typename float_type>
+template <typename float_type_>
 class modified_lennard_jones
 {
 public:
+    typedef float_type_ float_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef boost::numeric::ublas::matrix<unsigned> uint_matrix_type;
 

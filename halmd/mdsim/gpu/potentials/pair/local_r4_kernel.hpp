@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012  Nicolas Höft
+ * Copyright © 2016 Daniel Kirchner
  *
  * This file is part of HALMD.
  *
@@ -18,40 +18,34 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
-#include <halmd/utility/lua/lua.hpp>
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_LOCAL_R4_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_LOCAL_R4_KERNEL_HPP
+
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd {
 namespace mdsim {
-namespace forces {
-namespace trunc {
+namespace gpu {
+namespace potentials {
+namespace pair {
+namespace local_r4_kernel {
 
-void discontinuous::luaopen(lua_State* L)
+// forward declaration for host code
+template<typename parent_kernel>
+class local_r4;
+
+} // namespace local_r4_kernel
+
+template<typename parent_kernel>
+struct local_r4_wrapper
 {
-    using namespace luaponte;
-    module(L, "libhalmd")
-    [
-        namespace_("mdsim")
-        [
-            namespace_("forces")
-            [
-                namespace_("trunc")
-                [
-                    class_<discontinuous, std::shared_ptr<discontinuous> >("discontinuous")
-                        .def(constructor<>())
-                ]
-            ]
-        ]
-    ];
-}
+    static cuda::symbol<float> rri_smooth;
+};
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_forces_trunc_discontinuous(lua_State* L)
-{
-    discontinuous::luaopen(L);
-    return 0;
-}
-
-} // namespace trunc
-} // namespace forces
+} // namespace pair
+} // namespace potentials
+} // namespace gpu
 } // namespace mdsim
 } // namespace halmd
+
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_LOCAL_R4_KERNEL_HPP */

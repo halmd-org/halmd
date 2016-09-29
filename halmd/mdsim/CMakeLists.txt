@@ -9,8 +9,6 @@ halmd_add_modules(
   libhalmd_mdsim_clock
 )
 
-add_subdirectory(forces)
-
 if(HALMD_WITH_GPU)
   add_subdirectory(gpu)
 endif(HALMD_WITH_GPU)

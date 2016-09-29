@@ -47,7 +47,6 @@ template <
   , typename vector_type
   , typename potential_type
   , typename gpu_vector_type
-  , typename trunc_type
 >
 __global__ void compute(
     float4 const* g_r1
@@ -60,7 +59,6 @@ __global__ void compute(
   , unsigned int ntype1
   , unsigned int ntype2
   , vector_type box_length
-  , trunc_type const trunc
   , bool force_zero
   , float aux_weight
 )
@@ -115,9 +113,6 @@ __global__ void compute(
         value_type fval, en_pot;
         tie(fval, en_pot) = potential(rr);
 
-        // apply smoothing function to force and potential
-        trunc(sqrt(rr), sqrt(potential.rr_cut()), fval, en_pot);
-
         // force from other particle acting on this particle
         f += fval * r;
         if (do_aux) {
@@ -147,9 +142,9 @@ __global__ void compute(
 
 } // namespace pair_trunc_kernel
 
-template <int dimension, typename potential_type, typename trunc_type>
-pair_trunc_wrapper<dimension, potential_type, trunc_type> const
-pair_trunc_wrapper<dimension, potential_type, trunc_type>::kernel = {
+template <int dimension, typename potential_type>
+pair_trunc_wrapper<dimension, potential_type> const
+pair_trunc_wrapper<dimension, potential_type>::kernel = {
     pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::r2_

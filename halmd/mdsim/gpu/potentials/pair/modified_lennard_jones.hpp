@@ -39,10 +39,11 @@ namespace pair {
 /**
  * define Lennard-Jones potential and parameters
  */
-template <typename float_type>
+template <typename float_type_>
 class modified_lennard_jones
 {
 public:
+    typedef float_type_ float_type;
     typedef modified_lennard_jones_kernel::modified_lennard_jones gpu_potential_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef boost::numeric::ublas::matrix<unsigned> uint_matrix_type;

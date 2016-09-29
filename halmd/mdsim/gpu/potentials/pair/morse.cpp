@@ -25,11 +25,11 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 #include <halmd/mdsim/gpu/forces/pair_full.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/morse.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/morse_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/local_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -136,17 +136,19 @@ void morse<float_type>::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_morse(lua_State* L)
 {
     morse<float>::luaopen(L);
+    local_r4<morse<float>>::luaopen(L);
     forces::pair_full<3, float, morse<float> >::luaopen(L);
     forces::pair_full<2, float, morse<float> >::luaopen(L);
     forces::pair_trunc<3, float, morse<float> >::luaopen(L);
     forces::pair_trunc<2, float, morse<float> >::luaopen(L);
-    forces::pair_trunc<3, float, morse<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
-    forces::pair_trunc<2, float, morse<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
+    forces::pair_trunc<3, float, local_r4<morse<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, local_r4<morse<float> > >::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class morse<float>;
+template class local_r4<morse<float>>;
 
 } // namespace pair
 } // namespace potentials
@@ -158,8 +160,8 @@ template class pair_full<3, float, potentials::pair::morse<float> >;
 template class pair_full<2, float, potentials::pair::morse<float> >;
 template class pair_trunc<3, float, potentials::pair::morse<float> >;
 template class pair_trunc<2, float, potentials::pair::morse<float> >;
-template class pair_trunc<3, float, potentials::pair::morse<float>, mdsim::forces::trunc::local_r4<float> >;
-template class pair_trunc<2, float, potentials::pair::morse<float>, mdsim::forces::trunc::local_r4<float> >;
+template class pair_trunc<3, float, potentials::pair::local_r4<potentials::pair::morse<float> > >;
+template class pair_trunc<2, float, potentials::pair::local_r4<potentials::pair::morse<float> > >;
 
 } // namespace forces
 } // namespace gpu

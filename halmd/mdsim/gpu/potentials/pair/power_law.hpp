@@ -39,10 +39,11 @@ namespace pair {
 /**
  * define power law potential and its parameters
  */
-template <typename float_type>
+template <typename float_type_>
 class power_law
 {
 public:
+    typedef float_type_ float_type;
     typedef power_law_kernel::power_law gpu_potential_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef boost::numeric::ublas::matrix<unsigned> uint_matrix_type;
