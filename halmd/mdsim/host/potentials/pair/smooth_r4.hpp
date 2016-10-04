@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_LOCAL_R4_HPP
-#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_LOCAL_R4_HPP
+#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_SMOOTH_R4_HPP
+#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_SMOOTH_R4_HPP
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -27,8 +27,8 @@
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/potentials/pair/discontinuous.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/matrix_shape.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -40,14 +40,14 @@ namespace pair {
  * define Lennard-Jones potential and parameters
  */
 template <typename potential_type>
-class local_r4 : public potential_type
+class smooth_r4 : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
     typedef typename potential_type::matrix_type matrix_type;
 
     template<typename... Args>
-    local_r4(matrix_type const& cutoff, float_type h, Args&&... args)
+    smooth_r4(matrix_type const& cutoff, float_type h, Args&&... args)
             : potential_type (std::forward<Args>(args)...)
             , r_cut_sigma_(check_shape(cutoff, this->sigma()))
             , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
@@ -119,13 +119,13 @@ public:
                                 [
                                         namespace_("pair")
                                         [
-                                                class_<local_r4, potential_type, std::shared_ptr<local_r4> >()
-                                                    .property("r_cut", (matrix_type const& (local_r4::*)() const) &local_r4::r_cut)
-                                                    .property("r_cut_sigma", &local_r4::r_cut_sigma)
-                                              , def("local_r4", &std::make_shared<local_r4
-                                                                 , matrix_type const&
-                                                                 , float_type
-                                                                 , potential_type const&>)
+                                                class_<smooth_r4, potential_type, std::shared_ptr<smooth_r4> >()
+                                                    .property("r_cut", (matrix_type const& (smooth_r4::*)() const) &smooth_r4::r_cut)
+                                                    .property("r_cut_sigma", &smooth_r4::r_cut_sigma)
+                                              , def("smooth_r4", &std::make_shared<smooth_r4
+                                                                , matrix_type const&
+                                                                , float_type
+                                                                , potential_type const&>)
                                         ]
                                 ]
                         ]
@@ -151,4 +151,4 @@ private:
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_LOCAL_R4_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_SMOOTH_R4_HPP */

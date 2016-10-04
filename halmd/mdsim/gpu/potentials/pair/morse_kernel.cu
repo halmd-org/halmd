@@ -20,8 +20,8 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/discontinuous_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/local_r4_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/shifted_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/smooth_r4_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/morse_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
@@ -77,8 +77,8 @@ private:
 } // namespace morse_kernel
 
 cuda::texture<float4> morse_wrapper::param = morse_kernel::param_;
-template class local_r4_wrapper<morse_kernel::morse>;
-template class discontinuous_wrapper<morse_kernel::morse>;
+template class smooth_r4_wrapper<morse_kernel::morse>;
+template class shifted_wrapper<morse_kernel::morse>;
 
 } // namespace pair
 } // namespace potentials
@@ -87,15 +87,15 @@ template class discontinuous_wrapper<morse_kernel::morse>;
 namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::morse_kernel;
-using namespace halmd::mdsim::gpu::potentials::pair::local_r4_kernel;
-using namespace halmd::mdsim::gpu::potentials::pair::discontinuous_kernel;
+using namespace halmd::mdsim::gpu::potentials::pair::smooth_r4_kernel;
+using namespace halmd::mdsim::gpu::potentials::pair::shifted_kernel;
 
 template class pair_full_wrapper<3, morse>;
 template class pair_full_wrapper<2, morse>;
-template class pair_trunc_wrapper<3, local_r4<morse> >;
-template class pair_trunc_wrapper<2, local_r4<morse> >;
-template class pair_trunc_wrapper<3, discontinuous<morse> >;
-template class pair_trunc_wrapper<2, discontinuous<morse> >;
+template class pair_trunc_wrapper<3, smooth_r4<morse> >;
+template class pair_trunc_wrapper<2, smooth_r4<morse> >;
+template class pair_trunc_wrapper<3, shifted<morse> >;
+template class pair_trunc_wrapper<2, shifted<morse> >;
 
 } // namespace forces
 

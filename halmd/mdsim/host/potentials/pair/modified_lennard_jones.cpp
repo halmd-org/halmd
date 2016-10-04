@@ -28,9 +28,9 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/pair_full.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
-#include <halmd/mdsim/host/potentials/pair/discontinuous.hpp>
-#include <halmd/mdsim/host/potentials/pair/local_r4.hpp>
 #include <halmd/mdsim/host/potentials/pair/modified_lennard_jones.hpp>
+#include <halmd/mdsim/host/potentials/pair/shifted.hpp>
+#include <halmd/mdsim/host/potentials/pair/smooth_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost::numeric::ublas;
@@ -119,24 +119,24 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_modified_lennard_j
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     modified_lennard_jones<double>::luaopen(L);
-    local_r4<modified_lennard_jones<double>>::luaopen(L);
-    discontinuous<modified_lennard_jones<double>>::luaopen(L);
+    smooth_r4<modified_lennard_jones<double>>::luaopen(L);
+    shifted<modified_lennard_jones<double>>::luaopen(L);
     forces::pair_full<3, double, modified_lennard_jones<double> >::luaopen(L);
     forces::pair_full<2, double, modified_lennard_jones<double> >::luaopen(L);
-    forces::pair_trunc<3, double, local_r4<modified_lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, local_r4<modified_lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<3, double, discontinuous<modified_lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, discontinuous<modified_lennard_jones<double> > >::luaopen(L);
+    forces::pair_trunc<3, double, smooth_r4<modified_lennard_jones<double> > >::luaopen(L);
+    forces::pair_trunc<2, double, smooth_r4<modified_lennard_jones<double> > >::luaopen(L);
+    forces::pair_trunc<3, double, shifted<modified_lennard_jones<double> > >::luaopen(L);
+    forces::pair_trunc<2, double, shifted<modified_lennard_jones<double> > >::luaopen(L);
 #else
     modified_lennard_jones<float>::luaopen(L);
-    local_r4<modified_lennard_jones<float>>::luaopen(L);
-    discontinuous<modified_lennard_jones<float>>::luaopen(L);
+    smooth_r4<modified_lennard_jones<float>>::luaopen(L);
+    shifted<modified_lennard_jones<float>>::luaopen(L);
     forces::pair_full<3, float, modified_lennard_jones<float> >::luaopen(L);
     forces::pair_full<2, float, modified_lennard_jones<float> >::luaopen(L);
-    forces::pair_trunc<3, double, local_r4<modified_lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<2, double, local_r4<modified_lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<3, double, discontinuous<modified_lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<2, double, discontinuous<modified_lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<3, double, smooth_r4<modified_lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<2, double, smooth_r4<modified_lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<3, double, shifted<modified_lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<2, double, shifted<modified_lennard_jones<float> > >::luaopen(L);
 #endif
     return 0;
 }
@@ -144,12 +144,12 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_modified_lennard_j
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class modified_lennard_jones<double>;
-template class local_r4<modified_lennard_jones<double>>;
-template class discontinuous<modified_lennard_jones<double>>;
+template class smooth_r4<modified_lennard_jones<double>>;
+template class shifted<modified_lennard_jones<double>>;
 #else
 template class modified_lennard_jones<float>;
-template class local_r4<modified_lennard_jones<float>>;
-template class discontinuous<modified_lennard_jones<float>>;
+template class smooth_r4<modified_lennard_jones<float>>;
+template class shifted<modified_lennard_jones<float>>;
 #endif
 
 } // namespace pair
@@ -161,17 +161,17 @@ namespace forces {
 #ifndef USE_HOST_SINGLE_PRECISION
 template class pair_full<3, double, potentials::pair::modified_lennard_jones<double> >;
 template class pair_full<2, double, potentials::pair::modified_lennard_jones<double> >;
-template class pair_trunc<3, double, potentials::pair::local_r4<potentials::pair::modified_lennard_jones<double> > >;
-template class pair_trunc<2, double, potentials::pair::local_r4<potentials::pair::modified_lennard_jones<double> > >;
-template class pair_trunc<3, double, potentials::pair::discontinuous<potentials::pair::modified_lennard_jones<double> > >;
-template class pair_trunc<2, double, potentials::pair::discontinuous<potentials::pair::modified_lennard_jones<double> > >;
+template class pair_trunc<3, double, potentials::pair::smooth_r4<potentials::pair::modified_lennard_jones<double> > >;
+template class pair_trunc<2, double, potentials::pair::smooth_r4<potentials::pair::modified_lennard_jones<double> > >;
+template class pair_trunc<3, double, potentials::pair::shifted<potentials::pair::modified_lennard_jones<double> > >;
+template class pair_trunc<2, double, potentials::pair::shifted<potentials::pair::modified_lennard_jones<double> > >;
 #else
 template class pair_full<3, float, potentials::pair::modified_lennard_jones<float> >;
 template class pair_full<2, float, potentials::pair::modified_lennard_jones<float> >;
-template class pair_trunc<3, float, potentials::pair::local_r4<potentials::pair::modified_lennard_jones<float> > >;
-template class pair_trunc<2, float, potentials::pair::local_r4<potentials::pair::modified_lennard_jones<float> > >;
-template class pair_trunc<3, float, potentials::pair::discontinuous<potentials::pair::modified_lennard_jones<float> > >;
-template class pair_trunc<2, float, potentials::pair::discontinuous<potentials::pair::modified_lennard_jones<float> > >;
+template class pair_trunc<3, float, potentials::pair::smooth_r4<potentials::pair::modified_lennard_jones<float> > >;
+template class pair_trunc<2, float, potentials::pair::smooth_r4<potentials::pair::modified_lennard_jones<float> > >;
+template class pair_trunc<3, float, potentials::pair::shifted<potentials::pair::modified_lennard_jones<float> > >;
+template class pair_trunc<2, float, potentials::pair::shifted<potentials::pair::modified_lennard_jones<float> > >;
 #endif
 
 } // namespace forces

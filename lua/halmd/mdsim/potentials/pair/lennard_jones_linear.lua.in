@@ -48,7 +48,7 @@ local module            = require("halmd.utility.module")
 -- distances by adding a constant force, and we do not recommend it for future
 -- work. It is mainly provided for historical reasons to connect to existing
 -- data and publications. Please refer to the :class:`local r⁴ truncation
--- <halmd.mdsim.forces.trunc.local_r4>` scheme for an alternative.
+-- <halmd.mdsim.forces.trunc.smooth_r4>` scheme for an alternative.
 --
 -- References
 -- ----------

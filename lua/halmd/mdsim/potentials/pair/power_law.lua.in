@@ -43,13 +43,13 @@ local module            = require("halmd.utility.module")
 
 -- grab C++ wrappers
 local power_law = { host = assert(libhalmd.mdsim.host.potentials.pair.power_law) }
-local local_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.local_r4) }
-local discontinuous = { host = assert(libhalmd.mdsim.host.potentials.pair.discontinuous) }
+local smooth_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.smooth_r4) }
+local shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.shifted) }
 
 if device.gpu then
     power_law.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.power_law)
-    local_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.local_r4)
-    discontinuous.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.discontinuous)
+    smooth_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
+    shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
 end
 
 ---
@@ -164,15 +164,15 @@ local M = module(function(args)
     end)
 
     local truncate_table = setmetatable({
-        discontinuous = function(self, cutoff, args)
-            return discontinuous[memory](cutoff, self)
+        shifted = function(self, cutoff, args)
+            return shifted[memory](cutoff, self)
         end,
         smooth_r4 = function(self, cutoff, args)
             local h = args.h
             if type(h) ~= "number" then
                 error("bad argument 'h'", 2)
             end
-            return local_r4[memory](cutoff, h, self)
+            return smooth_r4[memory](cutoff, h, self)
         end
     }, {
         __index = function(tbl, key)
@@ -189,7 +189,7 @@ local M = module(function(args)
             cutoff = numeric.scalar_matrix(species, species, cutoff)
         end
 
-        local newpot = truncate_table[args[1] or "discontinuous"](self, cutoff, args)
+        local newpot = truncate_table[args[1] or "shifted"](self, cutoff, args)
         newpot.description = "truncated "..self.description
         newpot.memory = self.memory
         newpot.logger = self.logger

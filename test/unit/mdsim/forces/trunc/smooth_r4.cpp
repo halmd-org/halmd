@@ -21,7 +21,7 @@
 
 #include <halmd/config.hpp>
 
-#define BOOST_TEST_MODULE local_r4
+#define BOOST_TEST_MODULE smooth_r4
 #include <boost/test/unit_test.hpp>
 
 #include <array>
@@ -32,12 +32,12 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/potentials/pair/lennard_jones.hpp>
-#include <halmd/mdsim/host/potentials/pair/local_r4.hpp>
+#include <halmd/mdsim/host/potentials/pair/smooth_r4.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/lennard_jones.hpp>
-# include <halmd/mdsim/gpu/potentials/pair/local_r4.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/smooth_r4.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
 # include <test/tools/cuda.hpp>
 #endif
@@ -45,10 +45,10 @@
 
 BOOST_AUTO_TEST_SUITE( host )
 
-BOOST_AUTO_TEST_CASE( local_r4 )
+BOOST_AUTO_TEST_CASE( smooth_r4 )
 {
     typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> base_potential_type;
-    typedef halmd::mdsim::host::potentials::pair::local_r4<base_potential_type> potential_type;
+    typedef halmd::mdsim::host::potentials::pair::smooth_r4<base_potential_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
 
     float wca_cut = std::pow(2., 1 / 6.);
@@ -151,16 +151,16 @@ BOOST_AUTO_TEST_SUITE_END() // host
 BOOST_AUTO_TEST_SUITE( gpu )
 
 template <typename float_type>
-struct test_local_r4
+struct test_smooth_r4
 {
     enum { dimension = 2 };
 
     typedef halmd::mdsim::box<dimension> box_type;
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::potentials::pair::lennard_jones<float_type> base_potential_type;
-    typedef halmd::mdsim::gpu::potentials::pair::local_r4<base_potential_type> potential_type;
+    typedef halmd::mdsim::gpu::potentials::pair::smooth_r4<base_potential_type> potential_type;
     typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> host_base_potential_type;
-    typedef halmd::mdsim::host::potentials::pair::local_r4<host_base_potential_type> host_potential_type;
+    typedef halmd::mdsim::host::potentials::pair::smooth_r4<host_base_potential_type> host_potential_type;
     typedef halmd::mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;
 
@@ -174,12 +174,12 @@ struct test_local_r4
     std::shared_ptr<particle_type> particle;
     std::shared_ptr<host_potential_type> host_potential;
 
-    test_local_r4();
+    test_smooth_r4();
     void test();
 };
 
 template <typename float_type>
-void test_local_r4<float_type>::test()
+void test_smooth_r4<float_type>::test()
 {
     // place particles along the x-axis within one half of the box,
     // put every second particle at the origin
@@ -239,7 +239,7 @@ void test_local_r4<float_type>::test()
 }
 
 template <typename float_type>
-test_local_r4<float_type>::test_local_r4()
+test_smooth_r4<float_type>::test_smooth_r4()
 {
     typedef typename potential_type::matrix_type matrix_type;
 
@@ -282,8 +282,8 @@ test_local_r4<float_type>::test_local_r4()
     particle->on_force([=](){force->apply();});
 }
 
-BOOST_FIXTURE_TEST_CASE( local_r4, set_cuda_device ) {
-    test_local_r4<float>().test();
+BOOST_FIXTURE_TEST_CASE( smooth_r4, set_cuda_device ) {
+    test_smooth_r4<float>().test();
 }
 
 BOOST_AUTO_TEST_SUITE_END() // gpu

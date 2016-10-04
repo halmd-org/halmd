@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_DISCONTINUOUS_KERNEL_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_DISCONTINUOUS_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_SMOOTH_R4_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_SMOOTH_R4_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -28,7 +28,7 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace discontinuous_kernel {
+namespace smooth_r4_kernel {
 
 /**
  * indices of parameters
@@ -41,13 +41,14 @@ enum {
 
 // forward declaration for host code
 template<typename parent_kernel>
-class discontinuous;
+class smooth_r4;
 
-} // namespace discontinuous_kernel
+} // namespace smooth_r4_kernel
 
 template<typename parent_kernel>
-struct discontinuous_wrapper
+struct smooth_r4_wrapper
 {
+    static cuda::symbol<float> rri_smooth;
     static cuda::texture<float4> param;
 };
 
@@ -57,4 +58,4 @@ struct discontinuous_wrapper
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_DISCONTINUOUS_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_SMOOTH_R4_KERNEL_HPP */

@@ -27,8 +27,8 @@
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_simple.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_simple_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/discontinuous.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/local_r4.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/shifted.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/smooth_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -78,21 +78,21 @@ void lennard_jones_simple<float_type>::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_lennard_jones_simple(lua_State* L)
 {
     lennard_jones_simple<float>::luaopen(L);
-    local_r4<lennard_jones_simple<float>>::luaopen(L);
-    discontinuous<lennard_jones_simple<float>>::luaopen(L);
+    smooth_r4<lennard_jones_simple<float>>::luaopen(L);
+    shifted<lennard_jones_simple<float>>::luaopen(L);
     forces::pair_full<3, float, lennard_jones_simple<float> >::luaopen(L);
     forces::pair_full<2, float, lennard_jones_simple<float> >::luaopen(L);
-    forces::pair_trunc<3, float, local_r4<lennard_jones_simple<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, local_r4<lennard_jones_simple<float> > >::luaopen(L);
-    forces::pair_trunc<3, float, discontinuous<lennard_jones_simple<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, discontinuous<lennard_jones_simple<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, smooth_r4<lennard_jones_simple<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, smooth_r4<lennard_jones_simple<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, shifted<lennard_jones_simple<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, shifted<lennard_jones_simple<float> > >::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class lennard_jones_simple<float>;
-template class local_r4<lennard_jones_simple<float>>;
-template class discontinuous<lennard_jones_simple<float>>;
+template class smooth_r4<lennard_jones_simple<float>>;
+template class shifted<lennard_jones_simple<float>>;
 
 } // namespace pair
 } // namespace potentials
@@ -103,11 +103,11 @@ namespace forces {
 template class pair_full<3, float, potentials::pair::lennard_jones_simple<float> >;
 template class pair_full<2, float, potentials::pair::lennard_jones_simple<float> >;
 
-template class pair_trunc<3, float, potentials::pair::local_r4<potentials::pair::lennard_jones_simple<float>> >;
-template class pair_trunc<2, float, potentials::pair::local_r4<potentials::pair::lennard_jones_simple<float>> >;
+template class pair_trunc<3, float, potentials::pair::smooth_r4<potentials::pair::lennard_jones_simple<float>> >;
+template class pair_trunc<2, float, potentials::pair::smooth_r4<potentials::pair::lennard_jones_simple<float>> >;
 
-template class pair_trunc<3, float, potentials::pair::discontinuous<potentials::pair::lennard_jones_simple<float>> >;
-template class pair_trunc<2, float, potentials::pair::discontinuous<potentials::pair::lennard_jones_simple<float>> >;
+template class pair_trunc<3, float, potentials::pair::shifted<potentials::pair::lennard_jones_simple<float>> >;
+template class pair_trunc<2, float, potentials::pair::shifted<potentials::pair::lennard_jones_simple<float>> >;
 
 } // namespace forces
 } // namespace gpu

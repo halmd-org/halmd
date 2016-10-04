@@ -29,8 +29,8 @@
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/morse.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/morse_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/discontinuous.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/local_r4.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/shifted.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/smooth_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -106,21 +106,21 @@ void morse<float_type>::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_morse(lua_State* L)
 {
     morse<float>::luaopen(L);
-    local_r4<morse<float>>::luaopen(L);
-    discontinuous<morse<float>>::luaopen(L);
+    smooth_r4<morse<float>>::luaopen(L);
+    shifted<morse<float>>::luaopen(L);
     forces::pair_full<3, float, morse<float> >::luaopen(L);
     forces::pair_full<2, float, morse<float> >::luaopen(L);
-    forces::pair_trunc<3, float, local_r4<morse<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, local_r4<morse<float> > >::luaopen(L);
-    forces::pair_trunc<3, float, discontinuous<morse<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, discontinuous<morse<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, smooth_r4<morse<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, smooth_r4<morse<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, shifted<morse<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, shifted<morse<float> > >::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class morse<float>;
-template class local_r4<morse<float>>;
-template class discontinuous<morse<float>>;
+template class smooth_r4<morse<float>>;
+template class shifted<morse<float>>;
 
 } // namespace pair
 } // namespace potentials
@@ -130,10 +130,10 @@ namespace forces {
 // explicit instantiation of force modules
 template class pair_full<3, float, potentials::pair::morse<float> >;
 template class pair_full<2, float, potentials::pair::morse<float> >;
-template class pair_trunc<3, float, potentials::pair::local_r4<potentials::pair::morse<float> > >;
-template class pair_trunc<2, float, potentials::pair::local_r4<potentials::pair::morse<float> > >;
-template class pair_trunc<3, float, potentials::pair::discontinuous<potentials::pair::morse<float> > >;
-template class pair_trunc<2, float, potentials::pair::discontinuous<potentials::pair::morse<float> > >;
+template class pair_trunc<3, float, potentials::pair::smooth_r4<potentials::pair::morse<float> > >;
+template class pair_trunc<2, float, potentials::pair::smooth_r4<potentials::pair::morse<float> > >;
+template class pair_trunc<3, float, potentials::pair::shifted<potentials::pair::morse<float> > >;
+template class pair_trunc<2, float, potentials::pair::shifted<potentials::pair::morse<float> > >;
 
 } // namespace forces
 } // namespace gpu

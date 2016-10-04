@@ -126,7 +126,7 @@ template class pair_full_wrapper<2, lennard_jones_linear>;
 
 template class pair_trunc_wrapper<3, lennard_jones_linear>;
 template class pair_trunc_wrapper<2, lennard_jones_linear>;
-// skip instantiation with local_r4 truncation
+// skip instantiation with smooth_r4 truncation
 
 } // namespace forces
 

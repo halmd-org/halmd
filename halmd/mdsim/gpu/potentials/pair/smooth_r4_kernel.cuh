@@ -18,12 +18,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_DISCONTINUOUS_KERNEL_CUH
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_DISCONTINUOUS_KERNEL_CUH
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_SMOOTH_R4_KERNEL_CUH
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_SMOOTH_R4_KERNEL_CUH
 
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/discontinuous_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/smooth_r4_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
 
@@ -32,12 +32,13 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace discontinuous_kernel {
+namespace smooth_r4_kernel {
 
 static texture<float4> param_;
+static __constant__ float rri_smooth_;
 
 template<typename parent_kernel>
-class discontinuous : public parent_kernel
+class smooth_r4 : public parent_kernel
 {
 public:
     /**
@@ -48,7 +49,7 @@ public:
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED discontinuous(
+    HALMD_GPU_ENABLED smooth_r4(
         unsigned int type1, unsigned int type2
       , unsigned int ntype1, unsigned int ntype2
     )
@@ -95,17 +96,35 @@ public:
         float_type f_abs, pot;
         tie(f_abs, pot) = parent_kernel::operator()(rr);
         pot = pot - pair_[EN_CUT];
+        float_type r = sqrt(rr);
+        float_type r_cut = pair_[R_CUT];
+        float_type dr = r - r_cut;
+        float_type x2 = dr * dr * rri_smooth_;
+        float_type x4 = x2 * x2;
+        float_type x4i = 1 / (1 + x4);
+        // smoothing function
+        float_type h0_r = x4 * x4i;
+        // first derivative
+        float_type h1_r = 4 * dr * rri_smooth_ * x2 * x4i * x4i;
+        // apply smoothing function to obtain C¹ force function
+        f_abs = h0_r * f_abs - h1_r * (pot / r);
+        // apply smoothing function to obtain C² potential function
+        pot = h0_r * pot;
+
         return make_tuple(f_abs, pot);
     }
 
 private:
-    fixed_vector<float, 4> pair_;
+    fixed_vector<float, 3> pair_;
 };
 
-} // namespace discontinuous_kernel
+} // namespace smooth_r4_kernel
 
 template<typename parent_kernel>
-cuda::texture<float4> discontinuous_wrapper<parent_kernel>::param = discontinuous_kernel::param_;
+cuda::symbol<float> smooth_r4_wrapper<parent_kernel>::rri_smooth = smooth_r4_kernel::rri_smooth_;
+
+template<typename parent_kernel>
+cuda::texture<float4> smooth_r4_wrapper<parent_kernel>::param = smooth_r4_kernel::param_;
 
 } // namespace pair
 } // namespace potentials
@@ -113,4 +132,4 @@ cuda::texture<float4> discontinuous_wrapper<parent_kernel>::param = discontinuou
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_DISCONTINUOUS_KERNEL_CUH */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_SMOOTH_R4_KERNEL_CUH */

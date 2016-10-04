@@ -20,8 +20,8 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/discontinuous_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/local_r4_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/shifted_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/smooth_r4_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_with_core_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
@@ -86,8 +86,8 @@ private:
 } // namespace power_law_with_core_kernel
 
 cuda::texture<float4> power_law_with_core_wrapper::param = power_law_with_core_kernel::param_;
-template class local_r4_wrapper<power_law_with_core_kernel::power_law_with_core>;
-template class discontinuous_wrapper<power_law_with_core_kernel::power_law_with_core>;
+template class smooth_r4_wrapper<power_law_with_core_kernel::power_law_with_core>;
+template class shifted_wrapper<power_law_with_core_kernel::power_law_with_core>;
 
 } // namespace pair
 } // namespace potentials
@@ -96,15 +96,15 @@ template class discontinuous_wrapper<power_law_with_core_kernel::power_law_with_
 namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::power_law_with_core_kernel;
-using namespace halmd::mdsim::gpu::potentials::pair::local_r4_kernel;
-using namespace halmd::mdsim::gpu::potentials::pair::discontinuous_kernel;
+using namespace halmd::mdsim::gpu::potentials::pair::smooth_r4_kernel;
+using namespace halmd::mdsim::gpu::potentials::pair::shifted_kernel;
 
 template class pair_full_wrapper<3, power_law_with_core>;
 template class pair_full_wrapper<2, power_law_with_core>;
-template class pair_trunc_wrapper<3, local_r4<power_law_with_core> >;
-template class pair_trunc_wrapper<2, local_r4<power_law_with_core> >;
-template class pair_trunc_wrapper<3, discontinuous<power_law_with_core> >;
-template class pair_trunc_wrapper<2, discontinuous<power_law_with_core> >;
+template class pair_trunc_wrapper<3, smooth_r4<power_law_with_core> >;
+template class pair_trunc_wrapper<2, smooth_r4<power_law_with_core> >;
+template class pair_trunc_wrapper<3, shifted<power_law_with_core> >;
+template class pair_trunc_wrapper<2, shifted<power_law_with_core> >;
 
 } // namespace forces
 

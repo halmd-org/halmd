@@ -21,8 +21,8 @@
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/discontinuous_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/local_r4_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/shifted_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/smooth_r4_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
 
@@ -77,8 +77,8 @@ private:
 } // namespace lennard_jones_kernel
 
 cuda::texture<float2> lennard_jones_wrapper::param = lennard_jones_kernel::param_;
-template class local_r4_wrapper<lennard_jones_kernel::lennard_jones>;
-template class discontinuous_wrapper<lennard_jones_kernel::lennard_jones>;
+template class smooth_r4_wrapper<lennard_jones_kernel::lennard_jones>;
+template class shifted_wrapper<lennard_jones_kernel::lennard_jones>;
 
 } // namespace pair
 } // namespace potentials
@@ -87,15 +87,15 @@ template class discontinuous_wrapper<lennard_jones_kernel::lennard_jones>;
 namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::lennard_jones_kernel;
-using namespace halmd::mdsim::gpu::potentials::pair::local_r4_kernel;
-using namespace halmd::mdsim::gpu::potentials::pair::discontinuous_kernel;
+using namespace halmd::mdsim::gpu::potentials::pair::smooth_r4_kernel;
+using namespace halmd::mdsim::gpu::potentials::pair::shifted_kernel;
 
 template class pair_full_wrapper<3, lennard_jones>;
 template class pair_full_wrapper<2, lennard_jones>;
-template class pair_trunc_wrapper<3, local_r4<lennard_jones> >;
-template class pair_trunc_wrapper<2, local_r4<lennard_jones> >;
-template class pair_trunc_wrapper<3, discontinuous<lennard_jones> >;
-template class pair_trunc_wrapper<2, discontinuous<lennard_jones> >;
+template class pair_trunc_wrapper<3, smooth_r4<lennard_jones> >;
+template class pair_trunc_wrapper<2, smooth_r4<lennard_jones> >;
+template class pair_trunc_wrapper<3, shifted<lennard_jones> >;
+template class pair_trunc_wrapper<2, shifted<lennard_jones> >;
 
 } // namespace forces
 

@@ -26,8 +26,8 @@
 #include <halmd/mdsim/host/forces/pair_full.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/potentials/pair/morse.hpp>
-#include <halmd/mdsim/host/potentials/pair/discontinuous.hpp>
-#include <halmd/mdsim/host/potentials/pair/local_r4.hpp>
+#include <halmd/mdsim/host/potentials/pair/shifted.hpp>
+#include <halmd/mdsim/host/potentials/pair/smooth_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -92,24 +92,24 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_morse(lua_State* L
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     morse<double>::luaopen(L);
-    local_r4<morse<double>>::luaopen(L);
-    discontinuous<morse<double>>::luaopen(L);
+    smooth_r4<morse<double>>::luaopen(L);
+    shifted<morse<double>>::luaopen(L);
     forces::pair_full<3, double, morse<double> >::luaopen(L);
     forces::pair_full<2, double, morse<double> >::luaopen(L);
-    forces::pair_trunc<3, double, local_r4<morse<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, local_r4<morse<double> > >::luaopen(L);
-    forces::pair_trunc<3, double, discontinuous<morse<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, discontinuous<morse<double> > >::luaopen(L);
+    forces::pair_trunc<3, double, smooth_r4<morse<double> > >::luaopen(L);
+    forces::pair_trunc<2, double, smooth_r4<morse<double> > >::luaopen(L);
+    forces::pair_trunc<3, double, shifted<morse<double> > >::luaopen(L);
+    forces::pair_trunc<2, double, shifted<morse<double> > >::luaopen(L);
 #else
     morse<float>::luaopen(L);
-    local_r4<morse<float>>::luaopen(L);
-    discontinuous<morse<float>>::luaopen(L);
+    smooth_r4<morse<float>>::luaopen(L);
+    shifted<morse<float>>::luaopen(L);
     forces::pair_full<3, float, morse<float> >::luaopen(L);
     forces::pair_full<2, float, morse<float> >::luaopen(L);
-    forces::pair_trunc<3, float, local_r4<morse<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, local_r4<morse<float> > >::luaopen(L);
-    forces::pair_trunc<3, float, discontinuous<morse<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, discontinuous<morse<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, smooth_r4<morse<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, smooth_r4<morse<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, shifted<morse<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, shifted<morse<float> > >::luaopen(L);
 #endif
     return 0;
 }
@@ -117,12 +117,12 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_morse(lua_State* L
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class morse<double>;
-template class local_r4<morse<double>>;
-template class discontinuous<morse<double>>;
+template class smooth_r4<morse<double>>;
+template class shifted<morse<double>>;
 #else
 template class morse<float>;
-template class local_r4<morse<float>>;
-template class discontinuous<morse<float>>;
+template class smooth_r4<morse<float>>;
+template class shifted<morse<float>>;
 #endif
 
 } // namespace pair
@@ -134,17 +134,17 @@ namespace forces {
 #ifndef USE_HOST_SINGLE_PRECISION
 template class pair_full<3, double, potentials::pair::morse<double> >;
 template class pair_full<2, double, potentials::pair::morse<double> >;
-template class pair_trunc<3, double, potentials::pair::local_r4<potentials::pair::morse<double> > >;
-template class pair_trunc<2, double, potentials::pair::local_r4<potentials::pair::morse<double> > >;
-template class pair_trunc<3, double, potentials::pair::discontinuous<potentials::pair::morse<double> > >;
-template class pair_trunc<2, double, potentials::pair::discontinuous<potentials::pair::morse<double> > >;
+template class pair_trunc<3, double, potentials::pair::smooth_r4<potentials::pair::morse<double> > >;
+template class pair_trunc<2, double, potentials::pair::smooth_r4<potentials::pair::morse<double> > >;
+template class pair_trunc<3, double, potentials::pair::shifted<potentials::pair::morse<double> > >;
+template class pair_trunc<2, double, potentials::pair::shifted<potentials::pair::morse<double> > >;
 #else
 template class pair_full<3, float, potentials::pair::morse<float> >;
 template class pair_full<2, float, potentials::pair::morse<float> >;
-template class pair_trunc<3, float, potentials::pair::local_r4<potentials::pair::morse<float> > >;
-template class pair_trunc<2, float, potentials::pair::local_r4<potentials::pair::morse<float> > >;
-template class pair_trunc<3, float, potentials::pair::discontinuous<potentials::pair::morse<float> > >;
-template class pair_trunc<2, float, potentials::pair::discontinuous<potentials::pair::morse<float> > >;
+template class pair_trunc<3, float, potentials::pair::smooth_r4<potentials::pair::morse<float> > >;
+template class pair_trunc<2, float, potentials::pair::smooth_r4<potentials::pair::morse<float> > >;
+template class pair_trunc<3, float, potentials::pair::shifted<potentials::pair::morse<float> > >;
+template class pair_trunc<2, float, potentials::pair::shifted<potentials::pair::morse<float> > >;
 #endif
 
 } // namespace forces

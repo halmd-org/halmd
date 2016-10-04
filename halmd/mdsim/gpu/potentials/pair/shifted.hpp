@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_DISCONTINUOUS_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_DISCONTINUOUS_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_SHIFTED_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_SHIFTED_HPP
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -28,7 +28,8 @@
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/discontinuous_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/shifted_kernel.hpp>
+#include <halmd/utility/matrix_shape.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -36,30 +37,20 @@ namespace gpu {
 namespace potentials {
 namespace pair {
 
-template <typename T, typename S>
-static T const&
-check_shape(T const& m1, S const& m2)
-{
-    if (m1.size1() != m2.size1() || m1.size2() != m2.size2()) {
-        throw std::invalid_argument("parameter matrix has invalid shape");
-    }
-    return m1;
-}
-
 /**
  * define Lennard-Jones potential and parameters
  */
 template <typename potential_type>
-class discontinuous : public potential_type
+class shifted : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
     typedef typename potential_type::gpu_potential_type parent_potential;
-    typedef discontinuous_kernel::discontinuous<parent_potential> gpu_potential_type;
+    typedef shifted_kernel::shifted<parent_potential> gpu_potential_type;
     typedef typename potential_type::matrix_type matrix_type;
 
     template<typename... Args>
-    discontinuous(matrix_type const& cutoff, Args&&... args)
+    shifted(matrix_type const& cutoff, Args&&... args)
             : potential_type (std::forward<Args>(args)...)
             , r_cut_sigma_(check_shape(cutoff, this->sigma()))
             , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
@@ -78,10 +69,10 @@ public:
 
         cuda::host::vector<float4> param(g_param_.size());
         for (size_t i = 0; i < param.size(); ++i) {
-            fixed_vector<float, 4> p;
-            p[discontinuous_kernel::R_CUT] = r_cut_.data()[i];
-            p[discontinuous_kernel::RR_CUT] = rr_cut_.data()[i];
-            p[discontinuous_kernel::EN_CUT] = en_cut_.data()[i];
+            fixed_vector<float, 3> p;
+            p[shifted_kernel::R_CUT] = r_cut_.data()[i];
+            p[shifted_kernel::RR_CUT] = rr_cut_.data()[i];
+            p[shifted_kernel::EN_CUT] = en_cut_.data()[i];
             param[i] = p;
         }
 
@@ -91,7 +82,7 @@ public:
     /** bind textures before kernel invocation */
     void bind_textures() const
     {
-        discontinuous_wrapper<parent_potential>::param.bind(g_param_);
+        shifted_wrapper<parent_potential>::param.bind(g_param_);
         potential_type::bind_textures();
     }
 
@@ -131,12 +122,12 @@ public:
                                         namespace_("pair")
                                         [
 
-                                                class_<discontinuous, potential_type, std::shared_ptr<discontinuous> >()
-                                                    .property("r_cut", (matrix_type const& (discontinuous::*)() const) &discontinuous::r_cut)
-                                                    .property("r_cut_sigma", &discontinuous::r_cut_sigma)
-                                              , def("discontinuous", &std::make_shared<discontinuous
-                                                                                     , matrix_type const&
-                                                                                     , potential_type const&>)
+                                                class_<shifted, potential_type, std::shared_ptr<shifted> >()
+                                                    .property("r_cut", (matrix_type const& (shifted::*)() const) &shifted::r_cut)
+                                                    .property("r_cut_sigma", &shifted::r_cut_sigma)
+                                              , def("shifted", &std::make_shared<shifted
+                                                                               , matrix_type const&
+                                                                               , potential_type const&>)
                                         ]
                                 ]
                         ]
@@ -162,4 +153,4 @@ private:
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_DISCONTINUOUS_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_SHIFTED_HPP */

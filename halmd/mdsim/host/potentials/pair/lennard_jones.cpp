@@ -26,9 +26,9 @@
 
 #include <halmd/mdsim/host/forces/pair_full.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
-#include <halmd/mdsim/host/potentials/pair/discontinuous.hpp>
 #include <halmd/mdsim/host/potentials/pair/lennard_jones.hpp>
-#include <halmd/mdsim/host/potentials/pair/local_r4.hpp>
+#include <halmd/mdsim/host/potentials/pair/shifted.hpp>
+#include <halmd/mdsim/host/potentials/pair/smooth_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -89,24 +89,24 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_lennard_jones(lua_
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     lennard_jones<double>::luaopen(L);
-    local_r4<lennard_jones<double>>::luaopen(L);
-    discontinuous<lennard_jones<double>>::luaopen(L);
+    smooth_r4<lennard_jones<double>>::luaopen(L);
+    shifted<lennard_jones<double>>::luaopen(L);
     forces::pair_full<3, double, lennard_jones<double> >::luaopen(L);
     forces::pair_full<2, double, lennard_jones<double> >::luaopen(L);
-    forces::pair_trunc<3, double, local_r4<lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, local_r4<lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<3, double, discontinuous<lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, discontinuous<lennard_jones<double> > >::luaopen(L);
+    forces::pair_trunc<3, double, smooth_r4<lennard_jones<double> > >::luaopen(L);
+    forces::pair_trunc<2, double, smooth_r4<lennard_jones<double> > >::luaopen(L);
+    forces::pair_trunc<3, double, shifted<lennard_jones<double> > >::luaopen(L);
+    forces::pair_trunc<2, double, shifted<lennard_jones<double> > >::luaopen(L);
 #else
     lennard_jones<float>::luaopen(L);
-    local_r4<lennard_jones<float>>::luaopen(L);
-    discontinuous<lennard_jones<float>>::luaopen(L);
+    smooth_r4<lennard_jones<float>>::luaopen(L);
+    shifted<lennard_jones<float>>::luaopen(L);
     forces::pair_full<3, float, lennard_jones<float> >::luaopen(L);
     forces::pair_full<2, float, lennard_jones<float> >::luaopen(L);
-    forces::pair_trunc<3, float, local_r4<lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, local_r4<lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<3, float, discontinuous<lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, discontinuous<lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, smooth_r4<lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, smooth_r4<lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, shifted<lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, shifted<lennard_jones<float> > >::luaopen(L);
 #endif
     return 0;
 }
@@ -114,12 +114,12 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_lennard_jones(lua_
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class lennard_jones<double>;
-template class local_r4<lennard_jones<double>>;
-template class discontinuous<lennard_jones<double>>;
+template class smooth_r4<lennard_jones<double>>;
+template class shifted<lennard_jones<double>>;
 #else
 template class lennard_jones<float>;
-template class local_r4<lennard_jones<float>>;
-template class discontinuous<lennard_jones<float>>;
+template class smooth_r4<lennard_jones<float>>;
+template class shifted<lennard_jones<float>>;
 #endif
 
 } // namespace pair
@@ -131,17 +131,17 @@ namespace forces {
 #ifndef USE_HOST_SINGLE_PRECISION
 template class pair_full<3, double, potentials::pair::lennard_jones<double> >;
 template class pair_full<2, double, potentials::pair::lennard_jones<double> >;
-template class pair_trunc<3, double, potentials::pair::local_r4<potentials::pair::lennard_jones<double> > >;
-template class pair_trunc<2, double, potentials::pair::local_r4<potentials::pair::lennard_jones<double> > >;
-template class pair_trunc<3, double, potentials::pair::discontinuous<potentials::pair::lennard_jones<double> > >;
-template class pair_trunc<2, double, potentials::pair::discontinuous<potentials::pair::lennard_jones<double> > >;
+template class pair_trunc<3, double, potentials::pair::smooth_r4<potentials::pair::lennard_jones<double> > >;
+template class pair_trunc<2, double, potentials::pair::smooth_r4<potentials::pair::lennard_jones<double> > >;
+template class pair_trunc<3, double, potentials::pair::shifted<potentials::pair::lennard_jones<double> > >;
+template class pair_trunc<2, double, potentials::pair::shifted<potentials::pair::lennard_jones<double> > >;
 #else
 template class pair_full<3, float, potentials::pair::lennard_jones<float> >;
 template class pair_full<2, float, potentials::pair::lennard_jones<float> >;
-template class pair_trunc<3, float, potentials::pair::local_r4<potentials::pair::lennard_jones<float> > >;
-template class pair_trunc<2, float, potentials::pair::local_r4<potentials::pair::lennard_jones<float> > >;
-template class pair_trunc<3, float, potentials::pair::discontinuous<potentials::pair::lennard_jones<float> > >;
-template class pair_trunc<2, float, potentials::pair::discontinuous<potentials::pair::lennard_jones<float> > >;
+template class pair_trunc<3, float, potentials::pair::smooth_r4<potentials::pair::lennard_jones<float> > >;
+template class pair_trunc<2, float, potentials::pair::smooth_r4<potentials::pair::lennard_jones<float> > >;
+template class pair_trunc<3, float, potentials::pair::shifted<potentials::pair::lennard_jones<float> > >;
+template class pair_trunc<2, float, potentials::pair::shifted<potentials::pair::lennard_jones<float> > >;
 #endif
 
 } // namespace forces

@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_LOCAL_R4_KERNEL_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_LOCAL_R4_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_SHIFTED_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_SHIFTED_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -28,7 +28,7 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace local_r4_kernel {
+namespace shifted_kernel {
 
 /**
  * indices of parameters
@@ -41,14 +41,13 @@ enum {
 
 // forward declaration for host code
 template<typename parent_kernel>
-class local_r4;
+class shifted;
 
-} // namespace local_r4_kernel
+} // namespace shifted_kernel
 
 template<typename parent_kernel>
-struct local_r4_wrapper
+struct shifted_wrapper
 {
-    static cuda::symbol<float> rri_smooth;
     static cuda::texture<float4> param;
 };
 
@@ -58,4 +57,4 @@ struct local_r4_wrapper
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_LOCAL_R4_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_SHIFTED_KERNEL_HPP */
