@@ -23,22 +23,20 @@ if(${HALMD_WITH_pair_lennard_jones})
       test_unit_mdsim_potentials_pair_lennard_jones --run_test=lennard_jones_gpu --log_level=test_suite
     )
   endif()
-endif()
 
-if(${HALMD_WITH_pair_lennard_jones_linear})
   add_executable(test_unit_mdsim_potentials_pair_lennard_jones_linear
     lennard_jones_linear.cpp
   )
   if(HALMD_WITH_GPU)
     target_link_libraries(test_unit_mdsim_potentials_pair_lennard_jones_linear
-      halmd_mdsim_gpu_potentials_pair_lennard_jones_linear
+      halmd_mdsim_gpu_potentials_pair_lennard_jones
       halmd_mdsim_gpu
       halmd_algorithm_gpu
       halmd_utility_gpu
     )
   endif()
   target_link_libraries(test_unit_mdsim_potentials_pair_lennard_jones_linear
-    halmd_mdsim_host_potentials_pair_lennard_jones_linear
+    halmd_mdsim_host_potentials_pair_lennard_jones
     halmd_mdsim
     ${HALMD_TEST_LIBRARIES}
   )

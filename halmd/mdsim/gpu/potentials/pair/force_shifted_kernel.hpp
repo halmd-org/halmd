@@ -1,6 +1,5 @@
 /*
- * Copyright © 2012       Felix Höfling
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2016 Daniel Kirchner
  *
  * This file is part of HALMD.
  *
@@ -19,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_LENNARD_JONES_LINEAR_KERNEL_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_LENNARD_JONES_LINEAR_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_FORCE_SHIFTED_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_FORCE_SHIFTED_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -29,29 +28,28 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace lennard_jones_linear_kernel {
+namespace force_shifted_kernel {
 
 /**
- * indices of potential parameters
+ * indices of parameters
  */
 enum {
-    EPSILON     /**< potential well depths in MD units */
-  , SIGMA2      /**< square of pair separation */
+    R_CUT       /**< cutoff length */
+  , RR_CUT      /**< square of cutoff length */
   , EN_CUT      /**< potential energy at cutoff length in MD units */
   , FORCE_CUT   /**< force at cutoff length in MD units */
 };
 
 // forward declaration for host code
-class lennard_jones_linear;
+template<typename parent_kernel>
+class force_shifted;
 
-} // namespace lennard_jones_linear_kernel
+} // namespace force_shifted_kernel
 
-struct lennard_jones_linear_wrapper
+template<typename parent_kernel>
+struct force_shifted_wrapper
 {
-    /** Lennard-Jones potential parameters */
     static cuda::texture<float4> param;
-    /** squared cutoff radius */
-    static cuda::texture<float> rr_cut;
 };
 
 } // namespace pair
@@ -60,4 +58,4 @@ struct lennard_jones_linear_wrapper
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_LENNARD_JONES_LINEAR_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_FORCE_SHIFTED_KERNEL_HPP */

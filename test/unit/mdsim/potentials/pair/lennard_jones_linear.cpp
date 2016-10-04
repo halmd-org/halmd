@@ -24,11 +24,13 @@
 #include <boost/test/unit_test.hpp>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/potentials/pair/lennard_jones_linear.hpp>
+#include <halmd/mdsim/host/potentials/pair/force_shifted.hpp>
+#include <halmd/mdsim/host/potentials/pair/lennard_jones.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
-# include <halmd/mdsim/gpu/potentials/pair/lennard_jones_linear.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/force_shifted.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/lennard_jones.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
 #endif
@@ -53,7 +55,8 @@
 
 BOOST_AUTO_TEST_CASE( lennard_jones_linear_host )
 {
-    typedef halmd::mdsim::host::potentials::pair::lennard_jones_linear<double> potential_type;
+    typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> base_potential_type;
+    typedef halmd::mdsim::host::potentials::pair::force_shifted<base_potential_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
 
     // define interaction parameters
@@ -146,8 +149,10 @@ struct lennard_jones_linear
 
     typedef halmd::mdsim::box<dimension> box_type;
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef halmd::mdsim::gpu::potentials::pair::lennard_jones_linear<float_type> potential_type;
-    typedef halmd::mdsim::host::potentials::pair::lennard_jones_linear<double> host_potential_type;
+    typedef halmd::mdsim::gpu::potentials::pair::lennard_jones<float_type> base_potential_type;
+    typedef halmd::mdsim::gpu::potentials::pair::force_shifted<base_potential_type> potential_type;
+    typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> host_base_potential_type;
+    typedef halmd::mdsim::host::potentials::pair::force_shifted<host_base_potential_type> host_potential_type;
     typedef halmd::mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;
 

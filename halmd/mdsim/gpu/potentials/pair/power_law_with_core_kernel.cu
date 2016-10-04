@@ -20,6 +20,7 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/force_shifted_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/shifted_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/smooth_r4_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_with_core_kernel.hpp>
@@ -88,6 +89,7 @@ private:
 cuda::texture<float4> power_law_with_core_wrapper::param = power_law_with_core_kernel::param_;
 template class smooth_r4_wrapper<power_law_with_core_kernel::power_law_with_core>;
 template class shifted_wrapper<power_law_with_core_kernel::power_law_with_core>;
+template class force_shifted_wrapper<power_law_with_core_kernel::power_law_with_core>;
 
 } // namespace pair
 } // namespace potentials
@@ -98,6 +100,7 @@ namespace forces {
 using namespace halmd::mdsim::gpu::potentials::pair::power_law_with_core_kernel;
 using namespace halmd::mdsim::gpu::potentials::pair::smooth_r4_kernel;
 using namespace halmd::mdsim::gpu::potentials::pair::shifted_kernel;
+using namespace halmd::mdsim::gpu::potentials::pair::force_shifted_kernel;
 
 template class pair_full_wrapper<3, power_law_with_core>;
 template class pair_full_wrapper<2, power_law_with_core>;
@@ -105,6 +108,8 @@ template class pair_trunc_wrapper<3, smooth_r4<power_law_with_core> >;
 template class pair_trunc_wrapper<2, smooth_r4<power_law_with_core> >;
 template class pair_trunc_wrapper<3, shifted<power_law_with_core> >;
 template class pair_trunc_wrapper<2, shifted<power_law_with_core> >;
+template class pair_trunc_wrapper<3, force_shifted<power_law_with_core> >;
+template class pair_trunc_wrapper<2, force_shifted<power_law_with_core> >;
 
 } // namespace forces
 

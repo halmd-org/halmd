@@ -1,6 +1,5 @@
 /*
- * Copyright © 2008-2012 Felix Höfling
- * Copyright © 2008-2011 Peter Colberg
+ * Copyright © 2016 Daniel Kirchner
  *
  * This file is part of HALMD.
  *
@@ -19,9 +18,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_FORCE_SHIFTED_KERNEL_CUH
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_FORCE_SHIFTED_KERNEL_CUH
+
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/lennard_jones_linear_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/force_shifted_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
 
@@ -30,44 +32,44 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace lennard_jones_linear_kernel {
+namespace force_shifted_kernel {
 
-/** array of Lennard-Jones potential parameters for all combinations of particle types */
 static texture<float4> param_;
-/** squares of potential cutoff radius for all combinations of particle types */
-static texture<float> rr_cut_;
 
-/**
- * Lennard-Jones interaction of a pair of particles.
- */
-class lennard_jones_linear
+template<typename parent_kernel>
+class force_shifted : public parent_kernel
 {
 public:
     /**
-     * Construct Lennard-Jones pair interaction potential.
+     * Construct Smoothing Function.
      *
      * Fetch potential parameters from texture cache for particle pair.
      *
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
-     * @param ntype1 number of types in first interacting particle instance
-     * @param ntype2 number of types in second interacting particle instance
      */
-    HALMD_GPU_ENABLED lennard_jones_linear(
+    HALMD_GPU_ENABLED force_shifted(
         unsigned int type1, unsigned int type2
       , unsigned int ntype1, unsigned int ntype2
     )
-      : pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
-      , pair_rr_cut_(tex1Dfetch(rr_cut_, type1 * ntype2 + type2))
+      : parent_kernel(type1, type2, ntype1, ntype2)
+      , pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
     {}
 
+    /**
+     * Returns cutoff distance.
+     */
+    HALMD_GPU_ENABLED float r_cut() const
+    {
+        return pair_[R_CUT];
+    }
 
     /**
      * Returns square of cutoff distance.
      */
     HALMD_GPU_ENABLED float rr_cut() const
     {
-        return pair_rr_cut_;
+        return pair_[RR_CUT];
     }
 
     /**
@@ -78,7 +80,7 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED bool within_range(float_type rr) const
     {
-        return (rr < pair_rr_cut_);
+        return (rr < pair_[RR_CUT]);
     }
 
     /**
@@ -90,46 +92,27 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
-        float_type rri = pair_[SIGMA2] / rr;
-        float_type ri6 = rri * rri * rri;
-        float_type eps_ri6 = pair_[EPSILON] * ri6;
+        float_type f_abs, pot;
         float_type r = sqrt(rr);
-        float_type rc = sqrt(pair_rr_cut_);
-        float_type fval = 48 * rri * eps_ri6 * (ri6 - 0.5f) / pair_[SIGMA2] - pair_[FORCE_CUT] / r;
-        float_type en_pot = 4 * eps_ri6 * (ri6 - 1) - pair_[EN_CUT] + (r - rc) * pair_[FORCE_CUT];
-
-        return make_tuple(fval, en_pot);
+        tie(f_abs, pot) = parent_kernel::operator()(rr);
+        f_abs -= pair_[FORCE_CUT] / r;
+        pot = pot - pair_[EN_CUT] + (r - pair_[R_CUT]) * pair_[FORCE_CUT];
+        return make_tuple(f_abs, pot);
     }
 
 private:
-    /** potential parameters for particle pair */
     fixed_vector<float, 4> pair_;
-    /** squared cutoff radius for particle pair */
-    float pair_rr_cut_;
 };
 
-} // namespace lennard_jones_linear_kernel
+} // namespace force_shifted_kernel
 
-cuda::texture<float4> lennard_jones_linear_wrapper::param = lennard_jones_linear_kernel::param_;
-cuda::texture<float> lennard_jones_linear_wrapper::rr_cut = lennard_jones_linear_kernel::rr_cut_;
+template<typename parent_kernel>
+cuda::texture<float4> force_shifted_wrapper<parent_kernel>::param = force_shifted_kernel::param_;
 
 } // namespace pair
 } // namespace potentials
-
-// explicit instantiation of force kernels
-namespace forces {
-
-using namespace halmd::mdsim::gpu::potentials::pair::lennard_jones_linear_kernel;
-
-template class pair_full_wrapper<3, lennard_jones_linear>;
-template class pair_full_wrapper<2, lennard_jones_linear>;
-
-template class pair_trunc_wrapper<3, lennard_jones_linear>;
-template class pair_trunc_wrapper<2, lennard_jones_linear>;
-// skip instantiation with smooth_r4 truncation
-
-} // namespace forces
-
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
+
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_FORCE_SHIFTED_KERNEL_CUH */

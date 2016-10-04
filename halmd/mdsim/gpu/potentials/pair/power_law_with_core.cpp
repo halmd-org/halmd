@@ -27,6 +27,7 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/force_shifted.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/shifted.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/smooth_r4.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_with_core.hpp>
@@ -119,12 +120,15 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_power_law_with_core
     power_law_with_core<float>::luaopen(L);
     smooth_r4<power_law_with_core<float>>::luaopen(L);
     shifted<power_law_with_core<float>>::luaopen(L);
+    force_shifted<power_law_with_core<float>>::luaopen(L);
     forces::pair_full<3, float, power_law_with_core<float> >::luaopen(L);
     forces::pair_full<2, float, power_law_with_core<float> >::luaopen(L);
     forces::pair_trunc<3, float, smooth_r4<power_law_with_core<float> > >::luaopen(L);
     forces::pair_trunc<2, float, smooth_r4<power_law_with_core<float> > >::luaopen(L);
     forces::pair_trunc<3, float, shifted<power_law_with_core<float> > >::luaopen(L);
     forces::pair_trunc<2, float, shifted<power_law_with_core<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, force_shifted<power_law_with_core<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, force_shifted<power_law_with_core<float> > >::luaopen(L);
     return 0;
 }
 
@@ -132,6 +136,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_power_law_with_core
 template class power_law_with_core<float>;
 template class smooth_r4<power_law_with_core<float>>;
 template class shifted<power_law_with_core<float>>;
+template class force_shifted<power_law_with_core<float>>;
 
 } // namespace pair
 } // namespace potentials
@@ -145,6 +150,8 @@ template class pair_trunc<3, float, potentials::pair::smooth_r4<potentials::pair
 template class pair_trunc<2, float, potentials::pair::smooth_r4<potentials::pair::power_law_with_core<float> > >;
 template class pair_trunc<3, float, potentials::pair::shifted<potentials::pair::power_law_with_core<float> > >;
 template class pair_trunc<2, float, potentials::pair::shifted<potentials::pair::power_law_with_core<float> > >;
+template class pair_trunc<3, float, potentials::pair::force_shifted<potentials::pair::power_law_with_core<float> > >;
+template class pair_trunc<2, float, potentials::pair::force_shifted<potentials::pair::power_law_with_core<float> > >;
 
 } // namespace forces
 } // namespace gpu

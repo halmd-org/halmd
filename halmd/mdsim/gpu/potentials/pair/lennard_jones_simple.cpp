@@ -25,6 +25,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/forces/pair_full.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/force_shifted.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_simple.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_simple_kernel.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/shifted.hpp>
@@ -93,6 +94,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_lennard_jones_simpl
 template class lennard_jones_simple<float>;
 template class smooth_r4<lennard_jones_simple<float>>;
 template class shifted<lennard_jones_simple<float>>;
+template class force_shifted<lennard_jones_simple<float>>;
 
 } // namespace pair
 } // namespace potentials
@@ -108,6 +110,9 @@ template class pair_trunc<2, float, potentials::pair::smooth_r4<potentials::pair
 
 template class pair_trunc<3, float, potentials::pair::shifted<potentials::pair::lennard_jones_simple<float>> >;
 template class pair_trunc<2, float, potentials::pair::shifted<potentials::pair::lennard_jones_simple<float>> >;
+
+template class pair_trunc<3, float, potentials::pair::force_shifted<potentials::pair::lennard_jones_simple<float>> >;
+template class pair_trunc<2, float, potentials::pair::force_shifted<potentials::pair::lennard_jones_simple<float>> >;
 
 } // namespace forces
 } // namespace gpu

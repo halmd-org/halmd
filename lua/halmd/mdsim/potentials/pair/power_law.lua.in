@@ -43,11 +43,13 @@ local module            = require("halmd.utility.module")
 
 -- grab C++ wrappers
 local power_law = { host = assert(libhalmd.mdsim.host.potentials.pair.power_law) }
+local force_shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.force_shifted) }
 local smooth_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.smooth_r4) }
 local shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.shifted) }
 
 if device.gpu then
     power_law.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.power_law)
+    force_shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.force_shifted)
     smooth_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
     shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
 end
@@ -164,6 +166,9 @@ local M = module(function(args)
     end)
 
     local truncate_table = setmetatable({
+        force_shifted = function(self, cutoff, args)
+            return force_shifted[memory](cutoff, self)
+        end,
         shifted = function(self, cutoff, args)
             return shifted[memory](cutoff, self)
         end,

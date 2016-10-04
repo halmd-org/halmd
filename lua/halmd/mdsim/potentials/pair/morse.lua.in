@@ -45,10 +45,12 @@ local module            = require("halmd.utility.module")
 local morse = {
     host = assert(libhalmd.mdsim.host.potentials.pair.morse)
 }
+local force_shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.force_shifted) }
 local smooth_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.smooth_r4) }
 local shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.shifted) }
 if device.gpu then
     morse.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.morse)
+    force_shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.force_shifted)
     smooth_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
     shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
 end
@@ -167,6 +169,9 @@ local M = module(function(args)
     end)
 
     local truncate_table = setmetatable({
+        force_shifted = function(self, cutoff, args)
+            return force_shifted[memory](cutoff, self)
+        end,
         shifted = function(self, cutoff, args)
             return shifted[memory](cutoff, self)
         end,
