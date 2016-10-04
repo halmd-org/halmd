@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_LOCAL_R4_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_LOCAL_R4_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_DISCONTINUOUS_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_DISCONTINUOUS_HPP
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -28,8 +28,7 @@
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/discontinuous.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/local_r4_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/discontinuous_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -37,26 +36,35 @@ namespace gpu {
 namespace potentials {
 namespace pair {
 
+template <typename T, typename S>
+static T const&
+check_shape(T const& m1, S const& m2)
+{
+    if (m1.size1() != m2.size1() || m1.size2() != m2.size2()) {
+        throw std::invalid_argument("parameter matrix has invalid shape");
+    }
+    return m1;
+}
+
 /**
  * define Lennard-Jones potential and parameters
  */
 template <typename potential_type>
-class local_r4 : public potential_type
+class discontinuous : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
     typedef typename potential_type::gpu_potential_type parent_potential;
-    typedef local_r4_kernel::local_r4<parent_potential> gpu_potential_type;
+    typedef discontinuous_kernel::discontinuous<parent_potential> gpu_potential_type;
     typedef typename potential_type::matrix_type matrix_type;
 
     template<typename... Args>
-    local_r4(matrix_type const& cutoff, float_type h, Args&&... args)
+    discontinuous(matrix_type const& cutoff, Args&&... args)
             : potential_type (std::forward<Args>(args)...)
             , r_cut_sigma_(check_shape(cutoff, this->sigma()))
             , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
             , rr_cut_(element_prod(r_cut_, r_cut_))
             , en_cut_(this->size1(), this->size2())
-            , rri_smooth_(std::pow(h, -2))
             , g_param_(this->size1() * this->size2()) {
 
         for (size_t i = 0; i < this->size1(); ++i) {
@@ -71,9 +79,9 @@ public:
         cuda::host::vector<float4> param(g_param_.size());
         for (size_t i = 0; i < param.size(); ++i) {
             fixed_vector<float, 4> p;
-            p[local_r4_kernel::R_CUT] = r_cut_.data()[i];
-            p[local_r4_kernel::RR_CUT] = rr_cut_.data()[i];
-            p[local_r4_kernel::EN_CUT] = en_cut_.data()[i];
+            p[discontinuous_kernel::R_CUT] = r_cut_.data()[i];
+            p[discontinuous_kernel::RR_CUT] = rr_cut_.data()[i];
+            p[discontinuous_kernel::EN_CUT] = en_cut_.data()[i];
             param[i] = p;
         }
 
@@ -83,8 +91,7 @@ public:
     /** bind textures before kernel invocation */
     void bind_textures() const
     {
-        cuda::copy(rri_smooth_, local_r4_wrapper<parent_potential>::rri_smooth);
-        local_r4_wrapper<parent_potential>::param.bind(g_param_);
+        discontinuous_wrapper<parent_potential>::param.bind(g_param_);
         potential_type::bind_textures();
     }
 
@@ -108,7 +115,6 @@ public:
         return r_cut_sigma_;
     }
 
-
     /**
      * Bind class to Lua.
      */
@@ -125,13 +131,12 @@ public:
                                         namespace_("pair")
                                         [
 
-                                                class_<local_r4, potential_type, std::shared_ptr<local_r4> >()
-                                                    .property("r_cut", (matrix_type const& (local_r4::*)() const) &local_r4::r_cut)
-                                                    .property("r_cut_sigma", &local_r4::r_cut_sigma)
-                                              , def("local_r4", &std::make_shared<local_r4
-                                                                                , matrix_type const&
-                                                                                , float_type
-                                                                                , potential_type const&>)
+                                                class_<discontinuous, potential_type, std::shared_ptr<discontinuous> >()
+                                                    .property("r_cut", (matrix_type const& (discontinuous::*)() const) &discontinuous::r_cut)
+                                                    .property("r_cut_sigma", &discontinuous::r_cut_sigma)
+                                              , def("discontinuous", &std::make_shared<discontinuous
+                                                                                     , matrix_type const&
+                                                                                     , potential_type const&>)
                                         ]
                                 ]
                         ]
@@ -148,7 +153,6 @@ private:
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
 
-    float_type rri_smooth_;
     cuda::vector<float4> g_param_;
 };
 
@@ -158,4 +162,4 @@ private:
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_LOCAL_R4_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_DISCONTINUOUS_HPP */

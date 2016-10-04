@@ -26,6 +26,7 @@
 #include <halmd/mdsim/host/forces/pair_full.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/potentials/pair/morse.hpp>
+#include <halmd/mdsim/host/potentials/pair/discontinuous.hpp>
 #include <halmd/mdsim/host/potentials/pair/local_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -35,23 +36,12 @@ namespace host {
 namespace potentials {
 namespace pair {
 
-template <typename matrix_type>
-static matrix_type const&
-check_shape(matrix_type const& m1, matrix_type const& m2)
-{
-    if (m1.size1() != m2.size1() || m1.size2() != m2.size2()) {
-        throw std::invalid_argument("parameter matrix has invalid shape");
-    }
-    return m1;
-}
-
 /**
  * Initialise Morse potential parameters
  */
 template <typename float_type>
 morse<float_type>::morse(
-    matrix_type const& cutoff
-  , matrix_type const& epsilon
+    matrix_type const& epsilon
   , matrix_type const& sigma
   , matrix_type const& r_min
   , std::shared_ptr<logger> logger
@@ -60,25 +50,11 @@ morse<float_type>::morse(
   : epsilon_(epsilon)
   , sigma_(check_shape(sigma, epsilon))
   , r_min_sigma_(check_shape(r_min, epsilon))
-  , r_cut_sigma_(check_shape(cutoff, epsilon))
-  , r_cut_(element_prod(sigma_, r_cut_sigma_))
-  , rr_cut_(element_prod(r_cut_, r_cut_))
-  , en_cut_(size1(), size2())
   , logger_(logger)
 {
-    // energy shift due to truncation at cutoff length
-    for (unsigned i = 0; i < en_cut_.size1(); ++i) {
-        for (unsigned j = 0; j < en_cut_.size2(); ++j) {
-            en_cut_(i, j) = 0;
-            std::tie(std::ignore, en_cut_(i, j)) = (*this)(rr_cut_(i, j), i, j);
-        }
-    }
-
     LOG("depth of potential well: ε = " << epsilon_);
     LOG("width of potential well: σ = " << sigma_);
     LOG("position of potential well: r_min / σ = " << r_min_sigma_);
-    LOG("cutoff radius of potential: r_c / σ = " << r_cut_sigma_);
-    LOG("potential energy at cutoff: U = " << en_cut_);
 }
 
 template <typename float_type>
@@ -100,11 +76,8 @@ void morse<float_type>::luaopen(lua_State* L)
                                 matrix_type const&
                               , matrix_type const&
                               , matrix_type const&
-                              , matrix_type const&
                               , std::shared_ptr<logger>
                             >())
-                            .property("r_cut", (matrix_type const& (morse::*)() const) &morse::r_cut)
-                            .property("r_cut_sigma", &morse::r_cut_sigma)
                             .property("epsilon", &morse::epsilon)
                             .property("sigma", &morse::sigma)
                             .property("r_min_sigma", &morse::r_min_sigma)
@@ -120,21 +93,23 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_morse(lua_State* L
 #ifndef USE_HOST_SINGLE_PRECISION
     morse<double>::luaopen(L);
     local_r4<morse<double>>::luaopen(L);
+    discontinuous<morse<double>>::luaopen(L);
     forces::pair_full<3, double, morse<double> >::luaopen(L);
     forces::pair_full<2, double, morse<double> >::luaopen(L);
-    forces::pair_trunc<3, double, morse<double> >::luaopen(L);
-    forces::pair_trunc<2, double, morse<double> >::luaopen(L);
     forces::pair_trunc<3, double, local_r4<morse<double> > >::luaopen(L);
     forces::pair_trunc<2, double, local_r4<morse<double> > >::luaopen(L);
+    forces::pair_trunc<3, double, discontinuous<morse<double> > >::luaopen(L);
+    forces::pair_trunc<2, double, discontinuous<morse<double> > >::luaopen(L);
 #else
     morse<float>::luaopen(L);
     local_r4<morse<float>>::luaopen(L);
+    discontinuous<morse<float>>::luaopen(L);
     forces::pair_full<3, float, morse<float> >::luaopen(L);
     forces::pair_full<2, float, morse<float> >::luaopen(L);
-    forces::pair_trunc<3, float, morse<float> >::luaopen(L);
-    forces::pair_trunc<2, float, morse<float> >::luaopen(L);
     forces::pair_trunc<3, float, local_r4<morse<float> > >::luaopen(L);
     forces::pair_trunc<2, float, local_r4<morse<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, discontinuous<morse<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, discontinuous<morse<float> > >::luaopen(L);
 #endif
     return 0;
 }
@@ -143,9 +118,11 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_morse(lua_State* L
 #ifndef USE_HOST_SINGLE_PRECISION
 template class morse<double>;
 template class local_r4<morse<double>>;
+template class discontinuous<morse<double>>;
 #else
 template class morse<float>;
 template class local_r4<morse<float>>;
+template class discontinuous<morse<float>>;
 #endif
 
 } // namespace pair
@@ -157,17 +134,17 @@ namespace forces {
 #ifndef USE_HOST_SINGLE_PRECISION
 template class pair_full<3, double, potentials::pair::morse<double> >;
 template class pair_full<2, double, potentials::pair::morse<double> >;
-template class pair_trunc<3, double, potentials::pair::morse<double> >;
-template class pair_trunc<2, double, potentials::pair::morse<double> >;
 template class pair_trunc<3, double, potentials::pair::local_r4<potentials::pair::morse<double> > >;
 template class pair_trunc<2, double, potentials::pair::local_r4<potentials::pair::morse<double> > >;
+template class pair_trunc<3, double, potentials::pair::discontinuous<potentials::pair::morse<double> > >;
+template class pair_trunc<2, double, potentials::pair::discontinuous<potentials::pair::morse<double> > >;
 #else
 template class pair_full<3, float, potentials::pair::morse<float> >;
 template class pair_full<2, float, potentials::pair::morse<float> >;
-template class pair_trunc<3, float, potentials::pair::morse<float> >;
-template class pair_trunc<2, float, potentials::pair::morse<float> >;
 template class pair_trunc<3, float, potentials::pair::local_r4<potentials::pair::morse<float> > >;
 template class pair_trunc<2, float, potentials::pair::local_r4<potentials::pair::morse<float> > >;
+template class pair_trunc<3, float, potentials::pair::discontinuous<potentials::pair::morse<float> > >;
+template class pair_trunc<2, float, potentials::pair::discontinuous<potentials::pair::morse<float> > >;
 #endif
 
 } // namespace forces

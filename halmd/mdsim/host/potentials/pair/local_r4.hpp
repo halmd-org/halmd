@@ -21,11 +21,13 @@
 #ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_LOCAL_R4_HPP
 #define HALMD_MDSIM_HOST_POTENTIALS_PAIR_LOCAL_R4_HPP
 
+#include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <lua.hpp>
 #include <memory>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/mdsim/host/potentials/pair/discontinuous.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -42,16 +44,51 @@ class local_r4 : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
+    typedef typename potential_type::matrix_type matrix_type;
 
     template<typename... Args>
-    local_r4(float_type h, Args&&... args)
-            : potential_type (std::forward<Args>(args)...), rri_smooth_(std::pow(h, -2)) {
+    local_r4(matrix_type const& cutoff, float_type h, Args&&... args)
+            : potential_type (std::forward<Args>(args)...)
+            , r_cut_sigma_(check_shape(cutoff, this->sigma()))
+            , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
+            , rr_cut_(element_prod(r_cut_, r_cut_))
+            , en_cut_(this->size1(), this->size2())
+            , rri_smooth_(std::pow(h, -2))
+    {
+        for (size_t i = 0; i < this->size1(); ++i) {
+            for (size_t j = 0; j < this->size2(); ++j) {
+                std::tie(std::ignore, en_cut_(i,j)) = potential_type::operator()(rr_cut_(i, j), i, j);
+            }
+        }
+        LOG("potential cutoff length: r_c = " << r_cut_sigma_);
+        LOG("potential cutoff energy: U = " << en_cut_);
+    }
+
+    matrix_type const& r_cut() const
+    {
+        return r_cut_;
+    }
+
+    float_type r_cut(unsigned a, unsigned b) const
+    {
+        return r_cut_(a, b);
+    }
+
+    float_type rr_cut(unsigned a, unsigned b) const
+    {
+        return rr_cut_(a, b);
+    }
+
+    matrix_type const& r_cut_sigma() const
+    {
+        return r_cut_sigma_;
     }
 
     std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         float_type f_abs, pot;
         tie(f_abs, pot) = potential_type::operator()(rr, a, b);
+        pot = pot - en_cut_(a,b);
         float_type r = std::sqrt(rr);
         float_type dr = r - this->r_cut(a, b);
         float_type x2 = dr * dr * rri_smooth_;
@@ -83,7 +120,12 @@ public:
                                         namespace_("pair")
                                         [
                                                 class_<local_r4, potential_type, std::shared_ptr<local_r4> >()
-                                              , def("local_r4", &std::make_shared<local_r4, float_type, potential_type const&>)
+                                                    .property("r_cut", (matrix_type const& (local_r4::*)() const) &local_r4::r_cut)
+                                                    .property("r_cut_sigma", &local_r4::r_cut_sigma)
+                                              , def("local_r4", &std::make_shared<local_r4
+                                                                 , matrix_type const&
+                                                                 , float_type
+                                                                 , potential_type const&>)
                                         ]
                                 ]
                         ]
@@ -91,6 +133,15 @@ public:
         ];
     }
 private:
+    /** cutoff length in units of sigma */
+    matrix_type r_cut_sigma_;
+    /** cutoff length in MD units */
+    matrix_type r_cut_;
+    /** square of cutoff length */
+    matrix_type rr_cut_;
+    /** potential energy at cutoff length in MD units */
+    matrix_type en_cut_;
+
     float_type rri_smooth_;
 };
 

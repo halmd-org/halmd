@@ -44,10 +44,12 @@ local module            = require("halmd.utility.module")
 -- grab C++ wrappers
 local power_law = { host = assert(libhalmd.mdsim.host.potentials.pair.power_law) }
 local local_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.local_r4) }
+local discontinuous = { host = assert(libhalmd.mdsim.host.potentials.pair.discontinuous) }
 
 if device.gpu then
     power_law.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.power_law)
     local_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.local_r4)
+    discontinuous.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.discontinuous)
 end
 
 ---
@@ -114,10 +116,6 @@ local M = module(function(args)
     if type(sigma) ~= "table" and type(sigma) ~= "number" then
         error("bad argument 'sigma'", 2)
     end
-    local cutoff = utility.assert_kwarg(args, "cutoff")
-    if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
-        error("bad argument 'cutoff'", 2)
-    end
     local index = args and args.index or 12
     if type(index) ~= "table" and type(index) ~= "number" then
         error("bad argument 'index'", 2)
@@ -133,13 +131,9 @@ local M = module(function(args)
     local species = args and args.species
         or (type(epsilon) == "table" and #epsilon) or (type(sigma) == "table" and #sigma)
         or (type(index) == "table" and #index) or 1
-        or (type(cutoff) == "table" and #cutoff) or 1
     utility.assert_type(species, "number")
 
     -- promote scalars to matrices
-    if type(cutoff) == "number" then
-        cutoff = numeric.scalar_matrix(species, species, cutoff)
-    end
     if type(epsilon) == "number" then
         epsilon = numeric.scalar_matrix(species, species, epsilon)
     end
@@ -154,7 +148,7 @@ local M = module(function(args)
     if not power_law[memory] then
         error(("unsupported memory type '%s'"):format(memory), 2)
     end
-    local self = power_law[memory](cutoff, epsilon, sigma, index, logger)
+    local self = power_law[memory](epsilon, sigma, index, logger)
 
     -- add description for profiler
     self.description = property(function()
@@ -169,13 +163,33 @@ local M = module(function(args)
         return logger
     end)
 
+    local truncate_table = setmetatable({
+        discontinuous = function(self, cutoff, args)
+            return discontinuous[memory](cutoff, self)
+        end,
+        smooth_r4 = function(self, cutoff, args)
+            local h = args.h
+            if type(h) ~= "number" then
+                error("bad argument 'h'", 2)
+            end
+            return local_r4[memory](cutoff, h, self)
+        end
+    }, {
+        __index = function(tbl, key)
+            error("invalid truncation type '"..key.."'", 2)
+        end
+    })
+
     self.truncate = function(self, args)
-        local h = args.h
-        if type(h) ~= "number" then
-            error("bad argument 'h'", 2)
+        local cutoff = utility.assert_kwarg(args, "cutoff")
+        if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
+            error("bad argument 'cutoff'", 2)
+        end
+        if type(cutoff) == "number" then
+            cutoff = numeric.scalar_matrix(species, species, cutoff)
         end
 
-        local newpot = local_r4[memory](h, self)
+        local newpot = truncate_table[args[1] or "discontinuous"](self, cutoff, args)
         newpot.description = "truncated "..self.description
         newpot.memory = self.memory
         newpot.logger = self.logger

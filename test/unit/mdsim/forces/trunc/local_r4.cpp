@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE( local_r4 )
     double const h = 1. / 256;
 
     // construct potential module
-    potential_type potential(h, cutoff_array, epsilon_array, sigma_array);
+    potential_type potential(cutoff_array, h, epsilon_array, sigma_array);
 
     double const eps = std::numeric_limits<double>::epsilon();
     typedef std::array<double, 3> row_type;
@@ -274,8 +274,8 @@ test_local_r4<float_type>::test_local_r4()
     // create modules
     particle = std::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
     box = std::make_shared<box_type>(edges);
-    potential = std::make_shared<potential_type>(h, cutoff_array, epsilon_array, sigma_array);
-    host_potential = std::make_shared<host_potential_type>(h, cutoff_array, epsilon_array, sigma_array);
+    potential = std::make_shared<potential_type>(cutoff_array, h, epsilon_array, sigma_array);
+    host_potential = std::make_shared<host_potential_type>(cutoff_array, h, epsilon_array, sigma_array);
     neighbour = std::make_shared<neighbour_type>(particle);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour, 1);
     particle->on_prepend_force([=](){force->check_cache();});

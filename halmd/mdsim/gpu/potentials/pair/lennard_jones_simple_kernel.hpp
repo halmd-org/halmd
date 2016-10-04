@@ -33,15 +33,21 @@ namespace lennard_jones_simple_kernel {
 // forward declaration for host code
 class lennard_jones_simple;
 
-} // namespace lennard_jones_kernel
-
-struct lennard_jones_simple_wrapper
+template <typename float_type>
+HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type rr)
 {
-    /** Lennard-Jones potential parameters */
-    static cuda::symbol<float> rr_cut;
-    static cuda::symbol<float> en_cut;
-};
+    const float_type sigma2 = 1;
+    const float_type epsilon = 1;
+    float_type rri = sigma2 / rr;
+    float_type ri6 = rri * rri * rri;
+    float_type eps_ri6 = epsilon * ri6;
+    float_type fval = 48 * rri * eps_ri6 * (ri6 - 0.5f) / sigma2;
+    float_type en_pot = 4 * eps_ri6 * (ri6 - 1);
 
+    return make_tuple(fval, en_pot);
+}
+
+} // namespace lennard_jones_kernel
 } // namespace pair
 } // namespace potentials
 } // namespace gpu

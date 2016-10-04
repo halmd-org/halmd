@@ -51,8 +51,7 @@ public:
     typedef boost::numeric::ublas::matrix<unsigned int> uint_matrix_type;
 
     power_law(
-        matrix_type const& cutoff
-      , matrix_type const& epsilon
+        matrix_type const& epsilon
       , matrix_type const& sigma
       , uint_matrix_type const& index
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
@@ -141,26 +140,6 @@ public:
         }
     }
 
-    matrix_type const& r_cut() const
-    {
-        return r_cut_;
-    }
-
-    float_type r_cut(unsigned a, unsigned b) const
-    {
-        return r_cut_(a, b);
-    }
-
-    float_type rr_cut(unsigned a, unsigned b) const
-    {
-        return rr_cut_(a, b);
-    }
-
-    matrix_type const& r_cut_sigma() const
-    {
-        return r_cut_sigma_;
-    }
-
     matrix_type const& epsilon() const
     {
         return epsilon_;
@@ -211,7 +190,7 @@ private:
         }
         float_type eps_rni = epsilon_(a, b) * rni;
         float_type fval = n * eps_rni / rr;
-        float_type en_pot = eps_rni - en_cut_(a, b);
+        float_type en_pot = eps_rni;
 
         return std::make_tuple(fval, en_pot);
     }
@@ -224,14 +203,6 @@ private:
     uint_matrix_type index_;
     /** square of pair separation */
     matrix_type sigma2_;
-    /** cutoff length in units of sigma */
-    matrix_type r_cut_sigma_;
-    /** cutoff length in MD units */
-    matrix_type r_cut_;
-    /** square of cutoff length */
-    matrix_type rr_cut_;
-    /** potential energy at cutoff in MD units */
-    matrix_type en_cut_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

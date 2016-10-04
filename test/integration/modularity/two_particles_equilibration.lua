@@ -94,8 +94,7 @@ local function setup(args)
             {1  , 0.8 } -- AA, AB
           , {0.8, 0.88} -- BA, BB
         }
-      , cutoff = 2.5
-    })
+    }):truncate({"smooth_r4", cutoff = 2.5, h = 0.005})
 
     -- create binning modules explicitly and therefore only once for each particle instance
     local binning = {
@@ -112,7 +111,6 @@ local function setup(args)
     }
     -- define interaction forces with smoothly truncated potential
     local force = {}
-    potential = potential:truncate({h = 0.005})
     for label1, p1 in pairs(particle) do
         for label2, p2 in pairs(particle) do
             local neighbour = mdsim.neighbour({

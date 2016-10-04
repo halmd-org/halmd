@@ -51,10 +51,12 @@ local modified_lennard_jones = {
     host = assert(libhalmd.mdsim.host.potentials.pair.modified_lennard_jones)
 }
 local local_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.local_r4) }
+local discontinuous = { host = assert(libhalmd.mdsim.host.potentials.pair.discontinuous) }
 
 if device.gpu then
     modified_lennard_jones.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.modified_lennard_jones)
     local_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.local_r4)
+    discontinuous.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.discontinuous)
 end
 
 ---
@@ -134,10 +136,6 @@ local M = module(function(args)
     if type(index_n) ~= "table" and type(index_n) ~= "number" then
         error("bad argument 'index_n'", 2)
     end
-    local cutoff = utility.assert_kwarg(args, "cutoff")
-    if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
-        error("bad argument 'cutoff'", 2)
-    end
 
     local memory = args and args.memory or (device.gpu and "gpu" or "host")
 
@@ -148,14 +146,10 @@ local M = module(function(args)
     -- derive number of species from parameter matrices
     local species = args and args.species
         or (type(epsilon) == "table" and #epsilon) or (type(sigma) == "table" and #sigma)
-        or (type(index_m) == "table" and #index_m) or (type(index_n) == "table" and #index_n)
-        or (type(cutoff) == "table" and #cutoff) or 1
+        or (type(index_m) == "table" and #index_m) or (type(index_n) == "table" and #index_n) or 1
     utility.assert_type(species, "number")
 
     -- promote scalars to matrices
-    if type(cutoff) == "number" then
-        cutoff = numeric.scalar_matrix(species, species, cutoff)
-    end
     if type(epsilon) == "number" then
         epsilon = numeric.scalar_matrix(species, species, epsilon)
     end
@@ -173,7 +167,7 @@ local M = module(function(args)
     if not modified_lennard_jones[memory] then
         error(("unsupported memory type '%s'"):format(memory), 2)
     end
-    local self = modified_lennard_jones[memory](cutoff, epsilon, sigma, index_m, index_n, logger)
+    local self = modified_lennard_jones[memory](epsilon, sigma, index_m, index_n, logger)
 
     -- add description for profiler
     self.description = property(function()
@@ -188,13 +182,33 @@ local M = module(function(args)
         return logger
     end)
 
+    local truncate_table = setmetatable({
+        discontinuous = function(self, cutoff, args)
+            return discontinuous[memory](cutoff, self)
+        end,
+        smooth_r4 = function(self, cutoff, args)
+            local h = args.h
+            if type(h) ~= "number" then
+                error("bad argument 'h'", 2)
+            end
+            return local_r4[memory](cutoff, h, self)
+        end
+    }, {
+        __index = function(tbl, key)
+            error("invalid truncation type '"..key.."'", 2)
+        end
+    })
+
     self.truncate = function(self, args)
-        local h = args.h
-        if type(h) ~= "number" then
-            error("bad argument 'h'", 2)
+        local cutoff = utility.assert_kwarg(args, "cutoff")
+        if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
+            error("bad argument 'cutoff'", 2)
+        end
+        if type(cutoff) == "number" then
+            cutoff = numeric.scalar_matrix(species, species, cutoff)
         end
 
-        local newpot = local_r4[memory](h, self)
+        local newpot = truncate_table[args[1] or "discontinuous"](self, cutoff, args)
         newpot.description = "truncated "..self.description
         newpot.memory = self.memory
         newpot.logger = self.logger

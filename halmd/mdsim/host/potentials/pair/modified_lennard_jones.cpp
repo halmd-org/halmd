@@ -28,6 +28,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/pair_full.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
+#include <halmd/mdsim/host/potentials/pair/discontinuous.hpp>
 #include <halmd/mdsim/host/potentials/pair/local_r4.hpp>
 #include <halmd/mdsim/host/potentials/pair/modified_lennard_jones.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -41,23 +42,12 @@ namespace host {
 namespace potentials {
 namespace pair {
 
-template <typename T, typename S>
-static T const&
-check_shape(T const& m1, S const& m2)
-{
-    if (m1.size1() != m2.size1() || m1.size2() != m2.size2()) {
-        throw std::invalid_argument("parameter matrix has invalid shape");
-    }
-    return m1;
-}
-
 /**
  * Initialise Lennard-Jones potential parameters
  */
 template <typename float_type>
 modified_lennard_jones<float_type>::modified_lennard_jones(
-    matrix_type const& cutoff
-  , matrix_type const& epsilon
+    matrix_type const& epsilon
   , matrix_type const& sigma
   , uint_matrix_type const& index_m
   , uint_matrix_type const& index_n
@@ -70,27 +60,13 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
   , index_m_2_(index_m_ / 2)
   , index_n_(check_shape(index_n, epsilon))
   , index_n_2_(index_n_ / 2)
-  , r_cut_sigma_(check_shape(cutoff, epsilon))
-  , r_cut_(element_prod(sigma_, r_cut_sigma_))
-  , rr_cut_(element_prod(r_cut_, r_cut_))
   , sigma2_(element_prod(sigma_, sigma_))
-  , en_cut_(size1(), size2())
   , logger_(logger)
 {
-    // energy shift due to truncation at cutoff length
-    for (unsigned i = 0; i < en_cut_.size1(); ++i) {
-        for (unsigned j = 0; j < en_cut_.size2(); ++j) {
-            en_cut_(i, j) = 0;
-            std::tie(std::ignore, en_cut_(i, j)) = (*this)(rr_cut_(i, j), i, j);
-        }
-    }
-
     LOG("potential well depths: ε = " << epsilon_);
     LOG("interaction range: σ = " << sigma_);
     LOG("index of repulsion: m = " << index_m_);
     LOG("index of attraction: n = " << index_n_);
-    LOG("cutoff length: r_c = " << r_cut_sigma_);
-    LOG("cutoff energy: U = " << en_cut_);
 
     // check conditions on power law indices (after logging output)
     for (unsigned i = 0; i < index_m_.size1(); ++i) {
@@ -124,13 +100,10 @@ void modified_lennard_jones<float_type>::luaopen(lua_State* L)
                             .def(constructor<
                                 matrix_type const&
                               , matrix_type const&
-                              , matrix_type const&
                               , uint_matrix_type const&
                               , uint_matrix_type const&
                               , std::shared_ptr<logger>
                             >())
-                            .property("r_cut", (matrix_type const& (modified_lennard_jones::*)() const) &modified_lennard_jones::r_cut)
-                            .property("r_cut_sigma", &modified_lennard_jones::r_cut_sigma)
                             .property("epsilon", &modified_lennard_jones::epsilon)
                             .property("sigma", &modified_lennard_jones::sigma)
                             .property("index_m", &modified_lennard_jones::index_m)
@@ -147,19 +120,23 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_modified_lennard_j
 #ifndef USE_HOST_SINGLE_PRECISION
     modified_lennard_jones<double>::luaopen(L);
     local_r4<modified_lennard_jones<double>>::luaopen(L);
+    discontinuous<modified_lennard_jones<double>>::luaopen(L);
     forces::pair_full<3, double, modified_lennard_jones<double> >::luaopen(L);
     forces::pair_full<2, double, modified_lennard_jones<double> >::luaopen(L);
     forces::pair_trunc<3, double, local_r4<modified_lennard_jones<double> > >::luaopen(L);
     forces::pair_trunc<2, double, local_r4<modified_lennard_jones<double> > >::luaopen(L);
+    forces::pair_trunc<3, double, discontinuous<modified_lennard_jones<double> > >::luaopen(L);
+    forces::pair_trunc<2, double, discontinuous<modified_lennard_jones<double> > >::luaopen(L);
 #else
     modified_lennard_jones<float>::luaopen(L);
     local_r4<modified_lennard_jones<float>>::luaopen(L);
+    discontinuous<modified_lennard_jones<float>>::luaopen(L);
     forces::pair_full<3, float, modified_lennard_jones<float> >::luaopen(L);
     forces::pair_full<2, float, modified_lennard_jones<float> >::luaopen(L);
-    forces::pair_trunc<3, float, modified_lennard_jones<float> >::luaopen(L);
-    forces::pair_trunc<2, float, modified_lennard_jones<float> >::luaopen(L);
     forces::pair_trunc<3, double, local_r4<modified_lennard_jones<float> > >::luaopen(L);
     forces::pair_trunc<2, double, local_r4<modified_lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<3, double, discontinuous<modified_lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<2, double, discontinuous<modified_lennard_jones<float> > >::luaopen(L);
 #endif
     return 0;
 }
@@ -168,9 +145,11 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_modified_lennard_j
 #ifndef USE_HOST_SINGLE_PRECISION
 template class modified_lennard_jones<double>;
 template class local_r4<modified_lennard_jones<double>>;
+template class discontinuous<modified_lennard_jones<double>>;
 #else
 template class modified_lennard_jones<float>;
 template class local_r4<modified_lennard_jones<float>>;
+template class discontinuous<modified_lennard_jones<float>>;
 #endif
 
 } // namespace pair
@@ -182,17 +161,17 @@ namespace forces {
 #ifndef USE_HOST_SINGLE_PRECISION
 template class pair_full<3, double, potentials::pair::modified_lennard_jones<double> >;
 template class pair_full<2, double, potentials::pair::modified_lennard_jones<double> >;
-template class pair_trunc<3, double, potentials::pair::modified_lennard_jones<double> >;
-template class pair_trunc<2, double, potentials::pair::modified_lennard_jones<double> >;
 template class pair_trunc<3, double, potentials::pair::local_r4<potentials::pair::modified_lennard_jones<double> > >;
 template class pair_trunc<2, double, potentials::pair::local_r4<potentials::pair::modified_lennard_jones<double> > >;
+template class pair_trunc<3, double, potentials::pair::discontinuous<potentials::pair::modified_lennard_jones<double> > >;
+template class pair_trunc<2, double, potentials::pair::discontinuous<potentials::pair::modified_lennard_jones<double> > >;
 #else
 template class pair_full<3, float, potentials::pair::modified_lennard_jones<float> >;
 template class pair_full<2, float, potentials::pair::modified_lennard_jones<float> >;
-template class pair_trunc<3, float, potentials::pair::modified_lennard_jones<float> >;
-template class pair_trunc<2, float, potentials::pair::modified_lennard_jones<float> >;
 template class pair_trunc<3, float, potentials::pair::local_r4<potentials::pair::modified_lennard_jones<float> > >;
 template class pair_trunc<2, float, potentials::pair::local_r4<potentials::pair::modified_lennard_jones<float> > >;
+template class pair_trunc<3, float, potentials::pair::discontinuous<potentials::pair::modified_lennard_jones<float> > >;
+template class pair_trunc<2, float, potentials::pair::discontinuous<potentials::pair::modified_lennard_jones<float> > >;
 #endif
 
 } // namespace forces

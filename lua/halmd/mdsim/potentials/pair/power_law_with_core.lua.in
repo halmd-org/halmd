@@ -47,10 +47,12 @@ local power_law_with_core = {
     host = libhalmd.mdsim.host.potentials.pair.power_law_with_core
 }
 local local_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.local_r4) }
+local discontinuous = { host = assert(libhalmd.mdsim.host.potentials.pair.discontinuous) }
 
 if libhalmd.mdsim.gpu then
     power_law_with_core.gpu = libhalmd.mdsim.gpu.potentials.pair.power_law_with_core
     local_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.local_r4)
+    discontinuous.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.discontinuous)
 end
 
 ---
@@ -114,10 +116,6 @@ end
 --    Device where the particle memory resides.
 --
 local M = module(function(args)
-    local cutoff = utility.assert_kwarg(args, "cutoff")
-    if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
-        error("bad argument 'cutoff'", 2)
-    end
     local core = utility.assert_kwarg(args, "core")
     if type(core) ~= "table" and type(core) ~= "number" then
         error("bad argument 'core'", 2)
@@ -144,13 +142,9 @@ local M = module(function(args)
     -- derive number of species from parameter matrices
     local species = args and args.species
         or (type(epsilon) == "table" and #epsilon) or (type(sigma) == "table" and #sigma)
-        or (type(index) == "table" and #index) or (type(core) == "table" and #core)
-        or (type(cutoff) == "table" and #cutoff) or 1
+        or (type(index) == "table" and #index) or (type(core) == "table" and #core) or 1
     utility.assert_type(species, "number")
 
-    if type(cutoff) == "number" then
-        cutoff = numeric.scalar_matrix(species, species, cutoff)
-    end
     if type(core) == "number" then
         core = numeric.scalar_matrix(species, species, core)
     end
@@ -168,7 +162,7 @@ local M = module(function(args)
     if not power_law_with_core[memory] then
         error(("unsupported memory type '%s'"):format(memory), 2)
     end
-    local self = power_law_with_core[memory](cutoff, core, epsilon, sigma, index, logger)
+    local self = power_law_with_core[memory](core, epsilon, sigma, index, logger)
 
     -- add description for profiler
     self.description = property(function()
@@ -183,13 +177,33 @@ local M = module(function(args)
         return logger
     end)
 
+    local truncate_table = setmetatable({
+        discontinuous = function(self, cutoff, args)
+            return discontinuous[memory](cutoff, self)
+        end,
+        smooth_r4 = function(self, cutoff, args)
+            local h = args.h
+            if type(h) ~= "number" then
+                error("bad argument 'h'", 2)
+            end
+            return local_r4[memory](cutoff, h, self)
+        end
+    }, {
+        __index = function(tbl, key)
+            error("invalid truncation type '"..key.."'", 2)
+        end
+    })
+
     self.truncate = function(self, args)
-        local h = args.h
-        if type(h) ~= "number" then
-            error("bad argument 'h'", 2)
+        local cutoff = utility.assert_kwarg(args, "cutoff")
+        if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
+            error("bad argument 'cutoff'", 2)
+        end
+        if type(cutoff) == "number" then
+            cutoff = numeric.scalar_matrix(species, species, cutoff)
         end
 
-        local newpot = local_r4[memory](h, self)
+        local newpot = truncate_table[args[1] or "discontinuous"](self, cutoff, args)
         newpot.description = "truncated "..self.description
         newpot.memory = self.memory
         newpot.logger = self.logger

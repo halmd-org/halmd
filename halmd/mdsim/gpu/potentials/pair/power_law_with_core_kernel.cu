@@ -20,6 +20,7 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/discontinuous_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/local_r4_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_with_core_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
@@ -35,8 +36,6 @@ namespace power_law_with_core_kernel {
 
 /** array of potential parameters for all combinations of particle types */
 static texture<float4> param_;
-/** squares of potential cutoff radius and energy shift for all combinations of particle types */
-static texture<float2> rr_en_cut_;
 
 /**
  * power law interaction potential of a pair of particles.
@@ -59,27 +58,7 @@ public:
       , unsigned int ntype1, unsigned int ntype2
     )
       : pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
-      , pair_rr_en_cut_(tex1Dfetch(rr_en_cut_, type1 * ntype2 + type2))
     {}
-
-    /**
-     * Returns square of cutoff distance.
-     */
-    HALMD_GPU_ENABLED float rr_cut() const
-    {
-        return pair_rr_en_cut_[0];
-    }
-
-    /**
-     * Check whether particles are in interaction range.
-     *
-     * @param rr squared distance between particles
-     */
-    template <typename float_type>
-    HALMD_GPU_ENABLED bool within_range(float_type rr) const
-    {
-        return (rr < pair_rr_en_cut_[0]);
-    }
 
     /**
      * Compute force and potential for interaction.
@@ -95,33 +74,20 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
-        float_type rr_ss = rr / pair_[SIGMA2];
-        // The computation of the square root can not be avoided
-        // as r_core must be substracted from r but only r * r is passed.
-        float_type r_s = sqrt(rr_ss);  // translates to sqrt.approx.f32 in PTX code for float_type=float (CUDA 3.2)
-        float_type dri = 1 / (r_s - pair_[CORE_SIGMA]);
-        unsigned short n = static_cast<unsigned short>(pair_[INDEX]);
-        float_type eps_dri_n = pair_[EPSILON] * halmd::pow(dri, n);
-
-        float_type en_pot = eps_dri_n - pair_rr_en_cut_[1];
-        float_type n_eps_dri_n_1 = n * dri * eps_dri_n;
-        float_type fval = n_eps_dri_n_1 / (pair_[SIGMA2] * r_s);
-
-        return make_tuple(fval, en_pot);
+        return compute(rr, pair_[SIGMA2], pair_[EPSILON], pair_[CORE_SIGMA]
+                     , static_cast<unsigned short>(pair_[INDEX]));
     }
 
 private:
     /** potential parameters for particle pair */
     fixed_vector<float, 4> pair_;
-    /** squared cutoff radius and energy shift for particle pair */
-    fixed_vector<float, 2> pair_rr_en_cut_;
 };
 
 } // namespace power_law_with_core_kernel
 
 cuda::texture<float4> power_law_with_core_wrapper::param = power_law_with_core_kernel::param_;
-cuda::texture<float2> power_law_with_core_wrapper::rr_en_cut = power_law_with_core_kernel::rr_en_cut_;
 template class local_r4_wrapper<power_law_with_core_kernel::power_law_with_core>;
+template class discontinuous_wrapper<power_law_with_core_kernel::power_law_with_core>;
 
 } // namespace pair
 } // namespace potentials
@@ -131,14 +97,14 @@ namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::power_law_with_core_kernel;
 using namespace halmd::mdsim::gpu::potentials::pair::local_r4_kernel;
+using namespace halmd::mdsim::gpu::potentials::pair::discontinuous_kernel;
 
 template class pair_full_wrapper<3, power_law_with_core>;
 template class pair_full_wrapper<2, power_law_with_core>;
-
-template class pair_trunc_wrapper<3, power_law_with_core>;
-template class pair_trunc_wrapper<2, power_law_with_core>;
 template class pair_trunc_wrapper<3, local_r4<power_law_with_core> >;
 template class pair_trunc_wrapper<2, local_r4<power_law_with_core> >;
+template class pair_trunc_wrapper<3, discontinuous<power_law_with_core> >;
+template class pair_trunc_wrapper<2, discontinuous<power_law_with_core> >;
 
 } // namespace forces
 

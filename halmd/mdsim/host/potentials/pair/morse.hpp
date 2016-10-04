@@ -46,8 +46,7 @@ public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
 
     morse(
-        matrix_type const& cutoff
-      , matrix_type const& epsilon
+        matrix_type const& epsilon
       , matrix_type const& sigma
       , matrix_type const& r_min
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
@@ -67,29 +66,9 @@ public:
         float_type exp_dr = exp(r_min_sigma_(a, b) - r_sigma);
         float_type eps_exp_dr = epsilon_(a, b) * exp_dr;
         float_type fval = 2 * eps_exp_dr * (exp_dr - 1) * r_sigma / rr;
-        float_type en_pot = eps_exp_dr * (exp_dr - 2) - en_cut_(a, b);
+        float_type en_pot = eps_exp_dr * (exp_dr - 2);
 
         return std::make_tuple(fval, en_pot);
-    }
-
-    matrix_type const& r_cut() const
-    {
-        return r_cut_;
-    }
-
-    float_type r_cut(unsigned a, unsigned b) const
-    {
-        return r_cut_(a, b);
-    }
-
-    float_type rr_cut(unsigned a, unsigned b) const
-    {
-        return rr_cut_(a, b);
-    }
-
-    matrix_type const& r_cut_sigma() const
-    {
-        return r_cut_sigma_;
     }
 
     matrix_type const& epsilon() const
@@ -129,14 +108,6 @@ private:
     matrix_type sigma_;
     /** position of potential well in units of sigma */
     matrix_type r_min_sigma_;
-    /** cutoff radius in units of sigma */
-    matrix_type r_cut_sigma_;
-    /** cutoff radius in MD units */
-    matrix_type r_cut_;
-    /** square of cutoff radius */
-    matrix_type rr_cut_;
-    /** potential energy at cutoff length in MD units */
-    matrix_type en_cut_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

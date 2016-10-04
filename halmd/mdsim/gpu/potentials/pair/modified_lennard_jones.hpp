@@ -49,8 +49,7 @@ public:
     typedef boost::numeric::ublas::matrix<unsigned> uint_matrix_type;
 
     modified_lennard_jones(
-        matrix_type const& cutoff
-      , matrix_type const& epsilon
+        matrix_type const& epsilon
       , matrix_type const& sigma
       , uint_matrix_type const& index_m
       , uint_matrix_type const& index_n
@@ -61,27 +60,6 @@ public:
     void bind_textures() const
     {
         modified_lennard_jones_wrapper::param.bind(g_param_);
-        modified_lennard_jones_wrapper::rr_en_cut.bind(g_rr_en_cut_);
-    }
-
-    matrix_type const& r_cut() const
-    {
-        return r_cut_;
-    }
-
-    float_type r_cut(unsigned a, unsigned b) const
-    {
-        return r_cut_(a, b);
-    }
-
-    float_type rr_cut(unsigned a, unsigned b) const
-    {
-        return rr_cut_(a, b);
-    }
-
-    matrix_type const& r_cut_sigma() const
-    {
-        return r_cut_sigma_;
     }
 
     matrix_type const& epsilon() const
@@ -114,6 +92,12 @@ public:
         return epsilon_.size2();
     }
 
+    std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
+    {
+        return modified_lennard_jones_kernel::compute(rr, sigma_(a,b)*sigma_(a,b), epsilon_(a,b)
+                                                    , index_m_(a,b) / 2, index_n_(a,b) / 2);
+    }
+
     /**
      * Bind class to Lua.
      */
@@ -128,20 +112,10 @@ private:
     uint_matrix_type index_m_;
     /** power law index of attraction */
     uint_matrix_type index_n_;
-    /** cutoff length in units of sigma */
-    matrix_type r_cut_sigma_;
-    /** cutoff length in MD units */
-    matrix_type r_cut_;
-    /** square of cutoff length */
-    matrix_type rr_cut_;
     /** square of pair separation */
     matrix_type sigma2_;
-    /** potential energy at cutoff length in MD units */
-    matrix_type en_cut_;
     /** potential parameters at CUDA device */
     cuda::vector<float4> g_param_;
-    /** squared cutoff radius and energy shift at CUDA device */
-    cuda::vector<float2> g_rr_en_cut_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

@@ -38,6 +38,7 @@
 #include <halmd/mdsim/host/max_displacement.hpp>
 #include <halmd/mdsim/host/neighbours/from_binning.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
+#include <halmd/mdsim/host/potentials/pair/discontinuous.hpp>
 #include <halmd/mdsim/host/potentials/pair/lennard_jones.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -51,6 +52,7 @@
 # include <halmd/mdsim/gpu/max_displacement.hpp>
 # include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/discontinuous.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/lennard_jones.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
@@ -312,7 +314,8 @@ template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::host::potentials::pair::lennard_jones<float_type> potential_type;
+    typedef mdsim::host::potentials::pair::lennard_jones<float_type> base_potential_type;
+    typedef mdsim::host::potentials::pair::discontinuous<base_potential_type> potential_type;
     typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::host::binning<dimension, float_type> binning_type;
     typedef mdsim::host::neighbours::from_binning<dimension, float_type> neighbour_type;
@@ -339,7 +342,8 @@ template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::gpu::potentials::pair::lennard_jones<float_type> potential_type;
+    typedef mdsim::gpu::potentials::pair::lennard_jones<float_type> base_potential_type;
+    typedef mdsim::gpu::potentials::pair::discontinuous<base_potential_type> potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::gpu::binning<dimension, float_type> binning_type;
     typedef mdsim::gpu::neighbours::from_binning<dimension, float_type> neighbour_type;

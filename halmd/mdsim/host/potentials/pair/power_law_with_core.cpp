@@ -26,8 +26,9 @@
 
 #include <halmd/mdsim/host/forces/pair_full.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
-#include <halmd/mdsim/host/potentials/pair/power_law_with_core.hpp>
+#include <halmd/mdsim/host/potentials/pair/discontinuous.hpp>
 #include <halmd/mdsim/host/potentials/pair/local_r4.hpp>
+#include <halmd/mdsim/host/potentials/pair/power_law_with_core.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -36,23 +37,12 @@ namespace host {
 namespace potentials {
 namespace pair {
 
-template <typename T, typename S>
-static T const&
-check_shape(T const& m1, S const& m2)
-{
-    if (m1.size1() != m2.size1() || m1.size2() != m2.size2()) {
-        throw std::invalid_argument("parameter matrix has invalid shape");
-    }
-    return m1;
-}
-
 /**
  * Initialise potential parameters
  */
 template <typename float_type>
 power_law_with_core<float_type>::power_law_with_core(
-    matrix_type const& cutoff
-  , matrix_type const& core
+    matrix_type const& core
   , matrix_type const& epsilon
   , matrix_type const& sigma
   , uint_matrix_type const& index
@@ -63,27 +53,13 @@ power_law_with_core<float_type>::power_law_with_core(
   , sigma_(check_shape(sigma, epsilon))
   , index_(check_shape(index, epsilon))
   , sigma2_(element_prod(sigma_, sigma_))
-  , r_cut_sigma_(check_shape(cutoff, epsilon))
-  , r_cut_(element_prod(sigma_, r_cut_sigma_))
-  , rr_cut_(element_prod(r_cut_, r_cut_))
   , r_core_sigma_(check_shape(core, epsilon))
-  , en_cut_(size1(), size2())
   , logger_(logger)
 {
-    // energy shift due to truncation at cutoff length
-    for (unsigned i = 0; i < en_cut_.size1(); ++i) {
-        for (unsigned j = 0; j < en_cut_.size2(); ++j) {
-            en_cut_(i, j) = 0;
-            std::tie(std::ignore, en_cut_(i, j)) = (*this)(rr_cut_(i, j), i, j);
-        }
-    }
-
     LOG("interaction strength ε = " << epsilon_);
     LOG("interaction range σ = " << sigma_);
     LOG("core radius r_core/σ = " << r_core_sigma_);
     LOG("power law index: n = " << index_);
-    LOG("cutoff length: r_c/σ = " << r_cut_sigma_);
-    LOG("cutoff energy U = " << en_cut_);
 }
 
 template <typename float_type>
@@ -102,15 +78,12 @@ void power_law_with_core<float_type>::luaopen(lua_State* L)
                     [
                         class_<power_law_with_core, std::shared_ptr<power_law_with_core> >("power_law_with_core")
                             .def(constructor<
-                                matrix_type const&          // cutoff
-                              , matrix_type const&          // core
+                                matrix_type const&          // core
                               , matrix_type const&          // epsilon
                               , matrix_type const&          // sigma
                               , uint_matrix_type const&     // index
                               , std::shared_ptr<logger>
                             >())
-                            .property("r_cut", (matrix_type const& (power_law_with_core::*)() const) &power_law_with_core::r_cut)
-                            .property("r_cut_sigma", &power_law_with_core::r_cut_sigma)
                             .property("r_core_sigma", &power_law_with_core::r_core_sigma)
                             .property("epsilon", &power_law_with_core::epsilon)
                             .property("sigma", &power_law_with_core::sigma)
@@ -126,20 +99,24 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_power_law_with_cor
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     power_law_with_core<double>::luaopen(L);
+    local_r4<power_law_with_core<double>>::luaopen(L);
+    discontinuous<power_law_with_core<double>>::luaopen(L);
     forces::pair_full<3, double, power_law_with_core<double> >::luaopen(L);
     forces::pair_full<2, double, power_law_with_core<double> >::luaopen(L);
-    forces::pair_trunc<3, double, power_law_with_core<double> >::luaopen(L);
-    forces::pair_trunc<2, double, power_law_with_core<double> >::luaopen(L);
     forces::pair_trunc<3, double, local_r4<power_law_with_core<double> > >::luaopen(L);
     forces::pair_trunc<2, double, local_r4<power_law_with_core<double> > >::luaopen(L);
+    forces::pair_trunc<3, double, discontinuous<power_law_with_core<double> > >::luaopen(L);
+    forces::pair_trunc<2, double, discontinuous<power_law_with_core<double> > >::luaopen(L);
 #else
     power_law_with_core<float>::luaopen(L);
+    local_r4<power_law_with_core<float>>::luaopen(L);
+    discontinuous<power_law_with_core<float>>::luaopen(L);
     forces::pair_full<3, float, power_law_with_core<float> >::luaopen(L);
     forces::pair_full<2, float, power_law_with_core<float> >::luaopen(L);
-    forces::pair_trunc<3, float, power_law_with_core<float> >::luaopen(L);
-    forces::pair_trunc<2, float, power_law_with_core<float> >::luaopen(L);
     forces::pair_trunc<3, float, local_r4<power_law_with_core<float> > >::luaopen(L);
     forces::pair_trunc<2, float, local_r4<power_law_with_core<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, discontinuous<power_law_with_core<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, discontinuous<power_law_with_core<float> > >::luaopen(L);
 #endif
     return 0;
 }
@@ -148,9 +125,11 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_power_law_with_cor
 #ifndef USE_HOST_SINGLE_PRECISION
 template class power_law_with_core<double>;
 template class local_r4<power_law_with_core<double>>;
+template class discontinuous<power_law_with_core<double>>;
 #else
 template class power_law_with_core<float>;
 template class local_r4<power_law_with_core<float>>;
+template class discontinuous<power_law_with_core<double>>;
 #endif
 
 } // namespace pair
@@ -162,17 +141,17 @@ namespace forces {
 #ifndef USE_HOST_SINGLE_PRECISION
 template class pair_full<3, double, potentials::pair::power_law_with_core<double> >;
 template class pair_full<2, double, potentials::pair::power_law_with_core<double> >;
-template class pair_trunc<3, double, potentials::pair::power_law_with_core<double> >;
-template class pair_trunc<2, double, potentials::pair::power_law_with_core<double> >;
 template class pair_trunc<3, double, potentials::pair::local_r4<potentials::pair::power_law_with_core<double> > >;
 template class pair_trunc<2, double, potentials::pair::local_r4<potentials::pair::power_law_with_core<double> > >;
+template class pair_trunc<3, double, potentials::pair::discontinuous<potentials::pair::power_law_with_core<double> > >;
+template class pair_trunc<2, double, potentials::pair::discontinuous<potentials::pair::power_law_with_core<double> > >;
 #else
 template class pair_full<3, float, potentials::pair::power_law_with_core<float> >;
 template class pair_full<2, float, potentials::pair::power_law_with_core<float> >;
-template class pair_trunc<3, float, potentials::pair::power_law_with_core<float> >;
-template class pair_trunc<2, float, potentials::pair::power_law_with_core<float> >;
 template class pair_trunc<3, float, potentials::pair::local_r4<potentials::pair::power_law_with_core<float> > >;
 template class pair_trunc<2, float, potentials::pair::local_r4<potentials::pair::power_law_with_core<float> > >;
+template class pair_trunc<3, float, potentials::pair::discontinuous<potentials::pair::power_law_with_core<float> > >;
+template class pair_trunc<2, float, potentials::pair::discontinuous<potentials::pair::power_law_with_core<float> > >;
 #endif
 
 } // namespace forces

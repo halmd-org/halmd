@@ -34,6 +34,7 @@ namespace potentials {
 namespace pair {
 namespace local_r4_kernel {
 
+static texture<float4> param_;
 static __constant__ float rri_smooth_;
 
 template<typename parent_kernel>
@@ -41,7 +42,7 @@ class local_r4 : public parent_kernel
 {
 public:
     /**
-     * Construct Lennard-Jones pair interaction potential.
+     * Construct Smoothing Function.
      *
      * Fetch potential parameters from texture cache for particle pair.
      *
@@ -53,14 +54,23 @@ public:
       , unsigned int ntype1, unsigned int ntype2
     )
       : parent_kernel(type1, type2, ntype1, ntype2)
+      , pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
     {}
+
+    /**
+     * Returns cutoff distance.
+     */
+    HALMD_GPU_ENABLED float r_cut() const
+    {
+        return pair_[R_CUT];
+    }
 
     /**
      * Returns square of cutoff distance.
      */
     HALMD_GPU_ENABLED float rr_cut() const
     {
-        return parent_kernel::rr_cut();
+        return pair_[RR_CUT];
     }
 
     /**
@@ -71,7 +81,7 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED bool within_range(float_type rr) const
     {
-        return parent_kernel::within_range (rr);
+        return (rr < pair_[RR_CUT]);
     }
 
     /**
@@ -85,8 +95,9 @@ public:
     {
         float_type f_abs, pot;
         tie(f_abs, pot) = parent_kernel::operator()(rr);
+        pot = pot - pair_[EN_CUT];
         float_type r = sqrt(rr);
-        float_type r_cut = sqrt(rr_cut());
+        float_type r_cut = pair_[R_CUT];
         float_type dr = r - r_cut;
         float_type x2 = dr * dr * rri_smooth_;
         float_type x4 = x2 * x2;
@@ -104,12 +115,16 @@ public:
     }
 
 private:
+    fixed_vector<float, 4> pair_;
 };
 
 } // namespace local_r4_kernel
 
 template<typename parent_kernel>
 cuda::symbol<float> local_r4_wrapper<parent_kernel>::rri_smooth = local_r4_kernel::rri_smooth_;
+
+template<typename parent_kernel>
+cuda::texture<float4> local_r4_wrapper<parent_kernel>::param = local_r4_kernel::param_;
 
 } // namespace pair
 } // namespace potentials

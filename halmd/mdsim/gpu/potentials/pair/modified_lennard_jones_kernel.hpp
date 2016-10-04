@@ -22,6 +22,7 @@
 #define HALMD_MDSIM_GPU_POTENTIALS_PAIR_MODIFIED_LENNARD_JONES_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 
 namespace halmd {
 namespace mdsim {
@@ -43,14 +44,30 @@ enum {
 // forward declaration for host code
 class modified_lennard_jones;
 
+template<typename float_type>
+HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type const& rr
+                                                                    , float_type const& sigma2
+                                                                    , float_type const& epsilon
+                                                                    , unsigned short const& m_2
+                                                                    , unsigned short const& n_2)
+{
+        float_type rri = sigma2 / rr;
+        float_type rni = halmd::pow(rri, n_2);
+        float_type rmni = (m_2 - n_2 == n_2) ? rni : halmd::pow(rri, m_2 - n_2);
+        float_type eps_rni = epsilon * rni;
+        float_type fval = 8 * rri * eps_rni * (m_2 * rmni - n_2) / sigma2;
+        float_type en_pot = 4 * eps_rni * (rmni - 1);
+
+        return make_tuple(fval, en_pot);
+
+}
+
 } // namespace modified_lennard_jones_kernel
 
 struct modified_lennard_jones_wrapper
 {
     /** Lennard-Jones potential parameters */
     static cuda::texture<float4> param;
-    /** squared cutoff radius and energy shift */
-    static cuda::texture<float2> rr_en_cut;
 };
 
 } // namespace pair

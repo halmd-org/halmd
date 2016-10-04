@@ -39,7 +39,7 @@ namespace pair {
 /**
  * Lennard-Jones potential for a single species (constituting a "simple liquid").
  *
- * The usual LJ units are employed, the only parameter is the potential cutoff.
+ * The usual LJ units are employed
  */
 template <typename float_type_>
 class lennard_jones_simple
@@ -53,18 +53,12 @@ public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
 
     lennard_jones_simple(
-        float_type cutoff
-      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
+        std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     void bind_textures() const {}
 
     // FIXME are the following functions actually needed?
-    matrix_type r_cut() const
-    {
-        return scalar_matrix_type(1, 1, r_cut_);
-    }
-
     matrix_type epsilon() const
     {
         return scalar_matrix_type(1, 1, 1);
@@ -77,12 +71,17 @@ public:
 
     unsigned int size1() const
     {
-        return -1U;
+        return 1U;
     }
 
     unsigned int size2() const
     {
-        return -1U;
+        return 1U;
+    }
+
+    std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
+    {
+        return lennard_jones_simple_kernel::compute(rr);
     }
 
     /**
@@ -91,12 +90,6 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    /** cutoff length in MD units, r_cut() must return a matrix */
-    float_type r_cut_;
-    /** square of cutoff length */
-    float_type rr_cut_;
-    /** potential energy at cutoff length in MD units */
-    float_type en_cut_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

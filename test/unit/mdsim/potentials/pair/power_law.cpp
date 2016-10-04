@@ -31,10 +31,12 @@
 #include <numeric> // std::accumulate
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/host/potentials/pair/discontinuous.hpp>
 #include <halmd/mdsim/host/potentials/pair/power_law.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/discontinuous.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/power_law.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
@@ -56,7 +58,8 @@ using namespace std;
 
 BOOST_AUTO_TEST_CASE( power_law_host )
 {
-    typedef mdsim::host::potentials::pair::power_law<double> potential_type;
+    typedef mdsim::host::potentials::pair::power_law<double> base_potential_type;
+    typedef mdsim::host::potentials::pair::discontinuous<base_potential_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
     typedef potential_type::uint_matrix_type uint_matrix_type;
 
@@ -174,8 +177,10 @@ struct power_law
 
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::gpu::potentials::pair::power_law<float_type> potential_type;
-    typedef mdsim::host::potentials::pair::power_law<double> host_potential_type;
+    typedef mdsim::gpu::potentials::pair::power_law<float_type> base_potential_type;
+    typedef mdsim::gpu::potentials::pair::discontinuous<base_potential_type> potential_type;
+    typedef mdsim::host::potentials::pair::power_law<double> base_host_potential_type;
+    typedef mdsim::host::potentials::pair::discontinuous<base_host_potential_type> host_potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;
 

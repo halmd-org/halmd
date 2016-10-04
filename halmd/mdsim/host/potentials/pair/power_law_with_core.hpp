@@ -52,8 +52,7 @@ public:
     typedef boost::numeric::ublas::matrix<unsigned int> uint_matrix_type;
 
     power_law_with_core(
-        matrix_type const& cutoff
-      , matrix_type const& core
+        matrix_type const& core
       , matrix_type const& epsilon
       , matrix_type const& sigma
       , uint_matrix_type const& index
@@ -143,26 +142,6 @@ public:
         }
     }
 
-    matrix_type const& r_cut() const
-    {
-        return r_cut_;
-    }
-
-    float_type r_cut(unsigned a, unsigned b) const
-    {
-        return r_cut_(a, b);
-    }
-
-    float_type rr_cut(unsigned a, unsigned b) const
-    {
-        return rr_cut_(a, b);
-    }
-
-    matrix_type const& r_cut_sigma() const
-    {
-        return r_cut_sigma_;
-    }
-
     matrix_type const& r_core_sigma() const
     {
         return r_core_sigma_;
@@ -225,7 +204,7 @@ private:
         float_type dri = 1 / (r_s - r_core_sigma_(a, b));
         float_type eps_dri_n = epsilon_(a, b) * ((const_index > 0) ? fixed_pow<const_index>(dri) : halmd::pow(dri, n));
 
-        float_type en_pot = eps_dri_n - en_cut_(a, b);
+        float_type en_pot = eps_dri_n;
         float_type n_eps_dri_n_1 = n * dri * eps_dri_n;
         float_type fval = n_eps_dri_n_1 / (sigma2_(a, b) * r_s);
 
@@ -240,16 +219,8 @@ private:
     uint_matrix_type index_;
     /** square of pair separation in MD units */
     matrix_type sigma2_;
-    /** cutoff length in units of sigma */
-    matrix_type r_cut_sigma_;
-    /** cutoff length in MD units */
-    matrix_type r_cut_;
-    /** square of cutoff length */
-    matrix_type rr_cut_;
     /** core radius in units of sigma */
     matrix_type r_core_sigma_;
-    /** potential energy at cutoff in MD units */
-    matrix_type en_cut_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

@@ -22,6 +22,7 @@
 #define HALMD_MDSIM_GPU_POTENTIALS_PAIR_POWER_LAW_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 
 namespace halmd {
 namespace mdsim {
@@ -42,14 +43,31 @@ enum {
 // forward declaration for host code
 class power_law;
 
+template<typename float_type>
+HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type const& rr
+                                                                    , float_type const& sigma2
+                                                                    , float_type const& epsilon
+                                                                    , unsigned short const& n)
+{
+    float_type rri = sigma2 / rr;
+    // avoid computation of square root for even powers
+    float_type rni = halmd::pow(rri, n / 2);
+    if (n % 2) {
+        rni *= sqrt(rri); // translates to sqrt.approx.f32 in PTX code for float_type=float (CUDA 3.2)
+    }
+    float_type eps_rni = epsilon * rni;
+    float_type fval = n * eps_rni / rr;
+    float_type en_pot = eps_rni;
+
+    return make_tuple(fval, en_pot);
+}
+
 } // namespace power_law_kernel
 
 struct power_law_wrapper
 {
     /** power law potential parameters */
     static cuda::texture<float4> param;
-    /** squared cutoff radius and energy shift */
-    static cuda::texture<float2> rr_en_cut;
 };
 
 } // namespace pair
