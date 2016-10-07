@@ -180,9 +180,22 @@ hsize_t append::read_time_index(
     return first - times.begin();
 }
 
+/**
+ * Wrapper function to allow one step reading.
+ *
+ * This wrapper internally creates an array and  connects it to the on_read slot.
+ * Additionally it connects to the on_append_read slot and passes the read array
+ * to the given slot function. After that the internal array is freed.
+ * This way complete datasets can be directly passed to a single slot function
+ * by const reference.
+ */
 template<typename T>
-void wrap_on_read(std::shared_ptr<append> self, H5::Group &group, std::function<void(const T&)> slot
-        , std::vector<std::string> const& location)
+void wrap_on_read(
+    std::shared_ptr<append> self
+  , H5::Group& group
+  , std::function<void(const T&)> slot
+  , std::vector<std::string> const& location
+)
 {
     std::shared_ptr<T> array = std::make_shared<T>();
 

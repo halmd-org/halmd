@@ -1,6 +1,7 @@
 /*
  * Copyright © 2012      Peter Colberg
  * Copyright © 2012      Felix Höfling
+ * Copyright © 2016      Daniel Kirchner
  * Copyright © 2013-2015 Nicolas Höft
  *
  * This file is part of HALMD.
@@ -72,7 +73,8 @@ public:
      * If the stored cached copy of the indices is no longer valid,
      * it is automatically updated from the GPU storage.
      */
-    host_array_type const& ordered_host_cached() {
+    host_array_type const& ordered_host_cached()
+    {
         if (!(ordered_observer_ == ordered())) {
             auto const& indices = read_cache(ordered());
             cached_ordered_.resize(indices.size());
@@ -86,6 +88,7 @@ public:
      * Bind class to Lua.
      */
     static void luaopen(lua_State* L);
+
 private:
     host_array_type cached_ordered_;
     cache<> ordered_observer_;

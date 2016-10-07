@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2012  Peter Colberg and Felix Höfling
+ * Copyright © 2016       Daniel Kirchner
+ * Copyright © 2008-2012  Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -50,18 +52,23 @@ namespace gpu {
  */
 class phase_space_host_cache {
 public:
-    phase_space_host_cache(std::shared_ptr<mdsim::gpu::particle_array const> array) : array_(array) {
-    }
-    bool up_to_date() const {
+    phase_space_host_cache(std::shared_ptr<mdsim::gpu::particle_array const> array)
+      : array_(array) {}
+
+    bool up_to_date() const
+    {
         return array_->cache_observer() == cache_observer_;
     }
-    cuda::host::vector<uint8_t>& acquire(void) {
+
+    cuda::host::vector<uint8_t>& acquire(void)
+    {
         if(!(array_->cache_observer() == cache_observer_)) {
             data_ = array_->get_gpu_data();
             cache_observer_ = array_->cache_observer();
         }
         return data_;
     }
+
 private:
     cuda::host::vector<uint8_t> data_;
     cache<> cache_observer_;
@@ -75,7 +82,8 @@ private:
  * for the sample related interface of phase_space
  */
 template<int dimension, typename scalar_type>
-class phase_space_sampler_typed : public phase_space_sampler
+class phase_space_sampler_typed
+  : public phase_space_sampler
 {
 public:
     typedef host::samples::sample<dimension, scalar_type> sample_type;
@@ -83,21 +91,24 @@ public:
     typedef mdsim::gpu::particle_array_host_wrapper<typename sample_type::data_type> particle_array_type;
     typedef std::map<mdsim::gpu::particle_array*, std::shared_ptr<phase_space_host_cache>> host_cache_type;
 
-    static std::shared_ptr<phase_space_sampler_typed>
-    create(std::shared_ptr<particle_group_type> group
-         , std::shared_ptr<mdsim::gpu::particle_array> array
-         , std::size_t nthreads
-         , host_cache_type& host_cache)
+    /**
+     * Creates a sampler for the given particle group and particle array.
+     *
+     * @param group         particle group passed down from phase_space
+     * @param array         particle array containing the data to be sampled
+     * @param nthreads      number of GPU threads, currently needed for dsfloat data
+     * @param host_cache    reference to the cache of gpu data stored in phase_space
+     */
+    phase_space_sampler_typed(
+        std::shared_ptr<particle_group_type> group
+      , std::shared_ptr<mdsim::gpu::particle_array> array
+      , std::size_t nthreads
+      , host_cache_type& host_cache
+    )
+      : array_(mdsim::gpu::particle_array::cast_host_wrapper<typename sample_type::data_type>(array))
+      , particle_group_(group)
+      , nthreads_(nthreads)
     {
-        return std::make_shared<phase_space_sampler_typed>(group, array, nthreads, host_cache);
-    }
-
-    phase_space_sampler_typed(std::shared_ptr<particle_group_type> group
-                            , std::shared_ptr<mdsim::gpu::particle_array> array
-                            , std::size_t nthreads
-                            , host_cache_type& host_cache)
-            : array_(mdsim::gpu::particle_array::cast_host_wrapper<typename sample_type::data_type>(array))
-            , particle_group_(group), nthreads_(nthreads) {
         // find host cache for the gpu particle array backing the queried host wrapper array
         // or create and store a new one if none was created so far
         auto parent = array_->parent();
@@ -107,6 +118,19 @@ public:
         } else {
             host_cache_ = it->second;
         }
+    }
+
+    /**
+     * Static wrapper to directly construct a shared_ptr.
+     */
+    static std::shared_ptr<phase_space_sampler_typed> create(
+        std::shared_ptr<particle_group_type> group
+      , std::shared_ptr<mdsim::gpu::particle_array> array
+      , std::size_t nthreads
+      , host_cache_type& host_cache
+    )
+    {
+        return std::make_shared<phase_space_sampler_typed>(group, array, nthreads, host_cache);
     }
 
     /**
@@ -136,10 +160,12 @@ public:
         }
         return sample_;
     }
+
     /**
      * copies the data of a sample to the GPU particle array
      */
-    virtual void set(std::shared_ptr<sample_base const> sample_) {
+    virtual void set(std::shared_ptr<sample_base const> sample_)
+    {
         typedef typename sample_type::data_type data_type;
 
         if(sample_->type() != typeid(typename sample_type::data_type)) {
@@ -171,11 +197,14 @@ public:
     /**
      * returns a lua slot function to be used to acquire a host sample
      */
-    virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self_) {
+    virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self_)
+    {
         auto self = std::static_pointer_cast<phase_space_sampler_typed>(self_);
-        std::function<std::shared_ptr<sample_type const>()> fn = [self]() -> std::shared_ptr<sample_type const> {
+        std::function<std::shared_ptr<sample_type const>()> fn = [self]() -> std::shared_ptr<sample_type const>
+        {
             return std::static_pointer_cast<sample_type const>(self->acquire());
         };
+
         luaponte::default_converter<std::function<std::shared_ptr<sample_type const>()>>().apply(L, fn);
         luaponte::object result(luaponte::from_stack(L, -1));
         lua_pop(L, 1);
@@ -185,10 +214,13 @@ public:
     /**
      * returns a lua slot function to be used to directly acquire the data of a host sample
      */
-    virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) {
-        std::function<typename sample_type::array_type const&()> fn = [self]() -> typename sample_type::array_type const& {
+    virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self)
+    {
+        std::function<typename sample_type::array_type const&()> fn = [self]() -> typename sample_type::array_type const&
+        {
             return std::static_pointer_cast<sample_type const>(std::static_pointer_cast<phase_space_sampler_typed>(self)->acquire())->data();
         };
+
         luaponte::default_converter<std::function<typename sample_type::array_type const&()>>().apply(L, fn);
         luaponte::object result(luaponte::from_stack(L, -1));
         lua_pop(L, 1);
@@ -198,15 +230,23 @@ public:
     /**
      * wrapper to export the set member to lua
      */
-    virtual void set_lua(luaponte::object sample) {
+    virtual void set_lua(luaponte::object sample)
+    {
         set(luaponte::object_cast<std::shared_ptr<sample_type const>>(sample));
     }
+
 protected:
+    /** particle array containing the data to be sampled */
     std::shared_ptr<particle_array_type> array_;
+    /** particle group containing the data indices to be sampled */
     std::shared_ptr<particle_group_type> particle_group_;
+    /** host cache of the GPU data backing the sample data */
     std::shared_ptr<phase_space_host_cache> host_cache_;
+    /** cached sample */
     std::shared_ptr<sample_type> sample_;
+    /** cache observer for the index list */
     cache<> group_observer_;
+    /** number of GPU threads (currently only used for dsfloat data) */
     std::size_t nthreads_;
 };
 
@@ -215,31 +255,34 @@ protected:
  *
  * used to create the correct phase space sampler based on the typeid of a particle array
  */
-static const std::unordered_map<std::type_index,
-        std::function<std::shared_ptr<phase_space_sampler>(std::shared_ptr<mdsim::gpu::particle_group>
-                , std::shared_ptr<mdsim::gpu::particle_array>
-                , std::size_t
-                , std::map<mdsim::gpu::particle_array*, std::shared_ptr<phase_space_host_cache>>&)>>
-        phase_space_sampler_typed_create_map = {
-        { typeid(float), phase_space_sampler_typed<1, float>::create },
-        { typeid(fixed_vector<float, 2>), phase_space_sampler_typed<2, float>::create },
-        { typeid(fixed_vector<float, 3>), phase_space_sampler_typed<3, float>::create },
-        { typeid(fixed_vector<float, 4>), phase_space_sampler_typed<4, float>::create },
+static const std::unordered_map<
+    std::type_index
+  , std::function<std::shared_ptr<phase_space_sampler>(
+        std::shared_ptr<mdsim::gpu::particle_group>
+      , std::shared_ptr<mdsim::gpu::particle_array>
+      , std::size_t
+      , std::map<mdsim::gpu::particle_array*, std::shared_ptr<phase_space_host_cache>>&
+    )>
+> phase_space_sampler_typed_create_map = {
+    { typeid(float), phase_space_sampler_typed<1, float>::create }
+  , { typeid(fixed_vector<float, 2>), phase_space_sampler_typed<2, float>::create }
+  , { typeid(fixed_vector<float, 3>), phase_space_sampler_typed<3, float>::create }
+  , { typeid(fixed_vector<float, 4>), phase_space_sampler_typed<4, float>::create }
 
-        { typeid(double), phase_space_sampler_typed<1, double>::create },
-        { typeid(fixed_vector<double, 2>), phase_space_sampler_typed<2, double>::create },
-        { typeid(fixed_vector<double, 3>), phase_space_sampler_typed<3, double>::create },
-        { typeid(fixed_vector<double, 4>), phase_space_sampler_typed<4, double>::create },
+  , { typeid(double), phase_space_sampler_typed<1, double>::create }
+  , { typeid(fixed_vector<double, 2>), phase_space_sampler_typed<2, double>::create }
+  , { typeid(fixed_vector<double, 3>), phase_space_sampler_typed<3, double>::create }
+  , { typeid(fixed_vector<double, 4>), phase_space_sampler_typed<4, double>::create }
 
-        { typeid(int), phase_space_sampler_typed<1, int>::create },
-        { typeid(fixed_vector<int, 2>), phase_space_sampler_typed<2, int>::create },
-        { typeid(fixed_vector<int, 3>), phase_space_sampler_typed<3, int>::create },
-        { typeid(fixed_vector<int, 4>), phase_space_sampler_typed<4, int>::create },
+  , { typeid(int), phase_space_sampler_typed<1, int>::create }
+  , { typeid(fixed_vector<int, 2>), phase_space_sampler_typed<2, int>::create }
+  , { typeid(fixed_vector<int, 3>), phase_space_sampler_typed<3, int>::create }
+  , { typeid(fixed_vector<int, 4>), phase_space_sampler_typed<4, int>::create }
 
-        { typeid(unsigned int), phase_space_sampler_typed<1, unsigned int>::create },
-        { typeid(fixed_vector<unsigned int, 2>), phase_space_sampler_typed<2, unsigned int>::create },
-        { typeid(fixed_vector<unsigned int, 3>), phase_space_sampler_typed<3, unsigned int>::create },
-        { typeid(fixed_vector<unsigned int, 4>), phase_space_sampler_typed<4, unsigned int>::create },
+  , { typeid(unsigned int), phase_space_sampler_typed<1, unsigned int>::create }
+  , { typeid(fixed_vector<unsigned int, 2>), phase_space_sampler_typed<2, unsigned int>::create }
+  , { typeid(fixed_vector<unsigned int, 3>), phase_space_sampler_typed<3, unsigned int>::create }
+  , { typeid(fixed_vector<unsigned int, 4>), phase_space_sampler_typed<4, unsigned int>::create }
 };
 
 /**
@@ -248,7 +291,8 @@ static const std::unordered_map<std::type_index,
  * does the same as the generic sampler, but additionally reduces/extends periodic positions
  */
 template<int dimension, typename scalar_type>
-class phase_space_sampler_position : public phase_space_sampler_typed<dimension, scalar_type>
+class phase_space_sampler_position
+  : public phase_space_sampler_typed<dimension, scalar_type>
 {
 public:
     typedef host::samples::sample<dimension, scalar_type> sample_type;
@@ -256,25 +300,29 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle_array_host_wrapper<typename sample_type::data_type> particle_array_type;
 
-    static std::shared_ptr<phase_space_sampler_position> create(std::shared_ptr<particle_group_type> group
-            , std::shared_ptr<box_type const> box
-            , std::shared_ptr<mdsim::gpu::particle_array> position_array
-            , std::shared_ptr<mdsim::gpu::particle_array> image_array
-            , cuda::config const& dim
-            , std::map<mdsim::gpu::particle_array*, std::shared_ptr<phase_space_host_cache>>& host_cache)
+    /**
+     * Creates a position sampler for the given particle group.
+     *
+     * @param group             particle group passed down from phase_space
+     * @param box               box for periodic border conditions
+     * @param position_array    particle array containing the position data
+     * @param image_array       particle array containing the image data
+     * @param dim               CUDA configuration used to launch CUDA kernels
+     * @param host_cache        reference to the cache of gpu data stored in phase_space
+     */
+    phase_space_sampler_position(
+        std::shared_ptr<particle_group_type> group
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<mdsim::gpu::particle_array> position_array
+      , std::shared_ptr<mdsim::gpu::particle_array> image_array
+      , cuda::config const& dim
+      , std::map<mdsim::gpu::particle_array*, std::shared_ptr<phase_space_host_cache>>& host_cache
+    )
+      : phase_space_sampler_typed<dimension, scalar_type>(group, position_array, dim.threads(), host_cache)
+      , box_(box)
+      , image_array_(mdsim::gpu::particle_array::cast_host_wrapper<typename sample_type::data_type>(image_array))
+      , dim_(dim)
     {
-        return std::make_shared<phase_space_sampler_position>(group, box, position_array, image_array, dim, host_cache);
-    }
-
-    phase_space_sampler_position(std::shared_ptr<particle_group_type> group
-            , std::shared_ptr<box_type const> box
-            , std::shared_ptr<mdsim::gpu::particle_array> position_array
-            , std::shared_ptr<mdsim::gpu::particle_array> image_array
-            , cuda::config const& dim
-            , std::map<mdsim::gpu::particle_array*, std::shared_ptr<phase_space_host_cache>>& host_cache)
-            : phase_space_sampler_typed<dimension, scalar_type>(group, position_array, dim.threads(), host_cache), box_(box),
-              image_array_(mdsim::gpu::particle_array::cast_host_wrapper<typename sample_type::data_type>(image_array)),
-              dim_(dim) {
         auto image_parent = image_array_->parent();
         auto it = host_cache.find(image_parent.get());
         if (it == host_cache.end()) {
@@ -284,7 +332,29 @@ public:
         }
     }
 
-    virtual std::shared_ptr<sample_base> acquire() {
+    /**
+     * Static wrapper to directly construct a shared_ptr.
+     */
+    static std::shared_ptr<phase_space_sampler_position> create(
+        std::shared_ptr<particle_group_type> group
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<mdsim::gpu::particle_array> position_array
+      , std::shared_ptr<mdsim::gpu::particle_array> image_array
+      , cuda::config const& dim
+      , std::map<mdsim::gpu::particle_array*, std::shared_ptr<phase_space_host_cache>>& host_cache)
+    {
+        return std::make_shared<phase_space_sampler_position>(group, box, position_array, image_array, dim, host_cache);
+    }
+
+    /**
+     * acquire a sample
+     *
+     * Copies the data from the cached GPU data to a new sample if the data is not up to date,
+     * returns the stored sample otherwise.
+     * Periodically extends position data.
+     */
+    virtual std::shared_ptr<sample_base> acquire()
+    {
         if (!(this->group_observer_ == this->particle_group_->ordered())
             || !this->host_cache_->up_to_date()
             || !image_host_cache_->up_to_date()) {
@@ -310,7 +380,14 @@ public:
         }
         return this->sample_;
     }
-    virtual void set(std::shared_ptr<sample_base const> sample) {
+
+    /**
+     * Copies the data of a sample to the GPU particle array.
+     * This is done by a CUDA kernel that automatically periodically reduces
+     * the position data.
+     */
+    virtual void set(std::shared_ptr<sample_base const> sample)
+    {
         // set position data the same as any other kind of data
         phase_space_sampler_typed<dimension, scalar_type>::set(sample);
 
@@ -323,11 +400,11 @@ public:
             phase_space_wrapper<dimension>::kernel.r.bind(*position);
             cuda::configure(dim_.grid, dim_.block);
             phase_space_wrapper<dimension>::kernel.reduce_periodic(
-                    &*group.begin()
-                    , &*position->begin()
-                    , &*image->begin()
-                    , static_cast<fixed_vector<scalar_type, dimension>>(box_->length())
-                    , group.size()
+                &*group.begin()
+              , &*position->begin()
+              , &*image->begin()
+              , static_cast<fixed_vector<scalar_type, dimension>>(box_->length())
+              , group.size()
             );
         }
         catch (cuda::error const&)
@@ -338,9 +415,13 @@ public:
     }
 
 private:
+    /** box for periodic border conditions */
     std::shared_ptr<box_type const> box_;
+    /** particle array storing the image data */
     std::shared_ptr<particle_array_type> image_array_;
+    /** host cache of the GPU data backing the sample data */
     std::shared_ptr<phase_space_host_cache> image_host_cache_;
+    /** CUDA configuration for launching kernels */
     cuda::config const dim_;
 };
 
@@ -351,25 +432,40 @@ private:
  * for the sample related interface of phase_space
  */
 template<int dimension, typename data_type>
-class phase_space_sampler_gpu_typed : public phase_space_sampler
+class phase_space_sampler_gpu_typed
+  : public phase_space_sampler
 {
 public:
     typedef samples::sample<dimension, data_type> sample_type;
     typedef mdsim::gpu::particle_group particle_group_type;
     typedef mdsim::gpu::particle_array_gpu<data_type> particle_array_type;
 
-    static std::shared_ptr<phase_space_sampler_gpu_typed> create(std::shared_ptr<particle_group_type> group
-            , std::shared_ptr<mdsim::gpu::particle_array> array
-            , cuda::config const& dim)
+    /**
+     * Creates a sampler for the given particle group and particle array.
+     *
+     * @param group     particle group providing the index list for the sample
+     * @param array     particle array containing the data to be sampled
+     * @param dim       CUDA configuration for launching kernels
+     */
+    phase_space_sampler_gpu_typed(
+        std::shared_ptr<particle_group_type> group
+      , std::shared_ptr<mdsim::gpu::particle_array> array
+      , cuda::config const& dim
+    )
+      : particle_group_(group), array_(mdsim::gpu::particle_array::cast_gpu<typename sample_type::data_type>(array))
+      , dim_(dim)
+    {}
+
+    /**
+     * Static wrapper to directly construct a shared_ptr.
+     */
+    static std::shared_ptr<phase_space_sampler_gpu_typed> create(
+        std::shared_ptr<particle_group_type> group
+      , std::shared_ptr<mdsim::gpu::particle_array> array
+      , cuda::config const& dim
+    )
     {
         return std::make_shared<phase_space_sampler_gpu_typed>(group, array, dim);
-    }
-
-    phase_space_sampler_gpu_typed(std::shared_ptr<particle_group_type> group
-            , std::shared_ptr<mdsim::gpu::particle_array> array
-            , cuda::config const& dim)
-            : particle_group_(group), array_(mdsim::gpu::particle_array::cast_gpu<typename sample_type::data_type>(array)),
-              dim_(dim) {
     }
 
     /**
@@ -377,7 +473,8 @@ public:
      *
      * copies the GPU data to a GPU sample using a CUDA kernel
      */
-    virtual std::shared_ptr<sample_base> acquire() {
+    virtual std::shared_ptr<sample_base> acquire()
+    {
         if (!(cache_observer_ == array_->data()) || !(group_observer_ == particle_group_->ordered())) {
             auto const& data = read_cache(array_->data());
             auto const& group = particle_group_->ordered_host_cached();
@@ -389,9 +486,9 @@ public:
                 phase_space_sample_wrapper<data_type>::kernel.input.bind(data);
                 cuda::configure(dim_.grid, dim_.block);
                 phase_space_sample_wrapper<data_type>::kernel.sample(
-                        &*group.begin()
-                        , &*sample_data.begin()
-                        , group.size()
+                    &*group.begin()
+                  , &*sample_data.begin()
+                  , group.size()
                 );
             }
             catch (cuda::error const&)
@@ -405,10 +502,12 @@ public:
         }
         return sample_;
     }
+
     /**
      * copies the data of a sample to the GPU particle array using a CUDA kernel
      */
-    virtual void set(std::shared_ptr<sample_base const> sample_) {
+    virtual void set(std::shared_ptr<sample_base const> sample_)
+    {
         if(sample_->type() != typeid(gpu_sample<data_type>)) {
             throw std::runtime_error("invalid sample data type");
         }
@@ -421,9 +520,9 @@ public:
             phase_space_sample_wrapper<data_type>::kernel.input.bind(sample->data());
             cuda::configure(dim_.grid, dim_.block);
             phase_space_sample_wrapper<data_type>::kernel.set(
-                    &*group.begin()
-                    , &*data->begin()
-                    , group.size()
+                &*group.begin()
+              , &*data->begin()
+              , group.size()
             );
         }
         catch (cuda::error const&)
@@ -436,39 +535,55 @@ public:
     /**
      * returns a lua slot function to be used to acquire a gpu sample
      */
-    virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) {
-        std::function<std::shared_ptr<sample_type const>()> fn = [self]() -> std::shared_ptr<sample_type const> {
+    virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self)
+    {
+        std::function<std::shared_ptr<sample_type const>()> fn = [self]() -> std::shared_ptr<sample_type const>
+        {
             return std::static_pointer_cast<sample_type const>(std::static_pointer_cast<phase_space_sampler_gpu_typed>(self)->acquire());
         };
+
         luaponte::default_converter<std::function<std::shared_ptr<sample_type const>()>>().apply(L, fn);
         luaponte::object result(luaponte::from_stack(L, -1));
         lua_pop(L, 1);
         return result;
     }
+
     /**
      * returns a lua slot function to be used to directly acquire the data of a host sample
      */
-    virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) {
-        std::function<typename sample_type::array_type const&()> fn = [self]() -> typename sample_type::array_type const& {
+    virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self)
+    {
+        std::function<typename sample_type::array_type const&()> fn = [self]() -> typename sample_type::array_type const&
+        {
             return std::static_pointer_cast<sample_type const>(std::static_pointer_cast<phase_space_sampler_gpu_typed>(self)->acquire())->data();
         };
+
         luaponte::default_converter<std::function<typename sample_type::array_type const&()>>().apply(L, fn);
         luaponte::object result(luaponte::from_stack(L, -1));
         lua_pop(L, 1);
         return result;
     }
+
     /**
      * wrapper to export the set member to lua
      */
-    virtual void set_lua(luaponte::object sample) {
+    virtual void set_lua(luaponte::object sample)
+    {
         set(luaponte::object_cast<std::shared_ptr<sample_type const>>(sample));
     }
+
 protected:
+    /** particle group containing the data indices to be sampled */
     std::shared_ptr<particle_group_type> particle_group_;
+    /** particle array containing the data to be sampled */
     std::shared_ptr<particle_array_type> array_;
+    /** cache observer for the array data */
     cache<> cache_observer_;
+    /** cached GPU sample */
     std::shared_ptr<sample_type> sample_;
+    /** cache observer for the index list */
     cache<> group_observer_;
+    /** CUDA configuration for launching kernels */
     cuda::config const dim_;
 };
 
@@ -478,47 +593,50 @@ protected:
  * used to create the correct phase space sampler based on the typeid of a particle array and the dimension of
  * the particle instance
  */
-static const std::unordered_map<std::type_index,
-        std::function<std::shared_ptr<phase_space_sampler>(std::shared_ptr<mdsim::gpu::particle_group>
-                , std::shared_ptr<mdsim::gpu::particle_array>
-                , cuda::config const&)>>
-        phase_space_sampler_gpu_typed_create_map[] = {
-        { // dimension 2
-                { typeid(float), phase_space_sampler_gpu_typed<1, float>::create },
-                { typeid(float2), phase_space_sampler_gpu_typed<2, float2>::create },
-                { typeid(float4), phase_space_sampler_gpu_typed<2, float4>::create },
+static const std::unordered_map<
+    std::type_index
+  , std::function<std::shared_ptr<phase_space_sampler>(
+        std::shared_ptr<mdsim::gpu::particle_group>
+      , std::shared_ptr<mdsim::gpu::particle_array>
+      , cuda::config const&
+    )>
+> phase_space_sampler_gpu_typed_create_map[] = {
+    { // dimension 2
+        { typeid(float), phase_space_sampler_gpu_typed<1, float>::create }
+      , { typeid(float2), phase_space_sampler_gpu_typed<2, float2>::create }
+      , { typeid(float4), phase_space_sampler_gpu_typed<2, float4>::create }
 
-                { typeid(int), phase_space_sampler_gpu_typed<1, int>::create },
-                { typeid(int2), phase_space_sampler_gpu_typed<2, int2>::create },
-                { typeid(int4), phase_space_sampler_gpu_typed<2, int4>::create },
+      , { typeid(int), phase_space_sampler_gpu_typed<1, int>::create }
+      , { typeid(int2), phase_space_sampler_gpu_typed<2, int2>::create }
+      , { typeid(int4), phase_space_sampler_gpu_typed<2, int4>::create }
 
-                { typeid(unsigned int), phase_space_sampler_gpu_typed<1, unsigned int>::create },
-                { typeid(uint2), phase_space_sampler_gpu_typed<2, uint2>::create },
-                { typeid(uint4), phase_space_sampler_gpu_typed<2, uint4>::create },
-        },
-        { // dimension 3
-                { typeid(float), phase_space_sampler_gpu_typed<1, float>::create },
-                { typeid(float2), phase_space_sampler_gpu_typed<2, float2>::create },
-                { typeid(float4), phase_space_sampler_gpu_typed<3, float4>::create },
+      , { typeid(unsigned int), phase_space_sampler_gpu_typed<1, unsigned int>::create }
+      , { typeid(uint2), phase_space_sampler_gpu_typed<2, uint2>::create }
+      , { typeid(uint4), phase_space_sampler_gpu_typed<2, uint4>::create }
+    }
+  , { // dimension 3
+        { typeid(float), phase_space_sampler_gpu_typed<1, float>::create }
+      , { typeid(float2), phase_space_sampler_gpu_typed<2, float2>::create }
+      , { typeid(float4), phase_space_sampler_gpu_typed<3, float4>::create }
 
-                { typeid(int), phase_space_sampler_gpu_typed<1, int>::create },
-                { typeid(int2), phase_space_sampler_gpu_typed<2, int2>::create },
-                { typeid(int4), phase_space_sampler_gpu_typed<3, int4>::create },
+      , { typeid(int), phase_space_sampler_gpu_typed<1, int>::create }
+      , { typeid(int2), phase_space_sampler_gpu_typed<2, int2>::create }
+      , { typeid(int4), phase_space_sampler_gpu_typed<3, int4>::create }
 
-                { typeid(unsigned int), phase_space_sampler_gpu_typed<1, unsigned int>::create },
-                { typeid(uint2), phase_space_sampler_gpu_typed<2, uint2>::create },
-                { typeid(uint4), phase_space_sampler_gpu_typed<3, uint4>::create },
-        }
+      , { typeid(unsigned int), phase_space_sampler_gpu_typed<1, unsigned int>::create }
+      , { typeid(uint2), phase_space_sampler_gpu_typed<2, uint2>::create }
+      , { typeid(uint4), phase_space_sampler_gpu_typed<3, uint4>::create }
+    }
 };
-
 
 /**
  * specialized phase_space sampler for gpu position data
  *
- * does the same as the generic sampler, but additionally reduces/extends periodic positions
+ * does the same as the generic GPU sampler, but additionally reduces/extends periodic positions
  */
 template<int dimension, typename data_type>
-class phase_space_sampler_gpu_position : public phase_space_sampler_gpu_typed<dimension, data_type>
+class phase_space_sampler_gpu_position
+  : public phase_space_sampler_gpu_typed<dimension, data_type>
 {
 public:
     typedef samples::sample<dimension, data_type> sample_type;
@@ -527,25 +645,48 @@ public:
     typedef mdsim::gpu::particle_array_gpu<data_type> position_array_type;
     typedef mdsim::gpu::particle_array_gpu<typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type> image_array_type;
 
-    static std::shared_ptr<phase_space_sampler_gpu_position> create(std::shared_ptr<particle_group_type> group
-            , std::shared_ptr<box_type const> box
-            , std::shared_ptr<mdsim::gpu::particle_array> position_array
-            , std::shared_ptr<mdsim::gpu::particle_array> image_array
-            , cuda::config const& dim)
+    /**
+     * Creates a GPU sampler for position data.
+     *
+     * @param group             particle group providing the index list for the sample
+     * @param box               box for periodic border conditions
+     * @param position_array    particle array containing the position data
+     * @param image_array       particle array containing the image data
+     * @param dim       CUDA configuration for launching kernels
+     */
+    phase_space_sampler_gpu_position(
+        std::shared_ptr<particle_group_type> group
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<mdsim::gpu::particle_array> position_array
+      , std::shared_ptr<mdsim::gpu::particle_array> image_array
+      , cuda::config const& dim
+    )
+      : phase_space_sampler_gpu_typed<dimension, data_type>(group, position_array, dim)
+      , box_(box)
+      , image_array_(mdsim::gpu::particle_array::cast_gpu<typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type>(image_array))
+    {}
+
+    /**
+     * Static wrapper to directly construct a shared_ptr.
+     */
+    static std::shared_ptr<phase_space_sampler_gpu_position> create(
+        std::shared_ptr<particle_group_type> group
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<mdsim::gpu::particle_array> position_array
+      , std::shared_ptr<mdsim::gpu::particle_array> image_array
+      , cuda::config const& dim
+    )
     {
         return std::make_shared<phase_space_sampler_gpu_position>(group, box, position_array, image_array, dim);
     }
 
-    phase_space_sampler_gpu_position(std::shared_ptr<particle_group_type> group
-            , std::shared_ptr<box_type const> box
-            , std::shared_ptr<mdsim::gpu::particle_array> position_array
-            , std::shared_ptr<mdsim::gpu::particle_array> image_array
-            , cuda::config const& dim)
-            : phase_space_sampler_gpu_typed<dimension, data_type>(group, position_array, dim), box_(box),
-              image_array_(mdsim::gpu::particle_array::cast_gpu<typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type>(image_array)) {
-    }
-
-    virtual std::shared_ptr<sample_base> acquire() {
+    /**
+     * acquire a sample
+     *
+     * copies the GPU data to a GPU sample using a CUDA kernel
+     */
+    virtual std::shared_ptr<sample_base> acquire()
+    {
         if (!(this->group_observer_ == this->particle_group_->ordered())
             || !(this->cache_observer_ == this->array_->data())
             || !(image_observer_ == image_array_->data())) {
@@ -564,10 +705,10 @@ public:
 
                 cuda::configure(this->dim_.grid, this->dim_.block);
                 phase_space_wrapper<dimension>::kernel.sample_position(
-                        &*group.begin()
-                        , this->sample_->data()
-                        , static_cast<fixed_vector<float, dimension>>(box_->length())
-                        , group.size()
+                    &*group.begin()
+                  , this->sample_->data()
+                  , static_cast<fixed_vector<float, dimension>>(box_->length())
+                  , group.size()
                 );
             }
             catch (cuda::error const&)
@@ -579,7 +720,12 @@ public:
         }
         return this->sample_;
     }
-    virtual void set(std::shared_ptr<sample_base const> sample) {
+
+    /**
+     * copies the data of a sample to the GPU particle array using a CUDA kernel
+     */
+    virtual void set(std::shared_ptr<sample_base const> sample)
+    {
         // set position data the same as any other kind of data
         phase_space_sampler_gpu_typed<dimension, data_type>::set(sample);
 
@@ -591,11 +737,11 @@ public:
             phase_space_wrapper<dimension>::kernel.r.bind(*position);
             cuda::configure(this->dim_.grid, this->dim_.block);
             phase_space_wrapper<dimension>::kernel.reduce_periodic(
-                    &*group.begin()
-                    , &*position->begin()
-                    , &*image->begin()
-                    , static_cast<fixed_vector<float, dimension>>(box_->length())
-                    , group.size()
+                &*group.begin()
+              , &*position->begin()
+              , &*image->begin()
+              , static_cast<fixed_vector<float, dimension>>(box_->length())
+              , group.size()
             );
         }
         catch (cuda::error const&)
@@ -606,8 +752,11 @@ public:
     }
 
 private:
+    /** box for periodic boundary conditions */
     std::shared_ptr<box_type const> box_;
+    /** particle array containing the image data */
     std::shared_ptr<image_array_type> image_array_;
+    /** cache observer for the image data */
     cache<> image_observer_;
 };
 

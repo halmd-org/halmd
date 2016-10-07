@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2012  Peter Colberg and Felix Höfling
+ * Copyright © 2016       Daniel Kirchner
+ * Copyright © 2008-2012  Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -40,7 +42,8 @@ namespace gpu {
  * abstract base class defining the interface for the actual sampling implementation
  * this interface is implemented for each data type and for GPU and CPU samples
  */
-class phase_space_sampler {
+class phase_space_sampler
+{
 public:
     virtual std::shared_ptr<sample_base> acquire(void) = 0;
     virtual void set(std::shared_ptr<sample_base const> sample) = 0;
@@ -77,6 +80,12 @@ public:
         get_sampler(name)->set(sample);
     }
 
+    /**
+     * Acquires a sample of the given type (template parameter) of
+     * a particle array.
+     *
+     * @param name      identifier of the particle array to be sampled
+     */
     template<typename sample_type>
     std::shared_ptr<sample_type const> acquire(std::string const& name)
     {
@@ -104,8 +113,11 @@ private:
     /** logger instance */
     std::shared_ptr<logger> logger_;
 
+    /** Associative container mapping identifiers of particle arrays to
+        already created sampler implementations */
     std::unordered_map<std::string, std::shared_ptr<phase_space_sampler>> samplers_;
 
+    /** Associative container mapping GPU particle arrays to their host cache. */
     std::map<mdsim::gpu::particle_array*, std::shared_ptr<phase_space_host_cache>> host_cache_;
 
     typedef halmd::utility::profiler::accumulator_type accumulator_type;

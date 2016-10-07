@@ -87,8 +87,12 @@ void truncate::read_dataset(
 }
 
 template<typename T>
-void wrap_on_read(std::shared_ptr<truncate> self, H5::DataSet &group, std::function<void(const T&)> slot
-        , std::vector<std::string> const& location)
+void wrap_on_read(
+    std::shared_ptr<truncate> self
+  , H5::DataSet& group
+  , std::function<void(const T&)> slot
+  , std::vector<std::string> const& location
+)
 {
     std::shared_ptr<T> array = std::make_shared<T>();
 

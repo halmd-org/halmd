@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
- * HALMD is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with HALMD.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_OBSERVABLES_GPU_SAMPLES_SAMPLE_HPP
@@ -32,8 +33,18 @@ namespace observables {
 namespace gpu {
 namespace samples {
 
+/**
+ * GPU phase_space sample.
+ *
+ * In order to be able to distinguish between two component data packed in a float4
+ * and two component data packed in a float2 (resp. between four component data and
+ * three component data packed into a float4), the dimension as well as the _GPU_
+ * data type are needed as template parameters.
+ */
 template<int dimension_, typename data_type_>
-class sample : public sample_base {
+class sample
+  : public sample_base
+{
 public:
     static constexpr int dimension = dimension_;
     static constexpr bool gpu = true;
@@ -41,19 +52,20 @@ public:
     typedef data_type_ data_type;
     typedef cuda::vector<data_type> array_type;
 
-    sample(std::size_t nparticles) : data_(nparticles)
-    {
-    }
+    sample(std::size_t nparticles) : data_(nparticles) {}
 
-    virtual std::type_info const& type() const {
+    virtual std::type_info const& type() const
+    {
         return typeid(gpu_sample<data_type>);
     }
 
-    array_type const& data() const {
+    array_type const& data() const
+    {
         return data_;
     }
 
-    array_type& data() {
+    array_type& data()
+    {
         return data_;
     }
 
@@ -63,6 +75,7 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    /** actual GPU data */
     array_type data_;
 };
 

@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2012  Peter Colberg and Felix Höfling
+ * Copyright © 2016       Daniel Kirchner
+ * Copyright © 2008-2012  Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -67,7 +69,8 @@ public:
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
-    void set(std::string const& name, std::shared_ptr<sample_base const> sample) {
+    void set(std::string const& name, std::shared_ptr<sample_base const> sample)
+    {
         get_sampler(name)->set(sample);
     }
 
@@ -86,7 +89,8 @@ public:
         return std::static_pointer_cast<sample_type const>(sample);
     }
 
-    std::type_info const& sample_type(std::string const& name) {
+    std::type_info const& sample_type(std::string const& name)
+    {
         return particle_->get_array(name)->type();
     }
 
@@ -107,6 +111,8 @@ private:
     /** logger instance */
     std::shared_ptr<logger> logger_;
 
+    /** Associative container mapping identifiers of particle arrays to
+        already created sampler implementations */
     std::unordered_map<std::string, std::shared_ptr<phase_space_sampler>> samplers_;
 
     typedef halmd::utility::profiler::accumulator_type accumulator_type;

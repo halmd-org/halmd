@@ -118,7 +118,8 @@ public:
      */
     template<typename T>
     std::shared_ptr<particle_array_typed<T>>
-    register_data(std::string const& name, std::function<void()> update_function = std::function<void()>()) {
+    register_data(std::string const& name, std::function<void()> update_function = std::function<void()>())
+    {
         auto ptr = particle_array::create<T>(nparticle_, update_function);
         if (!data_.insert(std::make_pair(name, ptr)).second) {
             throw std::runtime_error("a particle array named \"" + name + "\" already exists");
@@ -408,7 +409,8 @@ public:
         return on_append_force_.connect(slot);
     }
 
-    std::shared_ptr<particle_array> const& get_array(std::string const& name) const {
+    std::shared_ptr<particle_array> const& get_array(std::string const& name) const
+    {
         auto it = data_.find(name);
         if(it == data_.end()) {
             throw std::invalid_argument("particle array \"" + name + "\" not registered");
@@ -416,7 +418,8 @@ public:
         return it->second;
     }
 
-    bool has_array(std::string const& name) const {
+    bool has_array(std::string const& name) const
+    {
         return data_.find(name) != data_.end();
     }
 
@@ -641,7 +644,6 @@ get_stress_pot(particle_type& particle, iterator_type const& first)
 {
     return particle.template get_data<typename particle_type::stress_pot_type>("stress_pot", first);
 }
-
 
 } // namespace host
 } // namespace mdsim

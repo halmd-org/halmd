@@ -49,20 +49,45 @@ local phase_space = assert(libhalmd.observables.phase_space)
 --
 -- .. note::
 --
---    The sample will be updated at most *once* per step, so you can reuse
---    the same sampler with multiple observable modules for optimal
+--    The sample will only be updated when the underlying particle data has changed,
+--    so you can reuse the same sampler with multiple observable modules for optimal
 --    performance.
 --
--- .. method:: acquire(args)
+-- .. method:: acquire(name)
 --
---    Returns data slot to acquire phase space sample.
+--    Returns data slot to acquire phase space sample for the given particle array.
 --
---    :param table args: keyword arguments (optional)
---    :param string args.memory: memory location of phase space sample (optional)
+--    :param string name: identifier of the particle array to be sampled
 --
---    The supported values for ``memory`` are "host" and "gpu". If ``memory``
---    is not specified, the memory location is selected according to the
---    compute device.
+--    The memory location of the sample depends on the type of the particle array.
+--    GPU particle arrays (e.g. "g_position") will be sampled to GPU memory, host
+--    wrappers (e.g. "position") will be sampled to Host memory.
+--
+-- .. method:: acquire_position()
+--
+--    Returns data slot to acquire position data. The memory type is inferred from the
+--    particle instance (for GPU particles this samples the "g_position" data, for
+--    Host particles the "position" data).
+--
+-- .. method:: acquire_velocity()
+--
+--    Returns data slot to acquire velocity data. The memory type is inferred from the
+--    particle instance (for GPU particles this samples the "g_velocity" data, for
+--    Host particles the "velocity" data).
+--
+-- .. method:: acquire_species()
+--
+--    Returns data slot to acquire species data. This always samples to host memory,
+--    as species data is packed together with position data on GPU memory.
+--    acquire("g_position") can be used to obtain a GPU sample of both position and
+--    species.
+--
+-- .. method:: acquire_mass()
+--
+--    Returns data slot to acquire mass data. This always samples to host memory,
+--    as mass data is packed together with velocity data on GPU memory.
+--    acquire("g_velocity") can be used to obtain a GPU sample of both velocity and
+--    mass.
 --
 -- .. method:: position()
 --
@@ -88,9 +113,12 @@ local phase_space = assert(libhalmd.observables.phase_space)
 --
 --    :returns: data slot that returns mass array in host memory
 --
--- .. method:: set(sample)
+-- .. method:: set(samples)
 --
---    Set positions, velocities, species and masses from phase space sample.
+--    Sets particle data from phase space samples.
+--
+--    :param table samples: List of samples to be set. The keys of the table contain the
+--                          identifiers for the particle array, the values the sample.
 --
 -- .. method:: disconnect()
 --
@@ -309,7 +337,8 @@ end)
 --
 --          If ``time`` is negative, seek backward from last (``-0``) sample.
 --
---    The returned phase space sample has these attributes.
+--    The returned phase space sample is a table mapping identifiers to the individual data
+--    samples and has the following additional attributes.
 --
 --       .. attribute:: nparticle
 --
@@ -341,9 +370,9 @@ function M.reader(args)
     local shape = assert(dataset.shape)
     local nparticle = assert(shape[2])
     local dimension = assert(shape[3])
-    -- create a metatable for the sample list, so that metainformation about the
+    -- create a metatable for the sample list, so that meta-information about the
     -- samples can be obtained; pairs(samples) will still only iterate over the
-    -- actual samples, but samples.nparticle, samples.dimension and samples.nspecies
+    -- actual samples, but samples.nparticle, samples.dimension, and samples.nspecies
     -- will return the desired values
     local sample_metainfo = { nparticle = nparticle, dimension = dimension }
     local samples = setmetatable({}, {

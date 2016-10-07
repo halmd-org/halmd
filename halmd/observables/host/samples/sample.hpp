@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
- * HALMD is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with HALMD.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_OBSERVABLES_HOST_SAMPLES_SAMPLE_HPP
@@ -32,7 +33,9 @@ namespace host {
 namespace samples {
 
 template<int dimension_, typename scalar_type>
-class sample : public sample_base {
+class sample
+  : public sample_base
+{
 public:
     static constexpr int dimension = dimension_;
     static constexpr bool gpu = false;
@@ -40,23 +43,25 @@ public:
     typedef typename std::conditional<dimension == 1, scalar_type, fixed_vector<scalar_type, dimension>>::type data_type;
     typedef raw_array<data_type> array_type;
 
-    sample(std::size_t nparticles) : data_(nparticles)
-    {
-    }
+    sample(std::size_t nparticles) : data_(nparticles) {}
 
-    virtual std::type_info const& type() const {
+    virtual std::type_info const& type() const
+    {
         return typeid(data_type);
     }
 
-    array_type const& data() const {
+    array_type const& data() const
+    {
         return data_;
     }
 
-    array_type& data() {
+    array_type& data()
+    {
         return data_;
     }
 
-    data_type const& maximum() const {
+    data_type const& maximum() const
+    {
         return *std::max_element(data_.begin(), data_.end());
     }
 

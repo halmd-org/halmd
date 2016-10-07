@@ -274,7 +274,8 @@ static int wrap_dimension(particle<dimension, float_type> const&)
 }
 
 template <typename particle_type>
-static luaponte::object wrap_get(particle_type const& particle, lua_State* L, std::string const& name) {
+static luaponte::object wrap_get(particle_type const& particle, lua_State* L, std::string const& name)
+{
     return particle.get_array(name)->get_lua(L);
 }
 

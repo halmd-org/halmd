@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
- * HALMD is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with HALMD.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <luaponte/luaponte.hpp>
@@ -46,7 +47,8 @@ template <typename sample_type>
 static std::function<void(std::vector<typename sample_type::data_type> const&)>
 wrap_data_setter(std::shared_ptr<sample_type> self)
 {
-    return [self](std::vector<typename sample_type::data_type> const& data) {
+    return [self](std::vector<typename sample_type::data_type> const& data)
+    {
         if (self->data().size() != data.size()) {
             throw std::runtime_error("phase space sample has mismatching size");
         }
@@ -55,10 +57,11 @@ wrap_data_setter(std::shared_ptr<sample_type> self)
 }
 
 template <typename sample_type>
-static std::function<typename sample_type::array_type const&()>
+static std::function<typename sample_type::array_type const& ()>
 wrap_get(std::shared_ptr<sample_type> self)
 {
-    return [self]() -> typename sample_type::array_type const& {
+    return [self]() -> typename sample_type::array_type const&
+    {
         return self->data();
     };
 }
@@ -70,7 +73,8 @@ static void wrap_set(std::shared_ptr<sample_type> self, std::vector<typename sam
 }
 
 template <typename sample_type>
-static typename sample_type::data_type wrap_maximum(sample_type const& self) {
+static typename sample_type::data_type wrap_maximum(sample_type const& self)
+{
     return self.maximum();
 }
 
@@ -139,7 +143,6 @@ HALMD_LUA_API int luaopen_libhalmd_observables_host_samples_sample(lua_State* L)
     sample<1, unsigned int>::luaopen(L);
     return 0;
 }
-
 
 } // namespace samples
 } // namespace host

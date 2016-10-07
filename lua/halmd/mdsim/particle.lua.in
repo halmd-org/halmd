@@ -80,6 +80,19 @@ end
 --    to a space-filling curve. To access particles in initial order, use
 --    :meth:`get_reverse_tag` to retrieve the current particle indices.
 --
+-- .. method:: get(name)
+--
+--    Returns particle data identified by the name of the particle array.
+--
+--    :param string name: identifier of the particle array
+--
+-- .. method:: set(name, data)
+--
+--    Set particle data identified by the name of the particle array.
+--
+--    :param string name: identifier of the particle array
+--    :param table data: table containing the data
+--
 -- .. method:: get_position()
 --
 --    Returns sequence with particle positions.

@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2012  Peter Colberg and Felix Höfling
+ * Copyright © 2016       Daniel Kirchner
+ * Copyright © 2008-2012  Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -47,16 +49,30 @@ public:
     typedef mdsim::host::particle_group particle_group_type;
     typedef mdsim::host::particle_array_typed<typename sample_type::data_type> particle_array_type;
 
-    static std::shared_ptr<phase_space_sampler_typed> create(std::shared_ptr<particle_group_type> group
-                                               , std::shared_ptr<mdsim::host::particle_array> array)
+    /**
+     * Construct a phase space sampler for a given particle group and array.
+     *
+     * @param group     particle group containing the index list for the data
+     * @param array     particle array containing the actual data
+     */
+    phase_space_sampler_typed(
+        std::shared_ptr<particle_group_type> group
+      , std::shared_ptr<mdsim::host::particle_array> array
+    )
+      : particle_group_(group), array_(mdsim::host::particle_array::cast<typename sample_type::data_type>(array))
+    {}
+
+    /**
+     * Static wrapper to directly construct a shared_ptr.
+     */
+    static std::shared_ptr<phase_space_sampler_typed> create(
+            std::shared_ptr<particle_group_type> group
+            , std::shared_ptr<mdsim::host::particle_array> array
+    )
     {
         return std::make_shared<phase_space_sampler_typed>(group, array);
     }
 
-    phase_space_sampler_typed(std::shared_ptr<particle_group_type> group
-            , std::shared_ptr<mdsim::host::particle_array> array)
-            : particle_group_(group), array_(mdsim::host::particle_array::cast<typename sample_type::data_type>(array)) {
-    }
 
     /**
      * acquire a sample
@@ -64,7 +80,8 @@ public:
      * copies the data to a new sample if the data is not up to date,
      * returns the stored sample otherwise
      */
-    virtual std::shared_ptr<sample_base> acquire() {
+    virtual std::shared_ptr<sample_base> acquire()
+    {
         if (!(group_observer_ == particle_group_->ordered()) || !(array_observer_ == array_->cache_observer())) {
             auto const& group = read_cache(particle_group_->ordered());
             group_observer_ = particle_group_->ordered();
@@ -72,22 +89,23 @@ public:
             auto const& data = read_cache(array_->data());
 
             sample_ = std::make_shared<sample_type>(group.size());
-
             auto& sample_data = sample_->data();
+
             // copy velocities using index map
             std::size_t tag = 0;
             for (std::size_t i : group) {
-                sample_data[tag] = data[i];
-                ++tag;
+                sample_data[tag++] = data[i];
             }
             array_observer_ = array_->cache_observer();
         }
         return sample_;
     }
+
     /**
      * copies the data of a sample to the particle array
      */
-    virtual void set(std::shared_ptr<sample_base const> sample) {
+    virtual void set(std::shared_ptr<sample_base const> sample)
+    {
         if(sample->type() != typeid(typename sample_type::data_type)) {
             throw std::runtime_error("invalid sample data type");
         }
@@ -97,18 +115,19 @@ public:
 
         std::size_t tag = 0;
         for (std::size_t i : group) {
-            (*data)[i] = sample_data[tag];
-            ++tag;
+            (*data)[i] = sample_data[tag++];
         }
     }
 
     /**
      * returns a lua slot function to be used to acquire a host sample
      */
-    virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) {
+    virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self)
+    {
         std::function<std::shared_ptr<sample_type const>()> fn = [self]() -> std::shared_ptr<sample_type const> {
             return std::static_pointer_cast<sample_type const>(std::static_pointer_cast<phase_space_sampler_typed>(self)->acquire());
         };
+
         luaponte::default_converter<std::function<std::shared_ptr<sample_type const>()>>().apply(L, fn);
         luaponte::object result(luaponte::from_stack(L, -1));
         lua_pop(L, 1);
@@ -118,10 +137,12 @@ public:
     /**
      * returns a lua slot function to be used to directly acquire the data of a host sample
      */
-    virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) {
+    virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self)
+    {
         std::function<typename sample_type::array_type const&()> fn = [self]() -> typename sample_type::array_type const& {
             return std::static_pointer_cast<sample_type const>(std::static_pointer_cast<phase_space_sampler_typed>(self)->acquire())->data();
         };
+
         luaponte::default_converter<std::function<typename sample_type::array_type const&()>>().apply(L, fn);
         luaponte::object result(luaponte::from_stack(L, -1));
         lua_pop(L, 1);
@@ -131,9 +152,11 @@ public:
     /**
      * wrapper to export the set member to lua
      */
-    virtual void set_lua(luaponte::object sample) {
+    virtual void set_lua(luaponte::object sample)
+    {
         set(luaponte::object_cast<std::shared_ptr<sample_type const>>(sample));
     }
+
 protected:
     std::shared_ptr<particle_group_type> particle_group_;
     std::shared_ptr<particle_array_type> array_;
@@ -147,34 +170,37 @@ protected:
  *
  * used to create the correct phase space sampler based on the typeid of a particle array
  */
-static const std::unordered_map<std::type_index,
-    std::function<std::shared_ptr<phase_space_sampler>(std::shared_ptr<mdsim::host::particle_group>
-                                                     , std::shared_ptr<mdsim::host::particle_array>)>>
+static const std::unordered_map<
+    std::type_index
+  , std::function<std::shared_ptr<phase_space_sampler>(std::shared_ptr<mdsim::host::particle_group>
+                                                     , std::shared_ptr<mdsim::host::particle_array>)>
+>
 phase_space_sampler_typed_create_map = {
-        { typeid(float), phase_space_sampler_typed<1, float>::create },
-        { typeid(fixed_vector<float, 2>), phase_space_sampler_typed<2, float>::create },
-        { typeid(fixed_vector<float, 3>), phase_space_sampler_typed<3, float>::create },
-        { typeid(fixed_vector<float, 4>), phase_space_sampler_typed<4, float>::create },
+    { typeid(float), phase_space_sampler_typed<1, float>::create }
+  , { typeid(fixed_vector<float, 2>), phase_space_sampler_typed<2, float>::create }
+  , { typeid(fixed_vector<float, 3>), phase_space_sampler_typed<3, float>::create }
+  , { typeid(fixed_vector<float, 4>), phase_space_sampler_typed<4, float>::create }
 
-        { typeid(double), phase_space_sampler_typed<1, double>::create },
-        { typeid(fixed_vector<double, 2>), phase_space_sampler_typed<2, double>::create },
-        { typeid(fixed_vector<double, 3>), phase_space_sampler_typed<3, double>::create },
-        { typeid(fixed_vector<double, 4>), phase_space_sampler_typed<4, double>::create },
+  , { typeid(double), phase_space_sampler_typed<1, double>::create }
+  , { typeid(fixed_vector<double, 2>), phase_space_sampler_typed<2, double>::create }
+  , { typeid(fixed_vector<double, 3>), phase_space_sampler_typed<3, double>::create }
+  , { typeid(fixed_vector<double, 4>), phase_space_sampler_typed<4, double>::create }
 
-        { typeid(int), phase_space_sampler_typed<1, int>::create },
-        { typeid(fixed_vector<int, 2>), phase_space_sampler_typed<2, int>::create },
-        { typeid(fixed_vector<int, 3>), phase_space_sampler_typed<3, int>::create },
-        { typeid(fixed_vector<int, 4>), phase_space_sampler_typed<4, int>::create },
+  , { typeid(int), phase_space_sampler_typed<1, int>::create }
+  , { typeid(fixed_vector<int, 2>), phase_space_sampler_typed<2, int>::create }
+  , { typeid(fixed_vector<int, 3>), phase_space_sampler_typed<3, int>::create }
+  , { typeid(fixed_vector<int, 4>), phase_space_sampler_typed<4, int>::create }
 
-        { typeid(unsigned int), phase_space_sampler_typed<1, unsigned int>::create },
-        { typeid(fixed_vector<unsigned int, 2>), phase_space_sampler_typed<2, unsigned int>::create },
-        { typeid(fixed_vector<unsigned int, 3>), phase_space_sampler_typed<3, unsigned int>::create },
-        { typeid(fixed_vector<unsigned int, 4>), phase_space_sampler_typed<4, unsigned int>::create },
+  , { typeid(unsigned int), phase_space_sampler_typed<1, unsigned int>::create }
+  , { typeid(fixed_vector<unsigned int, 2>), phase_space_sampler_typed<2, unsigned int>::create }
+  , { typeid(fixed_vector<unsigned int, 3>), phase_space_sampler_typed<3, unsigned int>::create }
+  , { typeid(fixed_vector<unsigned int, 4>), phase_space_sampler_typed<4, unsigned int>::create }
 };
 
 
 template<int dimension, typename scalar_type>
-class phase_space_sampler_position : public phase_space_sampler_typed<dimension, scalar_type>
+class phase_space_sampler_position
+  : public phase_space_sampler_typed<dimension, scalar_type>
 {
 public:
     typedef samples::sample<dimension, scalar_type> sample_type;
@@ -182,26 +208,33 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::particle_array_typed<typename sample_type::data_type> particle_array_type;
 
-    static std::shared_ptr<phase_space_sampler_position> create(std::shared_ptr<particle_group_type> group
-            , std::shared_ptr<box_type const> box
-            , std::shared_ptr<mdsim::host::particle_array> position_array
-            , std::shared_ptr<mdsim::host::particle_array> image_array)
+    static std::shared_ptr<phase_space_sampler_position> create(
+        std::shared_ptr<particle_group_type> group
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<mdsim::host::particle_array> position_array
+      , std::shared_ptr<mdsim::host::particle_array> image_array
+    )
     {
         return std::make_shared<phase_space_sampler_position>(group, box, position_array, image_array);
     }
 
-    phase_space_sampler_position(std::shared_ptr<particle_group_type> group
-    , std::shared_ptr<box_type const> box
-    , std::shared_ptr<mdsim::host::particle_array> position_array
-    , std::shared_ptr<mdsim::host::particle_array> image_array)
-    : phase_space_sampler_typed<dimension, scalar_type>(group, position_array), box_(box),
-      image_array_(mdsim::host::particle_array::cast<typename sample_type::data_type>(image_array)) {
-    }
+    phase_space_sampler_position(
+        std::shared_ptr<particle_group_type> group
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<mdsim::host::particle_array> position_array
+      , std::shared_ptr<mdsim::host::particle_array> image_array
+    )
+      : phase_space_sampler_typed<dimension, scalar_type>(group, position_array)
+      , box_(box)
+      , image_array_(mdsim::host::particle_array::cast<typename sample_type::data_type>(image_array))
+    {}
 
-    virtual std::shared_ptr<sample_base> acquire() {
+    virtual std::shared_ptr<sample_base> acquire()
+    {
         if (!(this->group_observer_ == this->particle_group_->ordered())
             || !(this->array_observer_ == this->array_->cache_observer())
             || !(image_array_observer_ == image_array_->cache_observer())) {
+
             auto const& group = read_cache(this->particle_group_->ordered());
             this->group_observer_ = this->particle_group_->ordered();
 
@@ -215,10 +248,9 @@ public:
             // copy and periodically extend positions using index map
             std::size_t tag = 0;
             for (std::size_t i : group) {
-                auto& r = sample_position[tag];
+                auto& r = sample_position[tag++];
                 r = particle_position[i];
                 box_->extend_periodic(r, particle_image[i]);
-                ++tag;
             }
 
             this->array_observer_ = this->array_->cache_observer();
@@ -226,7 +258,9 @@ public:
         }
         return this->sample_;
     }
-    virtual void set(std::shared_ptr<sample_base const> sample) {
+
+    virtual void set(std::shared_ptr<sample_base const> sample)
+    {
         if(sample->type() != typeid(typename sample_type::data_type)) {
             throw std::runtime_error("invalid sample data type");
         }
@@ -240,8 +274,8 @@ public:
         std::size_t tag = 0;
         for (std::size_t i : group) {
             auto& r = (*particle_position)[i];
-            r = sample_position[tag];
             auto& image = (*particle_image)[i];
+            r = sample_position[tag++];
             image = 0;
 
             // The host implementation of reduce_periodic wraps the position at
@@ -251,15 +285,19 @@ public:
             // periodic box.
             typedef typename sample_type::data_type vector_type;
             vector_type shift;
-            do {
-                image += (shift = box_->reduce_periodic(r));
-            } while (shift != vector_type(0));
-            ++tag;
+            while ((shift = box_->reduce_periodic(r)) != vector_type(0))
+            {
+                image += shift;
+            }
         }
     }
+
 private:
+    /** box for periodic boundary conditions */
     std::shared_ptr<box_type const> box_;
+    /** particle array containing the image data */
     std::shared_ptr<particle_array_type> image_array_;
+    /** cache observer for the image data */
     cache<> image_array_observer_;
 };
 
@@ -273,7 +311,8 @@ phase_space<dimension, float_type>::phase_space(
   : particle_(particle)
   , particle_group_(particle_group)
   , box_(box)
-  , logger_(logger) {}
+  , logger_(logger)
+{}
 
 /**
  * Get phase space sampler implementation.

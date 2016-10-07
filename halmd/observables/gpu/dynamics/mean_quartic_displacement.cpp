@@ -31,6 +31,8 @@ namespace observables {
 namespace gpu {
 namespace dynamics {
 
+// FIXME why data_type instead of float_type (as before)? at other places, we have scalar_type, value_type, ...
+// msd<3, float4> looks weird ...
 template <int dimension, typename data_type>
 mean_quartic_displacement<dimension, data_type>::mean_quartic_displacement(
     unsigned int blocks

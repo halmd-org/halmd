@@ -423,7 +423,8 @@ public:
         return on_append_force_.connect(slot);
     }
 
-    std::shared_ptr<particle_array> const& get_array(std::string const& name) const {
+    std::shared_ptr<particle_array> const& get_array(std::string const& name) const
+    {
         auto it = data_.find(name);
         if(it == data_.end()) {
             throw std::invalid_argument("particle array \"" + name + "\" not registered");
@@ -431,7 +432,8 @@ public:
         return it->second;
     }
 
-    bool has_array(std::string const& name) const {
+    bool has_array(std::string const& name) const
+    {
         return data_.find(name) != data_.end();
     }
 
