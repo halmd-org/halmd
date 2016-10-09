@@ -28,6 +28,7 @@
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/potentials/pair/force_shifted.hpp>
 #include <halmd/mdsim/host/potentials/pair/lennard_jones.hpp>
+#include <halmd/mdsim/host/potentials/pair/sharp.hpp>
 #include <halmd/mdsim/host/potentials/pair/shifted.hpp>
 #include <halmd/mdsim/host/potentials/pair/smooth_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -91,12 +92,15 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_lennard_jones(lua_
 #ifndef USE_HOST_SINGLE_PRECISION
     lennard_jones<double>::luaopen(L);
     smooth_r4<lennard_jones<double>>::luaopen(L);
+    sharp<lennard_jones<double>>::luaopen(L);
     shifted<lennard_jones<double>>::luaopen(L);
     force_shifted<lennard_jones<double>>::luaopen(L);
     forces::pair_full<3, double, lennard_jones<double> >::luaopen(L);
     forces::pair_full<2, double, lennard_jones<double> >::luaopen(L);
     forces::pair_trunc<3, double, smooth_r4<lennard_jones<double> > >::luaopen(L);
     forces::pair_trunc<2, double, smooth_r4<lennard_jones<double> > >::luaopen(L);
+    forces::pair_trunc<3, double, sharp<lennard_jones<double> > >::luaopen(L);
+    forces::pair_trunc<2, double, sharp<lennard_jones<double> > >::luaopen(L);
     forces::pair_trunc<3, double, shifted<lennard_jones<double> > >::luaopen(L);
     forces::pair_trunc<2, double, shifted<lennard_jones<double> > >::luaopen(L);
     forces::pair_trunc<3, double, force_shifted<lennard_jones<double> > >::luaopen(L);
@@ -104,12 +108,15 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_lennard_jones(lua_
 #else
     lennard_jones<float>::luaopen(L);
     smooth_r4<lennard_jones<float>>::luaopen(L);
+    sharp<lennard_jones<float>>::luaopen(L);
     shifted<lennard_jones<float>>::luaopen(L);
     force_shifted<lennard_jones<float>>::luaopen(L);
     forces::pair_full<3, float, lennard_jones<float> >::luaopen(L);
     forces::pair_full<2, float, lennard_jones<float> >::luaopen(L);
     forces::pair_trunc<3, float, smooth_r4<lennard_jones<float> > >::luaopen(L);
     forces::pair_trunc<2, float, smooth_r4<lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, sharp<lennard_jones<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, sharp<lennard_jones<float> > >::luaopen(L);
     forces::pair_trunc<3, float, shifted<lennard_jones<float> > >::luaopen(L);
     forces::pair_trunc<2, float, shifted<lennard_jones<float> > >::luaopen(L);
     forces::pair_trunc<3, float, force_shifted<lennard_jones<float> > >::luaopen(L);
@@ -122,11 +129,13 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_lennard_jones(lua_
 #ifndef USE_HOST_SINGLE_PRECISION
 template class lennard_jones<double>;
 template class smooth_r4<lennard_jones<double>>;
+template class sharp<lennard_jones<double>>;
 template class shifted<lennard_jones<double>>;
 template class force_shifted<lennard_jones<double>>;
 #else
 template class lennard_jones<float>;
 template class smooth_r4<lennard_jones<float>>;
+template class sharp<lennard_jones<float>>;
 template class shifted<lennard_jones<float>>;
 template class force_shifted<lennard_jones<float>>;
 #endif
@@ -142,6 +151,8 @@ template class pair_full<3, double, potentials::pair::lennard_jones<double> >;
 template class pair_full<2, double, potentials::pair::lennard_jones<double> >;
 template class pair_trunc<3, double, potentials::pair::smooth_r4<potentials::pair::lennard_jones<double> > >;
 template class pair_trunc<2, double, potentials::pair::smooth_r4<potentials::pair::lennard_jones<double> > >;
+template class pair_trunc<3, double, potentials::pair::sharp<potentials::pair::lennard_jones<double> > >;
+template class pair_trunc<2, double, potentials::pair::sharp<potentials::pair::lennard_jones<double> > >;
 template class pair_trunc<3, double, potentials::pair::shifted<potentials::pair::lennard_jones<double> > >;
 template class pair_trunc<2, double, potentials::pair::shifted<potentials::pair::lennard_jones<double> > >;
 template class pair_trunc<3, double, potentials::pair::force_shifted<potentials::pair::lennard_jones<double> > >;
@@ -151,6 +162,8 @@ template class pair_full<3, float, potentials::pair::lennard_jones<float> >;
 template class pair_full<2, float, potentials::pair::lennard_jones<float> >;
 template class pair_trunc<3, float, potentials::pair::smooth_r4<potentials::pair::lennard_jones<float> > >;
 template class pair_trunc<2, float, potentials::pair::smooth_r4<potentials::pair::lennard_jones<float> > >;
+template class pair_trunc<3, float, potentials::pair::sharp<potentials::pair::lennard_jones<float> > >;
+template class pair_trunc<2, float, potentials::pair::sharp<potentials::pair::lennard_jones<float> > >;
 template class pair_trunc<3, float, potentials::pair::shifted<potentials::pair::lennard_jones<float> > >;
 template class pair_trunc<2, float, potentials::pair::shifted<potentials::pair::lennard_jones<float> > >;
 template class pair_trunc<3, float, potentials::pair::force_shifted<potentials::pair::lennard_jones<float> > >;

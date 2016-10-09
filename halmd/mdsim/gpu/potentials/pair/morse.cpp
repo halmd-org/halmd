@@ -30,6 +30,7 @@
 #include <halmd/mdsim/gpu/potentials/pair/force_shifted.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/morse.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/morse_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/sharp.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/shifted.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/smooth_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -108,12 +109,15 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_morse(lua_State* L)
 {
     morse<float>::luaopen(L);
     smooth_r4<morse<float>>::luaopen(L);
+    sharp<morse<float>>::luaopen(L);
     shifted<morse<float>>::luaopen(L);
     force_shifted<morse<float>>::luaopen(L);
     forces::pair_full<3, float, morse<float> >::luaopen(L);
     forces::pair_full<2, float, morse<float> >::luaopen(L);
     forces::pair_trunc<3, float, smooth_r4<morse<float> > >::luaopen(L);
     forces::pair_trunc<2, float, smooth_r4<morse<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, sharp<morse<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, sharp<morse<float> > >::luaopen(L);
     forces::pair_trunc<3, float, shifted<morse<float> > >::luaopen(L);
     forces::pair_trunc<2, float, shifted<morse<float> > >::luaopen(L);
     forces::pair_trunc<3, float, force_shifted<morse<float> > >::luaopen(L);
@@ -124,6 +128,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_morse(lua_State* L)
 // explicit instantiation
 template class morse<float>;
 template class smooth_r4<morse<float>>;
+template class sharp<morse<float>>;
 template class shifted<morse<float>>;
 template class force_shifted<morse<float>>;
 
@@ -137,6 +142,8 @@ template class pair_full<3, float, potentials::pair::morse<float> >;
 template class pair_full<2, float, potentials::pair::morse<float> >;
 template class pair_trunc<3, float, potentials::pair::smooth_r4<potentials::pair::morse<float> > >;
 template class pair_trunc<2, float, potentials::pair::smooth_r4<potentials::pair::morse<float> > >;
+template class pair_trunc<3, float, potentials::pair::sharp<potentials::pair::morse<float> > >;
+template class pair_trunc<2, float, potentials::pair::sharp<potentials::pair::morse<float> > >;
 template class pair_trunc<3, float, potentials::pair::shifted<potentials::pair::morse<float> > >;
 template class pair_trunc<2, float, potentials::pair::shifted<potentials::pair::morse<float> > >;
 template class pair_trunc<3, float, potentials::pair::force_shifted<potentials::pair::morse<float> > >;

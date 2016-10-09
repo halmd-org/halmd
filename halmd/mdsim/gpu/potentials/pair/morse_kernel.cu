@@ -21,6 +21,7 @@
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/force_shifted_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/sharp_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/shifted_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/smooth_r4_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/morse_kernel.hpp>
@@ -79,6 +80,7 @@ private:
 
 cuda::texture<float4> morse_wrapper::param = morse_kernel::param_;
 template class smooth_r4_wrapper<morse_kernel::morse>;
+template class sharp_wrapper<morse_kernel::morse>;
 template class shifted_wrapper<morse_kernel::morse>;
 template class force_shifted_wrapper<morse_kernel::morse>;
 
@@ -90,6 +92,7 @@ namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::morse_kernel;
 using namespace halmd::mdsim::gpu::potentials::pair::smooth_r4_kernel;
+using namespace halmd::mdsim::gpu::potentials::pair::sharp_kernel;
 using namespace halmd::mdsim::gpu::potentials::pair::shifted_kernel;
 using namespace halmd::mdsim::gpu::potentials::pair::force_shifted_kernel;
 
@@ -97,6 +100,8 @@ template class pair_full_wrapper<3, morse>;
 template class pair_full_wrapper<2, morse>;
 template class pair_trunc_wrapper<3, smooth_r4<morse> >;
 template class pair_trunc_wrapper<2, smooth_r4<morse> >;
+template class pair_trunc_wrapper<3, sharp<morse> >;
+template class pair_trunc_wrapper<2, sharp<morse> >;
 template class pair_trunc_wrapper<3, shifted<morse> >;
 template class pair_trunc_wrapper<2, shifted<morse> >;
 template class pair_trunc_wrapper<3, force_shifted<morse> >;

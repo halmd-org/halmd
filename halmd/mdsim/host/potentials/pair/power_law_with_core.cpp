@@ -28,6 +28,7 @@
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/potentials/pair/force_shifted.hpp>
 #include <halmd/mdsim/host/potentials/pair/power_law_with_core.hpp>
+#include <halmd/mdsim/host/potentials/pair/sharp.hpp>
 #include <halmd/mdsim/host/potentials/pair/shifted.hpp>
 #include <halmd/mdsim/host/potentials/pair/smooth_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -101,12 +102,15 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_power_law_with_cor
 #ifndef USE_HOST_SINGLE_PRECISION
     power_law_with_core<double>::luaopen(L);
     smooth_r4<power_law_with_core<double>>::luaopen(L);
+    sharp<power_law_with_core<double>>::luaopen(L);
     shifted<power_law_with_core<double>>::luaopen(L);
     force_shifted<power_law_with_core<double>>::luaopen(L);
     forces::pair_full<3, double, power_law_with_core<double> >::luaopen(L);
     forces::pair_full<2, double, power_law_with_core<double> >::luaopen(L);
     forces::pair_trunc<3, double, smooth_r4<power_law_with_core<double> > >::luaopen(L);
     forces::pair_trunc<2, double, smooth_r4<power_law_with_core<double> > >::luaopen(L);
+    forces::pair_trunc<3, double, sharp<power_law_with_core<double> > >::luaopen(L);
+    forces::pair_trunc<2, double, sharp<power_law_with_core<double> > >::luaopen(L);
     forces::pair_trunc<3, double, shifted<power_law_with_core<double> > >::luaopen(L);
     forces::pair_trunc<2, double, shifted<power_law_with_core<double> > >::luaopen(L);
     forces::pair_trunc<3, double, force_shifted<power_law_with_core<double> > >::luaopen(L);
@@ -120,6 +124,8 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_power_law_with_cor
     forces::pair_full<2, float, power_law_with_core<float> >::luaopen(L);
     forces::pair_trunc<3, float, smooth_r4<power_law_with_core<float> > >::luaopen(L);
     forces::pair_trunc<2, float, smooth_r4<power_law_with_core<float> > >::luaopen(L);
+    forces::pair_trunc<3, float, sharp<power_law_with_core<float> > >::luaopen(L);
+    forces::pair_trunc<2, float, sharp<power_law_with_core<float> > >::luaopen(L);
     forces::pair_trunc<3, float, shifted<power_law_with_core<float> > >::luaopen(L);
     forces::pair_trunc<2, float, shifted<power_law_with_core<float> > >::luaopen(L);
     forces::pair_trunc<3, float, force_shifted<power_law_with_core<float> > >::luaopen(L);
@@ -132,11 +138,13 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_power_law_with_cor
 #ifndef USE_HOST_SINGLE_PRECISION
 template class power_law_with_core<double>;
 template class smooth_r4<power_law_with_core<double>>;
+template class sharp<power_law_with_core<double>>;
 template class shifted<power_law_with_core<double>>;
 template class force_shifted<power_law_with_core<double>>;
 #else
 template class power_law_with_core<float>;
 template class smooth_r4<power_law_with_core<float>>;
+template class sharp<power_law_with_core<double>>;
 template class shifted<power_law_with_core<double>>;
 template class force_shifted<power_law_with_core<double>>;
 #endif
@@ -152,6 +160,8 @@ template class pair_full<3, double, potentials::pair::power_law_with_core<double
 template class pair_full<2, double, potentials::pair::power_law_with_core<double> >;
 template class pair_trunc<3, double, potentials::pair::smooth_r4<potentials::pair::power_law_with_core<double> > >;
 template class pair_trunc<2, double, potentials::pair::smooth_r4<potentials::pair::power_law_with_core<double> > >;
+template class pair_trunc<3, double, potentials::pair::sharp<potentials::pair::power_law_with_core<double> > >;
+template class pair_trunc<2, double, potentials::pair::sharp<potentials::pair::power_law_with_core<double> > >;
 template class pair_trunc<3, double, potentials::pair::shifted<potentials::pair::power_law_with_core<double> > >;
 template class pair_trunc<2, double, potentials::pair::shifted<potentials::pair::power_law_with_core<double> > >;
 template class pair_trunc<3, double, potentials::pair::force_shifted<potentials::pair::power_law_with_core<double> > >;
@@ -161,6 +171,8 @@ template class pair_full<3, float, potentials::pair::power_law_with_core<float> 
 template class pair_full<2, float, potentials::pair::power_law_with_core<float> >;
 template class pair_trunc<3, float, potentials::pair::smooth_r4<potentials::pair::power_law_with_core<float> > >;
 template class pair_trunc<2, float, potentials::pair::smooth_r4<potentials::pair::power_law_with_core<float> > >;
+template class pair_trunc<3, float, potentials::pair::sharp<potentials::pair::power_law_with_core<float> > >;
+template class pair_trunc<2, float, potentials::pair::sharp<potentials::pair::power_law_with_core<float> > >;
 template class pair_trunc<3, float, potentials::pair::shifted<potentials::pair::power_law_with_core<float> > >;
 template class pair_trunc<2, float, potentials::pair::shifted<potentials::pair::power_law_with_core<float> > >;
 template class pair_trunc<3, float, potentials::pair::force_shifted<potentials::pair::power_law_with_core<float> > >;
