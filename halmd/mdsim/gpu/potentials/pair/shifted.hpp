@@ -67,10 +67,9 @@ public:
         LOG("potential cutoff length: r_c = " << r_cut_sigma_);
         LOG("potential cutoff energy: U = " << en_cut_);
 
-        cuda::host::vector<float4> param(g_param_.size());
+        cuda::host::vector<float2> param(g_param_.size());
         for (size_t i = 0; i < param.size(); ++i) {
-            fixed_vector<float, 3> p;
-            p[shifted_kernel::R_CUT] = r_cut_.data()[i];
+            fixed_vector<float, 2> p;
             p[shifted_kernel::RR_CUT] = rr_cut_.data()[i];
             p[shifted_kernel::EN_CUT] = en_cut_.data()[i];
             param[i] = p;
@@ -144,7 +143,7 @@ private:
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
 
-    cuda::vector<float4> g_param_;
+    cuda::vector<float2> g_param_;
 };
 
 } // namespace pair

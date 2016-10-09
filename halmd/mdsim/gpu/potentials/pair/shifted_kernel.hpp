@@ -34,8 +34,7 @@ namespace shifted_kernel {
  * indices of parameters
  */
 enum {
-    R_CUT       /**< cutoff length */
-  , RR_CUT      /**< square of cutoff length */
+    RR_CUT      /**< square of cutoff length */
   , EN_CUT      /**< potential energy at cutoff length in MD units */
 };
 
@@ -48,7 +47,7 @@ class shifted;
 template<typename parent_kernel>
 struct shifted_wrapper
 {
-    static cuda::texture<float4> param;
+    static cuda::texture<float2> param;
 };
 
 } // namespace pair

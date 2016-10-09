@@ -34,7 +34,7 @@ namespace potentials {
 namespace pair {
 namespace shifted_kernel {
 
-static texture<float4> param_;
+static texture<float2> param_;
 
 template<typename parent_kernel>
 class shifted : public parent_kernel
@@ -55,22 +55,6 @@ public:
       : parent_kernel(type1, type2, ntype1, ntype2)
       , pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
     {}
-
-    /**
-     * Returns cutoff distance.
-     */
-    HALMD_GPU_ENABLED float r_cut() const
-    {
-        return pair_[R_CUT];
-    }
-
-    /**
-     * Returns square of cutoff distance.
-     */
-    HALMD_GPU_ENABLED float rr_cut() const
-    {
-        return pair_[RR_CUT];
-    }
 
     /**
      * Check whether particles are in interaction range.
@@ -99,13 +83,13 @@ public:
     }
 
 private:
-    fixed_vector<float, 3> pair_;
+    fixed_vector<float, 2> pair_;
 };
 
 } // namespace shifted_kernel
 
 template<typename parent_kernel>
-cuda::texture<float4> shifted_wrapper<parent_kernel>::param = shifted_kernel::param_;
+cuda::texture<float2> shifted_wrapper<parent_kernel>::param = shifted_kernel::param_;
 
 } // namespace pair
 } // namespace potentials

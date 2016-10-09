@@ -57,22 +57,6 @@ public:
     {}
 
     /**
-     * Returns cutoff distance.
-     */
-    HALMD_GPU_ENABLED float r_cut() const
-    {
-        return sqrt(rr_cut_);
-    }
-
-    /**
-     * Returns square of cutoff distance.
-     */
-    HALMD_GPU_ENABLED float rr_cut() const
-    {
-        return rr_cut_;
-    }
-
-    /**
      * Check whether particles are in interaction range.
      *
      * @param rr squared distance between particles
