@@ -194,7 +194,7 @@ private:
 
         return std::make_tuple(fval, en_pot);
     }
-
+protected:
     /** interaction strength in MD units */
     matrix_type epsilon_;
     /** interaction range in MD units */

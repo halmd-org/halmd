@@ -31,10 +31,3 @@ halmd_add_potential(
   power_law.cpp
   power_law_kernel.cu
 )
-
-halmd_add_potential(
-  halmd_mdsim_gpu_potentials_pair_power_law_with_core
-  pair power_law_with_core
-  power_law_with_core.cpp
-  power_law_with_core_kernel.cu
-)

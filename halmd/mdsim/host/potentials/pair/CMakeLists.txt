@@ -21,9 +21,3 @@ halmd_add_potential(
   pair power_law
   power_law.cpp
 )
-
-halmd_add_potential(
-  halmd_mdsim_host_potentials_pair_power_law_with_core
-  pair power_law_with_core
-  power_law_with_core.cpp
-)

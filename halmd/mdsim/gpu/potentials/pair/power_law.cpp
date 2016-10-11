@@ -27,8 +27,8 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/hard_core.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/power_law.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/power_law_hard_core.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_kernel.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/truncations.hpp>
 #include <halmd/utility/lua/lua.hpp>

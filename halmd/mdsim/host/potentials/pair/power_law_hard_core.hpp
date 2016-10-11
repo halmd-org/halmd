@@ -1,6 +1,5 @@
 /*
- * Copyright © 2011-2013 Felix Höfling
- * Copyright © 2011-2012 Michael Kopp
+ * Copyright © 2016 Daniel Kirchner
  *
  * This file is part of HALMD.
  *
@@ -19,16 +18,11 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_POWER_LAW_WITH_CORE_HPP
-#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_POWER_LAW_WITH_CORE_HPP
+#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_POWER_LAW_HARD_CORE_HPP
+#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_POWER_LAW_HARD_CORE_HPP
 
-#include <boost/numeric/ublas/matrix.hpp>
-#include <lua.hpp>
-#include <tuple>
-#include <memory>
-
-#include <halmd/io/logger.hpp>
-#include <halmd/numeric/pow.hpp>
+#include <halmd/mdsim/host/potentials/pair/hard_core.hpp>
+#include <halmd/mdsim/host/potentials/pair/power_law.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -37,27 +31,27 @@ namespace potentials {
 namespace pair {
 
 /**
- * A power-law potential @f$ r^{-n} @f$ is often used for
- * repulsive smooth spheres. This potential is slightly
- * modified to allow for solid particles. It diverges for
- * (finite) r_core (parameter): @f$ (r-r_\mathrm{core})^{-n} @f$
+ * explicit instantiation for power_law
  */
-
 template <typename float_type_>
-class power_law_with_core
+class hard_core<power_law<float_type_>> : public power_law<float_type_>
 {
 public:
     typedef float_type_ float_type;
-    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
-    typedef boost::numeric::ublas::matrix<unsigned int> uint_matrix_type;
+    typedef typename power_law<float_type>::matrix_type matrix_type;
 
-    power_law_with_core(
-        matrix_type const& core
-      , matrix_type const& epsilon
-      , matrix_type const& sigma
-      , uint_matrix_type const& index
-      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
-    );
+    template<typename... Args>
+    hard_core(matrix_type const& core, Args&&... args)
+            : power_law<float_type> (std::forward<Args>(args)...)
+            , r_core_sigma_(check_shape(core, this->sigma()))
+    {
+        LOG("core radius r_core/σ = " << r_core_sigma_);
+    }
+
+    matrix_type const& r_core_sigma() const
+    {
+        return r_core_sigma_;
+    }
 
     /**
      * Compute potential and its derivative at squared distance 'rr'
@@ -78,7 +72,7 @@ public:
      * the differences in the assembler code are tiny:
      *
      * std::pow (GCC 4.3.2):
-.L738:
+    .L738:
         mov     %edx, %eax      # n.3872, n.3872
         addl    $1, %edx        #, n.3872
         cvtsi2sdq       %rax, %xmm0     # n.3872, tmp316
@@ -93,7 +87,7 @@ public:
         movsd   %xmm2, 1304(%rsp)       # b_lsm.3847, b
      *
      * std::pow (GCC 4.4.1):
-.L687:
+    .L687:
         mov     %eax, %edx      # n.3613, n.3613
         cvtsi2sdq       %rdx, %xmm1     # n.3613, tmp258
         movapd  %xmm1, %xmm0    # tmp258, prephitmp.3563
@@ -101,7 +95,7 @@ public:
         mulsd   %xmm1, %xmm0    # tmp258, prephitmp.3563
         mulsd   %xmm0, %xmm0    # prephitmp.3563, prephitmp.3563
         mulsd   %xmm0, %xmm0    # prephitmp.3563, prephitmp.3563
-.L683:
+    .L683:
         addl    $1, %eax        #, n.3613
         addsd   %xmm0, %xmm2    # prephitmp.3563, prephitmp.3612
         cmpl    $10000000, %eax #, n.3613
@@ -110,7 +104,7 @@ public:
         movsd   %xmm2, 1272(%rsp)       # prephitmp.3612, b
      *
      * fixed_pow (GCC 4.4.1):
-.L666:
+    .L666:
         mov     %eax, %edx      # n, n
         addl    $1, %eax        #, n
         cvtsi2sdq       %rdx, %xmm0     # n, x.3623
@@ -131,52 +125,42 @@ public:
      */
     std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
-        switch (index_(a, b)) {
+        switch (this->index_(a, b)) {
             case 6:  return impl_<6>(rr, a, b);
             case 12: return impl_<12>(rr, a, b);
             case 24: return impl_<24>(rr, a, b);
             case 48: return impl_<48>(rr, a, b);
             default:
-                LOG_WARNING_ONCE("Using non-optimised force routine for index " << index_(a, b));
+            LOG_WARNING_ONCE("Using non-optimised force routine for index " << this->index_(a, b));
                 return impl_<0>(rr, a, b);
         }
     }
-
-    matrix_type const& r_core_sigma() const
-    {
-        return r_core_sigma_;
-    }
-
-    matrix_type const& epsilon() const
-    {
-        return epsilon_;
-    }
-
-    matrix_type const& sigma() const
-    {
-        return sigma_;
-    }
-
-    uint_matrix_type const& index() const
-    {
-        return index_;
-    }
-
-    unsigned int size1() const
-    {
-        return epsilon_.size1();
-    }
-
-    unsigned int size2() const
-    {
-        return epsilon_.size2();
-    }
-
     /**
      * Bind class to Lua.
      */
-    static void luaopen(lua_State* L);
-
+    static void luaopen(lua_State* L) {
+        using namespace luaponte;
+        module(L, "libhalmd")
+        [
+                namespace_("mdsim")
+                [
+                        namespace_("host")
+                        [
+                                namespace_("potentials")
+                                [
+                                        namespace_("pair")
+                                        [
+                                                class_<hard_core, power_law<float_type>, std::shared_ptr<hard_core> >()
+                                                    .property("r_core_sigma", &hard_core::r_core_sigma)
+                                              , def("hard_core", &std::make_shared<hard_core
+                                                                                 , matrix_type const&
+                                                                                 , power_law<float_type> const&>)
+                                        ]
+                                ]
+                        ]
+                ]
+        ];
+    }
 private:
     /**
      * Optimise pow() function by providing the index at compile time.
@@ -196,33 +180,23 @@ private:
     std::tuple<float_type, float_type> impl_(float_type rr, unsigned a, unsigned b) const
     {
         // choose arbitrary index_ if template parameter index = 0
-        unsigned int n = const_index > 0 ? const_index : index_(a, b);
-        float_type rr_ss = rr / sigma2_(a, b);
+        unsigned int n = const_index > 0 ? const_index : this->index_(a, b);
+        float_type rr_ss = rr / this->sigma2_(a, b);
         // The computation of the square root can not be avoided
         // as r_core must be substracted from r but only r * r is passed.
         float_type r_s = std::sqrt(rr_ss);
         float_type dri = 1 / (r_s - r_core_sigma_(a, b));
-        float_type eps_dri_n = epsilon_(a, b) * ((const_index > 0) ? fixed_pow<const_index>(dri) : halmd::pow(dri, n));
+        float_type eps_dri_n = this->epsilon_(a, b) * ((const_index > 0) ? fixed_pow<const_index>(dri) : halmd::pow(dri, n));
 
         float_type en_pot = eps_dri_n;
         float_type n_eps_dri_n_1 = n * dri * eps_dri_n;
-        float_type fval = n_eps_dri_n_1 / (sigma2_(a, b) * r_s);
+        float_type fval = n_eps_dri_n_1 / (this->sigma2_(a, b) * r_s);
 
         return std::make_tuple(fval, en_pot);
     }
 
-    /** interaction strength in MD units */
-    matrix_type epsilon_;
-    /** interaction range in MD units */
-    matrix_type sigma_;
-    /** power law index */
-    uint_matrix_type index_;
-    /** square of pair separation in MD units */
-    matrix_type sigma2_;
     /** core radius in units of sigma */
     matrix_type r_core_sigma_;
-    /** module logger */
-    std::shared_ptr<logger> logger_;
 };
 
 } // namespace pair
@@ -231,4 +205,4 @@ private:
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_POWER_LAW_WITH_CORE_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_POWER_LAW_HARD_CORE_HPP */

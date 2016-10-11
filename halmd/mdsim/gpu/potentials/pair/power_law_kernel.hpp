@@ -40,8 +40,45 @@ enum {
   , INDEX         /**< power law index */
 };
 
-// forward declaration for host code
-class power_law;
+/**
+ * power law interaction potential of a pair of particles.
+ *
+ * @f[  U(r) = \epsilon (r/\sigma)^{-n} @f]
+ */
+class power_law
+{
+public:
+    /**
+     * Construct power law potential.
+     *
+     * Fetch potential parameters from texture cache for particle pair.
+     *
+     * @param type1 type of first interacting particle
+     * @param type2 type of second interacting particle
+     */
+    HALMD_GPU_ENABLED power_law(
+            unsigned int type1, unsigned int type2
+          , unsigned int ntype1, unsigned int ntype2
+    );
+
+    /**
+     * Compute force and potential for interaction.
+     *
+     * @param rr squared distance between particles
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
+     *
+     * @f{eqnarray*}{
+     *   - U'(r) / r &=& n r^{-2} \epsilon (r/\sigma)^{-n} \\
+     *   U(r) &=& \epsilon (r/\sigma)^{-n}
+     * @f}
+     */
+    template <typename float_type>
+    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const;
+
+protected:
+    /** potential parameters for particle pair */
+    fixed_vector<float, 4> pair_;
+};
 
 template<typename float_type>
 HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type const& rr

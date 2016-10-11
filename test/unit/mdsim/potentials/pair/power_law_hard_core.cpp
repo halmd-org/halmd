@@ -21,7 +21,7 @@
 
 #include <halmd/config.hpp>
 
-#define BOOST_TEST_MODULE power_law_with_core
+#define BOOST_TEST_MODULE power_law_hard_core
 #include <boost/test/unit_test.hpp>
 
 #include <boost/foreach.hpp>
@@ -32,14 +32,12 @@
 #include <numeric> // std::accumulate
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/potentials/pair/hard_core.hpp>
-#include <halmd/mdsim/host/potentials/pair/power_law.hpp>
+#include <halmd/mdsim/host/potentials/pair/power_law_hard_core.hpp>
 #include <halmd/mdsim/host/potentials/pair/shifted.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
-# include <halmd/mdsim/gpu/potentials/pair/hard_core.hpp>
-# include <halmd/mdsim/gpu/potentials/pair/power_law.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/power_law_hard_core.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/shifted.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
@@ -59,7 +57,7 @@ using namespace std;
  *  neighbour per particle.
  */
 
-BOOST_AUTO_TEST_CASE( power_law_with_core_host )
+BOOST_AUTO_TEST_CASE( power_law_hard_core_host )
 {
     typedef mdsim::host::potentials::pair::power_law<double> base_potential_type;
     typedef mdsim::host::potentials::pair::hard_core<base_potential_type> modified_potential_type;
@@ -203,7 +201,7 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
 #ifdef HALMD_WITH_GPU
 
 template <typename float_type>
-struct power_law_with_core
+struct power_law_hard_core
 {
     enum { dimension = 2 };
 
@@ -229,12 +227,12 @@ struct power_law_with_core
     std::shared_ptr<host_potential_type> host_potential;
     vector<unsigned int> npart_list;
 
-    power_law_with_core();
+    power_law_hard_core();
     void test();
 };
 
 template <typename float_type>
-void power_law_with_core<float_type>::test()
+void power_law_hard_core<float_type>::test()
 {
     // place particles along the x-axis within one half of the box,
     // put every second particle at the origin
@@ -286,7 +284,7 @@ void power_law_with_core<float_type>::test()
 }
 
 template <typename float_type>
-power_law_with_core<float_type>::power_law_with_core()
+power_law_hard_core<float_type>::power_law_hard_core()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
 
@@ -339,7 +337,7 @@ power_law_with_core<float_type>::power_law_with_core()
     particle->on_force([=](){force->apply();});
 }
 
-BOOST_FIXTURE_TEST_CASE( power_law_with_core_gpu, device ) {
-    power_law_with_core<float>().test();
+BOOST_FIXTURE_TEST_CASE( power_law_hard_core_gpu, device ) {
+    power_law_hard_core<float>().test();
 }
 #endif // HALMD_WITH_GPU
