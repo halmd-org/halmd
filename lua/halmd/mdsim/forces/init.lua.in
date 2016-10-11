@@ -29,7 +29,6 @@ local module = require("halmd.utility.module")
 --    :glob:
 --
 --    *
---    trunc/index
 --
 
 return module.loader("halmd.mdsim.forces")
