@@ -77,7 +77,7 @@ local function liquid(args)
         potential = potential:truncate({cutoff = args.cutoff})
     end
     -- compute forces
-    local force = mdsim.forces.pair_trunc({
+    local force = mdsim.forces.pair({
         box = box, particle = particle, potential = potential
     })
 

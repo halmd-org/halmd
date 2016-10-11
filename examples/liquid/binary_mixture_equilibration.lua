@@ -97,7 +97,7 @@ local function liquid(args)
     -- smoothing at potential cutoff
     potential = potential:truncate({"smooth_r4", cutoff = 2.5, h = 0.005})
     -- compute forces
-    local force = mdsim.forces.pair_trunc({
+    local force = mdsim.forces.pair({
         box = box
       , particle = particle
       , potential = potential

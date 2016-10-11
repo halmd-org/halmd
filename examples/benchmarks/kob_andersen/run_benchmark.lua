@@ -98,7 +98,7 @@ local function kob_andersen(args)
       , cutoff = 2.5
     })
     -- compute forces
-    local force = mdsim.forces.pair_trunc({box = box, particle = particle, potential = potential})
+    local force = mdsim.forces.pair({box = box, particle = particle, potential = potential})
 
     -- define velocity-Verlet integrator
     local integrator = mdsim.integrators.verlet({

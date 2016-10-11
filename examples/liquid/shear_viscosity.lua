@@ -61,7 +61,7 @@ local function shear_viscosity(args)
     local potential = mdsim.potentials.pair.lennard_jones({cutoff = args.cutoff})
 
     -- compute forces
-    local force = mdsim.forces.pair_trunc({
+    local force = mdsim.forces.pair({
         box = box, particle = particle, potential = potential
     })
 

@@ -84,7 +84,6 @@ local function setup(args)
     particle = particle_; particle_ = nil
 
     -- truncated Lennard-Jones potential
-    -- FIXME move cutoff to pair_trunc
     local potential = mdsim.potentials.pair.lennard_jones({
         epsilon = {
             {1  , 1.5} -- AA, AB
@@ -119,7 +118,7 @@ local function setup(args)
               , r_cut = potential.r_cut
               , binning = { binning[label1], binning[label2] }
             })
-            force[label1 .. label2] = mdsim.forces.pair_trunc({
+            force[label1 .. label2] = mdsim.forces.pair({
                 box = box
               , particle = { p1, p2 }
               , potential = potential

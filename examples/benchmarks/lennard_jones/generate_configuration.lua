@@ -57,7 +57,7 @@ local function lennard_jones(args)
     -- define interaction using truncated Lennard-Jones potential
     local potential = mdsim.potentials.pair.lennard_jones({cutoff = cutoff})
     -- compute forces
-    local force = mdsim.forces.pair_trunc({
+    local force = mdsim.forces.pair({
         box = box, particle = particle, potential = potential, -- neighbour_skin = 0.7
     })
 
