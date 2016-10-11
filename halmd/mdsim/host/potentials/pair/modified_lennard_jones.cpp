@@ -28,11 +28,8 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/pair_full.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
-#include <halmd/mdsim/host/potentials/pair/force_shifted.hpp>
 #include <halmd/mdsim/host/potentials/pair/modified_lennard_jones.hpp>
-#include <halmd/mdsim/host/potentials/pair/sharp.hpp>
-#include <halmd/mdsim/host/potentials/pair/shifted.hpp>
-#include <halmd/mdsim/host/potentials/pair/smooth_r4.hpp>
+#include <halmd/mdsim/host/potentials/pair/truncations.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost::numeric::ublas;
@@ -121,36 +118,14 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_modified_lennard_j
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     modified_lennard_jones<double>::luaopen(L);
-    smooth_r4<modified_lennard_jones<double>>::luaopen(L);
-    sharp<modified_lennard_jones<double>>::luaopen(L);
-    shifted<modified_lennard_jones<double>>::luaopen(L);
-    force_shifted<modified_lennard_jones<double>>::luaopen(L);
     forces::pair_full<3, double, modified_lennard_jones<double> >::luaopen(L);
     forces::pair_full<2, double, modified_lennard_jones<double> >::luaopen(L);
-    forces::pair_trunc<3, double, smooth_r4<modified_lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, smooth_r4<modified_lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<3, double, sharp<modified_lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, sharp<modified_lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<3, double, shifted<modified_lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, shifted<modified_lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<3, double, force_shifted<modified_lennard_jones<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, force_shifted<modified_lennard_jones<double> > >::luaopen(L);
+    truncations_luaopen<double, modified_lennard_jones<double> >(L);
 #else
     modified_lennard_jones<float>::luaopen(L);
-    smooth_r4<modified_lennard_jones<float>>::luaopen(L);
-    sharp<modified_lennard_jones<float>>::luaopen(L);
-    shifted<modified_lennard_jones<float>>::luaopen(L);
-    force_shifted<modified_lennard_jones<float>>::luaopen(L);
     forces::pair_full<3, float, modified_lennard_jones<float> >::luaopen(L);
     forces::pair_full<2, float, modified_lennard_jones<float> >::luaopen(L);
-    forces::pair_trunc<3, double, smooth_r4<modified_lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<2, double, smooth_r4<modified_lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<3, double, sharp<modified_lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<2, double, sharp<modified_lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<3, double, shifted<modified_lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<2, double, shifted<modified_lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<3, double, force_shifted<modified_lennard_jones<float> > >::luaopen(L);
-    forces::pair_trunc<2, double, force_shifted<modified_lennard_jones<float> > >::luaopen(L);
+    truncations_luaopen<float, modified_lennard_jones<float> >(L);
 #endif
     return 0;
 }
@@ -158,16 +133,10 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_modified_lennard_j
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class modified_lennard_jones<double>;
-template class smooth_r4<modified_lennard_jones<double>>;
-template class sharp<modified_lennard_jones<double>>;
-template class shifted<modified_lennard_jones<double>>;
-template class force_shifted<modified_lennard_jones<double>>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(modified_lennard_jones<double>);
 #else
 template class modified_lennard_jones<float>;
-template class smooth_r4<modified_lennard_jones<float>>;
-template class sharp<modified_lennard_jones<float>>;
-template class shifted<modified_lennard_jones<float>>;
-template class force_shifted<modified_lennard_jones<float>>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(modified_lennard_jones<float>);
 #endif
 
 } // namespace pair
@@ -179,25 +148,11 @@ namespace forces {
 #ifndef USE_HOST_SINGLE_PRECISION
 template class pair_full<3, double, potentials::pair::modified_lennard_jones<double> >;
 template class pair_full<2, double, potentials::pair::modified_lennard_jones<double> >;
-template class pair_trunc<3, double, potentials::pair::smooth_r4<potentials::pair::modified_lennard_jones<double> > >;
-template class pair_trunc<2, double, potentials::pair::smooth_r4<potentials::pair::modified_lennard_jones<double> > >;
-template class pair_trunc<3, double, potentials::pair::sharp<potentials::pair::modified_lennard_jones<double> > >;
-template class pair_trunc<2, double, potentials::pair::sharp<potentials::pair::modified_lennard_jones<double> > >;
-template class pair_trunc<3, double, potentials::pair::shifted<potentials::pair::modified_lennard_jones<double> > >;
-template class pair_trunc<2, double, potentials::pair::shifted<potentials::pair::modified_lennard_jones<double> > >;
-template class pair_trunc<3, double, potentials::pair::force_shifted<potentials::pair::modified_lennard_jones<double> > >;
-template class pair_trunc<2, double, potentials::pair::force_shifted<potentials::pair::modified_lennard_jones<double> > >;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(double, potentials::pair::modified_lennard_jones<double>);
 #else
 template class pair_full<3, float, potentials::pair::modified_lennard_jones<float> >;
 template class pair_full<2, float, potentials::pair::modified_lennard_jones<float> >;
-template class pair_trunc<3, float, potentials::pair::smooth_r4<potentials::pair::modified_lennard_jones<float> > >;
-template class pair_trunc<2, float, potentials::pair::smooth_r4<potentials::pair::modified_lennard_jones<float> > >;
-template class pair_trunc<3, float, potentials::pair::sharp<potentials::pair::modified_lennard_jones<float> > >;
-template class pair_trunc<2, float, potentials::pair::sharp<potentials::pair::modified_lennard_jones<float> > >;
-template class pair_trunc<3, float, potentials::pair::shifted<potentials::pair::modified_lennard_jones<float> > >;
-template class pair_trunc<2, float, potentials::pair::shifted<potentials::pair::modified_lennard_jones<float> > >;
-template class pair_trunc<3, float, potentials::pair::force_shifted<potentials::pair::modified_lennard_jones<float> > >;
-template class pair_trunc<2, float, potentials::pair::force_shifted<potentials::pair::modified_lennard_jones<float> > >;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::modified_lennard_jones<float>);
 #endif
 
 } // namespace forces

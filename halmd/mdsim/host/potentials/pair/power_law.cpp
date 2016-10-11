@@ -26,12 +26,9 @@
 
 #include <halmd/mdsim/host/forces/pair_full.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
-#include <halmd/mdsim/host/potentials/pair/force_shifted.hpp>
 #include <halmd/mdsim/host/potentials/pair/hard_core.hpp>
 #include <halmd/mdsim/host/potentials/pair/power_law.hpp>
-#include <halmd/mdsim/host/potentials/pair/sharp.hpp>
-#include <halmd/mdsim/host/potentials/pair/shifted.hpp>
-#include <halmd/mdsim/host/potentials/pair/smooth_r4.hpp>
+#include <halmd/mdsim/host/potentials/pair/truncations.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -97,68 +94,25 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_power_law(lua_Stat
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     power_law<double>::luaopen(L);
-    smooth_r4<power_law<double>>::luaopen(L);
-    sharp<power_law<double>>::luaopen(L);
-    shifted<power_law<double>>::luaopen(L);
-    force_shifted<power_law<double>>::luaopen(L);
     forces::pair_full<3, double, power_law<double> >::luaopen(L);
     forces::pair_full<2, double, power_law<double> >::luaopen(L);
-    forces::pair_trunc<3, double, smooth_r4<power_law<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, smooth_r4<power_law<double> > >::luaopen(L);
-    forces::pair_trunc<3, double, sharp<power_law<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, sharp<power_law<double> > >::luaopen(L);
-    forces::pair_trunc<3, double, shifted<power_law<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, shifted<power_law<double> > >::luaopen(L);
-    forces::pair_trunc<3, double, force_shifted<power_law<double> > >::luaopen(L);
-    forces::pair_trunc<2, double, force_shifted<power_law<double> > >::luaopen(L);
+    truncations_luaopen<double, power_law<double> >(L);
+
 
     hard_core<power_law<double> >::luaopen(L);
-    smooth_r4<hard_core<power_law<double> > >::luaopen(L);
-    sharp<hard_core<power_law<double> > >::luaopen(L);
-    shifted<hard_core<power_law<double> > >::luaopen(L);
-    force_shifted<hard_core<power_law<double> > >::luaopen(L);
     forces::pair_full<3, double, hard_core<power_law<double> > >::luaopen(L);
     forces::pair_full<2, double, hard_core<power_law<double> > >::luaopen(L);
-    forces::pair_trunc<3, double, smooth_r4<hard_core<power_law<double> > > >::luaopen(L);
-    forces::pair_trunc<2, double, smooth_r4<hard_core<power_law<double> > > >::luaopen(L);
-    forces::pair_trunc<3, double, sharp<hard_core<power_law<double> > > >::luaopen(L);
-    forces::pair_trunc<2, double, sharp<hard_core<power_law<double> > > >::luaopen(L);
-    forces::pair_trunc<3, double, shifted<hard_core<power_law<double> > > >::luaopen(L);
-    forces::pair_trunc<2, double, shifted<hard_core<power_law<double> > > >::luaopen(L);
-    forces::pair_trunc<3, double, force_shifted<hard_core<power_law<double> > > >::luaopen(L);
-    forces::pair_trunc<2, double, force_shifted<hard_core<power_law<double> > > >::luaopen(L);
+    truncations_luaopen<double, hard_core<power_law<double> > >(L);
 #else
     power_law<float>::luaopen(L);
-    smooth_r4<power_law<float> >::luaopen(L);
-    sharp<power_law<float> >::luaopen(L);
-    shifted<power_law<float> >::luaopen(L);
-    force_shifted<power_law<float> >::luaopen(L);
     forces::pair_full<3, float, power_law<float> >::luaopen(L);
     forces::pair_full<2, float, power_law<float> >::luaopen(L);
-    forces::pair_trunc<3, float, smooth_r4<power_law<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, smooth_r4<power_law<float> > >::luaopen(L);
-    forces::pair_trunc<3, float, sharp<power_law<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, sharp<power_law<float> > >::luaopen(L);
-    forces::pair_trunc<3, float, shifted<power_law<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, shifted<power_law<float> > >::luaopen(L);
-    forces::pair_trunc<3, float, force_shifted<power_law<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, force_shifted<power_law<float> > >::luaopen(L);
+    truncations_luaopen<float, power_law<float> >(L);
 
     hard_core<power_law<float> >::luaopen(L);
-    smooth_r4<hard_core<power_law<float> > >::luaopen(L);
-    sharp<hard_core<power_law<float> > >::luaopen(L);
-    shifted<hard_core<power_law<float> > >::luaopen(L);
-    force_shifted<hard_core<power_law<float> > >::luaopen(L);
     forces::pair_full<3, float, hard_core<power_law<float> > >::luaopen(L);
     forces::pair_full<2, float, hard_core<power_law<float> > >::luaopen(L);
-    forces::pair_trunc<3, float, smooth_r4<hard_core<power_law<float> > > >::luaopen(L);
-    forces::pair_trunc<2, float, smooth_r4<hard_core<power_law<float> > > >::luaopen(L);
-    forces::pair_trunc<3, float, sharp<hard_core<power_law<float> > > >::luaopen(L);
-    forces::pair_trunc<2, float, sharp<hard_core<power_law<float> > > >::luaopen(L);
-    forces::pair_trunc<3, float, shifted<hard_core<power_law<float> > > >::luaopen(L);
-    forces::pair_trunc<2, float, shifted<hard_core<power_law<float> > > >::luaopen(L);
-    forces::pair_trunc<3, float, force_shifted<hard_core<power_law<float> > > >::luaopen(L);
-    forces::pair_trunc<2, float, force_shifted<hard_core<power_law<float> > > >::luaopen(L);
+    truncations_luaopen<float, hard_core<power_law<float> > >(L);
 #endif
     return 0;
 }
@@ -166,28 +120,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_power_law(lua_Stat
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class power_law<double>;
-template class smooth_r4<power_law<double>>;
-template class sharp<power_law<double>>;
-template class shifted<power_law<double>>;
-template class force_shifted<power_law<double>>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(power_law<double>);
 
 template class hard_core<power_law<double>>;
-template class smooth_r4<hard_core<power_law<double>>>;
-template class sharp<hard_core<power_law<double>>>;
-template class shifted<hard_core<power_law<double>>>;
-template class force_shifted<hard_core<power_law<double>>>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(hard_core<power_law<double>>);
 #else
 template class power_law<float>;
-template class smooth_r4<power_law<float>>;
-template class sharp<power_law<float>>;
-template class shifted<power_law<float>>;
-template class force_shifted<power_law<float>>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(power_law<float>);
 
 template class hard_core<power_law<float>>;
-template class smooth_r4<hard_core<power_law<float>>>;
-template class sharp<hard_core<power_law<float>>>;
-template class shifted<hard_core<power_law<float>>>;
-template class force_shifted<hard_core<power_law<float>>>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(hard_core<power_law<float>>);
 #endif
 
 } // namespace pair
@@ -197,34 +139,28 @@ namespace forces {
 
 // explicit instantiation of force modules
 #ifndef USE_HOST_SINGLE_PRECISION
-typedef double float_type;
+template class pair_full<3, double, potentials::pair::power_law<double>>;
+template class pair_full<2, double, potentials::pair::power_law<double>>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(double, potentials::pair::power_law<double>);
+
+template class pair_full<3, double, potentials::pair::hard_core<potentials::pair::power_law<double>>>;
+template class pair_full<2, double, potentials::pair::hard_core<potentials::pair::power_law<double>>>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(
+    double
+  , potentials::pair::hard_core<potentials::pair::power_law<double>>
+);
 #else
-typedef float float_type;
+template class pair_full<3, float, potentials::pair::power_law<float>>;
+template class pair_full<2, float, potentials::pair::power_law<float>>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::power_law<float>);
+
+template class pair_full<3, float, potentials::pair::hard_core<potentials::pair::power_law<float>>>;
+template class pair_full<2, float, potentials::pair::hard_core<potentials::pair::power_law<float>>>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(
+    float
+  , potentials::pair::hard_core<potentials::pair::power_law<float>>
+);
 #endif
-
-typedef potentials::pair::power_law<float_type> power_law;
-template class pair_full<3, float_type, power_law>;
-template class pair_full<2, float_type, power_law>;
-template class pair_trunc<3, float_type, potentials::pair::smooth_r4<power_law> >;
-template class pair_trunc<2, float_type, potentials::pair::smooth_r4<power_law> >;
-template class pair_trunc<3, float_type, potentials::pair::sharp<power_law> >;
-template class pair_trunc<2, float_type, potentials::pair::sharp<power_law> >;
-template class pair_trunc<3, float_type, potentials::pair::shifted<power_law> >;
-template class pair_trunc<2, float_type, potentials::pair::shifted<power_law> >;
-template class pair_trunc<3, float_type, potentials::pair::force_shifted<power_law> >;
-template class pair_trunc<2, float_type, potentials::pair::force_shifted<power_law> >;
-
-typedef potentials::pair::hard_core<power_law> power_law_with_core;
-template class pair_full<3, float_type, power_law_with_core>;
-template class pair_full<2, float_type, power_law_with_core>;
-template class pair_trunc<3, float_type, potentials::pair::smooth_r4<power_law_with_core> >;
-template class pair_trunc<2, float_type, potentials::pair::smooth_r4<power_law_with_core> >;
-template class pair_trunc<3, float_type, potentials::pair::sharp<power_law_with_core> >;
-template class pair_trunc<2, float_type, potentials::pair::sharp<power_law_with_core> >;
-template class pair_trunc<3, float_type, potentials::pair::shifted<power_law_with_core> >;
-template class pair_trunc<2, float_type, potentials::pair::shifted<power_law_with_core> >;
-template class pair_trunc<3, float_type, potentials::pair::force_shifted<power_law_with_core> >;
-template class pair_trunc<2, float_type, potentials::pair::force_shifted<power_law_with_core> >;
 
 } // namespace forces
 } // namespace host

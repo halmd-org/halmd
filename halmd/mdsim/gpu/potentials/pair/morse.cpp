@@ -27,12 +27,9 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/force_shifted.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/morse.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/morse_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/sharp.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/shifted.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/smooth_r4.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/truncations.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -65,7 +62,7 @@ morse<float_type>::morse(
     // copy parameters to CUDA device
     cuda::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
-        fixed_vector<float, 4> p;
+        fixed_vector<float, 4> p(0);
         p[morse_kernel::EPSILON] = epsilon_.data()[i];
         p[morse_kernel::SIGMA] = sigma_.data()[i];
         p[morse_kernel::R_MIN_SIGMA] = r_min_sigma_.data()[i];
@@ -108,29 +105,15 @@ void morse<float_type>::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_morse(lua_State* L)
 {
     morse<float>::luaopen(L);
-    smooth_r4<morse<float>>::luaopen(L);
-    sharp<morse<float>>::luaopen(L);
-    shifted<morse<float>>::luaopen(L);
-    force_shifted<morse<float>>::luaopen(L);
     forces::pair_full<3, float, morse<float> >::luaopen(L);
     forces::pair_full<2, float, morse<float> >::luaopen(L);
-    forces::pair_trunc<3, float, smooth_r4<morse<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, smooth_r4<morse<float> > >::luaopen(L);
-    forces::pair_trunc<3, float, sharp<morse<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, sharp<morse<float> > >::luaopen(L);
-    forces::pair_trunc<3, float, shifted<morse<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, shifted<morse<float> > >::luaopen(L);
-    forces::pair_trunc<3, float, force_shifted<morse<float> > >::luaopen(L);
-    forces::pair_trunc<2, float, force_shifted<morse<float> > >::luaopen(L);
+    truncations_luaopen<float, morse<float> >(L);
     return 0;
 }
 
 // explicit instantiation
 template class morse<float>;
-template class smooth_r4<morse<float>>;
-template class sharp<morse<float>>;
-template class shifted<morse<float>>;
-template class force_shifted<morse<float>>;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(morse<float>);
 
 } // namespace pair
 } // namespace potentials
@@ -140,14 +123,7 @@ namespace forces {
 // explicit instantiation of force modules
 template class pair_full<3, float, potentials::pair::morse<float> >;
 template class pair_full<2, float, potentials::pair::morse<float> >;
-template class pair_trunc<3, float, potentials::pair::smooth_r4<potentials::pair::morse<float> > >;
-template class pair_trunc<2, float, potentials::pair::smooth_r4<potentials::pair::morse<float> > >;
-template class pair_trunc<3, float, potentials::pair::sharp<potentials::pair::morse<float> > >;
-template class pair_trunc<2, float, potentials::pair::sharp<potentials::pair::morse<float> > >;
-template class pair_trunc<3, float, potentials::pair::shifted<potentials::pair::morse<float> > >;
-template class pair_trunc<2, float, potentials::pair::shifted<potentials::pair::morse<float> > >;
-template class pair_trunc<3, float, potentials::pair::force_shifted<potentials::pair::morse<float> > >;
-template class pair_trunc<2, float, potentials::pair::force_shifted<potentials::pair::morse<float> > >;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::morse<float>);
 
 } // namespace forces
 } // namespace gpu

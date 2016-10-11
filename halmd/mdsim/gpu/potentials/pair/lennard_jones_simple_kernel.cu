@@ -20,11 +20,8 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/force_shifted_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_simple_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/sharp_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/shifted_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/smooth_r4_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/truncations.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
 
@@ -68,10 +65,7 @@ public:
 
 } // namespace lennard_jones_simple_kernel
 
-template class smooth_r4_wrapper<lennard_jones_simple_kernel::lennard_jones_simple>;
-template class sharp_wrapper<lennard_jones_simple_kernel::lennard_jones_simple>;
-template class shifted_wrapper<lennard_jones_simple_kernel::lennard_jones_simple>;
-template class force_shifted_wrapper<lennard_jones_simple_kernel::lennard_jones_simple>;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(lennard_jones_simple_kernel::lennard_jones_simple);
 
 } // namespace pair
 } // namespace potentials
@@ -80,21 +74,10 @@ template class force_shifted_wrapper<lennard_jones_simple_kernel::lennard_jones_
 namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::lennard_jones_simple_kernel;
-using namespace halmd::mdsim::gpu::potentials::pair::smooth_r4_kernel;
-using namespace halmd::mdsim::gpu::potentials::pair::sharp_kernel;
-using namespace halmd::mdsim::gpu::potentials::pair::shifted_kernel;
-using namespace halmd::mdsim::gpu::potentials::pair::force_shifted_kernel;
 
 template class pair_full_wrapper<3, lennard_jones_simple>;
 template class pair_full_wrapper<2, lennard_jones_simple>;
-template class pair_trunc_wrapper<3, smooth_r4<lennard_jones_simple> >;
-template class pair_trunc_wrapper<2, smooth_r4<lennard_jones_simple> >;
-template class pair_trunc_wrapper<3, sharp<lennard_jones_simple> >;
-template class pair_trunc_wrapper<2, sharp<lennard_jones_simple> >;
-template class pair_trunc_wrapper<3, shifted<lennard_jones_simple> >;
-template class pair_trunc_wrapper<2, shifted<lennard_jones_simple> >;
-template class pair_trunc_wrapper<3, force_shifted<lennard_jones_simple> >;
-template class pair_trunc_wrapper<2, force_shifted<lennard_jones_simple> >;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCE_KERNELS(lennard_jones_simple);
 
 } // namespace forces
 
