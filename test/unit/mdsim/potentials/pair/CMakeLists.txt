@@ -110,14 +110,14 @@ if(${HALMD_WITH_pair_power_law_with_core})
   )
   if(HALMD_WITH_GPU)
     target_link_libraries(test_unit_mdsim_potentials_pair_power_law_with_core
-      halmd_mdsim_gpu_potentials_pair_power_law_with_core
+      halmd_mdsim_gpu_potentials_pair_power_law
       halmd_mdsim_gpu
       halmd_algorithm_gpu
       halmd_utility_gpu
     )
   endif()
   target_link_libraries(test_unit_mdsim_potentials_pair_power_law_with_core
-    halmd_mdsim_host_potentials_pair_power_law_with_core
+    halmd_mdsim_host_potentials_pair_power_law
     halmd_mdsim
     ${HALMD_TEST_LIBRARIES}
   )

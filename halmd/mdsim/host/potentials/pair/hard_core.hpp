@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_SHARP_HPP
-#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_SHARP_HPP
+#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_HARD_CORE_HPP
+#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_HARD_CORE_HPP
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -37,53 +37,37 @@ namespace potentials {
 namespace pair {
 
 /**
- * define cutoff adapter
+ * define hard core adapter
  */
 template <typename potential_type>
-class sharp : public potential_type
+class hard_core : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
     typedef typename potential_type::matrix_type matrix_type;
 
     template<typename... Args>
-    sharp(matrix_type const& cutoff, Args&&... args)
+    hard_core(matrix_type const& core, Args&&... args)
             : potential_type (std::forward<Args>(args)...)
-            , r_cut_sigma_(check_shape(cutoff, this->sigma()))
-            , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
-            , rr_cut_(element_prod(r_cut_, r_cut_))
+            , r_core_sigma_(check_shape(core, this->sigma()))
+            , r_core_(element_prod(core, this->sigma()))
     {
-        LOG("potential cutoff length: r_c = " << r_cut_sigma_);
+        LOG("core radius r_core/σ = " << r_core_sigma_);
     }
 
-    bool within_range(float_type rr, unsigned a, unsigned b) const
+    matrix_type const& r_core_sigma() const
     {
-        return rr < rr_cut_(a,b);
-    }
-
-    matrix_type const& r_cut() const
-    {
-        return r_cut_;
-    }
-
-    float_type r_cut(unsigned a, unsigned b) const
-    {
-        return r_cut_(a, b);
-    }
-
-    float_type rr_cut(unsigned a, unsigned b) const
-    {
-        return rr_cut_(a, b);
-    }
-
-    matrix_type const& r_cut_sigma() const
-    {
-        return r_cut_sigma_;
+        return r_core_sigma_;
     }
 
     std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
-        return potential_type::operator()(rr, a, b);
+        float_type r = sqrt(rr);
+        float_type r_s = (sqrt(rr) - r_core_(a,b));
+        float_type f_abs, en_pot;
+        tie(f_abs, en_pot) = potential_type::operator()(r_s*r_s, a, b);
+        f_abs *= r_s / r;
+        return make_tuple(f_abs, en_pot);
     }
     /**
      * Bind class to Lua.
@@ -100,12 +84,11 @@ public:
                                 [
                                         namespace_("pair")
                                         [
-                                                class_<sharp, potential_type, std::shared_ptr<sharp> >()
-                                                    .property("r_cut", (matrix_type const& (sharp::*)() const) &sharp::r_cut)
-                                                    .property("r_cut_sigma", &sharp::r_cut_sigma)
-                                              , def("sharp", &std::make_shared<sharp
-                                                                 , matrix_type const&
-                                                                 , potential_type const&>)
+                                                class_<hard_core, potential_type, std::shared_ptr<hard_core> >()
+                                                    .property("r_core_sigma", &hard_core::r_core_sigma)
+                                              , def("hard_core", &std::make_shared<hard_core
+                                                                                 , matrix_type const&
+                                                                                 , potential_type const&>)
                                         ]
                                 ]
                         ]
@@ -113,12 +96,10 @@ public:
         ];
     }
 private:
-    /** cutoff length in units of sigma */
-    matrix_type r_cut_sigma_;
-    /** cutoff length in MD units */
-    matrix_type r_cut_;
-    /** square of cutoff length */
-    matrix_type rr_cut_;
+    /** core radius in units of sigma */
+    matrix_type r_core_sigma_;
+    /** core radius in MD units */
+    matrix_type r_core_;
 };
 
 } // namespace pair
@@ -127,4 +108,4 @@ private:
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_SHARP_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_HARD_CORE_HPP */

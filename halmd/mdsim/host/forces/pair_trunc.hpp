@@ -226,7 +226,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
             float_type rr = inner_prod(r, r);
 
             // truncate potential at cutoff length
-            if (rr >= potential_->rr_cut(a, b))
+            if (!potential_->within_range(rr, a, b))
                 continue;
 
             float_type fval, pot;

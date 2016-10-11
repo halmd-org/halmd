@@ -67,6 +67,11 @@ public:
         LOG("potential cutoff force: F_c = " << force_cut_);
     }
 
+    bool within_range(float_type rr, unsigned a, unsigned b) const
+    {
+        return rr < rr_cut_(a,b);
+    }
+
     matrix_type const& r_cut() const
     {
         return r_cut_;

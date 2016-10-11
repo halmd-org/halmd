@@ -1,0 +1,106 @@
+--
+-- Copyright © 2016 Daniel Kirchner
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+local device    = require("halmd.utility.device")
+local numeric   = require("halmd.numeric")
+local utility   = require("halmd.utility")
+
+local force_shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.force_shifted) }
+local hard_core = { host = assert(libhalmd.mdsim.host.potentials.pair.hard_core) }
+local smooth_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.smooth_r4) }
+local shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.shifted) }
+
+if device.gpu then
+    force_shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.force_shifted)
+    hard_core.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.hard_core)
+    smooth_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
+    shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
+end
+
+local self = {}
+
+local truncate_table = setmetatable({
+    force_shifted = function(potential, cutoff, args)
+        return force_shifted[potential.memory](cutoff, potential)
+    end,
+    shifted = function(potential, cutoff, args)
+        return shifted[potential.memory](cutoff, potential)
+    end,
+    smooth_r4 = function(potential, cutoff, args)
+        local h = args.h
+        if type(h) ~= "number" then
+            error("bad argument 'h'", 2)
+        end
+        return smooth_r4[potential.memory](cutoff, h, potential)
+    end
+}, {
+    __index = function(tbl, key)
+        error("invalid truncation type '"..key.."'", 2)
+    end
+})
+
+self.truncate = function(potential, args)
+    local cutoff = utility.assert_kwarg(args, "cutoff")
+    if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
+        error("bad argument 'cutoff'", 2)
+    end
+    if type(cutoff) == "number" then
+        cutoff = numeric.scalar_matrix(potential.species, potential.species, cutoff)
+    end
+
+    local newpot = truncate_table[args[1] or "shifted"](potential, cutoff, args)
+    newpot.description = args[1].." "..potential.description
+    newpot.species = potential.species
+    newpot.memory = potential.memory
+    newpot.logger = potential.logger
+    newpot.truncate = potential.truncate
+    newpot.modify = potential.modify
+    return newpot
+end
+
+local modify_table = setmetatable({
+    hard_core = function(potential, core, args)
+        local radius = utility.assert_kwarg(args, "radius")
+        if type(radius) ~= "table" and type(radius) ~= "number" then
+            error("bad argument 'radius'", 2)
+        end
+        if type(radius) == "number" then
+            radius = numeric.scalar_matrix(potential.species, potential.species, radius)
+        end
+        return hard_core[potential.memory](radius, potential)
+    end,
+}, {
+    __index = function(tbl, key)
+        error("invalid modification type '"..key.."'", 2)
+    end
+})
+
+self.modify = function(potential, args)
+    local newpot = modify_table[args[1]](potential, args)
+    newpot.description = args[1].." "..potential.description
+    newpot.species = potential.species
+    newpot.memory = potential.memory
+    newpot.logger = potential.logger
+    newpot.truncate = potential.truncate
+    newpot.modify = potential.modify
+    return newpot
+end
+
+return self

@@ -25,6 +25,7 @@ local log               = require("halmd.io.log")
 local numeric           = require("halmd.numeric")
 local utility           = require("halmd.utility")
 local module            = require("halmd.utility.module")
+local adapters          = require("halmd.mdsim.potentials.pair.adapters")
 
 ---
 -- Power-law with hard core potential
@@ -171,6 +172,9 @@ local M = module(function(args)
         return "Power law with hard core potential" .. label
     end)
 
+    -- store number of species
+    self.species = property(function(self) return species end)
+
     -- store memory location
     self.memory = property(function(self) return memory end)
 
@@ -179,42 +183,8 @@ local M = module(function(args)
         return logger
     end)
 
-    local truncate_table = setmetatable({
-        force_shifted = function(self, cutoff, args)
-            return force_shifted[memory](cutoff, self)
-        end,
-        shifted = function(self, cutoff, args)
-            return shifted[memory](cutoff, self)
-        end,
-        smooth_r4 = function(self, cutoff, args)
-            local h = args.h
-            if type(h) ~= "number" then
-                error("bad argument 'h'", 2)
-            end
-            return smooth_r4[memory](cutoff, h, self)
-        end
-    }, {
-        __index = function(tbl, key)
-            error("invalid truncation type '"..key.."'", 2)
-        end
-    })
-
-    self.truncate = function(self, args)
-        local cutoff = utility.assert_kwarg(args, "cutoff")
-        if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
-            error("bad argument 'cutoff'", 2)
-        end
-        if type(cutoff) == "number" then
-            cutoff = numeric.scalar_matrix(species, species, cutoff)
-        end
-
-        local newpot = truncate_table[args[1] or "shifted"](self, cutoff, args)
-        newpot.description = "truncated "..self.description
-        newpot.memory = self.memory
-        newpot.logger = self.logger
-        newpot.truncate = self.truncate
-        return newpot
-    end
+    self.truncate = adapters.truncate
+    self.modify = adapters.modify
 
     return self
 end)
