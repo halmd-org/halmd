@@ -88,13 +88,13 @@ struct gpu_samples {
         species = std::make_shared<species_sample_type>(g_position->data().size());
         velocity = std::make_shared<velocity_sample_type>(g_velocity->data().size());
 
-        cuda::copy(g_position->data(), h_buf);
+        cuda::copy(g_position->data().begin(), g_position->data().end(), h_buf.begin());
         cuda::thread::synchronize();
         for(size_t i = 0; i < h_buf.size(); ++i) {
             tie(position->data()[i], species->data()[i]) <<= h_buf[i];
         }
 
-        cuda::copy(g_velocity->data(), h_buf);
+        cuda::copy(g_velocity->data().begin(), g_velocity->data().end(), h_buf.begin());
         cuda::thread::synchronize();
         std::copy(h_buf.begin(), h_buf.end(), velocity->data().begin());
     }
