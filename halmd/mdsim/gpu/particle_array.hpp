@@ -22,6 +22,7 @@
 #define HALMD_MDSIM_GPU_PARTICLE_ARRAY_HPP
 
 #include <typeinfo>
+#include <halmd/io/logger.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -294,6 +295,9 @@ public:
         //       potential loss of (the high precision part of) data for
         //       tupled arrays, if only one member of a tuple is set, but
         //       the other one is retained.
+#ifdef USE_VERLET_DSFUN
+        LOG_WARNING_ONCE("full dsfloat data cleared by tuple element update");
+#endif
         set_gpu_data(mem);
         return it;
     }
