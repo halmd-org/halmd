@@ -30,7 +30,7 @@
 #include <halmd/mdsim/gpu/potentials/pair/power_law.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_hard_core.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/truncations.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/truncations.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -108,12 +108,12 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_power_law(lua_State
     power_law<float>::luaopen(L);
     forces::pair_full<3, float, power_law<float> >::luaopen(L);
     forces::pair_full<2, float, power_law<float> >::luaopen(L);
-    truncations_luaopen<float, power_law<float> >(L);
+    adapters::truncations_luaopen<float, power_law<float> >(L);
 
-    hard_core<power_law<float>>::luaopen(L);
-    forces::pair_full<3, float, hard_core<power_law<float> > >::luaopen(L);
-    forces::pair_full<2, float, hard_core<power_law<float> > >::luaopen(L);
-    truncations_luaopen<float, hard_core<power_law<float> > >(L);
+    adapters::hard_core<power_law<float>>::luaopen(L);
+    forces::pair_full<3, float, adapters::hard_core<power_law<float> > >::luaopen(L);
+    forces::pair_full<2, float, adapters::hard_core<power_law<float> > >::luaopen(L);
+    adapters::truncations_luaopen<float, adapters::hard_core<power_law<float> > >(L);
 
     return 0;
 }
@@ -122,8 +122,8 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_power_law(lua_State
 template class power_law<float>;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(power_law<float>);
 
-template class hard_core<power_law<float>>;
-HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(hard_core<power_law<float>>);
+template class adapters::hard_core<power_law<float>>;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(adapters::hard_core<power_law<float>>);
 
 } // namespace pair
 } // namespace potentials
@@ -135,11 +135,11 @@ template class pair_full<3, float, potentials::pair::power_law<float> >;
 template class pair_full<2, float, potentials::pair::power_law<float> >;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::power_law<float>);
 
-template class pair_full<3, float, potentials::pair::hard_core<potentials::pair::power_law<float> > >;
-template class pair_full<2, float, potentials::pair::hard_core<potentials::pair::power_law<float> > >;
+template class pair_full<3, float, potentials::pair::adapters::hard_core<potentials::pair::power_law<float> > >;
+template class pair_full<2, float, potentials::pair::adapters::hard_core<potentials::pair::power_law<float> > >;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(
     float
-  , potentials::pair::hard_core<potentials::pair::power_law<float> >
+  , potentials::pair::adapters::hard_core<potentials::pair::power_law<float> >
   );
 
 } // namespace forces

@@ -21,7 +21,7 @@
 #ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_POWER_LAW_HARD_CORE_HPP
 #define HALMD_MDSIM_GPU_POTENTIALS_PAIR_POWER_LAW_HARD_CORE_HPP
 
-#include <halmd/mdsim/gpu/potentials/pair/hard_core.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/hard_core.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/power_law.hpp>
 
 namespace halmd {
@@ -29,6 +29,7 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
+namespace adapters {
 
 /**
  * explicit instantiation for power_law
@@ -114,6 +115,7 @@ private:
     cuda::vector<float> g_param_;
 };
 
+} // namespace adapters
 } // namespace pair
 } // namespace potentials
 } // namespace gpu

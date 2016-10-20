@@ -18,55 +18,72 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_SMOOTH_R4_HPP
-#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_SMOOTH_R4_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SHIFTED_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SHIFTED_HPP
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/utility/lua/lua.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/shifted_kernel.hpp>
 #include <halmd/utility/matrix_shape.hpp>
 
 namespace halmd {
 namespace mdsim {
-namespace host {
+namespace gpu {
 namespace potentials {
 namespace pair {
+namespace adapters {
 
 /**
- * define Lennard-Jones potential and parameters
+ * define potential adapter
  */
 template <typename potential_type>
-class smooth_r4 : public potential_type
+class shifted : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
+    typedef typename potential_type::gpu_potential_type parent_potential;
+    typedef shifted_kernel::shifted<parent_potential> gpu_potential_type;
     typedef typename potential_type::matrix_type matrix_type;
 
     template<typename... Args>
-    smooth_r4(matrix_type const& cutoff, float_type h, Args&&... args)
+    shifted(matrix_type const& cutoff, Args&&... args)
             : potential_type (std::forward<Args>(args)...)
             , r_cut_sigma_(check_shape(cutoff, this->sigma()))
             , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
             , rr_cut_(element_prod(r_cut_, r_cut_))
             , en_cut_(this->size1(), this->size2())
-            , rri_smooth_(std::pow(h, -2))
-    {
+            , g_param_(this->size1() * this->size2()) {
+
         for (size_t i = 0; i < this->size1(); ++i) {
             for (size_t j = 0; j < this->size2(); ++j) {
                 std::tie(std::ignore, en_cut_(i,j)) = potential_type::operator()(rr_cut_(i, j), i, j);
             }
         }
+
         LOG("potential cutoff length: r_c = " << r_cut_sigma_);
         LOG("potential cutoff energy: U = " << en_cut_);
+
+        cuda::host::vector<float2> param(g_param_.size());
+        for (size_t i = 0; i < param.size(); ++i) {
+            fixed_vector<float, 2> p;
+            p[shifted_kernel::RR_CUT] = rr_cut_.data()[i];
+            p[shifted_kernel::EN_CUT] = en_cut_.data()[i];
+            param[i] = p;
+        }
+
+        cuda::copy(param, g_param_);
     }
 
-    bool within_range(float_type rr, unsigned a, unsigned b) const
+    /** bind textures before kernel invocation */
+    void bind_textures() const
     {
-        return rr < rr_cut_(a,b);
+        shifted_wrapper<parent_potential>::param.bind(g_param_);
+        potential_type::bind_textures();
     }
 
     matrix_type const& r_cut() const
@@ -89,26 +106,6 @@ public:
         return r_cut_sigma_;
     }
 
-    std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
-    {
-        float_type f_abs, pot;
-        tie(f_abs, pot) = potential_type::operator()(rr, a, b);
-        pot = pot - en_cut_(a,b);
-        float_type r = std::sqrt(rr);
-        float_type dr = r - this->r_cut(a, b);
-        float_type x2 = dr * dr * rri_smooth_;
-        float_type x4 = x2 * x2;
-        float_type x4i = 1 / (1 + x4);
-        // smoothing function
-        float_type h0_r = x4 * x4i;
-        // first derivative
-        float_type h1_r = 4 * dr * rri_smooth_ * x2 * x4i * x4i;
-        // apply smoothing function to obtain C¹ force function
-        f_abs = h0_r * f_abs - h1_r * (pot / r);
-        // apply smoothing function to obtain C² potential function
-        pot = h0_r * pot;
-        return std::make_tuple(f_abs, pot);
-    }
     /**
      * Bind class to Lua.
      */
@@ -118,19 +115,19 @@ public:
         [
                 namespace_("mdsim")
                 [
-                        namespace_("host")
+                        namespace_("gpu")
                         [
                                 namespace_("potentials")
                                 [
                                         namespace_("pair")
                                         [
-                                                class_<smooth_r4, potential_type, std::shared_ptr<smooth_r4> >()
-                                                    .property("r_cut", (matrix_type const& (smooth_r4::*)() const) &smooth_r4::r_cut)
-                                                    .property("r_cut_sigma", &smooth_r4::r_cut_sigma)
-                                              , def("smooth_r4", &std::make_shared<smooth_r4
-                                                                , matrix_type const&
-                                                                , float_type
-                                                                , potential_type const&>)
+
+                                                class_<shifted, potential_type, std::shared_ptr<shifted> >()
+                                                    .property("r_cut", (matrix_type const& (shifted::*)() const) &shifted::r_cut)
+                                                    .property("r_cut_sigma", &shifted::r_cut_sigma)
+                                              , def("shifted", &std::make_shared<shifted
+                                                                               , matrix_type const&
+                                                                               , potential_type const&>)
                                         ]
                                 ]
                         ]
@@ -147,13 +144,14 @@ private:
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
 
-    float_type rri_smooth_;
+    cuda::vector<float2> g_param_;
 };
 
+} // namespace adapters
 } // namespace pair
 } // namespace potentials
-} // namespace host
+} // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_SMOOTH_R4_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SHIFTED_HPP */

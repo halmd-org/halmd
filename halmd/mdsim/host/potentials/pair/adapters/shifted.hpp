@@ -18,35 +18,33 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_SHIFTED_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_SHIFTED_HPP
+#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_ADAPTERS_SHIFTED_HPP
+#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_ADAPTERS_SHIFTED_HPP
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/shifted_kernel.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/matrix_shape.hpp>
 
 namespace halmd {
 namespace mdsim {
-namespace gpu {
+namespace host {
 namespace potentials {
 namespace pair {
+namespace adapters {
 
 /**
- * define potential adapter
+ * define Lennard-Jones potential and parameters
  */
 template <typename potential_type>
 class shifted : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
-    typedef typename potential_type::gpu_potential_type parent_potential;
-    typedef shifted_kernel::shifted<parent_potential> gpu_potential_type;
     typedef typename potential_type::matrix_type matrix_type;
 
     template<typename... Args>
@@ -56,33 +54,20 @@ public:
             , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
             , rr_cut_(element_prod(r_cut_, r_cut_))
             , en_cut_(this->size1(), this->size2())
-            , g_param_(this->size1() * this->size2()) {
-
+    {
         for (size_t i = 0; i < this->size1(); ++i) {
             for (size_t j = 0; j < this->size2(); ++j) {
+                fixed_vector<float, 4> p;
                 std::tie(std::ignore, en_cut_(i,j)) = potential_type::operator()(rr_cut_(i, j), i, j);
             }
         }
-
         LOG("potential cutoff length: r_c = " << r_cut_sigma_);
         LOG("potential cutoff energy: U = " << en_cut_);
-
-        cuda::host::vector<float2> param(g_param_.size());
-        for (size_t i = 0; i < param.size(); ++i) {
-            fixed_vector<float, 2> p;
-            p[shifted_kernel::RR_CUT] = rr_cut_.data()[i];
-            p[shifted_kernel::EN_CUT] = en_cut_.data()[i];
-            param[i] = p;
-        }
-
-        cuda::copy(param, g_param_);
     }
 
-    /** bind textures before kernel invocation */
-    void bind_textures() const
+    bool within_range(float_type rr, unsigned a, unsigned b) const
     {
-        shifted_wrapper<parent_potential>::param.bind(g_param_);
-        potential_type::bind_textures();
+        return rr < rr_cut_(a,b);
     }
 
     matrix_type const& r_cut() const
@@ -105,6 +90,13 @@ public:
         return r_cut_sigma_;
     }
 
+    std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
+    {
+        float_type f_abs, pot;
+        tie(f_abs, pot) = potential_type::operator()(rr, a, b);
+        pot = pot - en_cut_(a,b);
+        return std::make_tuple(f_abs, pot);
+    }
     /**
      * Bind class to Lua.
      */
@@ -114,19 +106,18 @@ public:
         [
                 namespace_("mdsim")
                 [
-                        namespace_("gpu")
+                        namespace_("host")
                         [
                                 namespace_("potentials")
                                 [
                                         namespace_("pair")
                                         [
-
                                                 class_<shifted, potential_type, std::shared_ptr<shifted> >()
                                                     .property("r_cut", (matrix_type const& (shifted::*)() const) &shifted::r_cut)
                                                     .property("r_cut_sigma", &shifted::r_cut_sigma)
                                               , def("shifted", &std::make_shared<shifted
-                                                                               , matrix_type const&
-                                                                               , potential_type const&>)
+                                                                 , matrix_type const&
+                                                                 , potential_type const&>)
                                         ]
                                 ]
                         ]
@@ -142,14 +133,13 @@ private:
     matrix_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
-
-    cuda::vector<float2> g_param_;
 };
 
+} // namespace adapters
 } // namespace pair
 } // namespace potentials
-} // namespace gpu
+} // namespace host
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_SHIFTED_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_ADAPTERS_SHIFTED_HPP */

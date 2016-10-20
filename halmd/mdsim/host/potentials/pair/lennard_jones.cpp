@@ -27,7 +27,7 @@
 #include <halmd/mdsim/host/forces/pair_full.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/potentials/pair/lennard_jones.hpp>
-#include <halmd/mdsim/host/potentials/pair/truncations.hpp>
+#include <halmd/mdsim/host/potentials/pair/adapters/truncations.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -90,12 +90,12 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_lennard_jones(lua_
     lennard_jones<double>::luaopen(L);
     forces::pair_full<3, double, lennard_jones<double> >::luaopen(L);
     forces::pair_full<2, double, lennard_jones<double> >::luaopen(L);
-    truncations_luaopen<double, lennard_jones<double> >(L);
+    adapters::truncations_luaopen<double, lennard_jones<double> >(L);
 #else
     lennard_jones<float>::luaopen(L);
     forces::pair_full<3, float, lennard_jones<float> >::luaopen(L);
     forces::pair_full<2, float, lennard_jones<float> >::luaopen(L);
-    truncations_luaopen<float, lennard_jones<float> >(L);
+    adapters::truncations_luaopen<float, lennard_jones<float> >(L);
 #endif
     return 0;
 }

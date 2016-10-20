@@ -21,7 +21,7 @@
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/truncations.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/truncations.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
 

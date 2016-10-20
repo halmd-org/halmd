@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_SMOOTH_R4_KERNEL_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_SMOOTH_R4_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SMOOTH_R4_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SMOOTH_R4_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -28,6 +28,7 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
+namespace adapters {
 namespace smooth_r4_kernel {
 
 /**
@@ -52,10 +53,11 @@ struct smooth_r4_wrapper
     static cuda::texture<float4> param;
 };
 
+} // namespace adapters
 } // namespace pair
 } // namespace potentials
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_SMOOTH_R4_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SMOOTH_R4_KERNEL_HPP */

@@ -18,13 +18,13 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_HPP
-#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_HPP
+#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_ADAPTERS_TRUNCATIONS_HPP
+#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_ADAPTERS_TRUNCATIONS_HPP
 
-#include <halmd/mdsim/host/potentials/pair/force_shifted.hpp>
-#include <halmd/mdsim/host/potentials/pair/sharp.hpp>
-#include <halmd/mdsim/host/potentials/pair/shifted.hpp>
-#include <halmd/mdsim/host/potentials/pair/smooth_r4.hpp>
+#include <halmd/mdsim/host/potentials/pair/adapters/force_shifted.hpp>
+#include <halmd/mdsim/host/potentials/pair/adapters/sharp.hpp>
+#include <halmd/mdsim/host/potentials/pair/adapters/shifted.hpp>
+#include <halmd/mdsim/host/potentials/pair/adapters/smooth_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -32,6 +32,7 @@ namespace mdsim {
 namespace host {
 namespace potentials {
 namespace pair {
+namespace adapters {
 
 template<typename float_type, typename potential_type>
 void truncations_luaopen(lua_State* L)
@@ -52,25 +53,26 @@ void truncations_luaopen(lua_State* L)
 }
 
 #define HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(potential_type) \
-    template class smooth_r4<potential_type>; \
-    template class sharp<potential_type>; \
-    template class shifted<potential_type>; \
-    template class force_shifted<potential_type>
+    template class adapters::smooth_r4<potential_type>; \
+    template class adapters::sharp<potential_type>; \
+    template class adapters::shifted<potential_type>; \
+    template class adapters::force_shifted<potential_type>
 
 #define HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float_type, potential_type) \
-    template class pair_trunc<3, float_type, potentials::pair::smooth_r4<potential_type> >; \
-    template class pair_trunc<2, float_type, potentials::pair::smooth_r4<potential_type> >; \
-    template class pair_trunc<3, float_type, potentials::pair::sharp<potential_type> >; \
-    template class pair_trunc<2, float_type, potentials::pair::sharp<potential_type> >; \
-    template class pair_trunc<3, float_type, potentials::pair::shifted<potential_type> >; \
-    template class pair_trunc<2, float_type, potentials::pair::shifted<potential_type> >; \
-    template class pair_trunc<3, float_type, potentials::pair::force_shifted<potential_type> >; \
-    template class pair_trunc<2, float_type, potentials::pair::force_shifted<potential_type> >
+    template class pair_trunc<3, float_type, potentials::pair::adapters::smooth_r4<potential_type> >; \
+    template class pair_trunc<2, float_type, potentials::pair::adapters::smooth_r4<potential_type> >; \
+    template class pair_trunc<3, float_type, potentials::pair::adapters::sharp<potential_type> >; \
+    template class pair_trunc<2, float_type, potentials::pair::adapters::sharp<potential_type> >; \
+    template class pair_trunc<3, float_type, potentials::pair::adapters::shifted<potential_type> >; \
+    template class pair_trunc<2, float_type, potentials::pair::adapters::shifted<potential_type> >; \
+    template class pair_trunc<3, float_type, potentials::pair::adapters::force_shifted<potential_type> >; \
+    template class pair_trunc<2, float_type, potentials::pair::adapters::force_shifted<potential_type> >
 
+} // namespace adapters
 } // namespace pair
 } // namespace potentials
 } // namespace host
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_ADAPTERS_TRUNCATIONS_HPP */

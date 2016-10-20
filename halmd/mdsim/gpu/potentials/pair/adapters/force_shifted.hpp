@@ -18,55 +18,77 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_SHIFTED_HPP
-#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_SHIFTED_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_FORCE_SHIFTED_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_FORCE_SHIFTED_HPP
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/utility/lua/lua.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/force_shifted_kernel.hpp>
 #include <halmd/utility/matrix_shape.hpp>
 
 namespace halmd {
 namespace mdsim {
-namespace host {
+namespace gpu {
 namespace potentials {
 namespace pair {
+namespace adapters {
 
 /**
  * define Lennard-Jones potential and parameters
  */
 template <typename potential_type>
-class shifted : public potential_type
+class force_shifted : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
+    typedef typename potential_type::gpu_potential_type parent_potential;
+    typedef force_shifted_kernel::force_shifted<parent_potential> gpu_potential_type;
     typedef typename potential_type::matrix_type matrix_type;
 
     template<typename... Args>
-    shifted(matrix_type const& cutoff, Args&&... args)
+    force_shifted(matrix_type const& cutoff, Args&&... args)
             : potential_type (std::forward<Args>(args)...)
             , r_cut_sigma_(check_shape(cutoff, this->sigma()))
             , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
             , rr_cut_(element_prod(r_cut_, r_cut_))
             , en_cut_(this->size1(), this->size2())
-    {
+            , force_cut_(this->size1(), this->size2())
+            , g_param_(this->size1() * this->size2()) {
+
         for (size_t i = 0; i < this->size1(); ++i) {
             for (size_t j = 0; j < this->size2(); ++j) {
-                fixed_vector<float, 4> p;
-                std::tie(std::ignore, en_cut_(i,j)) = potential_type::operator()(rr_cut_(i, j), i, j);
+                std::tie(force_cut_(i,j), en_cut_(i,j)) = potential_type::operator()(rr_cut_(i, j), i, j);
+                force_cut_(i,j) *= r_cut_(i,j);
             }
         }
+
         LOG("potential cutoff length: r_c = " << r_cut_sigma_);
         LOG("potential cutoff energy: U = " << en_cut_);
+        LOG("potential cutoff force: F_c = " << force_cut_);
+
+        cuda::host::vector<float4> param(g_param_.size());
+        for (size_t i = 0; i < param.size(); ++i) {
+            fixed_vector<float, 4> p;
+            p[force_shifted_kernel::R_CUT] = r_cut_.data()[i];
+            p[force_shifted_kernel::RR_CUT] = rr_cut_.data()[i];
+            p[force_shifted_kernel::EN_CUT] = en_cut_.data()[i];
+            p[force_shifted_kernel::FORCE_CUT] = force_cut_.data()[i];
+            param[i] = p;
+        }
+
+        cuda::copy(param, g_param_);
     }
 
-    bool within_range(float_type rr, unsigned a, unsigned b) const
+    /** bind textures before kernel invocation */
+    void bind_textures() const
     {
-        return rr < rr_cut_(a,b);
+        force_shifted_wrapper<parent_potential>::param.bind(g_param_);
+        potential_type::bind_textures();
     }
 
     matrix_type const& r_cut() const
@@ -89,13 +111,6 @@ public:
         return r_cut_sigma_;
     }
 
-    std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
-    {
-        float_type f_abs, pot;
-        tie(f_abs, pot) = potential_type::operator()(rr, a, b);
-        pot = pot - en_cut_(a,b);
-        return std::make_tuple(f_abs, pot);
-    }
     /**
      * Bind class to Lua.
      */
@@ -105,18 +120,19 @@ public:
         [
                 namespace_("mdsim")
                 [
-                        namespace_("host")
+                        namespace_("gpu")
                         [
                                 namespace_("potentials")
                                 [
                                         namespace_("pair")
                                         [
-                                                class_<shifted, potential_type, std::shared_ptr<shifted> >()
-                                                    .property("r_cut", (matrix_type const& (shifted::*)() const) &shifted::r_cut)
-                                                    .property("r_cut_sigma", &shifted::r_cut_sigma)
-                                              , def("shifted", &std::make_shared<shifted
-                                                                 , matrix_type const&
-                                                                 , potential_type const&>)
+
+                                                class_<force_shifted, potential_type, std::shared_ptr<force_shifted> >()
+                                                    .property("r_cut", (matrix_type const& (force_shifted::*)() const) &force_shifted::r_cut)
+                                                    .property("r_cut_sigma", &force_shifted::r_cut_sigma)
+                                              , def("force_shifted", &std::make_shared<force_shifted
+                                                                                     , matrix_type const&
+                                                                                     , potential_type const&>)
                                         ]
                                 ]
                         ]
@@ -132,12 +148,17 @@ private:
     matrix_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
+    /** force at cutoff length in MD units */
+    matrix_type force_cut_;
+
+    cuda::vector<float4> g_param_;
 };
 
+} // namespace adapters
 } // namespace pair
 } // namespace potentials
-} // namespace host
+} // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_SHIFTED_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_FORCE_SHIFTED_HPP */

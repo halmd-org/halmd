@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_FORCE_SHIFTED_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_FORCE_SHIFTED_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SMOOTH_R4_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SMOOTH_R4_HPP
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -28,7 +28,7 @@
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/force_shifted_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/smooth_r4_kernel.hpp>
 #include <halmd/utility/matrix_shape.hpp>
 
 namespace halmd {
@@ -36,47 +36,45 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
+namespace adapters {
 
 /**
  * define Lennard-Jones potential and parameters
  */
 template <typename potential_type>
-class force_shifted : public potential_type
+class smooth_r4 : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
     typedef typename potential_type::gpu_potential_type parent_potential;
-    typedef force_shifted_kernel::force_shifted<parent_potential> gpu_potential_type;
+    typedef smooth_r4_kernel::smooth_r4<parent_potential> gpu_potential_type;
     typedef typename potential_type::matrix_type matrix_type;
 
     template<typename... Args>
-    force_shifted(matrix_type const& cutoff, Args&&... args)
+    smooth_r4(matrix_type const& cutoff, float_type h, Args&&... args)
             : potential_type (std::forward<Args>(args)...)
             , r_cut_sigma_(check_shape(cutoff, this->sigma()))
             , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
             , rr_cut_(element_prod(r_cut_, r_cut_))
             , en_cut_(this->size1(), this->size2())
-            , force_cut_(this->size1(), this->size2())
+            , rri_smooth_(std::pow(h, -2))
             , g_param_(this->size1() * this->size2()) {
 
         for (size_t i = 0; i < this->size1(); ++i) {
             for (size_t j = 0; j < this->size2(); ++j) {
-                std::tie(force_cut_(i,j), en_cut_(i,j)) = potential_type::operator()(rr_cut_(i, j), i, j);
-                force_cut_(i,j) *= r_cut_(i,j);
+                std::tie(std::ignore, en_cut_(i,j)) = potential_type::operator()(rr_cut_(i, j), i, j);
             }
         }
 
         LOG("potential cutoff length: r_c = " << r_cut_sigma_);
         LOG("potential cutoff energy: U = " << en_cut_);
-        LOG("potential cutoff force: F_c = " << force_cut_);
 
         cuda::host::vector<float4> param(g_param_.size());
         for (size_t i = 0; i < param.size(); ++i) {
-            fixed_vector<float, 4> p;
-            p[force_shifted_kernel::R_CUT] = r_cut_.data()[i];
-            p[force_shifted_kernel::RR_CUT] = rr_cut_.data()[i];
-            p[force_shifted_kernel::EN_CUT] = en_cut_.data()[i];
-            p[force_shifted_kernel::FORCE_CUT] = force_cut_.data()[i];
+            fixed_vector<float, 3> p;
+            p[smooth_r4_kernel::R_CUT] = r_cut_.data()[i];
+            p[smooth_r4_kernel::RR_CUT] = rr_cut_.data()[i];
+            p[smooth_r4_kernel::EN_CUT] = en_cut_.data()[i];
             param[i] = p;
         }
 
@@ -86,7 +84,8 @@ public:
     /** bind textures before kernel invocation */
     void bind_textures() const
     {
-        force_shifted_wrapper<parent_potential>::param.bind(g_param_);
+        cuda::copy(rri_smooth_, smooth_r4_wrapper<parent_potential>::rri_smooth);
+        smooth_r4_wrapper<parent_potential>::param.bind(g_param_);
         potential_type::bind_textures();
     }
 
@@ -110,6 +109,7 @@ public:
         return r_cut_sigma_;
     }
 
+
     /**
      * Bind class to Lua.
      */
@@ -126,12 +126,13 @@ public:
                                         namespace_("pair")
                                         [
 
-                                                class_<force_shifted, potential_type, std::shared_ptr<force_shifted> >()
-                                                    .property("r_cut", (matrix_type const& (force_shifted::*)() const) &force_shifted::r_cut)
-                                                    .property("r_cut_sigma", &force_shifted::r_cut_sigma)
-                                              , def("force_shifted", &std::make_shared<force_shifted
-                                                                                     , matrix_type const&
-                                                                                     , potential_type const&>)
+                                                class_<smooth_r4, potential_type, std::shared_ptr<smooth_r4> >()
+                                                    .property("r_cut", (matrix_type const& (smooth_r4::*)() const) &smooth_r4::r_cut)
+                                                    .property("r_cut_sigma", &smooth_r4::r_cut_sigma)
+                                              , def("smooth_r4", &std::make_shared<smooth_r4
+                                                                                 , matrix_type const&
+                                                                                 , float_type
+                                                                                 , potential_type const&>)
                                         ]
                                 ]
                         ]
@@ -147,16 +148,16 @@ private:
     matrix_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
-    /** force at cutoff length in MD units */
-    matrix_type force_cut_;
 
+    float_type rri_smooth_;
     cuda::vector<float4> g_param_;
 };
 
+} // namespace adapters
 } // namespace pair
 } // namespace potentials
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_FORCE_SHIFTED_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SMOOTH_R4_HPP */

@@ -18,25 +18,25 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_CUH
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_CUH
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_TRUNCATIONS_CUH
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_TRUNCATIONS_CUH
 
-#include <halmd/mdsim/gpu/potentials/pair/force_shifted_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/sharp_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/shifted_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/smooth_r4_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/force_shifted_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/sharp_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/shifted_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/smooth_r4_kernel.cuh>
 
 #define HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(kernel_type) \
-    template class force_shifted_wrapper<kernel_type>; \
-    template class sharp_wrapper<kernel_type>; \
-    template class shifted_wrapper<kernel_type>; \
-    template class smooth_r4_wrapper<kernel_type>;
+    template class adapters::force_shifted_wrapper<kernel_type>; \
+    template class adapters::sharp_wrapper<kernel_type>; \
+    template class adapters::shifted_wrapper<kernel_type>; \
+    template class adapters::smooth_r4_wrapper<kernel_type>;
 
 #define HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCE_KERNELS(kernel_type) \
-    using namespace halmd::mdsim::gpu::potentials::pair::smooth_r4_kernel; \
-    using namespace halmd::mdsim::gpu::potentials::pair::sharp_kernel; \
-    using namespace halmd::mdsim::gpu::potentials::pair::shifted_kernel; \
-    using namespace halmd::mdsim::gpu::potentials::pair::force_shifted_kernel; \
+    using namespace halmd::mdsim::gpu::potentials::pair::adapters::smooth_r4_kernel; \
+    using namespace halmd::mdsim::gpu::potentials::pair::adapters::sharp_kernel; \
+    using namespace halmd::mdsim::gpu::potentials::pair::adapters::shifted_kernel; \
+    using namespace halmd::mdsim::gpu::potentials::pair::adapters::force_shifted_kernel; \
     template class pair_trunc_wrapper<3, smooth_r4<kernel_type> >; \
     template class pair_trunc_wrapper<2, smooth_r4<kernel_type> >; \
     template class pair_trunc_wrapper<3, sharp<kernel_type> >; \
@@ -46,4 +46,4 @@
     template class pair_trunc_wrapper<3, force_shifted<kernel_type> >; \
     template class pair_trunc_wrapper<2, force_shifted<kernel_type> >;
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_CUH */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_TRUNCATIONS_CUH */

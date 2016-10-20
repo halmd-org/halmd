@@ -22,7 +22,7 @@
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_hard_core_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/truncations.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/truncations.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 #include <halmd/utility/tuple.hpp>
@@ -55,9 +55,9 @@ HALMD_GPU_ENABLED tuple<float_type, float_type> power_law::operator()(float_type
 cuda::texture<float4> power_law_wrapper::param = power_law_kernel::param_;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(power_law_kernel::power_law);
 
-template class hard_core_wrapper<power_law_kernel::power_law>;
+template class adapters::hard_core_wrapper<power_law_kernel::power_law>;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(
-  hard_core_kernel::hard_core<power_law_kernel::power_law>
+  adapters::hard_core_kernel::hard_core<power_law_kernel::power_law>
   );
 
 } // namespace pair
@@ -67,7 +67,7 @@ HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(
 namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::power_law_kernel;
-using namespace halmd::mdsim::gpu::potentials::pair::hard_core_kernel;
+using namespace halmd::mdsim::gpu::potentials::pair::adapters::hard_core_kernel;
 
 template class pair_full_wrapper<3, power_law>;
 template class pair_full_wrapper<2, power_law>;

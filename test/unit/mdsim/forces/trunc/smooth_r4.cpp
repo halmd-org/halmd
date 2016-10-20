@@ -32,12 +32,12 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/potentials/pair/lennard_jones.hpp>
-#include <halmd/mdsim/host/potentials/pair/smooth_r4.hpp>
+#include <halmd/mdsim/host/potentials/pair/adapters/smooth_r4.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/lennard_jones.hpp>
-# include <halmd/mdsim/gpu/potentials/pair/smooth_r4.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/adapters/smooth_r4.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
 # include <test/tools/cuda.hpp>
 #endif
@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_SUITE( host )
 BOOST_AUTO_TEST_CASE( smooth_r4 )
 {
     typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> base_potential_type;
-    typedef halmd::mdsim::host::potentials::pair::smooth_r4<base_potential_type> potential_type;
+    typedef halmd::mdsim::host::potentials::pair::adapters::smooth_r4<base_potential_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
 
     float wca_cut = std::pow(2., 1 / 6.);
@@ -158,9 +158,9 @@ struct test_smooth_r4
     typedef halmd::mdsim::box<dimension> box_type;
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::potentials::pair::lennard_jones<float_type> base_potential_type;
-    typedef halmd::mdsim::gpu::potentials::pair::smooth_r4<base_potential_type> potential_type;
+    typedef halmd::mdsim::gpu::potentials::pair::adapters::smooth_r4<base_potential_type> potential_type;
     typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> host_base_potential_type;
-    typedef halmd::mdsim::host::potentials::pair::smooth_r4<host_base_potential_type> host_potential_type;
+    typedef halmd::mdsim::host::potentials::pair::adapters::smooth_r4<host_base_potential_type> host_potential_type;
     typedef halmd::mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;
 

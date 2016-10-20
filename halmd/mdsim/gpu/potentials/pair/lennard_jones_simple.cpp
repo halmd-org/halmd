@@ -27,7 +27,7 @@
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_simple.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_simple_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/truncations.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/truncations.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -79,7 +79,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_lennard_jones_simpl
     lennard_jones_simple<float>::luaopen(L);
     forces::pair_full<3, float, lennard_jones_simple<float> >::luaopen(L);
     forces::pair_full<2, float, lennard_jones_simple<float> >::luaopen(L);
-    truncations_luaopen<float, lennard_jones_simple<float> >(L);
+    adapters::truncations_luaopen<float, lennard_jones_simple<float> >(L);
     return 0;
 }
 
