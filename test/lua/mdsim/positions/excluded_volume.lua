@@ -19,8 +19,7 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = require("halmd")
-halmd.io.log.open_console()
+local halmd = halmd
 
 function test()
     local box = halmd.mdsim.box{length = {20, 20, 20}}
@@ -67,5 +66,7 @@ local particle = halmd.mdsim.particle{dimension = box.dimension, particles = #ob
 particle:set_position(obstacles)
 end
 
-test()
-example()
+function run()
+    test()
+    example()
+end

@@ -20,8 +20,7 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = require("halmd")
-halmd.io.log.open_console({severity = "info"}) -- or "debug"
+local halmd = halmd
 
 -- grab modules
 local log = halmd.io.log
@@ -47,6 +46,8 @@ function test(dims)
     end
 end
 
-test({2, 1, 3, 3})
-test({2, 3, 3})
-test({1})
+function run()
+    test({2, 1, 3, 3})
+    test({2, 3, 3})
+    test({1})
+end
