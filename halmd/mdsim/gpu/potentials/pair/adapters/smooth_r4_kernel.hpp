@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2012 Nicolas Höft
  * Copyright © 2016 Daniel Kirchner
  *
  * This file is part of HALMD.

@@ -1,5 +1,7 @@
 /*
- * Copyright © 2016 Daniel Kirchner
+ * Copyright © 2008-2011 Peter Colberg and Felix Höfling
+ * Copyright © 2012      Nicolas Höft
+ * Copyright © 2016      Daniel Kirchner
  *
  * This file is part of HALMD.
  *
