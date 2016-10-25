@@ -146,11 +146,9 @@ end
 -- Parse command-line arguments.
 --
 function define_args(parser)
-    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
-        -- substitute current time
-        args[key] = os.date(value)
-    end, default = "lennard_jones_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
-    
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+        default = "lennard_jones_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+
     parser:add_argument("random-seed", {type = "integer", help = "seed for random number generator"})
 
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {10000}, help = "number of particles"})

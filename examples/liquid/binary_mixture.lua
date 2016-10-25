@@ -238,10 +238,8 @@ end
 -- Parse command-line arguments.
 --
 function define_args(parser)
-    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
-        -- substitute current time
-        args[key] = os.date(value)
-    end, default = "binary_mixture_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+        default = "binary_mixture_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
     parser:add_argument("input", {type = "string", required = true, action = function(args, key, value)
         readers.h5md.check(value)

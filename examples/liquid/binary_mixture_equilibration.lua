@@ -188,10 +188,8 @@ end
 -- Parse command-line arguments.
 --
 function define_args(parser)
-    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
-        -- substitute current time
-        args[key] = os.date(value)
-    end, default = "binary_mixture_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+        default = "binary_mixture_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {4000, 1000}, help = "number of particles"})
     parser:add_argument("density", {type = "number", default = 1.2, help = "particle number density"})
