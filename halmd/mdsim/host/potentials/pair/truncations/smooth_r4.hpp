@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_ADAPTERS_SMOOTH_R4_HPP
-#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_ADAPTERS_SMOOTH_R4_HPP
+#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_SMOOTH_R4_HPP
+#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_SMOOTH_R4_HPP
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -35,10 +35,10 @@ namespace mdsim {
 namespace host {
 namespace potentials {
 namespace pair {
-namespace adapters {
+namespace truncations {
 
 /**
- * define Lennard-Jones potential and parameters
+ * define potential truncation
  */
 template <typename potential_type>
 class smooth_r4 : public potential_type
@@ -151,11 +151,11 @@ private:
     float_type rri_smooth_;
 };
 
-} // namespace adapters
+} // namespace truncations
 } // namespace pair
 } // namespace potentials
 } // namespace host
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_ADAPTERS_SMOOTH_R4_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_SMOOTH_R4_HPP */

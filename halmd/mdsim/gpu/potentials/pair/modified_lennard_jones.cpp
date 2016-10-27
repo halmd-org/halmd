@@ -29,7 +29,7 @@
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/modified_lennard_jones.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/modified_lennard_jones_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/adapters/truncations.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/truncations/truncations.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost::numeric::ublas;
@@ -129,13 +129,13 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_modified_lennard_jo
     modified_lennard_jones<float>::luaopen(L);
     forces::pair_full<3, float, modified_lennard_jones<float> >::luaopen(L);
     forces::pair_full<2, float, modified_lennard_jones<float> >::luaopen(L);
-    adapters::truncations_luaopen<float, modified_lennard_jones<float> >(L);
+    truncations::truncations_luaopen<float, modified_lennard_jones<float> >(L);
     return 0;
 }
 
 // explicit instantiation
 template class modified_lennard_jones<float>;
-HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(modified_lennard_jones<float>);
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(modified_lennard_jones<float>)
 
 } // namespace pair
 } // namespace potentials
@@ -145,7 +145,7 @@ namespace forces {
 // explicit instantiation of force modules
 template class pair_full<3, float, potentials::pair::modified_lennard_jones<float> >;
 template class pair_full<2, float, potentials::pair::modified_lennard_jones<float> >;
-HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::modified_lennard_jones<float>);
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::modified_lennard_jones<float>)
 
 } // namespace forces
 } // namespace gpu

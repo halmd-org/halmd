@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SHARP_KERNEL_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SHARP_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_FORCE_SHIFTED_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_FORCE_SHIFTED_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -28,26 +28,37 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace adapters {
-namespace sharp_kernel {
+namespace truncations {
+
+namespace force_shifted_kernel {
+
+/**
+ * indices of parameters
+ */
+enum {
+    R_CUT       /**< cutoff length */
+  , RR_CUT      /**< square of cutoff length */
+  , EN_CUT      /**< potential energy at cutoff length in MD units */
+  , FORCE_CUT   /**< force at cutoff length in MD units */
+};
 
 // forward declaration for host code
 template<typename parent_kernel>
-class sharp;
+class force_shifted;
 
-} // namespace sharp_kernel
+} // namespace force_shifted_kernel
 
 template<typename parent_kernel>
-struct sharp_wrapper
+struct force_shifted_wrapper
 {
-    static cuda::texture<float> param;
+    static cuda::texture<float4> param;
 };
 
-} // namespace adapters
+} // namespace truncations
 } // namespace pair
 } // namespace potentials
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SHARP_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_FORCE_SHIFTED_KERNEL_HPP */

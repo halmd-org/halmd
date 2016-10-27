@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_FORCE_SHIFTED_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_FORCE_SHIFTED_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_FORCE_SHIFTED_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_FORCE_SHIFTED_HPP
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -28,7 +28,7 @@
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/adapters/force_shifted_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/truncations/force_shifted_kernel.hpp>
 #include <halmd/utility/matrix_shape.hpp>
 
 namespace halmd {
@@ -36,7 +36,7 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace adapters {
+namespace truncations {
 
 /**
  * define Lennard-Jones potential and parameters
@@ -154,11 +154,11 @@ private:
     cuda::vector<float4> g_param_;
 };
 
-} // namespace adapters
+} // namespace truncations
 } // namespace pair
 } // namespace potentials
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_FORCE_SHIFTED_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_FORCE_SHIFTED_HPP */

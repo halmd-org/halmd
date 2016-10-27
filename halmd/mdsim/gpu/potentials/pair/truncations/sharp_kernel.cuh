@@ -18,12 +18,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_FORCE_SHIFTED_KERNEL_CUH
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_FORCE_SHIFTED_KERNEL_CUH
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_SHARP_KERNEL_CUH
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_SHARP_KERNEL_CUH
 
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/adapters/force_shifted_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/truncations/sharp_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
 
@@ -32,30 +32,29 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace adapters {
+namespace truncations {
+namespace sharp_kernel {
 
-namespace force_shifted_kernel {
-
-static texture<float4> param_;
+static texture<float> param_;
 
 template<typename parent_kernel>
-class force_shifted : public parent_kernel
+class sharp : public parent_kernel
 {
 public:
     /**
-     * Construct Smoothing Function.
+     * Construct Cutoff Adapter.
      *
-     * Fetch potential parameters from texture cache for particle pair.
+     * Fetch cutoff parameter from texture cache for particle pair.
      *
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED force_shifted(
+    HALMD_GPU_ENABLED sharp(
         unsigned int type1, unsigned int type2
       , unsigned int ntype1, unsigned int ntype2
     )
       : parent_kernel(type1, type2, ntype1, ntype2)
-      , pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
+      , rr_cut_(tex1Dfetch(param_, type1 * ntype2 + type2))
     {}
 
     /**
@@ -66,7 +65,7 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED bool within_range(float_type rr) const
     {
-        return (rr < pair_[RR_CUT]);
+        return (rr < rr_cut_);
     }
 
     /**
@@ -78,28 +77,23 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
-        float_type f_abs, pot;
-        float_type r = sqrt(rr);
-        tie(f_abs, pot) = parent_kernel::operator()(rr);
-        f_abs -= pair_[FORCE_CUT] / r;
-        pot = pot - pair_[EN_CUT] + (r - pair_[R_CUT]) * pair_[FORCE_CUT];
-        return make_tuple(f_abs, pot);
+        return parent_kernel::operator()(rr);
     }
 
 private:
-    fixed_vector<float, 4> pair_;
+    float rr_cut_;
 };
 
-} // namespace force_shifted_kernel
+} // namespace sharp_kernel
 
 template<typename parent_kernel>
-cuda::texture<float4> force_shifted_wrapper<parent_kernel>::param = force_shifted_kernel::param_;
+cuda::texture<float> sharp_wrapper<parent_kernel>::param = sharp_kernel::param_;
 
-} // namespace adapters
+} // namespace truncations
 } // namespace pair
 } // namespace potentials
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_FORCE_SHIFTED_KERNEL_CUH */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_SHARP_KERNEL_CUH */

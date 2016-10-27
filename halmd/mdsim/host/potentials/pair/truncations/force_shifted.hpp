@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_ADAPTERS_SHIFTED_HPP
-#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_ADAPTERS_SHIFTED_HPP
+#ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_FORCE_SHIFTED_HPP
+#define HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_FORCE_SHIFTED_HPP
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -35,34 +35,37 @@ namespace mdsim {
 namespace host {
 namespace potentials {
 namespace pair {
-namespace adapters {
+namespace truncations {
 
 /**
  * define Lennard-Jones potential and parameters
  */
 template <typename potential_type>
-class shifted : public potential_type
+class force_shifted : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
     typedef typename potential_type::matrix_type matrix_type;
 
     template<typename... Args>
-    shifted(matrix_type const& cutoff, Args&&... args)
+    force_shifted(matrix_type const& cutoff, Args&&... args)
             : potential_type (std::forward<Args>(args)...)
             , r_cut_sigma_(check_shape(cutoff, this->sigma()))
             , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
             , rr_cut_(element_prod(r_cut_, r_cut_))
             , en_cut_(this->size1(), this->size2())
+            , force_cut_(this->size1(), this->size2())
     {
         for (size_t i = 0; i < this->size1(); ++i) {
             for (size_t j = 0; j < this->size2(); ++j) {
                 fixed_vector<float, 4> p;
-                std::tie(std::ignore, en_cut_(i,j)) = potential_type::operator()(rr_cut_(i, j), i, j);
+                std::tie(force_cut_(i,j), en_cut_(i,j)) = potential_type::operator()(rr_cut_(i, j), i, j);
+                force_cut_(i,j) *= r_cut_(i,j);
             }
         }
         LOG("potential cutoff length: r_c = " << r_cut_sigma_);
         LOG("potential cutoff energy: U = " << en_cut_);
+        LOG("potential cutoff force: F_c = " << force_cut_);
     }
 
     bool within_range(float_type rr, unsigned a, unsigned b) const
@@ -93,8 +96,10 @@ public:
     std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         float_type f_abs, pot;
+        float_type r = sqrt(rr);
         tie(f_abs, pot) = potential_type::operator()(rr, a, b);
-        pot = pot - en_cut_(a,b);
+        f_abs -= force_cut_(a,b) / r;
+        pot = pot - en_cut_(a,b) + (r - r_cut_(a,b)) * force_cut_(a,b);
         return std::make_tuple(f_abs, pot);
     }
     /**
@@ -112,10 +117,10 @@ public:
                                 [
                                         namespace_("pair")
                                         [
-                                                class_<shifted, potential_type, std::shared_ptr<shifted> >()
-                                                    .property("r_cut", (matrix_type const& (shifted::*)() const) &shifted::r_cut)
-                                                    .property("r_cut_sigma", &shifted::r_cut_sigma)
-                                              , def("shifted", &std::make_shared<shifted
+                                                class_<force_shifted, potential_type, std::shared_ptr<force_shifted> >()
+                                                    .property("r_cut", (matrix_type const& (force_shifted::*)() const) &force_shifted::r_cut)
+                                                    .property("r_cut_sigma", &force_shifted::r_cut_sigma)
+                                              , def("force_shifted", &std::make_shared<force_shifted
                                                                  , matrix_type const&
                                                                  , potential_type const&>)
                                         ]
@@ -133,13 +138,15 @@ private:
     matrix_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
+    /** force at cutoff length in MD units */
+    matrix_type force_cut_;
 };
 
-} // namespace adapters
+} // namespace truncations
 } // namespace pair
 } // namespace potentials
 } // namespace host
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_ADAPTERS_SHIFTED_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_FORCE_SHIFTED_HPP */

@@ -28,7 +28,7 @@
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/potentials/pair/power_law_hard_core.hpp>
 #include <halmd/mdsim/host/potentials/pair/power_law.hpp>
-#include <halmd/mdsim/host/potentials/pair/adapters/truncations.hpp>
+#include <halmd/mdsim/host/potentials/pair/truncations/truncations.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -96,23 +96,23 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_power_law(lua_Stat
     power_law<double>::luaopen(L);
     forces::pair_full<3, double, power_law<double> >::luaopen(L);
     forces::pair_full<2, double, power_law<double> >::luaopen(L);
-    adapters::truncations_luaopen<double, power_law<double> >(L);
+    truncations::truncations_luaopen<double, power_law<double> >(L);
 
 
     adapters::hard_core<power_law<double> >::luaopen(L);
     forces::pair_full<3, double, adapters::hard_core<power_law<double> > >::luaopen(L);
     forces::pair_full<2, double, adapters::hard_core<power_law<double> > >::luaopen(L);
-    adapters::truncations_luaopen<double, adapters::hard_core<power_law<double> > >(L);
+    truncations::truncations_luaopen<double, adapters::hard_core<power_law<double> > >(L);
 #else
     power_law<float>::luaopen(L);
     forces::pair_full<3, float, power_law<float> >::luaopen(L);
     forces::pair_full<2, float, power_law<float> >::luaopen(L);
-    adapters::truncations_luaopen<float, power_law<float> >(L);
+    truncations::truncations_luaopen<float, power_law<float> >(L);
 
     adapters::hard_core<power_law<float> >::luaopen(L);
     forces::pair_full<3, float, adapters::hard_core<power_law<float> > >::luaopen(L);
     forces::pair_full<2, float, adapters::hard_core<power_law<float> > >::luaopen(L);
-    adapters::truncations_luaopen<float, adapters::hard_core<power_law<float> > >(L);
+    truncations::truncations_luaopen<float, adapters::hard_core<power_law<float> > >(L);
 #endif
     return 0;
 }
@@ -120,16 +120,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_power_law(lua_Stat
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class power_law<double>;
-HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(power_law<double>);
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(power_law<double>)
 
 template class adapters::hard_core<power_law<double>>;
-HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(adapters::hard_core<power_law<double>>);
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(adapters::hard_core<power_law<double>>)
 #else
 template class power_law<float>;
-HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(power_law<float>);
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(power_law<float>)
 
 template class adapters::hard_core<power_law<float>>;
-HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(adapters::hard_core<power_law<float>>);
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(adapters::hard_core<power_law<float>>)
 #endif
 
 } // namespace pair
@@ -141,25 +141,25 @@ namespace forces {
 #ifndef USE_HOST_SINGLE_PRECISION
 template class pair_full<3, double, potentials::pair::power_law<double>>;
 template class pair_full<2, double, potentials::pair::power_law<double>>;
-HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(double, potentials::pair::power_law<double>);
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(double, potentials::pair::power_law<double>)
 
 template class pair_full<3, double, potentials::pair::adapters::hard_core<potentials::pair::power_law<double>>>;
 template class pair_full<2, double, potentials::pair::adapters::hard_core<potentials::pair::power_law<double>>>;
 HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(
     double
   , potentials::pair::adapters::hard_core<potentials::pair::power_law<double>>
-);
+)
 #else
 template class pair_full<3, float, potentials::pair::power_law<float>>;
 template class pair_full<2, float, potentials::pair::power_law<float>>;
-HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::power_law<float>);
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::power_law<float>)
 
 template class pair_full<3, float, potentials::pair::adapters::hard_core<potentials::pair::power_law<float>>>;
 template class pair_full<2, float, potentials::pair::adapters::hard_core<potentials::pair::power_law<float>>>;
 HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(
     float
   , potentials::pair::hard_core<potentials::pair::adapters::power_law<float>>
-);
+)
 #endif
 
 } // namespace forces

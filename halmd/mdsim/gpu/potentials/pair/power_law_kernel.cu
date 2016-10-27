@@ -22,7 +22,7 @@
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_hard_core_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/adapters/truncations.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/truncations/truncations.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 #include <halmd/utility/tuple.hpp>

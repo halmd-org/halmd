@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SHIFTED_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SHIFTED_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_SHIFTED_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_SHIFTED_HPP
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -28,7 +28,7 @@
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/adapters/shifted_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/truncations/shifted_kernel.hpp>
 #include <halmd/utility/matrix_shape.hpp>
 
 namespace halmd {
@@ -36,10 +36,10 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace adapters {
+namespace truncations {
 
 /**
- * define potential adapter
+ * define potential truncation
  */
 template <typename potential_type>
 class shifted : public potential_type
@@ -147,11 +147,11 @@ private:
     cuda::vector<float2> g_param_;
 };
 
-} // namespace adapters
+} // namespace truncations
 } // namespace pair
 } // namespace potentials
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_ADAPTERS_SHIFTED_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_SHIFTED_HPP */

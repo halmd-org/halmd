@@ -33,12 +33,12 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/potentials/pair/power_law_hard_core.hpp>
-#include <halmd/mdsim/host/potentials/pair/adapters/shifted.hpp>
+#include <halmd/mdsim/host/potentials/pair/truncations/shifted.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/power_law_hard_core.hpp>
-# include <halmd/mdsim/gpu/potentials/pair/adapters/shifted.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/truncations/shifted.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
 #endif
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE( power_law_hard_core_host )
 {
     typedef mdsim::host::potentials::pair::power_law<double> base_potential_type;
     typedef mdsim::host::potentials::pair::adapters::hard_core<base_potential_type> modified_potential_type;
-    typedef mdsim::host::potentials::pair::adapters::shifted<modified_potential_type> potential_type;
+    typedef mdsim::host::potentials::pair::truncations::shifted<modified_potential_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
     typedef potential_type::uint_matrix_type uint_matrix_type;
 
@@ -209,11 +209,11 @@ struct power_law_hard_core
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::potentials::pair::power_law<float_type> base_potential_type;
     typedef mdsim::gpu::potentials::pair::adapters::hard_core<base_potential_type> modified_potential_type;
-    typedef mdsim::gpu::potentials::pair::adapters::shifted<modified_potential_type> potential_type;
+    typedef mdsim::gpu::potentials::pair::truncations::shifted<modified_potential_type> potential_type;
 
     typedef mdsim::host::potentials::pair::power_law<double> base_host_potential_type;
     typedef mdsim::host::potentials::pair::adapters::hard_core<base_host_potential_type> modified_host_potential_type;
-    typedef mdsim::host::potentials::pair::adapters::shifted<modified_host_potential_type> host_potential_type;
+    typedef mdsim::host::potentials::pair::truncations::shifted<modified_host_potential_type> host_potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;
 
