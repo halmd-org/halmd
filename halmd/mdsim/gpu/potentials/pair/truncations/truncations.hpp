@@ -36,8 +36,6 @@ namespace potentials {
 namespace pair {
 namespace truncations {
 
-#define HALMD_PAIR_POTENTIAL_TRUNCATIONS (smooth_r4)(sharp)(shifted)(force_shifted)
-
 #define _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_LUAOPEN(r, data, truncation) \
     truncation<potential_type>::luaopen(L);\
     forces::pair_trunc<3, float_type, truncation<potential_type> >::luaopen(L);\

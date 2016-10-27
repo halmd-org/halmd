@@ -28,8 +28,6 @@
 #include <halmd/mdsim/gpu/potentials/pair/truncations/shifted_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/truncations/smooth_r4_kernel.cuh>
 
-#define HALMD_PAIR_POTENTIAL_TRUNCATIONS (smooth_r4)(sharp)(shifted)(force_shifted)
-
 #define _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_MAKE_WRAPPER(x) x##_wrapper
 #define _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_MAKE_KERNEL(x) x##_kernel
 
