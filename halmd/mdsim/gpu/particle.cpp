@@ -231,7 +231,7 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     get_particle_kernel<dimension>().image.bind(*g_image);
     get_particle_kernel<dimension>().v.bind(*g_velocity);
     get_particle_kernel<dimension>().tag.bind(*g_tag);
-    get_particle_kernel<dimension>().rearrange(g_index, position, image, velocity, tag);
+    get_particle_kernel<dimension>().rearrange(g_index, position, image, velocity, tag, nparticle_);
 
     position.swap(*g_position);
     image.swap(*g_image);
