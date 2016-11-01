@@ -29,7 +29,7 @@ if(HALMD_WITH_GPU)
   target_link_libraries(test_performance_memory_allocation
     ${HALMD_TEST_LIBRARIES}
   )
-  add_test(performance/memory_allocation
+  halmd_add_gpu_test(performance/memory_allocation
     test_performance_memory_allocation --log_level=message
   )
 endif(HALMD_WITH_GPU)

@@ -19,7 +19,7 @@ if(${HALMD_WITH_pair_lennard_jones})
     test_unit_mdsim_potentials_pair_lennard_jones --run_test=lennard_jones_host --log_level=test_suite
   )
   if(HALMD_WITH_GPU)
-    add_test(unit/mdsim/potentials/pair/lennard_jones/gpu
+    halmd_add_gpu_test(unit/mdsim/potentials/pair/lennard_jones/gpu
       test_unit_mdsim_potentials_pair_lennard_jones --run_test=lennard_jones_gpu --log_level=test_suite
     )
   endif()
@@ -46,7 +46,7 @@ if(${HALMD_WITH_pair_lennard_jones_linear})
     test_unit_mdsim_potentials_pair_lennard_jones_linear --run_test=lennard_jones_linear_host --log_level=test_suite
   )
   if(HALMD_WITH_GPU)
-    add_test(unit/mdsim/potentials/pair/lennard_jones_linear/gpu
+    halmd_add_gpu_test(unit/mdsim/potentials/pair/lennard_jones_linear/gpu
       test_unit_mdsim_potentials_pair_lennard_jones_linear --run_test=lennard_jones_linear_gpu --log_level=test_suite
     )
   endif()
@@ -73,7 +73,7 @@ if(${HALMD_WITH_pair_modified_lennard_jones})
     test_unit_mdsim_potentials_pair_modified_lennard_jones --run_test=modified_lennard_jones_host --log_level=test_suite
   )
   if(HALMD_WITH_GPU)
-    add_test(unit/mdsim/potentials/pair/modified_lennard_jones/gpu
+    halmd_add_gpu_test(unit/mdsim/potentials/pair/modified_lennard_jones/gpu
       test_unit_mdsim_potentials_pair_modified_lennard_jones --run_test=modified_lennard_jones_gpu --log_level=test_suite
     )
   endif()
@@ -100,7 +100,7 @@ if(${HALMD_WITH_pair_power_law})
     test_unit_mdsim_potentials_pair_power_law --run_test=power_law_host --log_level=test_suite
   )
   if(HALMD_WITH_GPU)
-    add_test(unit/mdsim/potentials/pair/power_law/gpu
+    halmd_add_gpu_test(unit/mdsim/potentials/pair/power_law/gpu
       test_unit_mdsim_potentials_pair_power_law --run_test=power_law_gpu --log_level=test_suite
     )
   endif()
@@ -127,7 +127,7 @@ if(${HALMD_WITH_pair_power_law_with_core})
     test_unit_mdsim_potentials_pair_power_law_with_core --run_test=power_law_with_core_host --log_level=test_suite
   )
   if(HALMD_WITH_GPU)
-    add_test(unit/mdsim/potentials/pair/power_law_with_core/gpu
+    halmd_add_gpu_test(unit/mdsim/potentials/pair/power_law_with_core/gpu
       test_unit_mdsim_potentials_pair_power_law_with_core --run_test=power_law_with_core_gpu --log_level=test_suite
     )
   endif()

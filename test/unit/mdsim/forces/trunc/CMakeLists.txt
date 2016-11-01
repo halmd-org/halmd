@@ -20,7 +20,7 @@ if(HALMD_WITH_pair_lennard_jones)
     test_unit_mdsim_forces_trunc_local_r4 --run_test=host/local_r4 --log_level=test_suite
   )
   if(HALMD_WITH_GPU)
-    add_test(unit/mdsim/forces/trunc/local_r4/gpu
+    halmd_add_gpu_test(unit/mdsim/forces/trunc/local_r4/gpu
       test_unit_mdsim_forces_trunc_local_r4 --run_test=gpu/local_r4 --log_level=test_suite
     )
   endif()
