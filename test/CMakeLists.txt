@@ -49,6 +49,28 @@ set(HALMD_LUA_CPATH
   "${CMAKE_BINARY_DIR}/halmd/?${CMAKE_SHARED_LIBRARY_SUFFIX}"
 )
 
+option(HALMD_TEST_CUDA_MEMCHECK "Set to OFF to disable CUDA memory checks while running the tests." ON)
+
+if(HALMD_TEST_CUDA_MEMCHECK)
+  find_program(CUDA_MEMCHECK cuda-memcheck)
+  if(CUDA_MEMCHECK)
+    set(CUDA_MEMCHECK_COMMAND ${CUDA_MEMCHECK} --error-exitcode 1)
+  else()
+    message(WARNING "cuda-memcheck was not found. No memory checks will be performed.")
+    set(CUDA_MEMCHECK_COMMAND)
+  endif()
+else()
+  set(CUDA_MEMCHECK_COMMAND)
+endif()
+
+macro(halmd_add_gpu_test NAME)
+  if ("${NAME}" STREQUAL "NO_MEMCHECK")
+    add_test(${ARGN})
+  else()
+    add_test(${NAME} ${CUDA_MEMCHECK_COMMAND} ${ARGN})
+  endif()
+endmacro()
+
 ##
 # HALMD test suite
 #

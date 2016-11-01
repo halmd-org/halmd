@@ -30,10 +30,10 @@ add_test(unit/observables/ssf/host/3d
   test_unit_observables_ssf --run_test=ssf_host_3d --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  add_test(unit/observables/ssf/gpu/2d
+  halmd_add_gpu_test(unit/observables/ssf/gpu/2d
     test_unit_observables_ssf --run_test=ssf_gpu_2d --log_level=test_suite
   )
-  add_test(unit/observables/ssf/gpu/3d
+  halmd_add_gpu_test(unit/observables/ssf/gpu/3d
     test_unit_observables_ssf --run_test=ssf_gpu_3d --log_level=test_suite
   )
 endif()
@@ -71,16 +71,16 @@ add_test(unit/observables/phase_space/host/3d
   test_unit_observables_phase_space --run_test=phase_space_host_3d --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  add_test(unit/observables/phase_space/gpu/host/2d
+  halmd_add_gpu_test(unit/observables/phase_space/gpu/host/2d
     test_unit_observables_phase_space --run_test=phase_space_gpu_host_2d --log_level=test_suite
   )
-  add_test(unit/observables/phase_space/gpu/host/3d
+  halmd_add_gpu_test(unit/observables/phase_space/gpu/host/3d
     test_unit_observables_phase_space --run_test=phase_space_gpu_host_3d --log_level=test_suite
   )
-  add_test(unit/observables/phase_space/gpu/gpu/2d
+  halmd_add_gpu_test(unit/observables/phase_space/gpu/gpu/2d
     test_unit_observables_phase_space --run_test=phase_space_gpu_gpu_2d --log_level=test_suite
   )
-  add_test(unit/observables/phase_space/gpu/gpu/3d
+  halmd_add_gpu_test(unit/observables/phase_space/gpu/gpu/3d
     test_unit_observables_phase_space --run_test=phase_space_gpu_gpu_3d --log_level=test_suite
   )
 endif()

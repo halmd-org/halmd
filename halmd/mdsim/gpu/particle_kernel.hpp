@@ -47,7 +47,7 @@ struct particle_wrapper
     /** tags */
     cuda::texture<unsigned int> tag;
     /** rearrange particles by a given permutation */
-    cuda::function<void (unsigned int const*, float4*, aligned_vector_type*, float4*, unsigned int*)> rearrange;
+    cuda::function<void (unsigned int const*, float4*, aligned_vector_type*, float4*, unsigned int*, unsigned int)> rearrange;
     static particle_wrapper const kernel;
 };
 
