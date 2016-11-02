@@ -6,6 +6,10 @@ scripts written in `Lua 5 <http://lua.org>`_. For a quick start refer to one of
 the `"liquid" <http://git.halmd.org/halmd/tree/master/examples>`_ scripts found
 in ``share/doc/halmd/examples`` in the installation directory.
 
+The simulation scripts define a global method ``function run(args)`` that
+sets up and runs the simulation and can optionally define a global method
+``function define_args(parser)`` that can be used to define custom command
+line arguments.
 
 Program parameters
 ------------------
