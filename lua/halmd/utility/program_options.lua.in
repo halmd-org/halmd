@@ -21,6 +21,8 @@
 local utility = require("halmd.utility") -- utility.sorted
 
 ---
+-- .. _program_options:
+--
 -- Program Options
 -- ===============
 --
@@ -225,6 +227,12 @@ end
 --    local options = require("halmd.utility.program_options")
 --
 --    local parser = options.argument_parser()
+--
+-- .. note::
+--    Usually the argument parser is not created directly. Instead
+--    a simulation script can define a global method ``define_args``
+--    which is given an argument parser as its argument, see
+--    :ref:`scripts`.
 --
 function M.argument_parser()
     local self = {

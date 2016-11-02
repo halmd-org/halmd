@@ -1,0 +1,54 @@
+.. highlight:: lua
+.. _scripts:
+
+Simulation Scripts
+==================
+
+*HAL’s MD package* is configured and steered with customisable simulation
+scripts written in `Lua 5 <http://lua.org>`_.
+
+Structure
+---------
+
+A simulation scripts has to define a global method ``run`` that
+sets up and runs the simulation and can optionally define a global method
+``define_args`` that can be used to define custom command line arguments.
+
+.. data:: halmd
+    :noindex:
+
+    Predefined global that can be used to access the :ref:`modules`.
+
+.. function:: run(args)
+
+    Main simulation entry point (defined by the simulation script).
+
+    :param table args: table containing the command line arguments
+
+.. function:: define_args(parser)
+
+    Optional entry point (defined by the simulation script) that, if present,
+    is called prior to :func:`run` and can be used to define command line arguments.
+
+    :param parser: instance of :class:`halmd.utility.program_options.argument_parser`
+                   that can be used to define command line argument,
+                   see :ref:`program_options`.
+
+Examples
+--------
+
+`Examples <http://git.halmd.org/halmd/tree/master/examples>`_ for simulation
+scripts can be found in ``share/doc/halmd/examples`` in the installation directory.
+
+Advanced
+--------
+
+The ``run`` and ``define_args`` functions are called from the internal lua script
+``main.lua`` which is found in ``share/halmd/lua`` in the installation directory.
+This script defines some default command line arguments and performs initial
+setup, e.g. for the logger. Advanced users may modify this script to change
+HALMD's predefined default behavior.
+
+To achieve backwards compatibility with earlier versions of HALMD the main script
+can be replaced with an empty script, which will effectively restore the old behavior,
+where all initial setup was the responsibility of the simulation script.
