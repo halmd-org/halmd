@@ -38,7 +38,7 @@ namespace pair {
 namespace truncations {
 
 /**
- * define potential truncation
+ * define smooth potential truncation
  */
 template <typename potential_type>
 class smooth_r4 : public potential_type

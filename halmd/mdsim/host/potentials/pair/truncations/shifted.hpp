@@ -38,7 +38,7 @@ namespace pair {
 namespace truncations {
 
 /**
- * define potential truncation
+ * define (energy) shifted potential truncation
  */
 template <typename potential_type>
 class shifted : public potential_type

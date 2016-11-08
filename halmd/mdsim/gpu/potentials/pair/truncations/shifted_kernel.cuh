@@ -84,6 +84,7 @@ public:
     }
 
 private:
+    /** adapter parameters for particle pair */
     fixed_vector<float, 2> pair_;
 };
 

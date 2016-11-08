@@ -39,7 +39,7 @@ namespace pair {
 namespace truncations {
 
 /**
- * define Lennard-Jones potential and parameters
+ * define force shifted potential truncation
  */
 template <typename potential_type>
 class force_shifted : public potential_type
@@ -150,7 +150,7 @@ private:
     matrix_type en_cut_;
     /** force at cutoff length in MD units */
     matrix_type force_cut_;
-
+    /** adapter parameters at CUDA device */
     cuda::vector<float4> g_param_;
 };
 

@@ -62,7 +62,6 @@ end
 -- :param table args: keyword arguments
 -- :param table args.epsilon: matrix with elements :math:`\epsilon_{ij}` (*default:* ``1``)
 -- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (*default:* ``1``)
--- :param table args.cutoff: matrix with elements :math:`r_{\text{c}, ij}`
 -- :param table args.index_repulsion: exponent of repulsive part, :math:`m_{ij}`
 -- :param table args.index_attraction: exponent of attractive part, , :math:`n_{ij}`
 -- :param number args.species: number of particle species *(optional)*
@@ -79,10 +78,6 @@ end
 -- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
 -- not specified, the memory location is selected according to the compute
 -- device.
---
--- .. note::
---
---    The cutoff is only relevant with :class:`halmd.mdsim.forces.pair_trunc`.
 --
 -- .. attribute:: epsilon
 --
@@ -115,6 +110,35 @@ end
 -- .. attribute:: memory
 --
 --    Device where the particle memory resides.
+--
+-- .. method:: truncate(args)
+--
+--    Truncate potential.
+--    See :ref:`pair_potential_truncations` for available truncations.
+--
+--    :param table args: keyword argument
+--    :param string args[1]: name of truncation type
+--    :param table cutoff: matrix with elements :math:`r_{\text{c}, ij}`
+--    :param any args.*: additional arguments depend on the truncation type
+--    :returns: truncated potential
+--
+--    Example::
+--
+--      potential = potential:truncate({"smooth_r4", cutoff = 5, h = 0.05})
+--
+-- .. method:: modify(args)
+--
+--    Apply potential modification.
+--    See :ref:`pair_potential_modifications` for available modifications.
+--
+--    :param table args: keyword argument
+--    :param string args[1]: name of modification type
+--    :param any args.*: additional arguments depend on the modification type
+--    :returns: modified potential
+--
+--    Example::
+--
+--      potential = potential:modify({"hard_core", radius = 0.5})
 --
 local M = module(function(args)
     local epsilon = args and args.epsilon or 1

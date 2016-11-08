@@ -39,7 +39,7 @@ namespace pair {
 namespace truncations {
 
 /**
- * define potential truncation
+ * define (energy) shifted potential truncation
  */
 template <typename potential_type>
 class shifted : public potential_type
@@ -143,7 +143,7 @@ private:
     matrix_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
-
+    /** adapter parameters at CUDA device */
     cuda::vector<float2> g_param_;
 };
 

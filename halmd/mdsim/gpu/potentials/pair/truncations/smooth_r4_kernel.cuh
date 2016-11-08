@@ -102,6 +102,7 @@ public:
     }
 
 private:
+    /** adapter parameters for particle pair */
     fixed_vector<float, 3> pair_;
 };
 

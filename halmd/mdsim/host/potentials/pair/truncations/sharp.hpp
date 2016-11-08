@@ -38,7 +38,7 @@ namespace pair {
 namespace truncations {
 
 /**
- * define potential truncation
+ * define sharp potential truncation
  */
 template <typename potential_type>
 class sharp : public potential_type

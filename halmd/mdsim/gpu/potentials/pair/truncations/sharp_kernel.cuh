@@ -81,6 +81,7 @@ public:
     }
 
 private:
+    /** squared cutoff radius */
     float rr_cut_;
 };
 

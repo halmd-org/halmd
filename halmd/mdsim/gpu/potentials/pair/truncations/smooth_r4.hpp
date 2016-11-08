@@ -39,7 +39,7 @@ namespace pair {
 namespace truncations {
 
 /**
- * define potential truncation
+ * define smooth potential truncation
  */
 template <typename potential_type>
 class smooth_r4 : public potential_type
@@ -148,8 +148,9 @@ private:
     matrix_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
-
+    /** smoothing length */
     float_type rri_smooth_;
+    /** adapter parameters at CUDA device */
     cuda::vector<float4> g_param_;
 };
 

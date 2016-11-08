@@ -67,7 +67,7 @@ public:
         float_type rr_ss = rr / pair_[power_law_kernel::SIGMA2];
         // The computation of the square root can not be avoided
         // as r_core must be substracted from r but only r * r is passed.
-        float_type r_s = sqrt(rr_ss);  // translates to sqrt.approx.f32 in PTX code for float_type=float (CUDA 3.2)
+        float_type r_s = sqrtf(rr_ss);  // translates to sqrt.approx.f32 in PTX code for float_type=float (CUDA 3.2)
         float_type dri = 1 / (r_s - core_sigma_);
         float_type eps_dri_n = pair_[power_law_kernel::EPSILON] * halmd::pow(dri, n);
 

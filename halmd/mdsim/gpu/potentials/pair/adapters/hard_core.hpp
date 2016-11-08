@@ -39,7 +39,7 @@ namespace pair {
 namespace adapters {
 
 /**
- * define potential adapter
+ * define hard_core potential adapter
  */
 template <typename potential_type>
 class hard_core : public potential_type
@@ -81,7 +81,7 @@ public:
 
     std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
-        float_type r = sqrt(rr);
+        float_type r = sqrtf(rr);
         float_type r_s = r - r_core_(a,b);
         float_type f_abs, en_pot;
         tie(f_abs, en_pot) = potential_type::operator()(r_s*r_s, a, b);
@@ -121,7 +121,7 @@ private:
     matrix_type r_core_sigma_;
     /** core radius in MD units */
     matrix_type r_core_;
-
+    /** adapter parameters at CUDA device */
     cuda::vector<float> g_param_;
 };
 

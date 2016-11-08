@@ -73,7 +73,7 @@ public:
 
     std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
-        float_type r = sqrt(rr);
+        float_type r = sqrtf(rr);
         float_type r_s = r - r_core_sigma_(a,b) * this->sigma()(a,b);
         float_type f_abs, en_pot;
         tie(f_abs, en_pot) = power_law<float_type>::operator()(r_s*r_s, a, b);

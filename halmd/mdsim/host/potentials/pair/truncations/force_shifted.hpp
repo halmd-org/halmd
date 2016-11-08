@@ -38,7 +38,7 @@ namespace pair {
 namespace truncations {
 
 /**
- * define Lennard-Jones potential and parameters
+ * define force shifted potential truncation
  */
 template <typename potential_type>
 class force_shifted : public potential_type

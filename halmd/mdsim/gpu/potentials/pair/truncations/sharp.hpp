@@ -39,7 +39,7 @@ namespace pair {
 namespace truncations {
 
 /**
- * define potential truncation
+ * define sharp potential truncation
  */
 template <typename potential_type>
 class sharp : public potential_type
@@ -130,7 +130,7 @@ private:
     matrix_type r_cut_;
     /** square of cutoff length */
     matrix_type rr_cut_;
-
+    /** adapter parameters at CUDA device */
     cuda::vector<float> g_param_;
 };
 

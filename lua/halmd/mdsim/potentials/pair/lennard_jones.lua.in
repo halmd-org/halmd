@@ -44,15 +44,9 @@ local adapters          = require("halmd.mdsim.potentials.pair.adapters")
 
 -- grab C++ wrappers
 local lennard_jones = { host = assert(libhalmd.mdsim.host.potentials.pair.lennard_jones) }
-local force_shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.force_shifted) }
-local smooth_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.smooth_r4) }
-local shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.shifted) }
 local lennard_jones_simple
 if device.gpu then
     lennard_jones.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.lennard_jones)
-    force_shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.force_shifted)
-    smooth_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
-    shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
     lennard_jones_simple = assert(libhalmd.mdsim.gpu.potentials.pair.lennard_jones_simple)
 end
 ---
@@ -61,7 +55,6 @@ end
 -- :param table args: keyword arguments
 -- :param table args.epsilon: matrix with elements :math:`\epsilon_{ij}` (*default:* ``1``)
 -- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (*default:* ``1``)
--- :param table args.cutoff: matrix with elements :math:`r_{\text{c}, ij}`
 -- :param number args.species: number of particle species *(optional)*
 -- :param string args.memory: select memory location *(optional)*
 -- :param string args.label: instance label *(optional)*
@@ -77,9 +70,6 @@ end
 -- not specified, the memory location is selected according to the compute
 -- device.
 --
--- .. note::
---
---    The cutoff is only relevant with :class:`halmd.mdsim.forces.pair_trunc`.
 --
 -- .. attribute:: epsilon
 --
@@ -104,6 +94,35 @@ end
 -- .. attribute:: memory
 --
 --    Device where the particle memory resides.
+--
+-- .. method:: truncate(args)
+--
+--    Truncate potential.
+--    See :ref:`pair_potential_truncations` for available truncations.
+--
+--    :param table args: keyword argument
+--    :param string args[1]: name of truncation type
+--    :param table cutoff: matrix with elements :math:`r_{\text{c}, ij}`
+--    :param any args.*: additional arguments depend on the truncation type
+--    :returns: truncated potential
+--
+--    Example::
+--
+--      potential = potential:truncate({"smooth_r4", cutoff = 5, h = 0.05})
+--
+-- .. method:: modify(args)
+--
+--    Apply potential modification.
+--    See :ref:`pair_potential_modifications` for available modifications.
+--
+--    :param table args: keyword argument
+--    :param string args[1]: name of modification type
+--    :param any args.*: additional arguments depend on the modification type
+--    :returns: modified potential
+--
+--    Example::
+--
+--      potential = potential:modify({"hard_core", radius = 0.5})
 --
 local M = module(function(args)
     local epsilon = args and args.epsilon or 1

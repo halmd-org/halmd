@@ -22,35 +22,106 @@ local device    = require("halmd.utility.device")
 local numeric   = require("halmd.numeric")
 local utility   = require("halmd.utility")
 
-local force_shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.force_shifted) }
-local hard_core = { host = assert(libhalmd.mdsim.host.potentials.pair.hard_core) }
-local smooth_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.smooth_r4) }
-local shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.shifted) }
+local force_shifted = { host = libhalmd.mdsim.host.potentials.pair.force_shifted }
+local hard_core = { host = libhalmd.mdsim.host.potentials.pair.hard_core }
+local smooth_r4 = { host = libhalmd.mdsim.host.potentials.pair.smooth_r4 }
+local sharp = { host = libhalmd.mdsim.host.potentials.pair.sharp }
+local shifted = { host = libhalmd.mdsim.host.potentials.pair.shifted }
 
 if device.gpu then
-    force_shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.force_shifted)
-    hard_core.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.hard_core)
-    smooth_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
-    shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
+    force_shifted.gpu = force_shifted.host and assert(libhalmd.mdsim.gpu.potentials.pair.force_shifted)
+    hard_core.gpu = hard_core.host and assert(libhalmd.mdsim.gpu.potentials.pair.hard_core)
+    sharp.gpu = sharp.host and assert(libhalmd.mdsim.gpu.potentials.pair.sharp)
+    smooth_r4.gpu = smooth_r4.host and assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
+    shifted.gpu = shifted.host and assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
 end
+
+---
+-- Potential adapters
+-- ~~~~~~~~~~~~~~~~~~
+--
+-- Every potential defines a ``truncate`` and a ``modify`` method that can be used
+-- to create a modified potential.
+--
+-- .. _pair_potential_truncations:
+--
+-- Potential Truncations
+-- =====================
+--
+-- force_shifted
+-- -------------
+--
+-- Example::
+--
+--     potential = potential:truncate({"force_shifted", cutoff = 4})
+--
+-- sharp
+-- -----
+--
+-- Example::
+--
+--     potential = potential:truncate({"sharp", cutoff = 4})
+--
+-- shifted
+-- -------
+--
+-- Example::
+--
+--     potential = potential:truncate({"shifted", cutoff = 4})
+--
+-- .. _smooth_r4:
+--
+-- smooth_r4
+-- ---------
+--
+-- Example::
+--
+--     potential = potential:truncate({"smooth_r4", cutoff = 4, h = 0.05})
+--
+-- .. _pair_potential_modifications:
+--
+-- Potential Modifications
+-- =======================
+--
+-- hard_core
+-- ---------
+--
+-- Example::
+--
+--     potential = potential:modify({"hard_core", radius = 0.5})
+--
+--
 
 local self = {}
 
-local truncate_table = setmetatable({
-    force_shifted = function(potential, cutoff, args)
+local truncate_table = {}
+
+if force_shifted.host then
+    truncate_table.force_shifted = function(potential, cutoff, args)
         return force_shifted[potential.memory](cutoff, potential)
-    end,
-    shifted = function(potential, cutoff, args)
+    end
+end
+if sharp.host then
+    truncate_table.sharp = function(potential, cutoff, args)
+        return sharp[potential.memory](cutoff, potential)
+    end
+end
+if shifted.host then
+    truncate_table.shifted = function(potential, cutoff, args)
         return shifted[potential.memory](cutoff, potential)
-    end,
-    smooth_r4 = function(potential, cutoff, args)
+    end
+end
+if smooth_r4.host then
+    truncate_table.smooth_r4 = function(potential, cutoff, args)
         local h = args.h
         if type(h) ~= "number" then
             error("bad argument 'h'", 2)
         end
         return smooth_r4[potential.memory](cutoff, h, potential)
     end
-}, {
+end
+
+truncate_table = setmetatable(truncate_table, {
     __index = function(tbl, key)
         error("invalid truncation type '"..key.."'", 2)
     end

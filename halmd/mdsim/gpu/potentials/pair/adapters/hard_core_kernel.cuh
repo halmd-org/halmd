@@ -66,7 +66,7 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
-        float_type r = sqrt(rr);
+        float_type r = sqrtf(rr);
         float_type r_s = r - r_core_;
         float_type f_abs, en_pot;
         tie(f_abs, en_pot) = parent_kernel::operator()(r_s * r_s);
@@ -75,6 +75,7 @@ public:
     }
 
 private:
+    /** core radius */
     float r_core_;
 };
 
