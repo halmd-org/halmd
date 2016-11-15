@@ -185,10 +185,8 @@ end
 local function parse_args()
     local parser = halmd.utility.program_options.argument_parser()
 
-    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
-        -- substitute current time
-        args[key] = os.date(value)
-    end, default = "shear_viscosity_%Y%m%d", help = "prefix of output files"})
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+        default = "shear_viscosity_%Y%m%d", help = "prefix of output files"})
     -- _%Y%m%d_%H%M%S
 
     parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)

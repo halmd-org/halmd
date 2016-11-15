@@ -18,11 +18,9 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = require("halmd")
-local mdsim = require("halmd.mdsim")
-local sampler = require("halmd.observables.sampler")
-
-halmd.io.log.open_console({severity = "debug"})
+local halmd = halmd
+local mdsim = halmd.mdsim
+local sampler = halmd.observables.sampler
 
 function rel_error(a, b)
     return math.abs(a - b) / math.abs(b)
@@ -86,9 +84,7 @@ function test_writer(integrator, args)
 end
 
 -- define command line arguments
-function parse_args()
-    local parser = halmd.utility.program_options.argument_parser()
-
+function define_args(parser)
     parser:add_argument("particles", {type = "integer", default=1600, help = "number of particles"})
     parser:add_argument("box-length", {type = "vector", dtype = "number", default = {20, 40, 20}
       , help = "edge lengths of simulation box"
@@ -97,16 +93,13 @@ function parse_args()
     parser:add_argument("temperature", {type = "number", default=3.0, help = "temperature"})
     parser:add_argument("frequency", {type = "number", default=5.0, help = "resonance frequency"})
     parser:add_argument("output,o", {type = "string", help = "prefix of output files"})
-
-    return parser:parse_args()
 end
 
-local args = parse_args()
-
 -- start tests
-local integrator = test_construction(args)
-test_methods(integrator, args)
-test_writer(integrator, args)
+function run(args)
+    local integrator = test_construction(args)
+    test_methods(integrator, args)
+    test_writer(integrator, args)
 
-integrator:disconnect()
-
+    integrator:disconnect()
+end

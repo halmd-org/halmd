@@ -65,6 +65,15 @@ script::script()
 
     // load HALMD Lua C++ wrapper
     luaopen_halmd(L);
+
+    // load lua interface of HALMD Lua C++ wrapper
+    if(luaL_dostring(L, "halmd = require(\"halmd\")")) {
+        size_t len = 0;
+        const char *errmsg = lua_tolstring(L, -1, &len);
+        std::string error("Cannot load halmd module: " + std::string(errmsg, len));
+        lua_pop(L, 1);
+        throw std::runtime_error(error);
+    }
 }
 
 /**
@@ -184,6 +193,29 @@ void script::dofile(std::string const& filename)
 
     if (luaL_loadfile(L, fn) || lua_pcall(L, 0, 0, 1)) {
         std::string error(lua_tostring(L, -1));
+        lua_pop(L, 1);
+        throw std::runtime_error(error);
+    }
+}
+
+void script::run()
+{
+    // error handler passed to lua_pcall as last argument
+    lua_pushcfunction(L, &script::traceback);
+    int stacktrace_index = lua_gettop(L);
+
+    if (luaL_loadstring(L, "halmd.main()")) {
+        size_t len = 0;
+        const char *errmsg = lua_tolstring(L, -1, &len);
+        std::string error("cannot load main script: " + std::string(errmsg, len));
+        lua_pop(L, 1);
+        throw std::runtime_error(error);
+    }
+
+    if (lua_pcall(L, 0, 0, stacktrace_index)) {
+        size_t len = 0;
+        const char *errmsg = lua_tolstring(L, -1, &len);
+        std::string error("cannot execute main script: " + std::string(errmsg, len));
         lua_pop(L, 1);
         throw std::runtime_error(error);
     }

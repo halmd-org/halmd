@@ -1,0 +1,63 @@
+--
+-- Copyright © 2016 Daniel Kirchner
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+local halmd = halmd
+local utility = halmd.utility
+local log = halmd.io.log
+
+return function()
+  if run ~= nil then
+
+    local parser = utility.program_options.argument_parser()
+
+    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
+        local level = {
+            -- console, file
+            {"warning", "info" },
+            {"info"   , "info" },
+            {"debug"  , "debug"},
+            {"trace"  , "trace"},
+        }
+        args[key] = level[value] or level[#level]
+    end, default = 1, help = "increase logging verbosity"})
+
+    if define_args ~= nil then
+       define_args(parser)
+    end
+    local args = parser:parse_args()
+
+    log.open_console({severity = args.verbose[1]})
+    -- log to file
+    if args.output then
+        log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
+    end
+    -- log version
+    utility.version.prologue()
+
+    -- seed the random number generator
+    if args.random_seed then
+      halmd.random.generator({seed = args.random_seed})
+    end
+
+    run(args)
+  else
+    error("simulation script did not define a \"run\" method")
+  end
+end

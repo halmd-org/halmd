@@ -1,10 +1,9 @@
-local log = require("halmd.io.log")
-log.open_console()
+function run()
 -- the following code is part of the documentation in doc/recipes/create_mixture.rst.in
 
-local mdsim   = require("halmd.mdsim")
-local numeric = require("halmd.numeric")
-local random  = require("halmd.random")
+local mdsim   = halmd.mdsim
+local numeric = halmd.numeric
+local random  = halmd.random
 
 local nparticle = {8000, 2000} -- particle numbers for each component
 local length = {20, 20, 20}    -- cubic simulation box
@@ -33,3 +32,6 @@ particle:set_position(r)
 
 -- set initial particle velocities
 mdsim.velocities.boltzmann({particle = particle, temperature = temperature}):set()
+
+-- end of usage in doc/recipes/create_mixture.rst.in
+end

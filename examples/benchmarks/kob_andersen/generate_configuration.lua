@@ -123,10 +123,8 @@ end
 local function parse_args()
     local parser = utility.program_options.argument_parser()
 
-    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
-        -- substitute current time
-        args[key] = os.date(value)
-    end, default = "kob_andersen_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+        default = "kob_andersen_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
     parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
         local level = {

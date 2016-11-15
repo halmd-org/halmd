@@ -20,11 +20,10 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = require("halmd")
+local halmd = halmd
 local rescale_velocity = require("rescale_velocity")
 
 -- grab modules
-local log = halmd.io.log
 local mdsim = halmd.mdsim
 local numeric = halmd.numeric
 local observables = halmd.observables
@@ -35,7 +34,7 @@ local writers = halmd.io.writers
 --
 -- Setup and run simulation
 --
-local function liquid(args)
+function run(args)
     -- open H5MD file for reading
     local file = readers.h5md({path = args.input})
 
@@ -209,24 +208,9 @@ end
 --
 -- Parse command-line arguments.
 --
-local function parse_args()
-    local parser = halmd.utility.program_options.argument_parser()
-
-    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
-        -- substitute current time
-        args[key] = os.date(value)
-    end, default = "lennard_jones_%Y%m%d_%H%M%S", help = "prefix of output files"})
-
-    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
-        local level = {
-            -- console, file
-            {"warning", "info" },
-            {"info"   , "info" },
-            {"debug"  , "debug"},
-            {"trace"  , "trace"},
-        }
-        args[key] = level[value] or level[#level]
-    end, default = 1, help = "increase logging verbosity"})
+function define_args(parser)
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+        default = "lennard_jones_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
     parser:add_argument("input", {type = "string", required = true, action = function(args, key, value)
         readers.h5md.check(value)
@@ -249,18 +233,4 @@ local function parse_args()
     local wavevector = parser:add_argument_group("wavevector", {help = "wavevector shells in reciprocal space"})
     observables.utility.wavevector.add_options(wavevector, {tolerance = 0.01, max_count = 7})
     observables.utility.semilog_grid.add_options(wavevector, {maximum = 15, decimation = 0})
-
-    return parser:parse_args()
 end
-
-local args = parse_args()
-
--- log to console
-halmd.io.log.open_console({severity = args.verbose[1]})
--- log to file
-halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
--- log version
-halmd.utility.version.prologue()
-
--- run simulation
-liquid(args)

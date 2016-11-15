@@ -477,7 +477,7 @@ public:
     {
         if (!(cache_observer_ == array_->data()) || !(group_observer_ == particle_group_->ordered())) {
             auto const& data = read_cache(array_->data());
-            auto const& group = particle_group_->ordered_host_cached();
+            auto const& group = read_cache(particle_group_->ordered());
 
             sample_ = std::make_shared<sample_type>(group.size());
             auto& sample_data = sample_->data();

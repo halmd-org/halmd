@@ -19,7 +19,7 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = require("halmd")
+local halmd = halmd
 
 -- grab modules
 local log = halmd.io.log
@@ -32,7 +32,7 @@ local utility = halmd.utility
 --
 -- Setup and run simulation
 --
-local function lennard_jones(args)
+function run(args)
     local timestep = 0.002   -- integration timestep
     local steps = 10000      -- number of integration steps
     local cutoff = 3.0       -- potential cutoff
@@ -100,13 +100,9 @@ end
 --
 -- Parse command-line arguments.
 --
-local function parse_args()
-    local parser = utility.program_options.argument_parser()
-
-    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
-        -- substitute current time
-        args[key] = os.date(value)
-    end, default = "lennard_jones_benchmark_%Y%m%d_%H%M%S", help = "prefix of output files"})
+function define_args(parser)
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+        default = "lennard_jones_benchmark_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
     parser:add_argument("trajectory", {type = "string", required = true, action = function(args, key, value)
         readers.h5md.check(value)
@@ -114,29 +110,4 @@ local function parse_args()
     end, help = "H5MD trajectory file"})
 
     parser:add_argument("count", {type = "number", default = 5, help = "number of repetitions"})
-
-    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
-        local level = {
-            -- console, file
-            {"warning", "info" },
-            {"info"   , "info" },
-            {"debug"  , "debug"},
-            {"trace"  , "trace"},
-        }
-        args[key] = level[value] or level[#level]
-    end, default = 1, help = "increase logging verbosity"})
-
-    return parser:parse_args()
 end
-
-local args = parse_args()
-
--- log to console
-log.open_console({severity = args.verbose[1]})
--- log to file
-log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
--- log version
-utility.version.prologue()
-
--- run simulation
-lennard_jones(args)

@@ -19,7 +19,7 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = require("halmd")
+local halmd = halmd
 
 -- grab modules
 local mdsim = halmd.mdsim
@@ -30,7 +30,7 @@ local utility = halmd.utility
 --
 -- Setup and run simulation
 --
-local function lennard_jones(args)
+function run(args)
     local nparticle = 64000   -- total number of particles
     local density = 0.4       -- number density
     local temperature = 1.2   -- heat bath temperature
@@ -95,36 +95,7 @@ end
 --
 -- Parse command-line arguments.
 --
-local function parse_args()
-    local parser = utility.program_options.argument_parser()
-
-    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
-        -- substitute current time
-        args[key] = os.date(value)
-    end, default = "lennard_jones_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
-
-    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
-        local level = {
-            -- console, file
-            {"warning", "info" },
-            {"info"   , "info" },
-            {"debug"  , "debug"},
-            {"trace"  , "trace"},
-        }
-        args[key] = level[value] or level[#level]
-    end, default = 1, help = "increase logging verbosity"})
-
-    return parser:parse_args()
+function define_args(parser)
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+        default = "lennard_jones_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 end
-
-local args = parse_args()
-
--- log to console
-halmd.io.log.open_console({severity = args.verbose[1]})
--- log to file
-halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
--- log version
-utility.version.prologue()
-
--- run simulation
-lennard_jones(args)
