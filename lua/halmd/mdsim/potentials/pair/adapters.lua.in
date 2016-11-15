@@ -1,5 +1,7 @@
 --
 -- Copyright © 2016 Daniel Kirchner
+-- Copyright © 2008, 2012 Peter Colberg
+-- Copyright © 2012 Nicolas Höft
 --
 -- This file is part of HALMD.
 --
@@ -73,6 +75,159 @@ end
 --
 -- smooth_r4
 -- ---------
+--
+-- This potential adapter -- transforms the potential :math:`V(r)`
+-- into a C²-continuous function, and the force into a C¹-continuous function.
+-- The degree of smoothing is controlled with a dimensionless parameter.
+-- Before smoothing the potential is shifted to :math:`V(r_c)=0`.
+--
+-- The smoothing function is
+--
+-- .. math::
+--
+--   g\left(\xi\right) = \frac{\xi^4}{1 + \xi^4}, \qquad \xi = \frac{r - r_c}{h r_c},
+--
+-- with smoothing parameter :math:`h \ll 1` and cutoff distance :math:`r_c`,
+-- and its derivative
+--
+-- .. math::
+--
+--   g^\prime\left(\xi\right) = 4 \frac{\xi^3}{\left(1 + \xi^4\right)^2}.
+--
+-- The C²-continuous potential is
+--
+-- .. math::
+--
+--   V_{C^2}\left(r\right) = V\left(r\right) g\left(\frac{r - r_c}{h r_c}\right),
+--
+-- and the C¹-continuous force is
+--
+-- .. math::
+--
+--   \lvert\vec{F}_{C^1}\left(\vec{r}\right)\rvert =
+--     \lvert\vec{F}\left(\vec{r}\right)\rvert g\left(\frac{r - r_c}{h r_c}\right)
+--     - \frac{1}{h r_c} V\left(r\right) g^\prime\left(\frac{r - r_c}{h r_c}\right).
+--
+--
+-- The following figure shows unmodified and C²-smooth variants of the
+-- Weeks-Chandler-Andersen potential, a purely repulsive form of the
+-- Lennard-Jones potential with cutoff :math:`r_c = \sqrt[6]{2}`.
+--
+-- .. plot::
+--
+--   import numpy
+--   import matplotlib
+--   from matplotlib import pyplot as plot
+--
+--   matplotlib.rc('figure', figsize=(6, 5))
+--   matplotlib.rc('text', usetex=True)
+--   matplotlib.rc('text.latex', preamble=r'\usepackage{amsmath}')
+--
+--   # Lennard Jones potential
+--   V = lambda r: 4 * (pow(r, -12) - pow(r, -6))
+--   # truncated Lennard-Jones potential
+--   V_c = lambda r, r_c: numpy.piecewise(r, [r < r_c, r >= r_c], [lambda r: V(r) - V(r_c), 0])
+--
+--   # smoothing function
+--   g_xi = lambda xi: pow(xi, 4) / (1 + pow(xi, 4))
+--   # smoothing function with scale parameter
+--   g = lambda r, r_c, h: g_xi((r - r_c) / (h * r_c))
+--
+--   # smoothed Lennard-Jones potential
+--   V_s = lambda r, r_c, h: g(r, r_c, h) * V_c(r, r_c)
+--
+--   # particle distance
+--   r = numpy.linspace(1, 1.4, 1000)
+--   # cutoff distance
+--   r_c = pow(2, 1./6)
+--   # smoothing function scale parameters
+--   h = (0.0025, 0.005, 0.0075)
+--
+--   # plot potentials
+--   ax = plot.axes()
+--   ax.axhline(0, 0, 1, color="k", lw=0.5, ls="--")
+--   ax.set_color_cycle(["r", "m", "g", "b"])
+--   ax.plot(r, V_c(r, r_c), label=r"$h \rightarrow 0$")
+--   for h in h:
+--       ax.plot(r, V_s(r, r_c, h), label=r"$h = %.3g$" % h)
+--
+--   l = ax.legend(loc="upper right")
+--   l.legendPatch.set_alpha(0.7)
+--
+--   major_formatter = matplotlib.ticker.ScalarFormatter()
+--   major_formatter.set_powerlimits((-1, 2))
+--   ax.yaxis.set_major_formatter(major_formatter)
+--
+--   plot.setp(ax, xlim=(1.09, 1.15 + 1e-15))
+--   plot.setp(ax, ylim=(-0.008, 0.04))
+--
+--   plot.xlabel(r"$r / \sigma$")
+--   plot.ylabel(r"$V(r) / \epsilon$")
+--   plot.show()
+--
+--
+-- The following figure shows the absolute value of the force.
+--
+-- .. plot::
+--
+--   import numpy
+--   import matplotlib
+--   from matplotlib import pyplot as plot
+--
+--   matplotlib.rc('figure', figsize=(6, 5))
+--   matplotlib.rc('text', usetex=True)
+--   matplotlib.rc('text.latex', preamble=r'\usepackage{amsmath}')
+--
+--   # Lennard Jones potential
+--   V = lambda r: 4 * (pow(r, -12) - pow(r, -6))
+--   # truncated Lennard-Jones potential
+--   V_c = lambda r, r_c: numpy.piecewise(r, [r < r_c, r >= r_c], [lambda r: V(r) - V(r_c), 0])
+--   # Lennard Jones force
+--   F = lambda r: 48 * (pow(r, -14) - 0.5*pow(r, -8))
+--   # truncated Lennard-Jones force
+--   F_c = lambda r, r_c: numpy.piecewise(r, [r < r_c, r >= r_c], [F, 0])
+--
+--   # smoothing function
+--   g_xi = lambda xi: pow(xi, 4) / (1 + pow(xi, 4))
+--   # smoothing function with scale parameter
+--   g = lambda r, r_c, h: g_xi((r - r_c) / (h * r_c))
+--   # first derivative of smoothing function
+--   Dg_xi = lambda xi: 4 * pow(xi, 3) / pow(1 + pow(xi, 4), 2)
+--   # first derivative of smoothing function with scale parameter
+--   Dg = lambda r, r_c, h: Dg_xi((r - r_c) / (h * r_c)) / (h * r_c)
+--
+--   # smoothed Lennard-Jones force
+--   F_s = lambda r, r_c, h: F_c(r, r_c) * g(r, r_c, h) - V_c(r, r_c) * Dg(r, r_c, h)
+--
+--   # particle distance
+--   r = numpy.linspace(1, 1.4, 1000)
+--   # cutoff distance
+--   r_c = pow(2, 1./6)
+--   # smoothing function scale parameters
+--   h = (0.0025, 0.005, 0.0075)
+--
+--   # plot forces
+--   ax = plot.axes()
+--   ax.axhline(0, 0, 1, color="k", lw=0.5, ls="--")
+--   ax.set_color_cycle(["r", "m", "g", "b"])
+--   ax.plot(r, F_c(r, r_c), label=r"$h \rightarrow 0$")
+--   for h in h:
+--       ax.plot(r, F_s(r, r_c, h), label=r"$h = %.3g$" % h)
+--
+--   l = ax.legend(loc="upper right")
+--   l.legendPatch.set_alpha(0.7)
+--
+--   major_formatter = matplotlib.ticker.ScalarFormatter()
+--   major_formatter.set_powerlimits((-1, 2))
+--   ax.yaxis.set_major_formatter(major_formatter)
+--
+--   plot.setp(ax, xlim=(1.09, 1.15 + 1e-15))
+--   plot.setp(ax, ylim=(-0.5, 2.5))
+--
+--   plot.xlabel(r"$r / \sigma$")
+--   plot.ylabel(r"$\sigma^2\lvert\vec{F}\left(\vec{r}\right)\rvert / \epsilon$")
+--   plot.show()
+--
 --
 -- Example::
 --
