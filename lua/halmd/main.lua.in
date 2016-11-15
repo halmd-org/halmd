@@ -45,7 +45,9 @@ return function()
 
     log.open_console({severity = args.verbose[1]})
     -- log to file
-    log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
+    if args.output then
+        log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
+    end
     -- log version
     utility.version.prologue()
 
