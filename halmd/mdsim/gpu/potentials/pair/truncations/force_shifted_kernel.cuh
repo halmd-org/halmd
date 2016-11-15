@@ -78,12 +78,12 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
-        float_type f_abs, pot;
-        float_type r = sqrt(rr);
-        tie(f_abs, pot) = parent_kernel::operator()(rr);
+        float_type f_abs, en_pot;
+        float_type r = sqrtf(rr);
+        tie(f_abs, en_pot) = parent_kernel::operator()(rr);
         f_abs -= pair_[FORCE_CUT] / r;
-        pot = pot - pair_[EN_CUT] + (r - pair_[R_CUT]) * pair_[FORCE_CUT];
-        return make_tuple(f_abs, pot);
+        en_pot = en_pot - pair_[EN_CUT] + (r - pair_[R_CUT]) * pair_[FORCE_CUT];
+        return make_tuple(f_abs, en_pot);
     }
 
 private:

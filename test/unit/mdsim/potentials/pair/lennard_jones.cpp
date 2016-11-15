@@ -1,5 +1,6 @@
 /*
  * Copyright © 2011-2013 Felix Höfling
+ * Copyright © 2016      Daniel Kirchner
  *
  * This file is part of HALMD.
  *
@@ -31,12 +32,18 @@
 #include <numeric> // std::accumulate
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/host/potentials/pair/truncations/force_shifted.hpp>
+#include <halmd/mdsim/host/potentials/pair/truncations/sharp.hpp>
 #include <halmd/mdsim/host/potentials/pair/truncations/shifted.hpp>
+#include <halmd/mdsim/host/potentials/pair/truncations/smooth_r4.hpp>
 #include <halmd/mdsim/host/potentials/pair/lennard_jones.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/truncations/force_shifted.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/truncations/sharp.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/truncations/shifted.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/truncations/smooth_r4.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/lennard_jones.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
@@ -56,10 +63,213 @@ using namespace std;
  *  neighbour per particle.
  */
 
+/**
+ * expected results for the host module
+ *
+ * This template is specialized for every available potential truncation and
+ * provides the expected results for the potential test.
+ */
+template<typename T>
+struct results;
+
+template<>
+struct results<mdsim::host::potentials::pair::truncations::sharp<mdsim::host::potentials::pair::lennard_jones<double>>>
+{
+    typedef boost::array<double, 3> array_type;
+
+    static constexpr boost::array<array_type, 5> aa() {
+        return {{
+            {{0.2, 2.92959375e11, 9.7649999999999905e8}}
+          , {{0.5, 780288., 16128.}}
+          , {{1., 24., 0.}}
+          , {{2., -0.0908203125, -0.0615234375}}
+          , {{10., -2.3999952e-7, -3.9999960000000006e-06}}
+        }};
+    }
+    static constexpr boost::array<array_type, 5> ab() {
+        return {{
+            {{0.2, 5.999997e14, 1.9999980000000002e12}}
+          , {{0.5, 1.610416128e9, 3.354624e7}}
+          , {{1., 97536., 8064.}}
+          , {{2., 3., 0.}}
+          , {{10., -7.67901696e-6,-0.00012799180800000004}}
+        }};
+    }
+    static constexpr boost::array<array_type, 5> bb() {
+        return {{
+            {{0.2, 1.2287999904e18, 4.095999936e15}}
+          , {{0.5, 3.298528591872e12, 6.871921459200006e10}}
+          , {{1., 2.01302016e8, 1.677312e7}}
+          , {{2., 12192., 4032.}}
+          , {{10., -0.00024374673408, -0.0040792227840000007}}
+        }};
+    }
+};
+
+template<>
+struct results<mdsim::host::potentials::pair::truncations::shifted<mdsim::host::potentials::pair::lennard_jones<double>>>
+{
+    typedef boost::array<double, 3> array_type;
+
+    static constexpr boost::array<array_type, 5> aa() {
+        return {{
+            {{0.2, 2.92959375e11, 9.76500000000256e8}}
+          , {{0.5, 780288., 16128.00025598362}}
+          , {{1., 24., 0.000255983616}}
+          , {{2., -0.0908203125, -0.061267453884}}
+          , {{10., -2.3999952e-7, 0.00025198362}}
+        }};
+    }
+    static constexpr boost::array<array_type, 5> ab() {
+        return {{
+            {{0.2, 5.999997e14, 1.9999980000000002e12}}
+          , {{0.5, 1.610416128e9, 3.3546240000127994e7}}
+          , {{1., 97536., 8064.000127991808}}
+          , {{2., 3., 0.000127991808}}
+          , {{10., -7.67901696e-6,0.}}
+        }};
+    }
+    static constexpr boost::array<array_type, 5> bb() {
+        return {{
+            {{0.2, 1.2287999904e18, 4.095999936e15}}
+          , {{0.5, 3.298528591872e12, 6.871921459200006e10}}
+          , {{1., 2.01302016e8, 1.6773120000064e7}}
+          , {{2., 12192., 4032.000063995904}}
+          , {{10., -0.00024374673408, -0.00401522688}}
+        }};
+    }
+};
+
+template<>
+struct results<mdsim::host::potentials::pair::truncations::force_shifted<mdsim::host::potentials::pair::lennard_jones<double>>>
+{
+    typedef boost::array<double, 3> array_type;
+
+    static constexpr boost::array<array_type, 5> aa() {
+        return {{
+            {{0.2, 2.929593750000015e11, 9.765000000017304e8}}
+          , {{0.5, 780288.0006143214, 16128.00163820667}}
+          , {{1., 24.0003071606784, 0.0014846263296}}
+          , {{2., -0.0906667321608, -0.0603459718488}}
+          , {{10., 0.00003047606832, -0.001283819772}}
+        }};
+    }
+    static constexpr boost::array<array_type, 5> ab() {
+        return {{
+            {{0.2, 5.999997e14, 1.999998000000001e12}}
+          , {{0.5, 1.610416128000154e9, 3.35462400008575e7}}
+          , {{1., 97536.00007679017, 8064.000819103334}}
+          , {{2., 3.0000383950848, 0.0007423131648}}
+          , {{10., 0, 0}}
+        }};
+    }
+    static constexpr boost::array<array_type, 5> bb() {
+        return {{
+            {{0.2, 1.2287999904e18, 4.095999936e15}}
+          , {{0.5, 3.298528591872e12, 6.871921459200044e10}}
+          , {{1., 2.013020160000192e8, 1.677312000042875e7}}
+          , {{2., 12192.00000959877, 4032.000409551667}}
+          , {{10., -0.00024182697984, -0.003823251456}}
+        }};
+    }
+};
+
+template<>
+struct results<mdsim::host::potentials::pair::truncations::smooth_r4<mdsim::host::potentials::pair::lennard_jones<double>>>
+{
+    typedef boost::array<double, 3> array_type;
+
+    static constexpr boost::array<array_type, 5> aa() {
+        return {{
+            {{0.2, 2.9295937499965955e11, 9.7649999999910533e8}}
+          , {{0.5, 780287.99999885436, 16128.000255959034}}
+          , {{1., 23.999999999941405, 0.00025598361599937509}}
+          , {{2., -0.090820312499614378, -0.061267453883527251}}
+          , {{10., -2.3999952001991871e-07, 0.00025198361999974805}}
+        }};
+    }
+    static constexpr boost::array<array_type, 5> ab() {
+        return {{
+            {{0.2, 5.99999699999959e14, 1.9999979999998628e12}}
+          , {{0.5, 1.6104161279998786e9, 3.3546240000125419e7}}
+          , {{1., 97535.999999991051, 8064.0001279910393}}
+          , {{2., 2.9999999999995426, 0.00012799180799998052}}
+          , {{10., 0., 0.}}
+        }};
+    }
+    static constexpr boost::array<array_type, 5> bb() {
+        return {{
+            {{0.2, 1.2287999903999936e18, 4.095999935999979e15}}
+          , {{0.5, 3.2985285918719858e12, 6.8719214591999763e10}}
+          , {{1., 2.0130201599999908e8, 1.6773120000063917e7}}
+          , {{2., 12191.999999999929, 4032.0000639958798}}
+          , {{10., -0.00024374673407999485, -0.0040152268799997504}}
+        }};
+    }
+};
+
+/**
+ * To be able to create different kinds of potential trunctations, a
+ * template struct make_potential is created and specialized for any
+ * potential truncation type that needs additional arguments.
+ */
+template<typename potential_type>
+struct make_potential
+{
+    typedef typename potential_type::matrix_type matrix_type;
+    static potential_type make(matrix_type const& cutoff, matrix_type const& epsilon, matrix_type const& sigma)
+    {
+        return potential_type(cutoff, epsilon, sigma);
+    }
+};
+
+template<typename base_potential_type>
+struct make_potential<mdsim::host::potentials::pair::truncations::smooth_r4<base_potential_type>>
+{
+    typedef mdsim::host::potentials::pair::truncations::smooth_r4<base_potential_type> potential_type;
+    typedef typename potential_type::matrix_type matrix_type;
+    static potential_type make(matrix_type const& cutoff, matrix_type const& epsilon, matrix_type const& sigma)
+    {
+        return potential_type(cutoff, 0.005, epsilon, sigma);
+    }
+};
+
+template<typename base_potential_type>
+struct make_potential<mdsim::gpu::potentials::pair::truncations::smooth_r4<base_potential_type>>
+{
+    typedef mdsim::gpu::potentials::pair::truncations::smooth_r4<base_potential_type> potential_type;
+    typedef typename potential_type::matrix_type matrix_type;
+    static potential_type make(matrix_type const& cutoff, matrix_type const& epsilon, matrix_type const& sigma)
+    {
+        return potential_type(cutoff, 0.005, epsilon, sigma);
+    }
+};
+
+/**
+ * The tolerance for the GPU tests can be overridden for a specific
+ * kind of potential trunctation.
+ *
+ * This is necessary as the subtraction in the force_shifted potential
+ * truncation is ill-conditioned.
+ */
+template<typename float_type, typename potential_type>
+struct gpu_tolerance
+{
+    static constexpr float_type value = 10 * numeric_limits<float_type>::epsilon();
+};
+
+template<typename float_type, typename base_potential_type>
+struct gpu_tolerance<float_type, mdsim::gpu::potentials::pair::truncations::force_shifted<base_potential_type>>
+{
+    // FIXME find better estimate for floating point error, a global estimate
+    // seems unsuitable due to the subtractions in the potential computation
+    static constexpr float_type value = 5e2 * 10 * numeric_limits<float_type>::epsilon();
+};
+
 BOOST_AUTO_TEST_CASE( lennard_jones_host )
 {
     typedef mdsim::host::potentials::pair::lennard_jones<double> base_potential_type;
-    typedef mdsim::host::potentials::pair::truncations::shifted<base_potential_type> potential_type;
+    typedef mdsim::host::potentials::pair::truncations::TRUNCATION_TYPE<base_potential_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
 
     // define interaction parameters
@@ -78,7 +288,7 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
       , 2., 4.;
 
     // construct module
-    potential_type potential(cutoff_array, epsilon_array, sigma_array);
+    potential_type potential = make_potential<potential_type>::make(cutoff_array, epsilon_array, sigma_array);
 
     // test paramters
     matrix_type epsilon = potential.epsilon();
@@ -98,13 +308,7 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
     const double tolerance = 5 * numeric_limits<double>::epsilon();
 
     // expected results (r, fval, en_pot) for ε=1, σ=1, rc=5σ
-    boost::array<array_type, 5> results_aa = {{
-        {{0.2, 2.92959375e11, 9.76500000000256e8}}
-      , {{0.5, 780288., 16128.00025598362}}
-      , {{1., 24., 0.000255983616}}
-      , {{2., -0.0908203125, -0.061267453884}}
-      , {{10., -2.3999952e-7, 0.00025198362}}
-    }};
+    boost::array<array_type, 5> const& results_aa = results<potential_type>::aa();
 
     BOOST_FOREACH (array_type const& a, results_aa) {
         double rr = std::pow(a[0], 2);
@@ -115,13 +319,7 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
     };
 
     // interaction AB: ε=.5, σ=2, rc=5σ
-    boost::array<array_type, 5> results_ab = {{
-        {{0.2, 5.999997e14, 1.9999980000000002e12}}
-      , {{0.5, 1.610416128e9, 3.3546240000127994e7}}
-      , {{1., 97536., 8064.000127991808}}
-      , {{2., 3., 0.000127991808}}
-      , {{10., -7.67901696e-6,0.}}
-    }};
+    boost::array<array_type, 5> const& results_ab = results<potential_type>::ab();
 
     BOOST_FOREACH (array_type const& a, results_ab) {
         double rr = std::pow(a[0], 2);
@@ -132,13 +330,7 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
     };
 
     // interaction BB: ε=.25, σ=4, rc=5σ
-    boost::array<array_type, 5> results_bb = {{
-        {{0.2, 1.2287999904e18, 4.095999936e15}}
-      , {{0.5, 3.298528591872e12, 6.871921459200006e10}}
-      , {{1., 2.01302016e8, 1.6773120000064e7}}
-      , {{2., 12192., 4032.000063995904}}
-      , {{10., -0.00024374673408, -0.00401522688}}
-    }};
+    boost::array<array_type, 5> const& results_bb = results<potential_type>::bb();
 
     BOOST_FOREACH (array_type const& a, results_bb) {
         double rr = std::pow(a[0], 2);
@@ -159,9 +351,9 @@ struct lennard_jones
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::potentials::pair::lennard_jones<float_type> base_potential_type;
-    typedef mdsim::gpu::potentials::pair::truncations::shifted<base_potential_type> potential_type;
+    typedef mdsim::gpu::potentials::pair::truncations::TRUNCATION_TYPE<base_potential_type> potential_type;
     typedef mdsim::host::potentials::pair::lennard_jones<double> base_host_potential_type;
-    typedef mdsim::host::potentials::pair::truncations::shifted<base_host_potential_type> host_potential_type;
+    typedef mdsim::host::potentials::pair::truncations::TRUNCATION_TYPE<base_host_potential_type> host_potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;
 
@@ -204,7 +396,7 @@ void lennard_jones<float_type>::test()
     std::vector<vector_type> f_list(particle->nparticle());
     BOOST_CHECK( get_force(*particle, f_list.begin()) == f_list.end() );
 
-    const float_type tolerance = 10 * numeric_limits<float_type>::epsilon();
+    const float_type tolerance = gpu_tolerance<float_type, potential_type>::value;
 
     for (unsigned int i = 0; i < npart; ++i) {
         unsigned int type1 = species[i];
@@ -256,8 +448,8 @@ lennard_jones<float_type>::lennard_jones()
     // create modules
     particle = std::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
     box = std::make_shared<box_type>(edges);
-    potential = std::make_shared<potential_type>(cutoff_array, epsilon_array, sigma_array);
-    host_potential = std::make_shared<host_potential_type>(cutoff_array, epsilon_array, sigma_array);
+    potential = std::make_shared<potential_type>(make_potential<potential_type>::make(cutoff_array, epsilon_array, sigma_array));
+    host_potential = std::make_shared<host_potential_type>(make_potential<host_potential_type>::make(cutoff_array, epsilon_array, sigma_array));
     neighbour = std::make_shared<neighbour_type>(particle);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
     particle->on_prepend_force([=](){force->check_cache();});

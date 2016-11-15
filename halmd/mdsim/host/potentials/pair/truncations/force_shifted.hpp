@@ -95,12 +95,12 @@ public:
 
     std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
-        float_type f_abs, pot;
-        float_type r = sqrt(rr);
-        tie(f_abs, pot) = potential_type::operator()(rr, a, b);
+        float_type f_abs, en_pot;
+        float_type r = std::sqrt(rr);
+        tie(f_abs, en_pot) = potential_type::operator()(rr, a, b);
         f_abs -= force_cut_(a,b) / r;
-        pot = pot - en_cut_(a,b) + (r - r_cut_(a,b)) * force_cut_(a,b);
-        return std::make_tuple(f_abs, pot);
+        en_pot = en_pot - en_cut_(a,b) + (r - r_cut_(a,b)) * force_cut_(a,b);
+        return std::make_tuple(f_abs, en_pot);
     }
     /**
      * Bind class to Lua.
