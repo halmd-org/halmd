@@ -92,9 +92,9 @@ public:
 
     std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
-        float_type f_abs, pot;
-        tie(f_abs, pot) = potential_type::operator()(rr, a, b);
-        pot = pot - en_cut_(a,b);
+        float_type f_abs, en_pot;
+        tie(f_abs, en_pot) = potential_type::operator()(rr, a, b);
+        en_pot = en_pot - en_cut_(a,b);
         float_type r = std::sqrt(rr);
         float_type dr = r - this->r_cut(a, b);
         float_type x2 = dr * dr * rri_smooth_;
@@ -105,10 +105,10 @@ public:
         // first derivative
         float_type h1_r = 4 * dr * rri_smooth_ * x2 * x4i * x4i;
         // apply smoothing function to obtain C¹ force function
-        f_abs = h0_r * f_abs - h1_r * (pot / r);
+        f_abs = h0_r * f_abs - h1_r * (en_pot / r);
         // apply smoothing function to obtain C² potential function
-        pot = h0_r * pot;
-        return std::make_tuple(f_abs, pot);
+        en_pot = h0_r * en_pot;
+        return std::make_tuple(f_abs, en_pot);
     }
     /**
      * Bind class to Lua.

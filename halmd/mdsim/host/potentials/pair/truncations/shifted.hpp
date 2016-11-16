@@ -92,10 +92,10 @@ public:
 
     std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
-        float_type f_abs, pot;
-        tie(f_abs, pot) = potential_type::operator()(rr, a, b);
-        pot = pot - en_cut_(a,b);
-        return std::make_tuple(f_abs, pot);
+        float_type f_abs, en_pot;
+        tie(f_abs, en_pot) = potential_type::operator()(rr, a, b);
+        en_pot = en_pot - en_cut_(a,b);
+        return std::make_tuple(f_abs, en_pot);
     }
     /**
      * Bind class to Lua.

@@ -80,9 +80,9 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
-        float_type f_abs, pot;
-        tie(f_abs, pot) = parent_kernel::operator()(rr);
-        pot = pot - pair_[EN_CUT];
+        float_type f_abs, en_pot;
+        tie(f_abs, en_pot) = parent_kernel::operator()(rr);
+        en_pot = en_pot - pair_[EN_CUT];
         float_type r = sqrt(rr);
         float_type r_cut = pair_[R_CUT];
         float_type dr = r - r_cut;
@@ -94,11 +94,11 @@ public:
         // first derivative
         float_type h1_r = 4 * dr * rri_smooth_ * x2 * x4i * x4i;
         // apply smoothing function to obtain C¹ force function
-        f_abs = h0_r * f_abs - h1_r * (pot / r);
+        f_abs = h0_r * f_abs - h1_r * (en_pot / r);
         // apply smoothing function to obtain C² potential function
-        pot = h0_r * pot;
+        en_pot = h0_r * en_pot;
 
-        return make_tuple(f_abs, pot);
+        return make_tuple(f_abs, en_pot);
     }
 
 private:
