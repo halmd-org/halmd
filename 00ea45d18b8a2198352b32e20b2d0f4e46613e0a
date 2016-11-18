@@ -1,0 +1,8 @@
+This caused an "unspecified launch failure" on older hardware without
+Unified Memory. (With Unified Memory, the host array is silently copied
+to the GPU). The commit fixes this error.
+
+The bug was detected by automatic testing, e.g.:
+http://my.cdash.org/testDetails.php?test=27984534&build=1066464
+http://my.cdash.org/testDetails.php?test=28240093&build=1074683
+---
