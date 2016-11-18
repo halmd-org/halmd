@@ -35,11 +35,14 @@ to specify custom command line arguments, see :ref:`program_options`.
 Examples
 --------
 
-TODO minimal, prototypical example - included from a small test of script.cpp
-
 Complete `examples <http://git.halmd.org/halmd/tree/master/examples>`_ of
 simulation scripts can be found in ``share/doc/halmd/examples`` in the
-installation directory.
+installation directory. A minimal simulation script is of the following form:
+
+.. literalinclude:: /test/lua/script.lua
+   :lines: 2-25
+   :language: lua
+
 
 Advanced
 --------
