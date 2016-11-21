@@ -10,7 +10,7 @@ scripts written in `Lua 5 <http://lua.org>`_.
 Structure
 ---------
 
-A simulation scripts has to define a global method ``run`` that
+A simulation scripts has to define a global method ``main`` that
 sets up and runs the simulation and can optionally define a global method
 ``define_args`` that can be used to define custom command line arguments.
 
@@ -19,7 +19,7 @@ sets up and runs the simulation and can optionally define a global method
 
     Predefined global that can be used to access the :ref:`modules`.
 
-.. function:: run(args)
+.. function:: main(args)
 
     Main simulation entry point (defined by the simulation script).
 
@@ -28,7 +28,7 @@ sets up and runs the simulation and can optionally define a global method
 .. function:: define_args(parser)
 
     Optional entry point (defined by the simulation script) that, if present,
-    is called prior to :func:`run` and can be used to define command line arguments.
+    is called prior to :func:`main` and can be used to define command line arguments.
 
     :param parser: instance of :class:`halmd.utility.program_options.argument_parser`
                    that can be used to define command line argument,
@@ -43,7 +43,7 @@ scripts can be found in ``share/doc/halmd/examples`` in the installation directo
 Advanced
 --------
 
-The ``run`` and ``define_args`` functions are called from the internal lua script
+The ``main`` and ``define_args`` functions are called from the internal lua script
 ``main.lua`` which is found in ``share/halmd/lua`` in the installation directory.
 This script defines some default command line arguments and performs initial
 setup, e.g. for the logger. Advanced users may modify this script to change

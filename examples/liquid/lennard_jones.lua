@@ -20,7 +20,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = halmd
 local rescale_velocity = require("rescale_velocity")
 
 -- grab modules
@@ -34,7 +33,7 @@ local writers = halmd.io.writers
 --
 -- Setup and run simulation
 --
-function run(args)
+function main(args)
     -- open H5MD file for reading
     local file = readers.h5md({path = args.input})
 

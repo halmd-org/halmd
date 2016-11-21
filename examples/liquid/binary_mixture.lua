@@ -20,8 +20,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = halmd
-
 -- grab modules
 local log = halmd.io.log
 local mdsim = halmd.mdsim
@@ -34,7 +32,7 @@ local utility = halmd.utility
 --
 -- Setup and run simulation
 --
-function run(args)
+function main(args)
     -- open H5MD file for reading
     local file = readers.h5md({path = args.input})
 

@@ -19,12 +19,12 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = halmd
+local mdsim = halmd.mdsim
 
 function test()
-    local box = halmd.mdsim.box{length = {20, 20, 20}}
+    local box = mdsim.box{length = {20, 20, 20}}
 
-    local excluded = halmd.mdsim.positions.excluded_volume({box = box, cell_length = 10})
+    local excluded = mdsim.positions.excluded_volume({box = box, cell_length = 10})
     excluded:exclude_sphere({3, 3, 3}, 1)
     assert(not excluded:place_sphere({3, 3, 3}, 1))
     assert(excluded:place_sphere({4, 4, 4}, 1))
@@ -42,8 +42,8 @@ local random = math.random
 math.randomseed(os.time())
 
 local edge = 50
-local box = halmd.mdsim.box{length = {edge, edge, edge}}
-local excluded = halmd.mdsim.positions.excluded_volume{box = box, cell_length = 1}
+local box = mdsim.box{length = {edge, edge, edge}}
+local excluded = mdsim.positions.excluded_volume{box = box, cell_length = 1}
 
 local obstacles = {}
 local diameter = 1
@@ -62,11 +62,11 @@ for i = 1, 1000 do
     end
 end
 
-local particle = halmd.mdsim.particle{dimension = box.dimension, particles = #obstacles}
+local particle = mdsim.particle{dimension = box.dimension, particles = #obstacles}
 particle:set_position(obstacles)
 end
 
-function run()
+function main()
     test()
     example()
 end

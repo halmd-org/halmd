@@ -1,4 +1,4 @@
-function run()
+function main()
 -- the following code is part of the documentation in doc/recipes/create_mixture.rst.in
 
 local mdsim   = halmd.mdsim

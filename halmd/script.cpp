@@ -204,10 +204,10 @@ void script::run()
     lua_pushcfunction(L, &script::traceback);
     int stacktrace_index = lua_gettop(L);
 
-    if (luaL_loadstring(L, "halmd.main()")) {
+    if (luaL_loadstring(L, "halmd.run()")) {
         size_t len = 0;
         const char *errmsg = lua_tolstring(L, -1, &len);
-        std::string error("cannot load main script: " + std::string(errmsg, len));
+        std::string error("cannot load run script: " + std::string(errmsg, len));
         lua_pop(L, 1);
         throw std::runtime_error(error);
     }
@@ -215,7 +215,7 @@ void script::run()
     if (lua_pcall(L, 0, 0, stacktrace_index)) {
         size_t len = 0;
         const char *errmsg = lua_tolstring(L, -1, &len);
-        std::string error("cannot execute main script: " + std::string(errmsg, len));
+        std::string error("cannot execute run script: " + std::string(errmsg, len));
         lua_pop(L, 1);
         throw std::runtime_error(error);
     }

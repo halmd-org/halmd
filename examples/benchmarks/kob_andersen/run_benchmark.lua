@@ -20,8 +20,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = halmd
-
 -- grab modules
 local log = halmd.io.log
 local mdsim = halmd.mdsim
@@ -33,7 +31,7 @@ local utility = halmd.utility
 --
 -- Setup and run simulation
 --
-function run(args)
+function main(args)
     local timestep = 0.001   -- integration timestep
     local steps = 10000      -- number of integration steps
     local count = args.count -- number of repetitions

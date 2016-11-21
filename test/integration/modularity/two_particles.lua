@@ -19,8 +19,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = halmd
-
 -- grab modules
 local log = halmd.io.log
 local mdsim = halmd.mdsim
@@ -267,7 +265,7 @@ local function production(box, particle, args)
     halmd.utility.profiler:profile()
 end
 
-function run(args)
+function main(args)
     -- restore simulation and run production
     production(restore(args))
 end

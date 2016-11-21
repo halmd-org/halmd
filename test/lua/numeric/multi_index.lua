@@ -20,8 +20,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = halmd
-
 -- grab modules
 local log = halmd.io.log
 local numeric = halmd.numeric
@@ -46,7 +44,7 @@ function test(dims)
     end
 end
 
-function run()
+function main()
     test({2, 1, 3, 3})
     test({2, 3, 3})
     test({1})

@@ -18,7 +18,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = halmd
 local mdsim = halmd.mdsim
 local sampler = halmd.observables.sampler
 
@@ -96,7 +95,7 @@ function define_args(parser)
 end
 
 -- start tests
-function run(args)
+function main(args)
     local integrator = test_construction(args)
     test_methods(integrator, args)
     test_writer(integrator, args)

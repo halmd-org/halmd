@@ -23,7 +23,7 @@ local utility = halmd.utility
 local log = halmd.io.log
 
 return function()
-  if run ~= nil then
+  if main ~= nil then
 
     local parser = utility.program_options.argument_parser()
 
@@ -56,8 +56,8 @@ return function()
       halmd.random.generator({seed = args.random_seed})
     end
 
-    run(args)
+    main(args)
   else
-    error("simulation script did not define a \"run\" method")
+    error("simulation script did not define a \"main\" method")
   end
 end

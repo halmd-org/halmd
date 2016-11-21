@@ -21,16 +21,16 @@
 --
 
 -- grab modules
-local halmd = halmd
 local mdsim = halmd.mdsim
 local numeric = halmd.numeric
 local observables = halmd.observables
 local writers = halmd.io.writers
+local utility = halmd.utility
 
 --
 -- Setup and run simulation
 --
-function run(args)
+function main(args)
     -- total number of particles from sum of particles per species
     local nspecies = #args.particles
     local nparticle = numeric.sum(args.particles)
@@ -139,7 +139,7 @@ function run(args)
     observables.sampler:run(steps)
 
     -- log profiler results
-    halmd.utility.profiler:profile()
+    utility.profiler:profile()
 end
 
 --
