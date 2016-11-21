@@ -27,6 +27,7 @@ return function()
 
     local parser = utility.program_options.argument_parser()
 
+    -- verbosity level of logger
     parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
         local level = {
             -- console, file
@@ -38,11 +39,13 @@ return function()
         args[key] = level[value] or level[#level]
     end, default = 1, help = "increase logging verbosity"})
 
+    -- call custom method define_args()
     if define_args ~= nil then
        define_args(parser)
     end
     local args = parser:parse_args()
 
+    -- start logger
     log.open_console({severity = args.verbose[1]})
     -- log to file
     if args.output then
@@ -56,6 +59,7 @@ return function()
       halmd.random.generator({seed = args.random_seed})
     end
 
+    -- call run method from user script
     main(args)
   else
     error("simulation script did not define a \"main\" method")

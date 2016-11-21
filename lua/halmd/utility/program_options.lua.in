@@ -225,13 +225,12 @@ end
 -- Example::
 --
 --    local options = require("halmd.utility.program_options")
---
 --    local parser = options.argument_parser()
 --
 -- .. note::
---    Usually the argument parser is not created directly. Instead
---    a simulation script can define a global method ``define_args``
---    which is given an argument parser as its argument, see
+--    Typically, the argument parser is not created directly. Instead
+--    a simulation script may define a global method ``define_args``,
+--    which receives an argument parser as its argument, see
 --    :ref:`scripts`.
 --
 function M.argument_parser()
@@ -552,7 +551,6 @@ end
 --
 --    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
 --        default = "lennard_jones_%Y%m%d_%H%M%S", help = "prefix of output files"})
---
 --
 function argument_parser.substitute_date_time(args, key, value)
     -- substitute current time
