@@ -127,7 +127,6 @@ int main(int argc, char **argv)
         else {
             script.dofile();
         }
-
     }
     catch (exception const& e) {
         LOG_ERROR(e.what());

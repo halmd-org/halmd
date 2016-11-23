@@ -19,8 +19,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = halmd
-
 -- grab modules
 local mdsim = halmd.mdsim
 local observables = halmd.observables
@@ -30,7 +28,7 @@ local utility = halmd.utility
 --
 -- Setup and run simulation
 --
-function run(args)
+function main(args)
     local nparticle = 64000   -- total number of particles
     local density = 0.4       -- number density
     local temperature = 1.2   -- heat bath temperature
@@ -96,6 +94,6 @@ end
 -- Parse command-line arguments.
 --
 function define_args(parser)
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
         default = "lennard_jones_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 end

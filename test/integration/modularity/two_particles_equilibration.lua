@@ -19,8 +19,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = halmd
-
 -- grab modules
 local log = halmd.io.log
 local mdsim = halmd.mdsim
@@ -198,7 +196,7 @@ local function equilibrate(box, particle, args)
     observables.sampler:run(math.floor(steps / 2) - math.floor(steps / 10))
 
     -- log intermediate profiler results and reset accumulators
-    halmd.utility.profiler:profile()
+    utility.profiler:profile()
 
     -- disconnect NVT integrator from sampler and profiler
     -- and replace by velocity-Verlet integrator (NVE)
@@ -214,10 +212,10 @@ local function equilibrate(box, particle, args)
     observables.sampler:run(steps - math.floor(steps / 2))
 
     -- log profiler results
-    halmd.utility.profiler:profile()
+    utility.profiler:profile()
 end
 
-function run(args)
+function main(args)
     -- set up system and perform equilibration run
     equilibrate(setup(args))
 end

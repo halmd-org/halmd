@@ -21,16 +21,16 @@
 --
 
 -- grab modules
-local halmd = halmd
 local mdsim = halmd.mdsim
 local numeric = halmd.numeric
 local observables = halmd.observables
 local writers = halmd.io.writers
+local utility = halmd.utility
 
 --
 -- Setup and run simulation
 --
-function run(args)
+function main(args)
     -- total number of particles from sum of particles per species
     local nspecies = #args.particles
     local nparticle = numeric.sum(args.particles)
@@ -140,17 +140,18 @@ function run(args)
     observables.sampler:run(steps)
 
     -- log profiler results
-    halmd.utility.profiler:profile()
+    utility.profiler:profile()
 end
 
 --
 -- Parse command-line arguments.
 --
 function define_args(parser)
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
         default = "lennard_jones_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
-    parser:add_argument("random-seed", {type = "integer", help = "seed for random number generator"})
+    parser:add_argument("random-seed", {type = "integer", action = parser.random_seed_action,
+        help = "seed for random number generator"})
 
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {10000}, help = "number of particles"})
     parser:add_argument("density", {type = "number", default = 0.75, help = "particle number density"})

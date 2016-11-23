@@ -19,8 +19,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = halmd
-
 -- grab modules
 local log = halmd.io.log
 local mdsim = halmd.mdsim
@@ -32,7 +30,7 @@ local utility = halmd.utility
 --
 -- Setup and run simulation
 --
-function run(args)
+function main(args)
     local timestep = 0.002   -- integration timestep
     local steps = 10000      -- number of integration steps
     local cutoff = 3.0       -- potential cutoff
@@ -101,7 +99,7 @@ end
 -- Parse command-line arguments.
 --
 function define_args(parser)
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
         default = "lennard_jones_benchmark_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
     parser:add_argument("trajectory", {type = "string", required = true, action = function(args, key, value)

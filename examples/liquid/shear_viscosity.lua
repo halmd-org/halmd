@@ -21,7 +21,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = require("halmd")
 local rescale_velocity = require("rescale_velocity")
 
 -- grab modules
@@ -31,11 +30,12 @@ local observables = halmd.observables
 local dynamics = halmd.observables.dynamics
 local readers = halmd.io.readers
 local writers = halmd.io.writers
+local utility = halmd.utility
 
 --
 -- Setup and run simulation
 --
-local function shear_viscosity(args)
+function main(args)
     local nparticle = 10000   -- total number of particles
     local equi_steps = 5e5    -- steps used to equilibrate the system
 
@@ -109,7 +109,7 @@ local function shear_viscosity(args)
     -- run equilibration
     observables.sampler:run(equi_steps)
     -- log profiler results
-    halmd.utility.profiler:profile()
+    utility.profiler:profile()
 
     integrator:disconnect()
     runtime:disconnect()
@@ -176,29 +176,17 @@ local function shear_viscosity(args)
     observables.sampler:run(steps)
 
     -- log profiler results
-    halmd.utility.profiler:profile()
+    utility.profiler:profile()
 end
 
 --
--- Parse command-line arguments.
+-- Define command-line arguments.
 --
-local function parse_args()
-    local parser = halmd.utility.program_options.argument_parser()
+function define_args(parser)
 
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
         default = "shear_viscosity_%Y%m%d", help = "prefix of output files"})
     -- _%Y%m%d_%H%M%S
-
-    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
-        local level = {
-            -- console, file
-            {"warning", "info" },
-            {"info"   , "info" },
-            {"debug"  , "debug"},
-            {"trace"  , "trace"},
-        }
-        args[key] = level[value] or level[#level]
-    end, default = 1, help = "increase logging verbosity"})
 
     parser:add_argument("density", {type = "number", default = 0.8442, help = "particle number density"})
     parser:add_argument("cutoff", {type = "float32", default = 2.5, help = "potential cutoff radius"})
@@ -211,18 +199,4 @@ local function parse_args()
     local sampling = parser:add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})
     sampling:add_argument("trajectory", {type = "integer", help = "for trajectory"})
     sampling:add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
-
-    return parser:parse_args()
 end
-
-local args = parse_args()
-
--- log to console
-halmd.io.log.open_console({severity = args.verbose[1]})
--- log to file
-halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
--- log version
-halmd.utility.version.prologue()
-
--- run simulation
-shear_viscosity(args)

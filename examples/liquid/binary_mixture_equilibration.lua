@@ -20,8 +20,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = halmd
-
 -- grab modules
 local log = halmd.io.log
 local mdsim = halmd.mdsim
@@ -34,7 +32,7 @@ local utility = halmd.utility
 --
 -- Setup and run simulation
 --
-function run(args)
+function main(args)
     -- total number of particles from sum of particles per species
     local nspecies = #args.particles
     local nparticle = numeric.sum(args.particles)
@@ -164,7 +162,7 @@ function run(args)
     observables.sampler:run(steps / 2 - steps / 10)
 
     -- log intermediate profiler results and reset accumulators
-    halmd.utility.profiler:profile()
+    utility.profiler:profile()
 
     -- disconnect NVT integrator from sampler and profiler
     integrator.disconnect()
@@ -179,14 +177,14 @@ function run(args)
     observables.sampler:run(steps - steps / 2)
 
     -- log profiler results
-    halmd.utility.profiler:profile()
+    utility.profiler:profile()
 end
 
 --
 -- Parse command-line arguments.
 --
 function define_args(parser)
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
         default = "binary_mixture_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {4000, 1000}, help = "number of particles"})
