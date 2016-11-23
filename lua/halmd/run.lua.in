@@ -54,11 +54,6 @@ return function()
     -- log version
     utility.version.prologue()
 
-    -- seed the random number generator
-    if args.random_seed then
-      halmd.random.generator({seed = args.random_seed})
-    end
-
     -- call run method from user script
     main(args)
   else

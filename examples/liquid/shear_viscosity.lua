@@ -184,7 +184,7 @@ end
 --
 function define_args(parser)
 
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time,
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
         default = "shear_viscosity_%Y%m%d", help = "prefix of output files"})
     -- _%Y%m%d_%H%M%S
 
