@@ -99,7 +99,7 @@ struct lattice
     unsigned npart;
     float density;
     float lattice_constant;
-    fixed_vector<double, dimension> slab;
+    typename modules_type::slab_type slab;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<particle_type> particle;
@@ -125,6 +125,8 @@ static vector_type wrap_element_min(vector_type const& v, vector_type const& w)
 template <typename modules_type>
 void lattice<modules_type>::test()
 {
+    typedef typename modules_type::vector_type vector_type;
+    typedef typename modules_type::slab_type slab_type;
     BOOST_TEST_MESSAGE("#particles: " << npart << ", #unit cells: " << ncell <<
                        ", lattice constant: " << lattice_constant << ", slab extents: " << slab);
 
@@ -139,17 +141,17 @@ void lattice<modules_type>::test()
     // compute static structure factors for a set of wavenumbers
     // which are points of the reciprocal lattice
     BOOST_TEST_MESSAGE("compute static structure factors from particle positions");
-    vector<fixed_vector<double, dimension> > q;
+    vector<vector_type> q;
     double qlat = 2 * M_PI / lattice_constant;
     if (dimension == 3) {
         for (unsigned i = 7; i > 0; --i) {
-            fixed_vector<double, dimension> q_{(i >> 2) & 1, (i >> 1) & 1, i & 1};
+            vector_type q_{(i >> 2) & 1, (i >> 1) & 1, i & 1};
             q.push_back(qlat * q_);
         }
     }
     else if (dimension == 2) {
         for (unsigned i = 3; i > 0; --i) {
-            fixed_vector<double, dimension> q_{(i >> 1) & 1, i & 1};
+            vector_type q_{(i >> 1) & 1, i & 1};
             q.push_back(qlat * q_);
         }
     }
@@ -159,20 +161,20 @@ void lattice<modules_type>::test()
     // compute structure factor
     vector<double> ssf = compute_ssf(position_sample, q);
     // centre of mass
-    fixed_vector<double, dimension> r_cm(
+    slab_type r_cm(
         accumulate(
             position_sample->data().begin(), position_sample->data().end(), vector_type(0)
           , plus<vector_type>()
         ) / npart
     );
     // minimal and maximal coordinates
-    fixed_vector<double, dimension> r_min(
+    slab_type r_min(
         accumulate(
             position_sample->data().begin(), position_sample->data().end(), vector_type(0)
           , bind(wrap_element_min<vector_type>, _1, _2)
         )
     );
-    fixed_vector<double, dimension> r_max(
+    slab_type r_max(
         accumulate(
             position_sample->data().begin(), position_sample->data().end(), vector_type(0)
           , bind(wrap_element_max<vector_type>, _1, _2)
@@ -187,11 +189,11 @@ void lattice<modules_type>::test()
     }
 
     // check centre and corners
-    fixed_vector<double, dimension> corner = .5 * element_prod(box->length(), slab);  //< upper right corner
-    fixed_vector<double, dimension> offset = lattice_constant;                               //< diagonal of the unit cell
-    BOOST_CHECK_SMALL(norm_1(r_cm) / norm_1(corner), 2 * eps);
-    BOOST_CHECK_SMALL(norm_1(r_min + corner - offset / 4) / norm_1(corner), eps);
-    BOOST_CHECK_SMALL(norm_1(r_max - corner + offset / 4) / norm_1(corner), eps);
+    slab_type corner = .5 * element_prod(static_cast<slab_type>(box->length()), slab);  //< upper right corner
+    slab_type offset = lattice_constant;                               //< diagonal of the unit cell
+    BOOST_CHECK_SMALL(norm_1(r_cm) / norm_1(corner), 2 * static_cast<typename slab_type::value_type>(eps));
+    BOOST_CHECK_SMALL(norm_1(r_min + corner - offset / 4) / norm_1(corner), static_cast<typename slab_type::value_type>(eps));
+    BOOST_CHECK_SMALL(norm_1(r_max - corner + offset / 4) / norm_1(corner), static_cast<typename slab_type::value_type>(eps));
 }
 
 template <typename modules_type>
@@ -199,7 +201,7 @@ lattice<modules_type>::lattice()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
     typedef fixed_vector<unsigned, dimension> cell_vector;
-    typedef fixed_vector<double, dimension> vector_type;
+    typedef typename modules_type::slab_type slab_type;
 
     ncell = (dimension == 3) ? cell_vector{3, 6, 6} : cell_vector{4, 1024};
     nunit_cell = (dimension == 3) ? 4 : 2;  //< number of particles per unit cell
@@ -212,7 +214,7 @@ lattice<modules_type>::lattice()
         edges(i, i) = lattice_constant * box_ratios[i];
     }
 
-    slab = (dimension == 3) ? vector_type{1., .5, 1.} : vector_type{1., 1.};
+    slab = (dimension == 3) ? slab_type{1., .5, 1.} : slab_type{1., 1.};
     double slab_vol_frac = accumulate(slab.begin(), slab.end(), 1., multiplies<double>());
     // adjust density to make sure that the slab can accomodate an fcc lattice with the
     // same lattice spacing (a mismatch is a likely reason for failure of the test)
@@ -228,6 +230,8 @@ lattice<modules_type>::lattice()
 template <int dimension, typename float_type>
 struct host_modules
 {
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef fixed_vector<float_type, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
@@ -237,17 +241,29 @@ struct host_modules
     static bool const gpu = false;
 };
 
+
+#ifndef USE_HOST_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE( lattice_host_2d ) {
     lattice<host_modules<2, double> >().test();
 }
 BOOST_AUTO_TEST_CASE( lattice_host_3d ) {
     lattice<host_modules<3, double> >().test();
 }
+#else
+BOOST_AUTO_TEST_CASE( lattice_host_2d ) {
+    lattice<host_modules<2, float> >().test();
+}
+BOOST_AUTO_TEST_CASE( lattice_host_3d ) {
+    lattice<host_modules<3, float> >().test();
+}
+#endif
 
 #ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>
 struct gpu_modules
 {
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef fixed_vector<double, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;

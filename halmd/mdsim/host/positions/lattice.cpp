@@ -69,7 +69,7 @@ void lattice<dimension, float_type>::set()
     auto image = make_cache_mutable(particle_->image());
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
-    vector_type length = element_prod(box_->length(), slab_);
+    vector_type length = element_prod(static_cast<vector_type>(box_->length()), slab_);
     vector_type offset = -length / 2;
     fcc(position->begin(), position->end(), length, offset);
 

@@ -72,10 +72,10 @@ using namespace std;
 template<typename T>
 struct results;
 
-template<>
-struct results<mdsim::host::potentials::pair::truncations::sharp<mdsim::host::potentials::pair::lennard_jones<double>>>
+template<typename float_type>
+struct results<mdsim::host::potentials::pair::truncations::sharp<mdsim::host::potentials::pair::lennard_jones<float_type>>>
 {
-    typedef boost::array<double, 3> array_type;
+    typedef boost::array<float_type, 3> array_type;
 
     static constexpr boost::array<array_type, 5> aa() {
         return {{
@@ -106,10 +106,10 @@ struct results<mdsim::host::potentials::pair::truncations::sharp<mdsim::host::po
     }
 };
 
-template<>
-struct results<mdsim::host::potentials::pair::truncations::shifted<mdsim::host::potentials::pair::lennard_jones<double>>>
+template<typename float_type>
+struct results<mdsim::host::potentials::pair::truncations::shifted<mdsim::host::potentials::pair::lennard_jones<float_type>>>
 {
-    typedef boost::array<double, 3> array_type;
+    typedef boost::array<float_type, 3> array_type;
 
     static constexpr boost::array<array_type, 5> aa() {
         return {{
@@ -140,10 +140,10 @@ struct results<mdsim::host::potentials::pair::truncations::shifted<mdsim::host::
     }
 };
 
-template<>
-struct results<mdsim::host::potentials::pair::truncations::force_shifted<mdsim::host::potentials::pair::lennard_jones<double>>>
+template<typename float_type>
+struct results<mdsim::host::potentials::pair::truncations::force_shifted<mdsim::host::potentials::pair::lennard_jones<float_type>>>
 {
-    typedef boost::array<double, 3> array_type;
+    typedef boost::array<float_type, 3> array_type;
 
     static constexpr boost::array<array_type, 5> aa() {
         return {{
@@ -174,10 +174,10 @@ struct results<mdsim::host::potentials::pair::truncations::force_shifted<mdsim::
     }
 };
 
-template<>
-struct results<mdsim::host::potentials::pair::truncations::smooth_r4<mdsim::host::potentials::pair::lennard_jones<double>>>
+template<typename float_type>
+struct results<mdsim::host::potentials::pair::truncations::smooth_r4<mdsim::host::potentials::pair::lennard_jones<float_type>>>
 {
-    typedef boost::array<double, 3> array_type;
+    typedef boost::array<float_type, 3> array_type;
 
     static constexpr boost::array<array_type, 5> aa() {
         return {{
@@ -268,7 +268,13 @@ struct gpu_tolerance<float_type, mdsim::gpu::potentials::pair::truncations::forc
 
 BOOST_AUTO_TEST_CASE( lennard_jones_host )
 {
-    typedef mdsim::host::potentials::pair::lennard_jones<double> base_potential_type;
+#ifndef USE_HOST_SINGLE_PRECISION
+    typedef double float_type;
+#else
+    typedef float float_type;
+#endif
+
+    typedef mdsim::host::potentials::pair::lennard_jones<float_type> base_potential_type;
     typedef mdsim::host::potentials::pair::truncations::TRUNCATION_TYPE<base_potential_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
 
@@ -304,15 +310,15 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
     BOOST_CHECK(sigma(1, 1) == sigma_array(1, 1));
 
     // evaluate some points of potential and force
-    typedef boost::array<double, 3> array_type;
-    const double tolerance = 5 * numeric_limits<double>::epsilon();
+    typedef boost::array<float_type, 3> array_type;
+    const float_type tolerance = 5 * numeric_limits<float_type>::epsilon();
 
     // expected results (r, fval, en_pot) for ε=1, σ=1, rc=5σ
     boost::array<array_type, 5> const& results_aa = results<potential_type>::aa();
 
     BOOST_FOREACH (array_type const& a, results_aa) {
-        double rr = std::pow(a[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(a[0], 2);
+        float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 0, 0);  // interaction AA
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
@@ -322,8 +328,8 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
     boost::array<array_type, 5> const& results_ab = results<potential_type>::ab();
 
     BOOST_FOREACH (array_type const& a, results_ab) {
-        double rr = std::pow(a[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(a[0], 2);
+        float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 0, 1);  // interaction AB
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
@@ -333,8 +339,8 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
     boost::array<array_type, 5> const& results_bb = results<potential_type>::bb();
 
     BOOST_FOREACH (array_type const& a, results_bb) {
-        double rr = std::pow(a[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(a[0], 2);
+        float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 1, 1);  // interaction BB
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
@@ -352,7 +358,11 @@ struct lennard_jones
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::potentials::pair::lennard_jones<float_type> base_potential_type;
     typedef mdsim::gpu::potentials::pair::truncations::TRUNCATION_TYPE<base_potential_type> potential_type;
+#ifndef USE_HOST_SINGLE_PRECISION
     typedef mdsim::host::potentials::pair::lennard_jones<double> base_host_potential_type;
+#else
+    typedef mdsim::host::potentials::pair::lennard_jones<float> base_host_potential_type;
+#endif
     typedef mdsim::host::potentials::pair::truncations::TRUNCATION_TYPE<base_host_potential_type> host_potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;

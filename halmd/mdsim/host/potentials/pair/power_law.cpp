@@ -158,7 +158,7 @@ template class pair_full<3, float, potentials::pair::adapters::hard_core<potenti
 template class pair_full<2, float, potentials::pair::adapters::hard_core<potentials::pair::power_law<float>>>;
 HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(
     float
-  , potentials::pair::hard_core<potentials::pair::adapters::power_law<float>>
+  , potentials::pair::adapters::hard_core<potentials::pair::power_law<float>>
 )
 #endif
 

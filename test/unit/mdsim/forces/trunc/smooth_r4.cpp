@@ -47,7 +47,12 @@ BOOST_AUTO_TEST_SUITE( host )
 
 BOOST_AUTO_TEST_CASE( smooth_r4 )
 {
-    typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> base_potential_type;
+#ifndef USE_HOST_SINGLE_PRECISION
+    typedef double float_type;
+#else
+    typedef float float_type;
+#endif
+    typedef halmd::mdsim::host::potentials::pair::lennard_jones<float_type> base_potential_type;
     typedef halmd::mdsim::host::potentials::pair::truncations::smooth_r4<base_potential_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
 
@@ -68,13 +73,13 @@ BOOST_AUTO_TEST_CASE( smooth_r4 )
         1., 2.
       , 2., 4.;
     // smoothing parameter
-    double const h = 1. / 256;
+    float_type const h = 1. / 256;
 
     // construct potential module
     potential_type potential(cutoff_array, h, epsilon_array, sigma_array);
 
-    double const eps = std::numeric_limits<double>::epsilon();
-    typedef std::array<double, 3> row_type;
+    double const eps = std::numeric_limits<float_type>::epsilon();
+    typedef std::array<float_type, 3> row_type;
 
     // expected results (r, fval, en_pot) for ε=1, σ=1, rc=2.5σ
     std::array<row_type, 5> const results_aa = {{
@@ -86,14 +91,14 @@ BOOST_AUTO_TEST_CASE( smooth_r4 )
     }};
 
     for (row_type const& row : results_aa) {
-        double rr = std::pow(row[0], 2);
-        double const rcut = potential.r_cut(0, 0);
+        float_type rr = std::pow(row[0], 2);
+        float_type const rcut = potential.r_cut(0, 0);
 
-        double fval, en_pot;
+        float_type fval, en_pot;
         // AA interaction
         std::tie(fval, en_pot) = potential(rr, 0, 0);
 
-        double const tolerance = 8 * eps * (1 + rcut / (rcut - row[0]));
+        float_type const tolerance = 8 * eps * (1 + rcut / (rcut - row[0]));
 
         BOOST_CHECK_CLOSE_FRACTION(fval, row[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, row[2], tolerance);
@@ -108,14 +113,14 @@ BOOST_AUTO_TEST_CASE( smooth_r4 )
     }};
 
     for (row_type const& row : results_ab) {
-        double rr = std::pow(row[0], 2);
-        double const rcut = potential.r_cut(0, 1);
+        float_type rr = std::pow(row[0], 2);
+        float_type const rcut = potential.r_cut(0, 1);
 
-        double fval, en_pot;
+        float_type fval, en_pot;
         // AB interaction
         std::tie(fval, en_pot) = potential(rr, 0, 1);
 
-        double const tolerance = 8 * eps * (1 + rcut / (rcut - row[0]));
+        float_type const tolerance = 8 * eps * (1 + rcut / (rcut - row[0]));
 
         BOOST_CHECK_CLOSE_FRACTION(fval, row[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, row[2], tolerance);
@@ -131,13 +136,13 @@ BOOST_AUTO_TEST_CASE( smooth_r4 )
     }};
 
     for (row_type const& row : results_bb) {
-        double rr = std::pow(row[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(row[0], 2);
+        float_type fval, en_pot;
         // BB interaction
         std::tie(fval, en_pot) = potential(rr, 1, 1);
-        double const rcut = potential.r_cut(1, 1);
+        float_type const rcut = potential.r_cut(1, 1);
 
-        double const tolerance = 9 * eps * (1 + rcut / (rcut - row[0]));
+        float_type const tolerance = 9 * eps * (1 + rcut / (rcut - row[0]));
 
         BOOST_CHECK_CLOSE_FRACTION(fval, row[1], 2 * tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, row[2], tolerance);
@@ -155,11 +160,17 @@ struct test_smooth_r4
 {
     enum { dimension = 2 };
 
+#ifndef USE_HOST_SINGLE_PRECISION
+    typedef double host_float_type;
+#else
+    typedef float host_float_type;
+#endif
+
     typedef halmd::mdsim::box<dimension> box_type;
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::potentials::pair::lennard_jones<float_type> base_potential_type;
     typedef halmd::mdsim::gpu::potentials::pair::truncations::smooth_r4<base_potential_type> potential_type;
-    typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> host_base_potential_type;
+    typedef halmd::mdsim::host::potentials::pair::lennard_jones<host_float_type> host_base_potential_type;
     typedef halmd::mdsim::host::potentials::pair::truncations::smooth_r4<host_base_potential_type> host_potential_type;
     typedef halmd::mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;
@@ -212,8 +223,8 @@ void test_smooth_r4<float_type>::test()
         vector_type f = f_list[i];
 
         // reference values from host module
-        double fval, en_pot_;
-        double rr = inner_prod(r, r);
+        host_float_type fval, en_pot_;
+        host_float_type rr = inner_prod(r, r);
         std::tie(fval, en_pot_) = (*host_potential)(rr, type1, type2);
 
         if (rr < host_potential->rr_cut(type1, type2)) {
@@ -255,7 +266,7 @@ test_smooth_r4<float_type>::test_smooth_r4()
         edges(i, i) = box_length;
     }
     // smoothing parameter
-    double const h = 1. / 256;
+    host_float_type const h = 1. / 256;
 
     float_type wca_cut = std::pow(2., 1. / 6);
     matrix_type cutoff_array(2, 2);

@@ -330,12 +330,21 @@ struct host_modules
     static bool const gpu = false;
 };
 
+#ifndef USE_HOST_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_2d ) {
     verlet_nvt_hoover<host_modules<2, double> >().test();
 }
 BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_3d ) {
     verlet_nvt_hoover<host_modules<3, double> >().test();
 }
+#else
+BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_2d ) {
+    verlet_nvt_hoover<host_modules<2, float> >().test();
+}
+BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_3d ) {
+    verlet_nvt_hoover<host_modules<3, float> >().test();
+}
+#endif
 
 #ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>

@@ -225,8 +225,8 @@ get_stress_tensor(particle_type& particle, particle_group& group)
 
     stress_tensor_type stress_tensor(0);
     for (size_type i : unordered) {
-        stress_tensor_type stress_kin = mass[i] * make_stress_tensor(velocity[i]);
-        stress_tensor += stress_pot[i] + stress_kin;
+        stress_tensor_type stress_kin = static_cast<stress_tensor_type>(mass[i] * make_stress_tensor(velocity[i]));
+        stress_tensor += static_cast<stress_tensor_type>(stress_pot[i]) + stress_kin;
     }
     return stress_tensor;
 }
