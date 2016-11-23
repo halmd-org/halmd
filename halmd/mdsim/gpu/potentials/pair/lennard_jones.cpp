@@ -27,6 +27,7 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/hard_core.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_kernel.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/truncations/truncations.hpp>
@@ -103,12 +104,21 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_lennard_jones(lua_S
     forces::pair_full<3, float, lennard_jones<float> >::luaopen(L);
     forces::pair_full<2, float, lennard_jones<float> >::luaopen(L);
     truncations::truncations_luaopen<float, lennard_jones<float> >(L);
+
+    adapters::hard_core<lennard_jones<float> >::luaopen(L);
+    forces::pair_full<3, float, adapters::hard_core<lennard_jones<float> > >::luaopen(L);
+    forces::pair_full<2, float, adapters::hard_core<lennard_jones<float> > >::luaopen(L);
+    truncations::truncations_luaopen<float, adapters::hard_core<lennard_jones<float> > >(L);
+
     return 0;
 }
 
 // explicit instantiation
 template class lennard_jones<float>;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(lennard_jones<float>)
+
+template class adapters::hard_core<lennard_jones<float> >;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(adapters::hard_core<lennard_jones<float> >)
 
 } // namespace pair
 } // namespace potentials
@@ -119,6 +129,13 @@ namespace forces {
 template class pair_full<3, float, potentials::pair::lennard_jones<float> >;
 template class pair_full<2, float, potentials::pair::lennard_jones<float> >;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::lennard_jones<float>)
+
+template class pair_full<3, float, potentials::pair::adapters::hard_core<potentials::pair::lennard_jones<float> > >;
+template class pair_full<2, float, potentials::pair::adapters::hard_core<potentials::pair::lennard_jones<float> > >;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(
+    float
+  , potentials::pair::adapters::hard_core<potentials::pair::lennard_jones<float> >
+  )
 
 } // namespace forces
 } // namespace gpu

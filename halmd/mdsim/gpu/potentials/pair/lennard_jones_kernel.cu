@@ -20,6 +20,7 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/pair/adapters/hard_core_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_kernel.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/truncations/truncations.cuh>
 #include <halmd/numeric/blas/blas.hpp>
@@ -54,7 +55,8 @@ public:
       , unsigned int ntype1, unsigned int ntype2
     )
       : pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
-    {}
+    {
+    }
 
     /**
      * Compute force and potential for interaction.
@@ -78,6 +80,11 @@ private:
 cuda::texture<float2> lennard_jones_wrapper::param = lennard_jones_kernel::param_;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(lennard_jones_kernel::lennard_jones);
 
+template class adapters::hard_core_wrapper<lennard_jones_kernel::lennard_jones>;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(
+  adapters::hard_core_kernel::hard_core<lennard_jones_kernel::lennard_jones>
+);
+
 } // namespace pair
 } // namespace potentials
 
@@ -85,10 +92,15 @@ HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(lennard_jones_k
 namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::lennard_jones_kernel;
+using namespace halmd::mdsim::gpu::potentials::pair::adapters::hard_core_kernel;
 
 template class pair_full_wrapper<3, lennard_jones>;
 template class pair_full_wrapper<2, lennard_jones>;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCE_KERNELS(lennard_jones);
+
+template class pair_full_wrapper<3, hard_core<lennard_jones> >;
+template class pair_full_wrapper<2, hard_core<lennard_jones> >;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCE_KERNELS(hard_core<lennard_jones>);
 
 } // namespace forces
 
