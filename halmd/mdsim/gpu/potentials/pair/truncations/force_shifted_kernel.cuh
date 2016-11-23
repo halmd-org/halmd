@@ -39,7 +39,8 @@ namespace force_shifted_kernel {
 static texture<float4> param_;
 
 template<typename parent_kernel>
-class force_shifted : public parent_kernel
+class force_shifted
+  : public parent_kernel
 {
 public:
     /**
@@ -56,7 +57,8 @@ public:
     )
       : parent_kernel(type1, type2, ntype1, ntype2)
       , pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
-    {}
+    {
+    }
 
     /**
      * Check whether particles are in interaction range.

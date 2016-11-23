@@ -42,7 +42,8 @@ namespace truncations {
  * define smooth potential truncation
  */
 template <typename potential_type>
-class smooth_r4 : public potential_type
+class smooth_r4
+  : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
@@ -58,7 +59,8 @@ public:
             , rr_cut_(element_prod(r_cut_, r_cut_))
             , en_cut_(this->size1(), this->size2())
             , rri_smooth_(std::pow(h, -2))
-            , g_param_(this->size1() * this->size2()) {
+            , g_param_(this->size1() * this->size2())
+    {
 
         for (size_t i = 0; i < this->size1(); ++i) {
             for (size_t j = 0; j < this->size2(); ++j) {
@@ -113,7 +115,8 @@ public:
     /**
      * Bind class to Lua.
      */
-    static void luaopen(lua_State* L) {
+    static void luaopen(lua_State* L)
+    {
         using namespace luaponte;
         module(L, "libhalmd")
         [

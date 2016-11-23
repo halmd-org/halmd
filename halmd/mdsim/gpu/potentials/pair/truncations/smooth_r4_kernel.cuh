@@ -41,7 +41,8 @@ static texture<float4> param_;
 static __constant__ float rri_smooth_;
 
 template<typename parent_kernel>
-class smooth_r4 : public parent_kernel
+class smooth_r4
+  : public parent_kernel
 {
 public:
     /**
@@ -58,7 +59,8 @@ public:
     )
       : parent_kernel(type1, type2, ntype1, ntype2)
       , pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
-    {}
+    {
+    }
 
     /**
      * Check whether particles are in interaction range.

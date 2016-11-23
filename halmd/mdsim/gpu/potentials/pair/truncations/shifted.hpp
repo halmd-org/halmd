@@ -42,7 +42,8 @@ namespace truncations {
  * define (energy) shifted potential truncation
  */
 template <typename potential_type>
-class shifted : public potential_type
+class shifted
+  : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
@@ -57,7 +58,8 @@ public:
             , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
             , rr_cut_(element_prod(r_cut_, r_cut_))
             , en_cut_(this->size1(), this->size2())
-            , g_param_(this->size1() * this->size2()) {
+            , g_param_(this->size1() * this->size2())
+    {
 
         for (size_t i = 0; i < this->size1(); ++i) {
             for (size_t j = 0; j < this->size2(); ++j) {
@@ -109,7 +111,8 @@ public:
     /**
      * Bind class to Lua.
      */
-    static void luaopen(lua_State* L) {
+    static void luaopen(lua_State* L)
+    {
         using namespace luaponte;
         module(L, "libhalmd")
         [

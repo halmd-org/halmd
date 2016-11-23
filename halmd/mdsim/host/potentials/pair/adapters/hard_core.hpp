@@ -41,7 +41,8 @@ namespace adapters {
  * define hard core adapter
  */
 template <typename potential_type>
-class hard_core : public potential_type
+class hard_core
+  : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
@@ -66,14 +67,15 @@ public:
         float_type r = sqrt(rr);
         float_type r_s = (sqrt(rr) - r_core_(a,b));
         float_type f_abs, en_pot;
-        tie(f_abs, en_pot) = potential_type::operator()(r_s*r_s, a, b);
+        tie(f_abs, en_pot) = potential_type::operator()(r_s * r_s, a, b);
         f_abs *= r_s / r;
         return make_tuple(f_abs, en_pot);
     }
     /**
      * Bind class to Lua.
      */
-    static void luaopen(lua_State* L) {
+    static void luaopen(lua_State* L)
+    {
         using namespace luaponte;
         module(L, "libhalmd")
         [

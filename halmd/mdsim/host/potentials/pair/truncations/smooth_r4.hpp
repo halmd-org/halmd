@@ -41,7 +41,8 @@ namespace truncations {
  * define smooth potential truncation
  */
 template <typename potential_type>
-class smooth_r4 : public potential_type
+class smooth_r4
+  : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
@@ -113,7 +114,8 @@ public:
     /**
      * Bind class to Lua.
      */
-    static void luaopen(lua_State* L) {
+    static void luaopen(lua_State* L)
+    {
         using namespace luaponte;
         module(L, "libhalmd")
         [
@@ -147,7 +149,7 @@ private:
     matrix_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
-
+    /** smoothing length */
     float_type rri_smooth_;
 };
 

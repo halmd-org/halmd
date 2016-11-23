@@ -38,7 +38,8 @@ namespace hard_core_kernel {
 static texture<float> param_;
 
 template<typename parent_kernel>
-class hard_core : public parent_kernel
+class hard_core
+  : public parent_kernel
 {
 public:
     /**
@@ -55,7 +56,8 @@ public:
     )
       : parent_kernel(type1, type2, ntype1, ntype2)
       , r_core_(tex1Dfetch(param_, type1 * ntype2 + type2))
-    {}
+    {
+    }
 
     /**
      * Compute force and potential for interaction.

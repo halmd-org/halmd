@@ -41,7 +41,8 @@ namespace truncations {
  * define (energy) shifted potential truncation
  */
 template <typename potential_type>
-class shifted : public potential_type
+class shifted
+  : public potential_type
 {
 public:
     typedef typename potential_type::float_type float_type;
@@ -100,7 +101,8 @@ public:
     /**
      * Bind class to Lua.
      */
-    static void luaopen(lua_State* L) {
+    static void luaopen(lua_State* L)
+    {
         using namespace luaponte;
         module(L, "libhalmd")
         [
