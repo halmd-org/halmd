@@ -186,7 +186,7 @@ local local_r4
 if device.gpu then
     local_r4 = assert(libhalmd.mdsim.forces.trunc.local_r4_float)
 else
-    local_r4 = assert(libhalmd.mdsim.forces.trunc.local_r4_double)
+    local_r4 = assert(libhalmd.mdsim.forces.trunc.local_r4_@HALMD_HOST_FLOAT_TYPE@)
 end
 
 ---

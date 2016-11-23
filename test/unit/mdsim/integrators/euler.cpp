@@ -99,8 +99,8 @@ struct test_euler
     double temp;
     double timestep;
     unsigned int npart;
-    fixed_vector<double, dimension> box_ratios;
-    fixed_vector<double, dimension> slab;
+    vector_type box_ratios;
+    typename modules_type::slab_type slab;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<particle_type> particle;
@@ -206,7 +206,6 @@ template <typename modules_type>
 test_euler<modules_type>::test_euler()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
-    typedef fixed_vector<double, dimension> vector_type;
 
     // set test parameters
     steps = 1000000; // run for as many steps as possible, wrap around the box for about 10 times
@@ -249,6 +248,8 @@ test_euler<modules_type>::test_euler()
 template <int dimension, typename float_type>
 struct host_modules
 {
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef fixed_vector<float_type, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
@@ -281,6 +282,7 @@ void host_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_
     );
 }
 
+#ifndef USE_HOST_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE( euler_host_2d_linear ) {
     test_euler<host_modules<2, double> >().linear_motion();
 }
@@ -294,6 +296,21 @@ BOOST_AUTO_TEST_CASE( euler_host_2d_overdamped ) {
 BOOST_AUTO_TEST_CASE( euler_host_3d_overdamped ) {
     test_euler<host_modules<3, double> >().overdamped_motion();
 }
+#else
+BOOST_AUTO_TEST_CASE( euler_host_2d_linear ) {
+    test_euler<host_modules<2, float> >().linear_motion();
+}
+BOOST_AUTO_TEST_CASE( euler_host_3d_linear ) {
+    test_euler<host_modules<3, float> >().linear_motion();
+}
+
+BOOST_AUTO_TEST_CASE( euler_host_2d_overdamped ) {
+    test_euler<host_modules<2, float> >().overdamped_motion();
+}
+BOOST_AUTO_TEST_CASE( euler_host_3d_overdamped ) {
+    test_euler<host_modules<3, float> >().overdamped_motion();
+}
+#endif
 
 #ifdef HALMD_WITH_GPU
 /**
@@ -302,6 +319,8 @@ BOOST_AUTO_TEST_CASE( euler_host_3d_overdamped ) {
 template <int dimension, typename float_type>
 struct gpu_modules
 {
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef fixed_vector<double, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;

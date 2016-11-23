@@ -294,12 +294,21 @@ struct host_modules
     static bool const gpu = false;
 };
 
+#ifndef USE_HOST_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE( phase_space_host_2d ) {
     phase_space<host_modules<2, double> >().test();
 }
 BOOST_AUTO_TEST_CASE( phase_space_host_3d ) {
     phase_space<host_modules<3, double> >().test();
 }
+#else
+BOOST_AUTO_TEST_CASE( phase_space_host_2d ) {
+    phase_space<host_modules<2, float> >().test();
+}
+BOOST_AUTO_TEST_CASE( phase_space_host_3d ) {
+    phase_space<host_modules<3, float> >().test();
+}
+#endif
 
 #ifdef HALMD_WITH_GPU
 

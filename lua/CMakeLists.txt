@@ -10,6 +10,12 @@ foreach(file ${halmd_lua_sources})
   endif()
 endforeach()
 
+if(HALMD_VARIANT_HOST_SINGLE_PRECISION)
+  set(HALMD_HOST_FLOAT_TYPE "float")
+else()
+  set(HALMD_HOST_FLOAT_TYPE "double")
+endif()
+
 # copy files from source to build tree
 foreach(file ${halmd_lua_sources})
   string(REGEX REPLACE "\\.in$" "" out_file ${file})

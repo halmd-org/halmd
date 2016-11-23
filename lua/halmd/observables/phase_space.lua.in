@@ -396,7 +396,7 @@ function M.reader(args)
         local shape = assert(dataset.shape)
         local dimension = shape[3] or 1
         local type = dataset.type
-        type = (memory == "host") and type or (type == "double" and "float" or type)
+        type = (type == "double" and ((memory == "host") and "@HALMD_HOST_FLOAT_TYPE@" or "float") or type)
 
         local sample = assert(libhalmd.observables.host.samples["sample_"..dimension.."_"..type])(nparticle)
         self:on_read(sample:data_setter(), {name})

@@ -57,7 +57,12 @@ using namespace std;
 
 BOOST_AUTO_TEST_CASE( power_law_with_core_host )
 {
-    typedef mdsim::host::potentials::pair::power_law_with_core<double> potential_type;
+#ifndef USE_HOST_SINGLE_PRECISION
+    typedef double float_type;
+#else
+    typedef float float_type;
+#endif
+    typedef mdsim::host::potentials::pair::power_law_with_core<float_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
     typedef potential_type::uint_matrix_type uint_matrix_type;
 
@@ -123,8 +128,8 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
     BOOST_CHECK(index(1, 1) == index_array(1, 1));
 
     // evaluate some points of potential and force
-    typedef boost::array<double, 3> array_type;
-    const double eps = numeric_limits<double>::epsilon();
+    typedef boost::array<float_type, 3> array_type;
+    const float_type eps = numeric_limits<float_type>::epsilon();
 
     // expected results (r, fval, en_pot)
     // interaction AA: ε=1, σ=1, rc=5σ, r_core=0.375σ, n=6
@@ -137,13 +142,13 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
     }};
 
     BOOST_FOREACH (array_type const& a, results_aa) {
-        double rr = std::pow(a[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(a[0], 2);
+        float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 0, 0);  // interaction AA
 
         // tolerance due to floating-point rounding depends on difference (r-r_core)
-        double r = a[0] / sigma_array(0, 0);        //< r in units of σ
-        double tolerance = eps * index_array(0, 0) * (1 + r / (r - core_array(0, 0)));
+        float_type r = a[0] / sigma_array(0, 0);        //< r in units of σ
+        float_type tolerance = eps * index_array(0, 0) * (1 + r / (r - core_array(0, 0)));
 
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
@@ -159,13 +164,13 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
     }};
 
     BOOST_FOREACH (array_type const& a, results_ab) {
-        double rr = std::pow(a[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(a[0], 2);
+        float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 0, 1);  // interaction AB
 
         // tolerance due to floating-point rounding depends on difference (r-r_core)
-        double r = a[0] / sigma_array(0, 1);        //< r in units of σ
-        double tolerance = eps * index_array(0, 1) * (1 + r / (r - core_array(0, 1)));
+        float_type r = a[0] / sigma_array(0, 1);        //< r in units of σ
+        float_type tolerance = eps * index_array(0, 1) * (1 + r / (r - core_array(0, 1)));
 
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
@@ -181,13 +186,13 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
     }};
 
     BOOST_FOREACH (array_type const& a, results_bb) {
-        double rr = std::pow(a[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(a[0], 2);
+        float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 1, 1);  // interaction BB
 
         // tolerance due to floating-point rounding depends on difference (r-r_core)
-        double r = a[0] / sigma_array(1, 1);        //< r in units of σ
-        double tolerance = eps * index_array(1, 1) * (1 + r / (r - core_array(1, 1)));
+        float_type r = a[0] / sigma_array(1, 1);        //< r in units of σ
+        float_type tolerance = eps * index_array(1, 1) * (1 + r / (r - core_array(1, 1)));
 
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
@@ -204,7 +209,11 @@ struct power_law_with_core
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::potentials::pair::power_law_with_core<float_type> potential_type;
+#ifndef USE_HOST_SINGLE_PRECISION
     typedef mdsim::host::potentials::pair::power_law_with_core<double> host_potential_type;
+#else
+    typedef mdsim::host::potentials::pair::power_law_with_core<float> host_potential_type;
+#endif
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;
 

@@ -56,7 +56,13 @@ using namespace std;
 
 BOOST_AUTO_TEST_CASE( lennard_jones_host )
 {
-    typedef mdsim::host::potentials::pair::lennard_jones<double> potential_type;
+#ifndef USE_HOST_SINGLE_PRECISION
+    typedef double float_type;
+#else
+    typedef float float_type;
+#endif
+
+    typedef mdsim::host::potentials::pair::lennard_jones<float_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
 
     // define interaction parameters
@@ -91,8 +97,8 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
     BOOST_CHECK(sigma(1, 1) == sigma_array(1, 1));
 
     // evaluate some points of potential and force
-    typedef boost::array<double, 3> array_type;
-    const double tolerance = 5 * numeric_limits<double>::epsilon();
+    typedef boost::array<float_type, 3> array_type;
+    const float_type tolerance = 5 * numeric_limits<float_type>::epsilon();
 
     // expected results (r, fval, en_pot) for ε=1, σ=1, rc=5σ
     boost::array<array_type, 5> results_aa = {{
@@ -104,8 +110,8 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
     }};
 
     BOOST_FOREACH (array_type const& a, results_aa) {
-        double rr = std::pow(a[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(a[0], 2);
+        float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 0, 0);  // interaction AA
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
@@ -121,8 +127,8 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
     }};
 
     BOOST_FOREACH (array_type const& a, results_ab) {
-        double rr = std::pow(a[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(a[0], 2);
+        float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 0, 1);  // interaction AB
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
@@ -138,8 +144,8 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
     }};
 
     BOOST_FOREACH (array_type const& a, results_bb) {
-        double rr = std::pow(a[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(a[0], 2);
+        float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 1, 1);  // interaction BB
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
@@ -156,7 +162,11 @@ struct lennard_jones
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::potentials::pair::lennard_jones<float_type> potential_type;
+#ifndef USE_HOST_SINGLE_PRECISION
     typedef mdsim::host::potentials::pair::lennard_jones<double> host_potential_type;
+#else
+    typedef mdsim::host::potentials::pair::lennard_jones<float> host_potential_type;
+#endif
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;
 

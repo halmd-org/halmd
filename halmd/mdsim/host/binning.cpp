@@ -60,7 +60,7 @@ binning<dimension, float_type>::binning(
             r_cut_max = std::max(r_cut_skin(i, j), r_cut_max);
         }
     }
-    vector_type L = box->length();
+    vector_type L = static_cast<vector_type>(box->length());
     ncell_ = element_max(static_cast<cell_size_type>(L / r_cut_max), cell_size_type(1));
 
     auto cell = make_cache_mutable(cell_);

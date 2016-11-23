@@ -80,8 +80,8 @@ struct ideal_gas
     float temp;
     double timestep;
     unsigned int npart;
-    fixed_vector<double, dimension> box_ratios;
-    fixed_vector<double, dimension> slab;
+    vector_type box_ratios;
+    typename modules_type::slab_type slab;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<integrator_type> integrator;
@@ -131,7 +131,7 @@ template <typename modules_type>
 ideal_gas<modules_type>::ideal_gas()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
-    typedef fixed_vector<double, dimension> vector_type;
+    typedef typename modules_type::vector_type vector_type;
 
     // set module parameters
     density = 1;
@@ -239,6 +239,8 @@ make_stress_pot_from_particle(
 template <int dimension, typename float_type>
 struct host_modules
 {
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef vector_type slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::integrators::verlet<dimension, float_type> integrator_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
@@ -250,17 +252,28 @@ struct host_modules
     static bool const gpu = false;
 };
 
+#ifndef USE_HOST_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE( ideal_gas_host_2d ) {
     ideal_gas<host_modules<2, double> >().test();
 }
 BOOST_AUTO_TEST_CASE( ideal_gas_host_3d ) {
     ideal_gas<host_modules<3, double> >().test();
 }
+#else
+BOOST_AUTO_TEST_CASE( ideal_gas_host_2d ) {
+    ideal_gas<host_modules<2, float> >().test();
+}
+BOOST_AUTO_TEST_CASE( ideal_gas_host_3d ) {
+    ideal_gas<host_modules<3, float> >().test();
+}
+#endif
 
 #ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>
 struct gpu_modules
 {
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef fixed_vector<double, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::integrators::verlet<dimension, float_type> integrator_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;

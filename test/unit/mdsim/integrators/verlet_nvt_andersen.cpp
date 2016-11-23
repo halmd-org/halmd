@@ -79,8 +79,8 @@ struct verlet_nvt_andersen
     float temp;
     double coll_rate;
     unsigned int npart;
-    fixed_vector<double, dimension> box_ratios;
-    fixed_vector<double, dimension> slab;
+    typename modules_type::vector_type box_ratios;
+    typename modules_type::slab_type slab;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<integrator_type> integrator;
@@ -177,7 +177,7 @@ template <typename modules_type>
 verlet_nvt_andersen<modules_type>::verlet_nvt_andersen()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
-    typedef fixed_vector<double, dimension> vector_type;
+    typedef typename modules_type::vector_type vector_type;
 
     // set module parameters
     density = 0.3;
@@ -286,6 +286,8 @@ make_stress_pot_from_particle(
 template <int dimension, typename float_type>
 struct host_modules
 {
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef vector_type slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::integrators::verlet_nvt_andersen<dimension, float_type> integrator_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
@@ -297,17 +299,28 @@ struct host_modules
     static bool const gpu = false;
 };
 
+#ifndef USE_HOST_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE( verlet_nvt_andersen_host_2d ) {
     verlet_nvt_andersen<host_modules<2, double> >().test();
 }
 BOOST_AUTO_TEST_CASE( verlet_nvt_andersen_host_3d ) {
     verlet_nvt_andersen<host_modules<3, double> >().test();
 }
+#else
+BOOST_AUTO_TEST_CASE( verlet_nvt_andersen_host_2d ) {
+    verlet_nvt_andersen<host_modules<2, float> >().test();
+}
+BOOST_AUTO_TEST_CASE( verlet_nvt_andersen_host_3d ) {
+    verlet_nvt_andersen<host_modules<3, float> >().test();
+}
+#endif
 
 #ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>
 struct gpu_modules
 {
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef fixed_vector<double, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
