@@ -69,7 +69,11 @@ using namespace std;
  * test NVT Verlet integrator with Nosé-Hoover chain thermostat
  */
 
+#ifndef USE_HOST_SINGLE_PRECISION
 const double eps = numeric_limits<double>::epsilon();
+#else
+const double eps = numeric_limits<float>::epsilon();
+#endif
 const float eps_float = numeric_limits<float>::epsilon();
 
 /**
@@ -201,7 +205,11 @@ void verlet_nvt_hoover<modules_type>::test()
     //
     // these tolerances have no deeper justification, except that even a small
     // energy drift requires a scaling with the number of simulation steps
+#ifndef USE_HOST_SINGLE_PRECISION
     const double en_tolerance = max(5e-5, steps * 1e-12);
+#else
+    const double en_tolerance = max(6e-5, steps * 1e-12);
+#endif
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_nhc0), en_tolerance);
 
     //

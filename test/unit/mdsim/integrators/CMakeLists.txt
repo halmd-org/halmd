@@ -188,6 +188,11 @@ if(HALMD_WITH_pair_lennard_jones)
   endif()
 endif()
 
+if(HALMD_VARIANT_HOST_SINGLE_PRECISION)
+  set(PARAMETER_TOLERANCE "1e-7")
+else()
+  set(PARAMETER_TOLERANCE "1e-15")
+endif()
 # Lua tests for module verlet_nvt_hoover
 configure_file(
   verlet_nvt_hoover.cmake.in

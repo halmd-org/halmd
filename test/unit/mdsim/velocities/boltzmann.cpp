@@ -49,7 +49,11 @@
 
 #include <limits>
 
+#ifndef USE_HOST_SINGLE_PRECISION
 const double eps = std::numeric_limits<double>::epsilon();
+#else
+const double eps = std::numeric_limits<float>::epsilon();
+#endif
 const float eps_float = std::numeric_limits<float>::epsilon();
 
 /**

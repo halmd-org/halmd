@@ -54,7 +54,11 @@ using namespace boost;
 using namespace halmd;
 using namespace std;
 
+#ifndef USE_HOST_SINGLE_PRECISION
 const double eps = numeric_limits<double>::epsilon();
+#else
+const double eps = numeric_limits<float>::epsilon();
+#endif
 const float eps_float = numeric_limits<float>::epsilon();
 
 /** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */

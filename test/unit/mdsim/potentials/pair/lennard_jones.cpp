@@ -311,8 +311,11 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
 
     // evaluate some points of potential and force
     typedef boost::array<float_type, 3> array_type;
+#ifndef USE_HOST_SINGLE_PRECISION
     const float_type tolerance = 5 * numeric_limits<float_type>::epsilon();
-
+#else
+    const float_type tolerance = 7 * numeric_limits<float_type>::epsilon();
+#endif
     // expected results (r, fval, en_pot) for ε=1, σ=1, rc=5σ
     boost::array<array_type, 5> const& results_aa = results<potential_type>::aa();
 
@@ -326,7 +329,6 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
 
     // interaction AB: ε=.5, σ=2, rc=5σ
     boost::array<array_type, 5> const& results_ab = results<potential_type>::ab();
-
     BOOST_FOREACH (array_type const& a, results_ab) {
         float_type rr = std::pow(a[0], 2);
         float_type fval, en_pot;

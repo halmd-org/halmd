@@ -58,6 +58,7 @@ execute_halmd(
   "@CMAKE_SOURCE_DIR@/test/unit/mdsim/integrators/verlet_nvt_hoover.lua"
   --box-length "${BOX_LENGTH}"
   --output "${OUTPUT_PREFIX}"
+  --parameter-tolerance "@PARAMETER_TOLERANCE@"
 )
 
 file(REMOVE

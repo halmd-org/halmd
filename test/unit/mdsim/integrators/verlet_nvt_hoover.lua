@@ -39,8 +39,8 @@ function test_construction(args)
     })
 
     -- check parameter passing
-    assert(rel_error(integrator.timestep, args.timestep) < 1e-15)
-    assert(rel_error(integrator.temperature, args.temperature) < 1e-15)
+    assert(rel_error(integrator.timestep, args.timestep) < args.parameter_tolerance)
+    assert(rel_error(integrator.temperature, args.temperature) < args.parameter_tolerance)
 
     -- check integrator masses
     local dimension = box.dimension
@@ -92,6 +92,9 @@ function define_args(parser)
     parser:add_argument("temperature", {type = "number", default=3.0, help = "temperature"})
     parser:add_argument("frequency", {type = "number", default=5.0, help = "resonance frequency"})
     parser:add_argument("output,o", {type = "string", help = "prefix of output files"})
+    parser:add_argument("parameter-tolerance", {type = "number", default=1e-15
+      , help = "parameter passing tolerance"
+    })
 end
 
 -- start tests
