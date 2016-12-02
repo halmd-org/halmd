@@ -76,7 +76,7 @@ local M = module(function(args)
     end
 
     -- construct module logger
-    local logger = log.logger({label = "lattice"})
+    local logger = args.logger or log.logger({label = "lattice"})
 
     local self = lattice(particle, box, slab, logger)
 
