@@ -1,0 +1,247 @@
+--
+-- Copyright © 2016 Felix Höfling
+-- Copyright © 2016 Arthur Straube
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+local device   = require("halmd.utility.device")
+local log      = require("halmd.io.log")
+local mdsim    = require("halmd.mdsim")
+local module   = require("halmd.utility.module")
+local random   = require("halmd.random")
+local sampler  = require("halmd.observables.sampler")
+local utility  = require("halmd.utility")
+
+-- grab C++ wrappers
+local chemical_potential = assert(libhalmd.observables.chemical_potential)
+
+---
+-- Chemical potential
+-- ==================
+--
+-- This module calculates the excess chemical potential(s) for the current
+-- particle configuration. It uses Widom's insertion method by randomly
+-- placing :math:`N_s` test particles of species :math:`s` uniformly within the
+-- simulation box. Then the potential energies :math:`U_i` are computed for
+-- each particle from its interaction with the real particles. The excess
+-- chemical potential of species :math:`s` is calculated as
+--
+-- .. math::
+--
+--   \mu_\mathrm{ex}^{(s)} = -k_B T \log
+--      \left( \frac{1}{N} \sum_{i=1}^{N_s} \exp(-U_i/k_B T) \right).
+--
+-- The interactions that contribute to :math:`U_i` must be defined explicitly,
+-- they should reproduce the interactions of the real system (i.e., the pair
+-- potentials). For an example, see ``examples/liquid/lennard_jones.lua``.
+--
+
+---
+-- Construct chemical potential module.
+--
+-- :param table args: keyword arguments
+-- :param args.box: instance of :class:`halmd.mdsim.box`
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param number args.temperature: temperature :math:`k_B T` of the statistical ensemble
+-- :param table args.test_particles: number of test particles per species
+--
+-- The argument ``test_particles`` is a table giving the number of test
+-- particles per species, starting with species #0.
+--
+-- The argument ``particle`` is an examplary particle of the simulation
+-- universe (in most cases there is only one such instance).  It is used to
+-- deduce the space dimension, the maximal number of species', and the compute
+-- device (``memory``) for the construction of the test particles.
+--
+-- .. attribute:: temperature
+--
+-- Temperature :math:`k_B T` used to calculate the chemical potential.
+-- Assignment changes the internal value.
+--
+-- .. attribute:: test_particle
+--
+-- The internal instance of :class:`halmd.mdsim.particle` that contains the
+-- test particles.
+--
+-- .. method:: add_force(args)
+--
+--     Define a new force on the test particles.
+--
+--     :param table args: keyword arguments
+--     :param string args[1]: name of force module, see :mod:`halmd.mdsim.forces`
+--     :param args.particle: instance of :mod:`halmd.mdsim.particle`
+--     :param args.potential: instance of :mod:`halmd.mdsim.potentials.pair`
+--     :param args.trunc: instance of :mod:`halmd.mdsim.forces.trunc` (optional)
+--     :param args.neighbour: instance of :mod:`halmd.mdsim.neighbour` (optional)
+--
+--     The function constructs a new force module of the type given by the
+--     first argument of the argument table (``args[1]``), which is then
+--     connected to the (internal) test particle instance.
+--
+--     The argument ``particle`` contains the real particles, which exert
+--     forces on the test particles.
+--
+--     The remaining arguments are passed to the force module. Use the ``box``
+--     module specified upon construction of the ``chemical_potential`` module.
+--
+-- .. method:: writer(args)
+--
+--    Write state variables to a file.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param number args.every: sampling interval
+--    :param table args.location: location within file (optional)
+--    :param table args.labels: labels of particle species
+--
+--    :returns: instance of group writer
+--
+--    The optional argument ``location`` specifies a path in a structured file
+--    format like H5MD given as a table of strings. It defaults to
+--    ``{"observables"}``.
+--
+--    The optional argument ``labels`` specifies the labels of the particle
+--    species in the output file as a table. The length of the table must match
+--    the length of ``test_particles`` passed to the constructor of the
+--    ``chemical_potential`` module.  The default is ``{"A", "B", …}``.
+--
+--    .. method:: disconnect()
+--
+--       Disconnect chemical potential writer from observables sampler.
+--
+-- .. method:: sample(species)
+--
+--    Returns a callable that computes and returns the chemical potential of
+--    the given species.
+--
+--    :param number species: species index, starting from 0
+--    :returns: callable
+--
+--    The argument ``species`` must be smaller than
+--    ``chemical_potential.result_size``.
+--
+-- .. method:: set_position()
+--
+--    Re-assign the positions of the test particles.
+--
+local M = module(function(args)
+    utility.assert_type(args, "table")
+    local box = utility.assert_kwarg(args, "box")
+    local particle = utility.assert_kwarg(args, "particle")
+    local temperature = utility.assert_type(utility.assert_kwarg(args, "temperature"), "number")
+    local test_particles = utility.assert_type(utility.assert_kwarg(args, "test_particles"), "table")
+
+    -- reproduce backend from particle example
+    local memory = particle.memory
+
+    -- construct random number generator
+    local rng = random.generator({memory = memory})
+
+    -- construct module logger
+    local logger = log.logger({label = "chemical potential"})
+
+    -- total number of test particles
+    local npart = 0
+    for i,n in ipairs(test_particles) do
+        npart = npart + n
+    end
+
+    -- construct test particle instance
+    local test_particle = mdsim.particle({
+        dimension = box.dimension
+      , particles = npart
+      , species = particle.nspecies
+      , memory = memory
+      , label = "chemical_potential"
+    })
+
+    -- construct position module to place test particles -- FIXME random
+    local position = mdsim.positions.lattice({
+        particle = test_particle, box = box, rng = rng, logger = logger
+    })
+
+    -- construct module instance
+    local self = chemical_potential(test_particle, position, temperature, test_particles, logger)
+
+    -- define method add_force(force, args)
+    self.add_force = function(self, args)
+        assert(#args >= 1)
+        local force = assert(mdsim.forces[utility.assert_type(args[1], "string")])
+        local particle = utility.assert_kwarg(args, "particle")
+        local potential = utility.assert_kwarg(args, "potential")
+
+        -- copy argument list to pass on the remaining one
+        local args = args
+        args.particle = { test_particle, particle }        -- replace by pair (test, particle)
+        -- args.potential = potential                      -- potential is already there
+        args.box = box                                     -- get box from chemical_potential module
+
+        -- construct force module
+        return force(args)
+    end
+
+    -- define method writer(args)
+    self.writer = function(self, args)
+        local file = utility.assert_kwarg(args, "file")
+        local location = utility.assert_type(
+            args.location or {"observables"}
+          , "table")
+        local every = utility.assert_kwarg(args, "every")
+
+        local labels = args.labels
+        local result_size = self.result_size
+        if not labels then
+            -- default: {"A", "B", ...}
+            labels = {}
+            for n = 1, result_size do
+                labels[n] = string.char(string.byte("A") + n - 1)
+            end
+        end
+        assert(#labels == result_size)
+        utility.assert_type(labels, "table")
+
+        -- construct file writer
+        writer = file:writer{location = location, mode = "append"}
+
+        -- register data fields with writer, each species separately
+        for i,label in ipairs(labels) do
+            writer:on_write(self:sample(i-1), {"excess_chemical_potential", label})
+        end
+
+        -- sequence of signal connections
+        local conn = {}
+        writer.disconnect = utility.signal.disconnect(conn, "chemical potential writer")
+
+        -- connect writer to sampler
+        table.insert(conn, sampler:on_prepare(function() self.test_particle:aux_enable() end, every, 0))
+        table.insert(conn, sampler:on_sample(writer.write, every, mdsim.clock.step))
+        -- FIXME re-shuffle particle positions occasionally
+        return writer
+    end
+
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "chemical potential module")
+
+    -- connect runtime accumulators to module profiler
+    local desc = ("computation of chemical potential")
+    table.insert(conn, utility.profiler:on_profile(assert(self.runtime.sample), desc))
+
+    return self
+end)
+
+return M
