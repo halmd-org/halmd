@@ -1,6 +1,6 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2010-2015 Felix Höfling
+-- Copyright © 2010-2016 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -112,6 +112,23 @@ local function liquid(args)
           , every = args.sampling.state_vars
         })
     end
+
+    -- measure chemical potential
+    -- 1) construct module including test particles
+    -- 2) define interactions with real particles
+    -- 3) setup result writer
+    local chemical_potential = observables.chemical_potential({
+        box = box
+      , particle = particle
+      , temperature = 3 -- args.temperature
+      , test_particles = { 1000 }
+    })
+
+    chemical_potential:add_force({"pair_trunc"
+      , particle = particle, potential = potential, trunc = trunc
+    })
+
+    chemical_potential:writer({file = file, every = args.sampling.state_vars})
 
     -- set up wavevectors, compute density modes and static structure factor
     local density_mode
