@@ -270,6 +270,11 @@ void append::luaopen(lua_State* L)
                         .def("on_write", &append::on_write<fixed_vector<double, 6>&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<fixed_vector<double, 6> const&>, pure_out_value(_2))
 
+                        // for halmd::accumulator
+                        .def("on_write", &append::on_write<boost::array<double, 3> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<boost::array<double, 3>& >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<boost::array<double, 3> const&>, pure_out_value(_2))
+
                         .def("on_write", &append::on_write<vector<float> >, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<float>&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<float> const&>, pure_out_value(_2))
