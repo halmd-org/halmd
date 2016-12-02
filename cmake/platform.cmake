@@ -6,12 +6,14 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
     # HALMD requires a C++11 compiler, e.g. GCC 4.7. Until major GNU/Linux
     # distributions have upgraded their stable releases to default to GCC 4.7,
     # we also support GCC 4.6 in experimental C++0x mode.
+    # Remove -DNDEBUG from RelWithDebInfo to enable assert() and LOG_DEBUG/LOG_TRACE.
     if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.7")
       set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
     else()
       set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++0x -pedantic")
     endif()
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
@@ -26,6 +28,7 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
       set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
     endif()
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
     # clang doesn't print colored diagnostics when invoked from Ninja
     if (UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
       set(CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT} -fcolor-diagnostics")
@@ -35,6 +38,7 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
 
     set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall")
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
 
