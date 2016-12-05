@@ -25,10 +25,10 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp> // FIXME random.hpp
+#include <halmd/numeric/accumulator.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
 
-#include <boost/array.hpp>
 #include <lua.hpp>
 #include <memory>
 #include <vector>
@@ -47,7 +47,7 @@ class chemical_potential
 public:
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
-    typedef std::vector<boost::array<double, 3>> result_type;
+    typedef std::vector<halmd::accumulator<double>> result_type;
 
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::size_type size_type;

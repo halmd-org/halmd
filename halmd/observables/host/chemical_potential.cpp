@@ -19,7 +19,6 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/chemical_potential.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -106,11 +105,11 @@ chemical_potential<dimension, float_type>::sample()
 
             // compute μ_ex = -kT log( <exp(-E/kT)> ) and store with statistics
             double Z = mean(acc);
-            mu_ex_[s] = {{
+            mu_ex_[s] = accumulator<double>(
                 - temperature_ * log(Z)                                     // mean
-              , count(acc) > 1 ? temperature_ / Z * error_of_mean(acc) : 0  // standard error of mean
-              , static_cast<double>(count(acc))                             // number of test particles of this species
-            }};
+              , pow(temperature_ / Z, 2) * variance(acc)                    // variance
+              , count(acc)                                                  // number of test particles of this species
+            );
         }
 
         mu_ex_cache_ = en_pot_cache;
@@ -119,14 +118,14 @@ chemical_potential<dimension, float_type>::sample()
 }
 
 template <typename chemical_potential_type>
-static std::function<boost::array<double, 3> const& ()>
+static std::function<accumulator<double> const& ()>
 wrap_sample(std::shared_ptr<chemical_potential_type> self, unsigned int species)
 {
     if (species >= self->result_size()) {
         LOG_ERROR("requested species too large: " << species);
         throw std::invalid_argument("index exceeds size of result array");
     }
-    return [=]() -> boost::array<double, 3> const& {
+    return [=]() -> accumulator<double> const& {
         return self->sample()[species];
     };
 }
