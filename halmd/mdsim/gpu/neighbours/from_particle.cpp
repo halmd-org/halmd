@@ -91,7 +91,7 @@ void from_particle<dimension, float_type>::set_occupancy(double cell_occupancy)
     // FIXME what is a sensible lower bound?
     // size_ = max(size_, binning_->cell_size());
     // number of neighbour lists
-    stride_ = particle1_->dim.threads();
+    stride_ = particle1_->dim().threads();
     // allocate neighbour lists
     auto g_neighbour = make_cache_mutable(g_neighbour_);
     g_neighbour->resize(stride_ * size_);
@@ -144,9 +144,9 @@ void from_particle<dimension, float_type>::update()
         cuda::memset(g_overflow, 0);
         get_from_particle_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
         cuda::configure(
-            particle1_->dim.grid
-        , particle1_->dim.block
-        , particle1_->dim.threads_per_block() * (sizeof(unsigned int) + sizeof(vector_type))
+            particle1_->dim().grid
+        , particle1_->dim().block
+        , particle1_->dim().threads_per_block() * (sizeof(unsigned int) + sizeof(vector_type))
         );
         get_from_particle_kernel<dimension>().update(
             &*position1.begin()

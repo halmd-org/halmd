@@ -796,25 +796,25 @@ phase_space<dimension, float_type>::get_sampler(std::string const& name)
         auto array = particle_->get_array(name);
         if(!name.compare("position")) {
             return (samplers_[name] = phase_space_sampler_position<dimension, float_type>::create
-                    (particle_group_, box_, array, particle_->get_array("image"), particle_->dim, host_cache_));
+                    (particle_group_, box_, array, particle_->get_array("image"), particle_->dim(), host_cache_));
         } else {
             if (array->gpu()) {
                 if (!name.compare("g_position")) {
                     return (samplers_[name] = phase_space_sampler_gpu_position<dimension, float4>::create
-                            (particle_group_, box_, array, particle_->get_array("g_image"), particle_->dim));
+                            (particle_group_, box_, array, particle_->get_array("g_image"), particle_->dim()));
                 } else {
                     auto it = phase_space_sampler_gpu_typed_create_map[dimension-2].find(array->type());
                     if(it == phase_space_sampler_gpu_typed_create_map[dimension-2].end()) {
                         throw std::runtime_error("invalid sample type");
                     }
-                    return (samplers_[name] = it->second(particle_group_, array, particle_->dim));
+                    return (samplers_[name] = it->second(particle_group_, array, particle_->dim()));
                 }
             } else {
                 auto it = phase_space_sampler_typed_create_map.find(array->type());
                 if(it == phase_space_sampler_typed_create_map.end()) {
                     throw std::runtime_error("invalid sample type");
                 }
-                return (samplers_[name] = it->second(particle_group_, array, particle_->dim.threads(), host_cache_));
+                return (samplers_[name] = it->second(particle_group_, array, particle_->dim().threads(), host_cache_));
             }
         }
     }

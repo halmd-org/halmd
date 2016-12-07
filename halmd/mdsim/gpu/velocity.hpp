@@ -37,11 +37,11 @@ inline void rescale_velocity(particle_type& particle, double factor)
 {
     auto velocity = make_cache_mutable(particle.velocity());
 
-    cuda::configure(particle.dim.grid, particle.dim.block);
+    cuda::configure(particle.dim().grid, particle.dim().block);
     get_velocity_kernel<particle_type::velocity_type::static_size>().rescale(
         &*velocity->begin()
       , particle.nparticle()
-      , particle.dim.threads()
+      , particle.dim().threads()
       , factor
     );
 }
@@ -56,14 +56,14 @@ inline void rescale_velocity_group(particle_type& particle, particle_group& grou
     auto velocity = make_cache_mutable(particle.velocity());
 
     cuda::configure(
-        (unordered.size() + particle.dim.threads_per_block() - 1) / particle.dim.threads_per_block()
-      , particle.dim.block
+        (unordered.size() + particle.dim().threads_per_block() - 1) / particle.dim().threads_per_block()
+      , particle.dim().block
     );
     get_velocity_kernel<particle_type::velocity_type::static_size>().rescale_group(
         &*velocity->begin()
       , &*unordered.begin()
       , unordered.size()
-      , particle.dim.threads()
+      , particle.dim().threads()
       , factor
     );
 }
@@ -76,11 +76,11 @@ inline void shift_velocity(particle_type& particle, fixed_vector<double, particl
 {
     auto velocity = make_cache_mutable(particle.velocity());
 
-    cuda::configure(particle.dim.grid, particle.dim.block);
+    cuda::configure(particle.dim().grid, particle.dim().block);
     get_velocity_kernel<particle_type::velocity_type::static_size>().shift(
         &*velocity->begin()
       , particle.nparticle()
-      , particle.dim.threads()
+      , particle.dim().threads()
       , delta
     );
 }
@@ -95,14 +95,14 @@ inline void shift_velocity_group(particle_type& particle, particle_group& group,
     auto velocity = make_cache_mutable(particle.velocity());
 
     cuda::configure(
-        (unordered.size() + particle.dim.threads_per_block() - 1) / particle.dim.threads_per_block()
-      , particle.dim.block
+        (unordered.size() + particle.dim().threads_per_block() - 1) / particle.dim().threads_per_block()
+      , particle.dim().block
     );
     get_velocity_kernel<particle_type::velocity_type::static_size>().shift_group(
         &*velocity->begin()
       , &*unordered.begin()
       , unordered.size()
-      , particle.dim.threads()
+      , particle.dim().threads()
       , delta
     );
 }
@@ -115,11 +115,11 @@ inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double,
 {
     auto velocity = make_cache_mutable(particle.velocity());
 
-    cuda::configure(particle.dim.grid, particle.dim.block);
+    cuda::configure(particle.dim().grid, particle.dim().block);
     get_velocity_kernel<particle_type::velocity_type::static_size>().shift_rescale(
         &*velocity->begin()
       , particle.nparticle()
-      , particle.dim.threads()
+      , particle.dim().threads()
       , delta
       , factor
     );
@@ -135,14 +135,14 @@ inline void shift_rescale_velocity_group(particle_type& particle, particle_group
     auto velocity = make_cache_mutable(particle.velocity());
 
     cuda::configure(
-        (unordered.size() + particle.dim.threads_per_block() - 1) / particle.dim.threads_per_block()
-      , particle.dim.block
+        (unordered.size() + particle.dim().threads_per_block() - 1) / particle.dim().threads_per_block()
+      , particle.dim().block
     );
     get_velocity_kernel<particle_type::velocity_type::static_size>().shift_rescale_group(
         &*velocity->begin()
       , &*unordered.begin()
       , unordered.size()
-      , particle.dim.threads()
+      , particle.dim().threads()
       , delta
       , factor
     );

@@ -192,7 +192,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
 
     potential_->bind_textures();
 
-    cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+    cuda::configure(particle1_->dim().grid, particle1_->dim().block);
     gpu_wrapper::kernel.compute(
         &*position1.begin()
       , &*position2.begin()
@@ -229,7 +229,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
         weight /= 2;
     }
 
-    cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+    cuda::configure(particle1_->dim().grid, particle1_->dim().block);
     gpu_wrapper::kernel.compute_aux(
         &*position1.begin()
       , &*position2.begin()

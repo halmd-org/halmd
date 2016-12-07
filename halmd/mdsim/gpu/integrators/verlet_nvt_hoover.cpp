@@ -122,7 +122,7 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
     float_type scale = propagate_chain();
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_type::kernel.integrate(
             &*position->begin()
           , &*image->begin()
@@ -156,7 +156,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_type::kernel.finalize(&*velocity->begin(), &*force.begin(), timestep_);
         cuda::thread::synchronize();
 
@@ -164,7 +164,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 
         // rescale velocities
         scoped_timer_type timer2(runtime_.rescale);
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_type::kernel.rescale(&*velocity->begin(), scale);
         cuda::thread::synchronize();
     }

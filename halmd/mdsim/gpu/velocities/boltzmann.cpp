@@ -105,7 +105,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     gaussian_impl_(
         &*velocity->begin()
       , particle_->nparticle()
-      , particle_->dim.threads()
+      , particle_->dim().threads()
       , temp_
       , g_mv_
       , g_mv2_
@@ -117,14 +117,14 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     // set center of mass velocity to zero and
     // rescale velocities to accurate temperature
     cuda::configure(
-        particle_->dim.grid
-      , particle_->dim.block
+        particle_->dim().grid
+      , particle_->dim().block
       , g_mv2_.size() * (2 + dimension) * sizeof(dsfloat)
     );
     wrapper_type::kernel.shift_rescale(
         &*velocity->begin()
       , particle_->nparticle()
-      , particle_->dim.threads()
+      , particle_->dim().threads()
       , temp_
       , g_mv_
       , g_mv2_

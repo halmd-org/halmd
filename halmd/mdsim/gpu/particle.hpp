@@ -87,7 +87,9 @@ public:
     void rearrange(cuda::vector<unsigned int> const& g_index);
 
     /** grid and block dimensions for CUDA calls */
-    cuda::config const dim;
+    cuda::config const& dim() const {
+        return dim_;
+    }
 
     /**
      * Allocate particle arrays in GPU memory.
@@ -113,6 +115,11 @@ public:
         return nparticle_;
     }
 
+    size_type array_size() const
+    {
+        return array_size_;
+    }
+
     /**
      * Returns number of species.
      */
@@ -133,7 +140,7 @@ public:
     template<typename T>
     std::shared_ptr<particle_array_gpu<T>>
     register_data(std::string const& name, std::function<void()> update_function = std::function<void()>()) {
-        auto ptr = particle_array::create<T>(nparticle_, update_function);
+        auto ptr = particle_array::create<T>(nparticle_, array_size_, update_function);
         if (!data_.insert(std::make_pair(name, ptr)).second) {
             throw std::runtime_error("a particle array named \"" + name + "\" already exists");
         }
@@ -445,8 +452,12 @@ public:
 private:
     /** number of particles */
     size_type nparticle_;
+    /** array size */
+    size_type array_size_;
     /** number of particle species */
     unsigned int nspecies_;
+    /** grid and block dimensions for CUDA calls */
+    cuda::config dim_;
 
     /** map of the stored particle arrays */
     std::unordered_map<std::string, std::shared_ptr<particle_array>> data_;

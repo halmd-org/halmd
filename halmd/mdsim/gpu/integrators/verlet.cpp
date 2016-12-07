@@ -74,7 +74,7 @@ void verlet<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_->integrate(
             &*position->begin()
           , &*image->begin()
@@ -107,7 +107,7 @@ void verlet<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_->finalize(
             &*velocity->begin()
           , &*force.begin()

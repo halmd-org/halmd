@@ -274,8 +274,8 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
     particle_group_wrapper<dimension>::kernel.v.bind(read_cache(particle_src.velocity()));
 
     cuda::configure(
-        (ordered.size() + particle_dst.dim.threads_per_block() - 1) / particle_dst.dim.threads_per_block()
-      , particle_dst.dim.block
+        (ordered.size() + particle_dst.dim().threads_per_block() - 1) / particle_dst.dim().threads_per_block()
+      , particle_dst.dim().block
     );
 
     particle_group_wrapper<dimension>::kernel.particle_group_to_particle(

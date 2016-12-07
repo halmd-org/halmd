@@ -53,11 +53,12 @@ namespace gpu {
  */
 template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
-  // FIXME default CUDA kernel execution dimensions
-  : dim(device::validate(cuda::config((nparticle + 128 - 1) / 128, 128)))
-  // allocate global device memory
-  , nparticle_(nparticle)
+  : // allocate global device memory
+    nparticle_(nparticle)
+  , array_size_((nparticle + 128 - 1) & ~(128-1))
   , nspecies_(std::max(nspecies, 1u))
+  // FIXME default CUDA kernel execution dimensions
+  , dim_(device::validate(cuda::config(array_size_/128, 128)))
   // enable auxiliary variables by default to allow sampling of initial state
   , force_zero_(true)
   , force_dirty_(true)
@@ -101,8 +102,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     auto g_en_pot = make_cache_mutable(en_pot_array->mutable_data());
     auto g_stress_pot = make_cache_mutable(stress_pot_array->mutable_data());
 
-    g_force->reserve(dim.threads());
-    g_en_pot->reserve(dim.threads());
     //
     // The GPU stores the stress tensor elements in column-major order to
     // optimise access patterns for coalescable access. Increase capacity of
@@ -110,10 +109,10 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     // available, although stress_pot_->size() still returns the number of
     // particles.
     //
-    g_stress_pot->reserve(stress_pot_type::static_size * dim.threads());
+    g_stress_pot->reserve(stress_pot_type::static_size * array_size_);
 
-    LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
-    LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
+    LOG_DEBUG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
+    LOG_DEBUG("number of CUDA execution threads per block: " << dim_.threads_per_block());
 
     //
     // As the number of threads may exceed the nmber of particles
@@ -146,16 +145,11 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
         // for the long-time stability of the integrator.
         //
         LOG("integrate using double-single precision");
-        g_position->reserve(2 * dim.threads());
-        g_velocity->reserve(2 * dim.threads());
+        g_position->reserve(2 * array_size_);
+        g_velocity->reserve(2 * array_size_);
 #else
         LOG_WARNING("integrate using single precision");
-        g_position->reserve(dim.threads());
-        g_velocity->reserve(dim.threads());
 #endif
-        g_image->reserve(dim.threads());
-        g_id->reserve(dim.threads());
-        g_reverse_id->reserve(dim.threads());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to allocate particles in global device memory");
@@ -191,7 +185,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     }
 
     LOG("number of particles: " << nparticle_);
-    LOG("number of particle placeholders: " << dim.threads());
+    LOG("number of particle placeholders: " << array_size_);
     LOG("number of particle species: " << nspecies_);
 }
 
@@ -226,7 +220,7 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     velocity.reserve(g_velocity->capacity());
     id.reserve(g_reverse_id->capacity());
 
-    cuda::configure(dim.grid, dim.block);
+    cuda::configure(dim_.grid, dim_.block);
     get_particle_kernel<dimension>().r.bind(*g_position);
     get_particle_kernel<dimension>().image.bind(*g_image);
     get_particle_kernel<dimension>().v.bind(*g_velocity);
@@ -307,6 +301,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                 class_<particle, std::shared_ptr<particle>>(class_name.c_str())
                     .def(constructor<size_type, unsigned int>())
                     .property("nparticle", &particle::nparticle)
+                    .property("array_size", &particle::array_size)
                     .property("nspecies", &particle::nspecies)
                     .def("get", &wrap_get<particle>)
                     .def("set", &wrap_set<particle>)

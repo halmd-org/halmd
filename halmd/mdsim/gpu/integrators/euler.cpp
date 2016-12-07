@@ -74,7 +74,7 @@ void euler<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_type::kernel.integrate(
             &*position->begin()
           , &*image->begin()

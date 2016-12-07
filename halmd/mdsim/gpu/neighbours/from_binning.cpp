@@ -103,7 +103,7 @@ void from_binning<dimension, float_type>::set_occupancy(double cell_occupancy)
     // FIXME what is a sensible lower bound?
     size_ = std::max(size_, binning2_->cell_size());
     // number of neighbour lists
-    stride_ = particle1_->dim.threads();
+    stride_ = particle1_->dim().threads();
     // allocate neighbour lists
     auto g_neighbour = make_cache_mutable(g_neighbour_);
     g_neighbour->resize(stride_ * size_);
@@ -229,7 +229,7 @@ void from_binning<dimension, float_type>::update()
             );
         }
         else {
-            cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+            cuda::configure(particle1_->dim().grid, particle1_->dim().block);
             kernel->rr_cut_skin.bind(g_rr_cut_skin_);
             kernel->r2.bind(position2);
             kernel->update_neighbours_naive(

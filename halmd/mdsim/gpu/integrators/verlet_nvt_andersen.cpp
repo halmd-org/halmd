@@ -88,7 +88,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrat
     scoped_timer_type timer(runtime_.integrate);
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_type::kernel.integrate(
             &*position->begin()
           , &*image->begin()
@@ -131,7 +131,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize
           , sqrt_temperature_
           , coll_prob_
           , particle_->nparticle()
-          , particle_->dim.threads()
+          , particle_->dim().threads()
           , random_->rng().rng()
         );
         cuda::thread::synchronize();

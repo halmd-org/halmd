@@ -166,7 +166,7 @@ void lattice<dimension, float_type>::fcc(
     }
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        cuda::configure(particle_->dim().grid, particle_->dim().block);
         get_lattice_kernel<lattice_type>().lattice(first, npart, a, skip, offset, n);
         cuda::thread::synchronize();
     }

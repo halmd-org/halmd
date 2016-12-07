@@ -60,12 +60,16 @@ public:
     /**
      * create gpu particle array of given type
      *
-     * @param size number of particles
-     * @param update_function optional update function
+     * @param nparticle number of particles
+     * @param size array size
+     * @param update_function update function
      * @return shared pointer to the new particle array
      */
     template<typename T>
-    static inline std::shared_ptr<particle_array_gpu<T>> create(unsigned int size, std::function<void()> update_function = std::function<void()>());
+    static inline std::shared_ptr<particle_array_gpu<T>> create(
+      unsigned int nparticle
+    , unsigned int size
+    , std::function<void()> update_function);
 
     /**
      * cast generic particle array to typed data
@@ -261,10 +265,9 @@ public:
      *
      * @param stride stride of the underlying gpu data
      * @param offset offset of the typed data within the underlying gpu data
-     * @param n_elems number of elements in the array
      */
-    particle_array_typed(size_t stride, size_t offset, size_t n_elems)
-      : stride_(stride), offset_(offset), n_elems_(n_elems)
+    particle_array_typed(size_t stride, size_t offset)
+      : stride_(stride), offset_(offset)
     {}
 
     /**
@@ -285,6 +288,7 @@ public:
     {
         auto mem = get_gpu_memory();
         auto it = first;
+        // TODO: handle sizes & ghost particles
         for(size_t i = offset_; i < mem.size(); i += stride_) {
             converter.set(mem, i, *it++);
         }
@@ -310,6 +314,7 @@ public:
     {
         auto data = get_gpu_data();
         auto it = first;
+        // TODO: handle sizes & ghost particles
         for(size_t i = offset_; i < data.size(); i += stride_) {
             *it++ = converter.get(data, i);
         }
@@ -324,9 +329,11 @@ public:
     virtual void set_lua(luaponte::object table)
     {
         auto mem = get_gpu_memory();
-        size_t j = 1;
-        for(size_t i = offset_; i < mem.size(); i += stride_) {
-            converter.set(mem, i, luaponte::object_cast<T>(table[j++]));
+        size_t i = offset_;
+        // TODO: handle size mismatch & ghost particles
+        for(luaponte::iterator it(table), end; it != end && i < mem.size(); ++it) {
+            converter.set(mem, i, luaponte::object_cast<T>(*it));
+            i += stride_;
         }
         set_gpu_data(mem);
     }
@@ -342,6 +349,7 @@ public:
         auto data = get_gpu_data();
         luaponte::object table = luaponte::newtable(L);
         std::size_t j = 1;
+        // TODO: handle ghost particles
         for(size_t i = offset_; i < data.size(); i += stride_) {
             auto&& value = converter.get(data, i);
             table[j++] = boost::cref(value);
@@ -359,18 +367,11 @@ public:
         return offset_;
     }
 
-    size_t n_elems() const
-    {
-        return n_elems_;
-    }
-
 private:
     /** gpu data stride */
     size_t stride_;
     /** typed data offset */
     size_t offset_;
-    /** number of elements */
-    size_t n_elems_;
     /** particle data converter */
     detail::particle_data_converter<T> converter;
 };
@@ -384,12 +385,14 @@ public:
     /**
      * gpu particle array constructor
      *
+     * @param nparticle number of particles
      * @param size size of the underlying cuda::vector
-     * @param update_function optional update function
+     * @param update_function update function
      */
-    particle_array_gpu(unsigned int size, std::function<void()> update_function)
-      : particle_array_typed<T>(sizeof(T), 0, size), data_(size), update_function_(update_function)
+    particle_array_gpu(unsigned int nparticle, unsigned int size, std::function<void()> update_function)
+      : particle_array_typed<T>(sizeof(T), 0), data_(nparticle), update_function_(update_function)
     {
+        make_cache_mutable(data_)->reserve(size);
         if (!update_function_) {
             update_function_ = [](){};
         }
@@ -507,7 +510,7 @@ public:
      */
     template<typename gpu_type>
     particle_array_host_wrapper(const std::shared_ptr<particle_array_gpu<gpu_type>> &parent, size_t offset, bool is_tuple)
-      : particle_array_typed<host_type>(sizeof(gpu_type), offset, parent->data()->size()), is_tuple_(is_tuple), parent_(parent)
+      : particle_array_typed<host_type>(sizeof(gpu_type), offset), is_tuple_(is_tuple), parent_(parent)
     {}
 
     /**
@@ -584,9 +587,12 @@ private:
 // implementations of static members of particle_array
 
 template<typename T>
-inline std::shared_ptr<particle_array_gpu<T>> particle_array::create(unsigned int size, std::function<void()> update_function)
+inline std::shared_ptr<particle_array_gpu<T>> particle_array::create(
+  unsigned int nparticle
+, unsigned int size
+, std::function<void()> update_function)
 {
-    return std::make_shared<particle_array_gpu<T>>(size, update_function);
+    return std::make_shared<particle_array_gpu<T>>(nparticle, size, update_function);
 }
 
 template<typename host_type, typename gpu_type>

@@ -73,11 +73,11 @@ void hilbert<dimension, float_type>::order()
     {
         scoped_timer_type timer(runtime_.order);
         cuda::vector<unsigned int> g_index(particle_->nparticle());
-        g_index.reserve(particle_->dim.threads());
+        g_index.reserve(particle_->dim().threads());
         {
 
             cuda::vector<unsigned int> g_map(particle_->nparticle());
-            g_map.reserve(particle_->dim.threads());
+            g_map.reserve(particle_->dim().threads());
             this->map(g_map);
             this->permutation(g_map, g_index);
         }
@@ -96,7 +96,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 
     scoped_timer_type timer(runtime_.map);
 
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    cuda::configure(particle_->dim().grid, particle_->dim().block);
     wrapper_type::kernel.map(
         &*position.begin()
       , g_map
@@ -110,7 +110,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index)
 {
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    cuda::configure(particle_->dim().grid, particle_->dim().block);
     wrapper_type::kernel.gen_index(g_index);
     radix_sort(g_map.begin(), g_map.end(), g_index.begin());
 }
