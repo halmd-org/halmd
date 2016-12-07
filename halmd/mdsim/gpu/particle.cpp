@@ -156,9 +156,10 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
         throw;
     }
 
-    // initialise 'ghost' particles to zero
+    // initialise 'ghost' particles to zero and sets their species to -1U
     // this avoids potential nonsense computations resulting in denormalised numbers
-    cuda::memset(g_position->begin(), g_position->begin() + g_position->capacity(), 0);
+    cuda::configure(dim_.grid, dim_.block);
+    get_particle_kernel<dimension>().initialize_position_species(&*g_position->begin(), nparticle_);
     cuda::memset(g_velocity->begin(), g_velocity->begin() + g_velocity->capacity(), 0);
     cuda::memset(g_image->begin(), g_image->begin() + g_image->capacity(), 0);
     iota(g_id->begin(), g_id->begin() + g_id->capacity(), 0);

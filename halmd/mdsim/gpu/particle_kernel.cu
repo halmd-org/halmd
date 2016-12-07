@@ -21,6 +21,7 @@
  */
 
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
+#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/tuple.hpp>
@@ -53,6 +54,25 @@ struct image
 };
 // instantiate static members
 template<int dimension> image<dimension>::type image<dimension>::tex_;
+
+/**
+ * initialize particle positions and species
+ */
+__global__ void initialize_position_species(
+    float4* g_r
+  , unsigned int size
+)
+{
+    unsigned int const threads = GTDIM;
+    unsigned int type = (GTID < size) ? 0 : placeholder;
+#ifdef USE_VERLET_DSFUN
+    fixed_vector<dsfloat, 3> r (0.0);
+    tie(g_r[GTID], g_r[GTID + threads]) <<= tie(r, type);
+#else
+    fixed_vector<float, 3> r (0.0f);
+    g_r[GTID] <<= tie(r, type);
+#endif
+}
 
 /**
  * rearrange particles by a given permutation
@@ -99,6 +119,7 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
   , particle_kernel::image<dimension>::tex_
   , particle_kernel::v_
   , particle_kernel::id_
+  , particle_kernel::initialize_position_species
 #ifdef USE_VERLET_DSFUN
   , particle_kernel::rearrange<fixed_vector<dsfloat, dimension> >
 #else
