@@ -46,6 +46,7 @@ namespace host {
 template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
   : nparticle_(nparticle)
+  , capacity_((nparticle+128-1)&~(128-1))
   , nspecies_(std::max(nspecies, 1u))
   // enable auxiliary variables by default to allow sampling of initial state
   , force_zero_(true)
@@ -73,15 +74,19 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     std::fill(position->begin(), position->end(), 0);
     std::fill(image->begin(), image->end(), 0);
     std::fill(velocity->begin(), velocity->end(), 0);
-    std::iota(id->begin(), id->end(), 0);
-    std::iota(reverse_id->begin(), reverse_id->end(), 0);
-    std::fill(species->begin(), species->end(), 0);
+    std::iota(id->begin(), id->begin() + nparticle_, 0);
+    std::fill(id->begin() + nparticle_, id->end(), -1U);
+    std::iota(reverse_id->begin(), reverse_id->begin() + nparticle_, 0);
+    std::fill(reverse_id->begin() + nparticle_, reverse_id->end(), -1U);
+    std::fill(species->begin(), species->begin() + nparticle_, 0);
+    std::fill(species->begin() + nparticle_, species->end(), -1U);
     std::fill(mass->begin(), mass->end(), 1);
     std::fill(force->begin(), force->end(), 0);
     std::fill(en_pot->begin(), en_pot->end(), 0);
     std::fill(stress_pot->begin(), stress_pot->end(), 0);
 
     LOG("number of particles: " << nparticle_);
+    LOG("capacity: " << capacity_);
     LOG("number of particle species: " << nspecies_);
 }
 
@@ -110,12 +115,12 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     auto species = make_cache_mutable(mutable_data<species_type>("species"));
     auto mass = make_cache_mutable(mutable_data<mass_type>("mass"));
 
-    permute(position->begin(), position->end(), index.begin());
-    permute(image->begin(), image->end(), index.begin());
-    permute(velocity->begin(), velocity->end(), index.begin());
-    permute(id->begin(), id->end(), index.begin());
-    permute(species->begin(), species->end(), index.begin());
-    permute(mass->begin(), mass->end(), index.begin());
+    permute(position->begin(), position->begin() + nparticle_, index.begin());
+    permute(image->begin(), image->begin() + nparticle_, index.begin());
+    permute(velocity->begin(), velocity->begin() + nparticle_, index.begin());
+    permute(id->begin(), id->begin() + nparticle_, index.begin());
+    permute(species->begin(), species->begin() + nparticle_, index.begin());
+    permute(mass->begin(), mass->begin() + nparticle_, index.begin());
     // no permutation of forces
 
     // update reverse ids
