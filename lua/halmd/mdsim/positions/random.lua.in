@@ -1,0 +1,97 @@
+--
+-- Copyright © 2016 Arthur Straube
+-- Copyright © 2010 Felix Höfling
+-- Copyright © 2013 Nicolas Höft
+-- Copyright © 2010 Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+local log               = require("halmd.io.log")
+local halmd_random      = require("halmd.random")
+local utility           = require("halmd.utility")
+local module            = require("halmd.utility.module")
+local profiler          = require("halmd.utility.profiler")
+
+-- grab C++ wrappers
+local random = assert(libhalmd.mdsim.positions.random)
+
+---
+-- Random
+-- ======
+--
+-- FIXME This module places particles on a face-centered cubic (fcc) lattice.
+-- Optionally, the lattice may be restricted to a cuboid ("slab") centred and
+-- aligned with the simulation box.
+--
+
+---
+-- Construct Lattice module
+--
+-- :param table args: keyword arguments
+-- :param args.particle: Instance of :class:`halmd.mdsim.particle`.
+-- :param args.box: Instance of :mod:`halmd.mdsim.box`.
+-- :param table args.slab: Vector specifying the fraction of the box size to be
+--   filled *(optional)*.
+--
+-- .. attribute:: slab
+--
+--    Restrict the lattice to a slab of given extents relative to the box size,
+--    the slab is centred within the simulation box. More generally, the
+--    lattice may be restricted to a cuboid aligned with the box since each
+--    direction may be less than unity. The default is `{1, … 1}`, i.e., no
+--    restriction.
+--
+-- .. method:: set()
+--
+--    Set all particle positions on an fcc lattice.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect module from profiler.
+--
+local M = module(function(args)
+    local particle = utility.assert_kwarg(args, "particle")
+    local box = utility.assert_kwarg(args, "box")
+    local slab = args.slab or {} -- optional
+
+    -- fill up missing values with 1
+    local dimension = assert(particle.dimension)
+    for i = #slab + 1, dimension do
+        slab[i] = 1
+    end
+
+    -- construct or grab random number generator (a singleton)
+    local rng = halmd_random.generator({memory = particle.memory})
+
+    -- construct module logger
+    local logger = args.logger or log.logger({label = "random positions"})
+
+    local self = random(particle, box, rng, slab, logger)
+
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "random positions module")
+
+    -- connect to profiler
+    local runtime = assert(self.runtime)
+    table.insert(conn, profiler:on_profile(runtime.set, "setting random particle positions"))
+
+    return self
+end)
+
+return M
