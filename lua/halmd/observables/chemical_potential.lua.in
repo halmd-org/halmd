@@ -146,12 +146,6 @@ local M = module(function(args)
     local temperature = utility.assert_type(utility.assert_kwarg(args, "temperature"), "number")
     local test_particles = utility.assert_type(utility.assert_kwarg(args, "test_particles"), "table")
 
-    -- reproduce backend from particle example
-    local memory = particle.memory
-
-    -- construct random number generator
-    local rng = random.generator({memory = memory})
-
     -- construct module logger
     local logger = log.logger({label = "chemical potential"})
 
@@ -166,13 +160,13 @@ local M = module(function(args)
         dimension = box.dimension
       , particles = npart
       , species = particle.nspecies
-      , memory = memory
+      , memory = particle.memory
       , label = "chemical_potential"
     })
 
-    -- construct position module to place test particles -- FIXME random
-    local position = mdsim.positions.lattice({
-        particle = test_particle, box = box, rng = rng, logger = logger
+    -- construct position module to place test particles
+    local position = mdsim.positions.random({
+        particle = test_particle, box = box, logger = logger
     })
 
     -- construct module instance
@@ -229,8 +223,9 @@ local M = module(function(args)
 
         -- connect writer to sampler
         table.insert(conn, sampler:on_prepare(function() self.test_particle:aux_enable() end, every, 0))
+        -- FIXME re-shuffle particle positions occasionally only
+        table.insert(conn, sampler:on_prepare(function() position:set() end, every, 0))
         table.insert(conn, sampler:on_sample(writer.write, every, mdsim.clock.step))
-        -- FIXME re-shuffle particle positions occasionally
         return writer
     end
 
