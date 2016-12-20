@@ -292,7 +292,7 @@ self.truncate = function(potential, args)
     end
 
     local newpot = truncate_table[args[1] or "shifted"](potential, cutoff, args)
-    newpot.description = args[1].." "..potential.description
+    newpot.description = (args[1] or "shifted").." "..potential.description
     newpot.species = potential.species
     newpot.memory = potential.memory
     newpot.logger = potential.logger
