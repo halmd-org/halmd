@@ -122,6 +122,7 @@ int main(int argc, char **argv)
         // read script from file if specified, or from stdin
         if (!pos.empty()) {
             script.dofile(pos.front());
+            script.run();
         }
         else {
             script.dofile();

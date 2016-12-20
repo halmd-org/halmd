@@ -20,8 +20,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = require("halmd")
-
 -- grab modules
 local mdsim = halmd.mdsim
 local observables = halmd.observables
@@ -32,7 +30,7 @@ local utility = halmd.utility
 --
 -- Setup and run simulation
 --
-local function kob_andersen(args)
+function main(args)
     local nparticle = 256000  -- total number of particles
     local concentration = 0.8 -- concentration of A particles
     local density = 1.2       -- number density
@@ -76,7 +74,7 @@ local function kob_andersen(args)
       , cutoff = 2.5
     })
     -- compute forces
-    local force = mdsim.forces.pair_trunc({box = box, particle = particle, potential = potential})
+    local force = mdsim.forces.pair({box = box, particle = particle, potential = potential})
 
     -- define velocity-Verlet integrator with Andersen thermostat
     local integrator = mdsim.integrators.verlet_nvt_andersen({
@@ -120,36 +118,9 @@ end
 --
 -- Parse command-line arguments.
 --
-local function parse_args()
+function define_args()
     local parser = utility.program_options.argument_parser()
 
-    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
-        -- substitute current time
-        args[key] = os.date(value)
-    end, default = "kob_andersen_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
-
-    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
-        local level = {
-            -- console, file
-            {"warning", "info" },
-            {"info"   , "info" },
-            {"debug"  , "debug"},
-            {"trace"  , "trace"},
-        }
-        args[key] = level[value] or level[#level]
-    end, default = 1, help = "increase logging verbosity"})
-
-    return parser:parse_args()
+    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
+        default = "kob_andersen_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 end
-
-local args = parse_args()
-
--- log to console
-halmd.io.log.open_console({severity = args.verbose[1]})
--- log to file
-halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
--- log version
-utility.version.prologue()
-
--- run simulation
-kob_andersen(args)

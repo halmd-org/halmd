@@ -4,8 +4,8 @@ Getting started
 *HAL’s MD package* is configured and steered with customisable simulation
 scripts written in `Lua 5 <http://lua.org>`_. For a quick start refer to one of
 the `"liquid" <http://git.halmd.org/halmd/tree/master/examples>`_ scripts found
-in ``share/doc/halmd/examples`` in the installation directory.
-
+in ``share/doc/halmd/examples`` in the installation directory. For further details
+about the simulation scripts, see :ref:`scripts`.
 
 Program parameters
 ------------------

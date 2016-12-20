@@ -64,25 +64,28 @@ __global__ void rearrange(
   , aligned_vector_type* g_image
   , float4* g_v
   , unsigned int* g_tag
+  , unsigned int npart
 )
 {
     enum { dimension = vector_type::static_size };
+    if (GTID < npart) {
+        int const i = g_index[GTID];
 
-    int const i = g_index[GTID];
+        // copy position and velocity as float4 values, and image vector
+        g_r[GTID] = tex1Dfetch(r_, i);
+        g_v[GTID] = tex1Dfetch(v_, i);
 
-    // copy position and velocity as float4 values, and image vector
-    g_r[GTID] = tex1Dfetch(r_, i);
-    g_v[GTID] = tex1Dfetch(v_, i);
 #ifdef USE_VERLET_DSFUN
-    g_r[GTID + GTDIM] = tex1Dfetch(r_, i + GTDIM);
-    g_v[GTID + GTDIM] = tex1Dfetch(v_, i + GTDIM);
+        g_r[GTID + GTDIM] = tex1Dfetch(r_, i + GTDIM);
+        g_v[GTID + GTDIM] = tex1Dfetch(v_, i + GTDIM);
 #endif
 
-    // select correct image texture depending on the space dimension
-    g_image[GTID] = tex1Dfetch(image<dimension>::tex_, i);
+        // select correct image texture depending on the space dimension
+        g_image[GTID] = tex1Dfetch(image<dimension>::tex_, i);
 
-    // copy particle tags
-    g_tag[GTID] = tex1Dfetch(tag_, i);
+        // copy particle tags
+        g_tag[GTID] = tex1Dfetch(tag_, i);
+    }
 }
 
 } // namespace particle_kernel

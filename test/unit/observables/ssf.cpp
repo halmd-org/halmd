@@ -82,7 +82,7 @@ struct lattice
     unsigned npart;
     float density;
     float lattice_constant;
-    fixed_vector<double, dimension> slab;
+    typename modules_type::slab_type slab;
 
     shared_ptr<box_type> box;
     shared_ptr<particle_type> particle;
@@ -273,6 +273,7 @@ lattice<modules_type>::lattice()
 template <int dimension, typename float_type>
 struct host_modules
 {
+    typedef fixed_vector<float_type, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
@@ -281,17 +282,27 @@ struct host_modules
     static bool const gpu = false;
 };
 
+#ifndef USE_HOST_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE( ssf_host_2d ) {
     lattice<host_modules<2, double> >().test();
 }
 BOOST_AUTO_TEST_CASE( ssf_host_3d ) {
     lattice<host_modules<3, double> >().test();
 }
+#else
+BOOST_AUTO_TEST_CASE( ssf_host_2d ) {
+    lattice<host_modules<2, float> >().test();
+}
+BOOST_AUTO_TEST_CASE( ssf_host_3d ) {
+    lattice<host_modules<3, float> >().test();
+}
+#endif
 
 #ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>
 struct gpu_modules
 {
+    typedef fixed_vector<double, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;

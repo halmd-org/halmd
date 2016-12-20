@@ -21,6 +21,8 @@
 local module = require("halmd.utility.module")
 
 ---
+-- .. _modules:
+--
 -- Modules
 -- =======
 --

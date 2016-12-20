@@ -49,7 +49,11 @@ using namespace std;
  * Ayadim, Oettel, Amokrane, J. Phys.: Condens. Matter 21, 115103 (2009).
  */
 
+#ifndef USE_HOST_SINGLE_PRECISION
 const double eps = numeric_limits<double>::epsilon();
+#else
+const double eps = numeric_limits<float>::epsilon();
+#endif
 const float eps_float = numeric_limits<float>::epsilon();
 
 /**
@@ -146,7 +150,11 @@ BOOST_AUTO_TEST_CASE( validation )
     // with the first released version of HAL's MD package (commit f5283a2),
     // an energy drift of less than 5e-6 ε was obtained over 2e8 MD steps
     // using a potential with smooth cutoff (dt*=0.001, h=0.005)
+#ifndef USE_HOST_SINGLE_PRECISION
     const double en_limit = max(3e-5, steps * 1e-12);
+#else
+    const double en_limit = max(7e-5, steps * 1e-12);
+#endif
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_tot), en_limit);
 
     // use tolerance of 4.5σ, see below;

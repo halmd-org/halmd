@@ -38,6 +38,7 @@
 #include <halmd/mdsim/host/max_displacement.hpp>
 #include <halmd/mdsim/host/neighbours/from_binning.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
+#include <halmd/mdsim/host/potentials/pair/truncations/shifted.hpp>
 #include <halmd/mdsim/host/potentials/pair/lennard_jones.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -51,6 +52,7 @@
 # include <halmd/mdsim/gpu/max_displacement.hpp>
 # include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/truncations/shifted.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/lennard_jones.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
@@ -67,7 +69,11 @@ using namespace std;
  * test NVT Verlet integrator with Nosé-Hoover chain thermostat
  */
 
+#ifndef USE_HOST_SINGLE_PRECISION
 const double eps = numeric_limits<double>::epsilon();
+#else
+const double eps = numeric_limits<float>::epsilon();
+#endif
 const float eps_float = numeric_limits<float>::epsilon();
 
 /**
@@ -199,7 +205,11 @@ void verlet_nvt_hoover<modules_type>::test()
     //
     // these tolerances have no deeper justification, except that even a small
     // energy drift requires a scaling with the number of simulation steps
+#ifndef USE_HOST_SINGLE_PRECISION
     const double en_tolerance = max(5e-5, steps * 1e-12);
+#else
+    const double en_tolerance = max(6e-5, steps * 1e-12);
+#endif
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_nhc0), en_tolerance);
 
     //
@@ -312,7 +322,8 @@ template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::host::potentials::pair::lennard_jones<float_type> potential_type;
+    typedef mdsim::host::potentials::pair::lennard_jones<float_type> base_potential_type;
+    typedef mdsim::host::potentials::pair::truncations::shifted<base_potential_type> potential_type;
     typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::host::binning<dimension, float_type> binning_type;
     typedef mdsim::host::neighbours::from_binning<dimension, float_type> neighbour_type;
@@ -327,19 +338,29 @@ struct host_modules
     static bool const gpu = false;
 };
 
+#ifndef USE_HOST_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_2d ) {
     verlet_nvt_hoover<host_modules<2, double> >().test();
 }
 BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_3d ) {
     verlet_nvt_hoover<host_modules<3, double> >().test();
 }
+#else
+BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_2d ) {
+    verlet_nvt_hoover<host_modules<2, float> >().test();
+}
+BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_3d ) {
+    verlet_nvt_hoover<host_modules<3, float> >().test();
+}
+#endif
 
 #ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::gpu::potentials::pair::lennard_jones<float_type> potential_type;
+    typedef mdsim::gpu::potentials::pair::lennard_jones<float_type> base_potential_type;
+    typedef mdsim::gpu::potentials::pair::truncations::shifted<base_potential_type> potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::gpu::binning<dimension, float_type> binning_type;
     typedef mdsim::gpu::neighbours::from_binning<dimension, float_type> neighbour_type;

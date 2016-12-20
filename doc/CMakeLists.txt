@@ -160,8 +160,9 @@ add_custom_command(OUTPUT pdf
 )
 
 add_custom_command(OUTPUT pdf/halmd.pdf
-  COMMAND make -C pdf LATEXOPTS=-interaction=${HALMD_DOC_LATEX_MODE}
+  COMMAND make LATEXOPTS=-interaction=${HALMD_DOC_LATEX_MODE}
   DEPENDS pdf
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/pdf"
   COMMENT "Build HALMD PDF documentation"
 )
 

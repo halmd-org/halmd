@@ -65,4 +65,9 @@
 # define BOOST_RESULT_OF_USE_DECLTYPE
 #endif
 
+/**
+ * List of potential truncations.
+ */
+#define HALMD_PAIR_POTENTIAL_TRUNCATIONS @HALMD_PAIR_POTENTIAL_TRUNCATION_DEFINITION@
+
 #endif /* ! HALMD_CONFIG_HPP */

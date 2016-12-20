@@ -37,11 +37,25 @@ enum {
     EPSILON     /**< depth of potential well in MD units */
   , SIGMA       /**< width of potential well in MD units */
   , R_MIN_SIGMA /**< position of potential well in units of sigma */
-  , EN_CUT      /**< potential energy at cutoff radius in MD units */
 };
 
 // forward declaration for host code
 class morse;
+
+template<typename float_type>
+HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type const& rr
+                                                                    , float_type const& sigma
+                                                                    , float_type const& epsilon
+                                                                    , float_type const& r_min)
+{
+    float_type r_sigma = sqrt(rr) / sigma;
+    float_type exp_dr = exp(r_min - r_sigma);
+    float_type eps_exp_dr = epsilon * exp_dr;
+    float_type fval = 2 * eps_exp_dr * (exp_dr - 1) * r_sigma / rr;
+    float_type en_pot = eps_exp_dr * (exp_dr - 2);
+
+    return make_tuple(fval, en_pot);
+}
 
 } // namespace morse_kernel
 
@@ -49,8 +63,6 @@ struct morse_wrapper
 {
     /** potential parameters */
     static cuda::texture<float4> param;
-    /** squared cutoff radius */
-    static cuda::texture<float> rr_cut;
 };
 
 } // namespace pair

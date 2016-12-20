@@ -88,13 +88,13 @@ struct gpu_samples {
         species = std::make_shared<species_sample_type>(g_position->data().size());
         velocity = std::make_shared<velocity_sample_type>(g_velocity->data().size());
 
-        cuda::copy(g_position->data(), h_buf);
+        cuda::copy(g_position->data().begin(), g_position->data().end(), h_buf.begin());
         cuda::thread::synchronize();
         for(size_t i = 0; i < h_buf.size(); ++i) {
             tie(position->data()[i], species->data()[i]) <<= h_buf[i];
         }
 
-        cuda::copy(g_velocity->data(), h_buf);
+        cuda::copy(g_velocity->data().begin(), g_velocity->data().end(), h_buf.begin());
         cuda::thread::synchronize();
         std::copy(h_buf.begin(), h_buf.end(), velocity->data().begin());
     }
@@ -294,12 +294,21 @@ struct host_modules
     static bool const gpu = false;
 };
 
+#ifndef USE_HOST_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE( phase_space_host_2d ) {
     phase_space<host_modules<2, double> >().test();
 }
 BOOST_AUTO_TEST_CASE( phase_space_host_3d ) {
     phase_space<host_modules<3, double> >().test();
 }
+#else
+BOOST_AUTO_TEST_CASE( phase_space_host_2d ) {
+    phase_space<host_modules<2, float> >().test();
+}
+BOOST_AUTO_TEST_CASE( phase_space_host_3d ) {
+    phase_space<host_modules<3, float> >().test();
+}
+#endif
 
 #ifdef HALMD_WITH_GPU
 

@@ -57,9 +57,9 @@ public:
     typedef unsigned int tag_type;
     typedef unsigned int reverse_tag_type;
     typedef unsigned int species_type;
-    typedef double mass_type;
+    typedef float_type mass_type;
     typedef fixed_vector<float_type, dimension> force_type;
-    typedef double en_pot_type;
+    typedef float_type en_pot_type;
     typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
 
     typedef raw_array<position_type> position_array_type;

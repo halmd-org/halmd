@@ -20,10 +20,10 @@ add_test(integration/validation/thermodynamics/host/3d
   ${CMAKE_COMMAND} -DDIMENSION=3 -DUSE_GPU=0 -P test_integration_validation_thermodynamics.cmake
 )
 if(HALMD_WITH_GPU)
-  add_test(integration/validation/thermodynamics/gpu/2d
+  halmd_add_gpu_test(NO_MEMCHECK integration/validation/thermodynamics/gpu/2d
     ${CMAKE_COMMAND} -DDIMENSION=2 -DUSE_GPU=1 -P test_integration_validation_thermodynamics.cmake
   )
-  add_test(integration/validation/thermodynamics/gpu/3d
+  halmd_add_gpu_test(NO_MEMCHECK integration/validation/thermodynamics/gpu/3d
     ${CMAKE_COMMAND} -DDIMENSION=3 -DUSE_GPU=1 -P test_integration_validation_thermodynamics.cmake
   )
 endif()

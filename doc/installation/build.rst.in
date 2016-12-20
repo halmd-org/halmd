@@ -33,6 +33,18 @@ third-party packages are not found in standard locations, make sure to
 correctly set the environment variable ``CMAKE_PREFIX_PATH``, see
 :ref:`prerequisites`.
 
+.. note::
+
+  CMake ≤ 3.0 may have problems locating a CUDA host compiler (especially if
+  you use nvcc.profile to specify a compiler directory). If you experience
+  errors like "-m64: No such file or directory" when compiling cuda sources,
+  the problem can be solved by manually setting the CMake variable
+  CUDA_HOST_COMPILER to the full path of the desired host compiler.
+  CMake ≥ 3.1 fixes this problem.
+
+  The problem does not occur for builds without GPU acceleration.
+
+
 Compilation
 -----------
 

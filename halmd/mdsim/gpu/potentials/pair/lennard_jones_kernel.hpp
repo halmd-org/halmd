@@ -34,21 +34,32 @@ namespace lennard_jones_kernel {
  * indices of potential parameters
  */
 enum {
-    RR_CUT      /**< square of cutoff length */
-  , EPSILON     /**< potential well depths in MD units */
+    EPSILON     /**< potential well depths in MD units */
   , SIGMA2      /**< square of pair separation */
-  , EN_CUT      /**< potential energy at cutoff length in MD units */
 };
 
 // forward declaration for host code
 class lennard_jones;
+
+template<typename float_type>
+HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type const& rr
+                                                                    , float_type const& sigma2
+                                                                    , float_type const& epsilon)
+{
+    float_type rri =  sigma2 / rr;
+    float_type ri6 = rri * rri * rri;
+    float_type eps_ri6 = epsilon * ri6;
+    float_type fval = 48 * rri * eps_ri6 * (ri6 - 0.5f) / sigma2;
+    float_type en_pot = 4 * eps_ri6 * (ri6 - 1);
+    return make_tuple(fval, en_pot);
+}
 
 } // namespace lennard_jones_kernel
 
 struct lennard_jones_wrapper
 {
     /** Lennard-Jones potential parameters */
-    static cuda::texture<float4> param;
+    static cuda::texture<float2> param;
 };
 
 } // namespace pair

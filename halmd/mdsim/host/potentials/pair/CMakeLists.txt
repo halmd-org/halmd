@@ -5,12 +5,6 @@ halmd_add_potential(
 )
 
 halmd_add_potential(
-  halmd_mdsim_host_potentials_pair_lennard_jones_linear
-  pair lennard_jones_linear
-  lennard_jones_linear.cpp
-)
-
-halmd_add_potential(
   halmd_mdsim_host_potentials_pair_modified_lennard_jones
   pair modified_lennard_jones
   modified_lennard_jones.cpp
@@ -26,10 +20,4 @@ halmd_add_potential(
   halmd_mdsim_host_potentials_pair_power_law
   pair power_law
   power_law.cpp
-)
-
-halmd_add_potential(
-  halmd_mdsim_host_potentials_pair_power_law_with_core
-  pair power_law_with_core
-  power_law_with_core.cpp
 )

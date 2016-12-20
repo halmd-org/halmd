@@ -4,11 +4,18 @@ file(GLOB_RECURSE halmd_lua_sources RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "halm
 # skip disabled potential modules
 foreach(file ${halmd_lua_sources})
   if(${file} MATCHES "halmd/mdsim/potentials/(.*)/(.*)\\.lua\\.in")
-    if(NOT HALMD_WITH_${CMAKE_MATCH_1}_${CMAKE_MATCH_2} AND NOT ${CMAKE_MATCH_2} STREQUAL "init")
+    if(NOT HALMD_WITH_${CMAKE_MATCH_1}_${CMAKE_MATCH_2} AND NOT ${CMAKE_MATCH_2} STREQUAL "init"
+       AND NOT ${CMAKE_MATCH_2} STREQUAL "adapters")
       list(REMOVE_ITEM halmd_lua_sources ${file})
     endif()
   endif()
 endforeach()
+
+if(HALMD_VARIANT_HOST_SINGLE_PRECISION)
+  set(HALMD_HOST_FLOAT_TYPE "float")
+else()
+  set(HALMD_HOST_FLOAT_TYPE "double")
+endif()
 
 # copy files from source to build tree
 foreach(file ${halmd_lua_sources})

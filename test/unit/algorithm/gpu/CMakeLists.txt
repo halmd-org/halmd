@@ -5,7 +5,7 @@ cuda_add_executable(test_unit_algorithm_gpu_apply
 target_link_libraries(test_unit_algorithm_gpu_apply
   ${HALMD_TEST_LIBRARIES}
 )
-add_test(unit/algorithm/gpu/apply
+halmd_add_gpu_test(NO_MEMCHECK unit/algorithm/gpu/apply
   test_unit_algorithm_gpu_apply --log_level=test_suite
 )
 
@@ -16,7 +16,7 @@ cuda_add_executable(test_unit_algorithm_gpu_reduce
 target_link_libraries(test_unit_algorithm_gpu_reduce
   ${HALMD_TEST_LIBRARIES}
 )
-add_test(unit/algorithm/gpu/reduce
+halmd_add_gpu_test(NO_MEMCHECK unit/algorithm/gpu/reduce
   test_unit_algorithm_gpu_reduce --log_level=test_suite
 )
 
@@ -27,7 +27,7 @@ cuda_add_executable(test_unit_algorithm_scan
 target_link_libraries(test_unit_algorithm_scan
   ${HALMD_TEST_LIBRARIES}
 )
-add_test(unit/algorithm/gpu/scan
+halmd_add_gpu_test(NO_MEMCHECK unit/algorithm/gpu/scan
   test_unit_algorithm_scan --log_level=test_suite
 )
 
@@ -39,6 +39,6 @@ target_link_libraries(test_unit_algorithm_gpu_copy_if
   ${HALMD_TEST_LIBRARIES}
   halmd_utility_gpu
 )
-add_test(unit/algorithm/gpu/copy_if
+halmd_add_gpu_test(NO_MEMCHECK unit/algorithm/gpu/copy_if
   test_unit_algorithm_gpu_copy_if --log_level=test_suite
 )

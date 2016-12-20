@@ -16,7 +16,7 @@ if(HALMD_WITH_GPU)
     ${HALMD_TEST_LIBRARIES}
     ${CUDA_LIBRARIES}
   )
-  add_test(unit/numeric/fixed_vector/cuda_vector_converter
+  halmd_add_gpu_test(unit/numeric/fixed_vector/cuda_vector_converter
     test_unit_numeric_fixed_vector_cuda_vector_converter --log_level=test_suite
   )
 endif(HALMD_WITH_GPU)
