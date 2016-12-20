@@ -34,13 +34,13 @@ local random = assert(libhalmd.mdsim.positions.random)
 -- Random
 -- ======
 --
--- FIXME This module places particles on a face-centered cubic (fcc) lattice.
--- Optionally, the lattice may be restricted to a cuboid ("slab") centred and
--- aligned with the simulation box.
+-- This module randomly places particles within the box sampling a uniform
+-- distribution.  Optionally, the volume may be restricted to a cuboid ("slab")
+-- centred and aligned with the simulation box.
 --
 
 ---
--- Construct Lattice module
+-- Construct Random module
 --
 -- :param table args: keyword arguments
 -- :param args.particle: Instance of :class:`halmd.mdsim.particle`.
@@ -58,7 +58,7 @@ local random = assert(libhalmd.mdsim.positions.random)
 --
 -- .. method:: set()
 --
---    Set all particle positions on an fcc lattice.
+--    Assign random positions to all particles.
 --
 -- .. method:: disconnect()
 --

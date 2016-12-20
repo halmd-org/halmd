@@ -71,12 +71,12 @@ void random<dimension, float_type>::set()
     auto position = make_cache_mutable(particle_->position());
     auto image = make_cache_mutable(particle_->image());
 
+    LOG_TRACE("randomly distributing positions of " << position->size() << " particles");
+
     scoped_timer_type timer(runtime_.set);
 
     // edge lengths of cuboid slab centred around the origin
     vector_type length = element_prod(box_->length(), slab_);
-
-    LOG("randomly distributing " << position->size() << " particles uniformly within cuboid of size " << length);
 
     // iterate over all particles
     for (auto &r : *position) {
