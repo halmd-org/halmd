@@ -224,7 +224,7 @@ local M = module(function(args)
         -- connect writer to sampler
         table.insert(conn, sampler:on_prepare(function() self.test_particle:aux_enable() end, every, 0))
         -- FIXME re-shuffle particle positions occasionally only
-        table.insert(conn, sampler:on_prepare(function() position:set() end, every, 0))
+        table.insert(conn, sampler:on_prepare(function() position:set() end, 10 * every, 0)) -- FIXME pass argument
         table.insert(conn, sampler:on_sample(writer.write, every, mdsim.clock.step))
         return writer
     end

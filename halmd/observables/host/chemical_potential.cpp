@@ -19,10 +19,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+#include <cmath>
+#include <sstream>
+
 #include <halmd/observables/host/chemical_potential.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-#include <cmath>
 
 namespace halmd {
 namespace observables {
@@ -43,6 +45,10 @@ chemical_potential<dimension, float_type>::chemical_potential(
   , logger_(logger)
 {
     set_temperature(temperature);
+
+    std::ostringstream str;
+    std::copy(ntest_particle_.begin(), ntest_particle_.end(), std::ostream_iterator<double>(str, " "));
+    LOG("number of test particles: " << str.str());
 
     // construct particle instance for test particles
     unsigned int npart = std::accumulate(ntest_particle_.begin(), ntest_particle_.end(), 0);
