@@ -58,6 +58,7 @@ execute_halmd(
   "@CMAKE_SOURCE_DIR@/test/unit/observables/chemical_potential.lua"
   --box-length "${BOX_LENGTH}"
   --output "${OUTPUT_PREFIX}"
+  --verbose --verbose # debug level
 )
 
 #file(REMOVE

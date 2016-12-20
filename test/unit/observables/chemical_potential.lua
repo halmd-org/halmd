@@ -23,9 +23,6 @@ local halmd = require("halmd")
 local mdsim = require("halmd.mdsim")
 local observables = require("halmd.observables")
 local sampler = require("halmd.observables.sampler")
-local log = require("halmd.io.log")
-
-log.open_console({severity = "debug"})
 
 function rel_error(a, b)
     return math.abs(a - b) / math.abs(b)
@@ -55,9 +52,9 @@ function test_construction(args)
             {1  , 0.8 } -- AA, AB
           , {0.8, 0.88} -- BA, BB
         }
-      , cutoff = 2.5
     })
-    chemical_potential:add_force({"pair_trunc"
+    potential = potential:truncate({cutoff = 2.5})
+    chemical_potential:add_force({"pair"
       , particle = particle
       , potential = potential
     })
@@ -86,26 +83,27 @@ function test_writer(chemical_potential, args)
 end
 
 -- define command line arguments
-function parse_args()
-    local parser = halmd.utility.program_options.argument_parser()
-
+function define_args(parser)
+    parser:add_argument("output,o", {type = "string", help = "prefix of output files"})
     parser:add_argument("particles", {type = "integer", default = 1600, help = "number of particles"})
+
     parser:add_argument("box-length", {type = "vector", dtype = "number", default = {9, 10, 11}
       , help = "edge lengths of simulation box"
     })
-    parser:add_argument("temperature", {type = "number", default = 3.0, help = "temperature"})
-    parser:add_argument("test-particles", {type = "vector", dtype = "number", default = {100, 200}, help = "number of test particles"})
-    parser:add_argument("output,o", {type = "string", help = "prefix of output files"})
 
-    return parser:parse_args()
+    parser:add_argument("temperature", {type = "number", default = 3.0, help = "temperature"})
+
+    parser:add_argument("test-particles", {type = "vector", dtype = "number", default = {100, 200}
+      , help = "number of test particles"
+    })
 end
 
-local args = parse_args()
-
 -- start tests
-local chemical_potential = test_construction(args)
-test_methods(chemical_potential, args)
-test_writer(chemical_potential, args)
+function main(args)
+    local chemical_potential = test_construction(args)
+    test_methods(chemical_potential, args)
+    test_writer(chemical_potential, args)
 
-chemical_potential:disconnect()
+    chemical_potential:disconnect()
+end
 
