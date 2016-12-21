@@ -40,6 +40,7 @@ function test_construction(args)
       , particle = particle
       , temperature = args.temperature
       , test_particles = args.test_particles
+      , position = "random"
     })
 
     -- define interaction: Kob-Andersen mixture
@@ -101,6 +102,7 @@ function test_single_particle(args)
       , particle = particle
       , temperature = 2
       , test_particles = {1e7}
+      , position = "lattice"
     })
 
     -- define interaction

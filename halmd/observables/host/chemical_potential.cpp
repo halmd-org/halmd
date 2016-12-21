@@ -75,7 +75,7 @@ template <int dimension, typename float_type>
 void chemical_potential<dimension, float_type>::set_temperature(double temperature)
 {
     temperature_ = temperature;
-    LOG("temperature for computation of chemical potential: " << temperature_);
+    LOG("temperature assumed for computation: " << temperature_);
 }
 
 // FIXME support particle groups

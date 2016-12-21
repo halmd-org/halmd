@@ -24,7 +24,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/host/positions/random.hpp>
+#include <halmd/mdsim/host/position.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -46,7 +46,7 @@ class chemical_potential
 {
 public:
     typedef mdsim::host::particle<dimension, float_type> particle_type;
-    typedef mdsim::host::positions::random<dimension, float_type> position_type;
+    typedef mdsim::host::position position_type;
     typedef std::vector<halmd::accumulator<double>> result_type;
 
     typedef typename particle_type::vector_type vector_type;
@@ -70,7 +70,7 @@ public:
     result_type const& sample();
 
     /**
-     * Re-assign random positions to test particles.
+     * Re-assign positions to test particles.
      */
     void set_position()
     {

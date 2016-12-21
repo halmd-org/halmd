@@ -59,6 +59,7 @@ local chemical_potential = assert(libhalmd.observables.chemical_potential)
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param number args.temperature: temperature :math:`k_B T` of the statistical ensemble
 -- :param table args.test_particles: number of test particles per species
+-- :param string args.position: name of position module
 --
 -- The argument ``test_particles`` is a table giving the number of test
 -- particles per species, starting with species #0.
@@ -67,6 +68,10 @@ local chemical_potential = assert(libhalmd.observables.chemical_potential)
 -- universe (in most cases there is only one such instance).  It is used to
 -- deduce the space dimension, the maximal number of species', and the compute
 -- device (``memory``) for the construction of the test particles.
+--
+-- The argument ``position`` is one of ``lattice`` and ``random`` and specifies
+-- a module in :class:`halmd.mdsim.positions` to place the test particles. The
+-- default is ``random``.
 --
 -- .. attribute:: temperature
 --
@@ -145,6 +150,7 @@ local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
     local temperature = utility.assert_type(utility.assert_kwarg(args, "temperature"), "number")
     local test_particles = utility.assert_type(utility.assert_kwarg(args, "test_particles"), "table")
+    local position = utility.assert_type(args.position or "random", "string")
 
     -- construct module logger
     local logger = log.logger({label = "chemical potential"})
@@ -164,8 +170,10 @@ local M = module(function(args)
       , label = "chemical_potential"
     })
 
-    -- construct position module to place test particles
-    local position = mdsim.positions.random({
+    -- construct position module to place test particles,
+    -- use module type from 'position' argument
+    assert(mdsim.positions[position])
+    local position = mdsim.positions[position]({
         particle = test_particle, box = box, logger = logger
     })
 
