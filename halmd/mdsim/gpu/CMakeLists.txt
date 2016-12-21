@@ -3,6 +3,7 @@ halmd_add_modules(
   libhalmd_mdsim_gpu_max_displacement
   libhalmd_mdsim_gpu_neighbour
   libhalmd_mdsim_gpu_particle
+  libhalmd_mdsim_gpu_position
   libhalmd_mdsim_gpu_particle_group
 )
 
@@ -21,6 +22,7 @@ halmd_add_library(halmd_mdsim_gpu
   max_displacement_kernel.cu
   neighbour.cpp
   particle.cpp
+  position.cpp
   particle_group.cpp
   particle_kernel.cu
   velocity_kernel.cu

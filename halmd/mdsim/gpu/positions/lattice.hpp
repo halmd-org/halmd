@@ -28,6 +28,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/mdsim/gpu/position.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -38,7 +39,10 @@ namespace positions {
 
 template <int dimension, typename float_type>
 class lattice
+  : public position
 {
+    typedef mdsim::gpu::position _Base;
+
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;

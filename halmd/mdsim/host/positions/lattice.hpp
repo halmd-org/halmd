@@ -28,6 +28,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/position.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -37,7 +38,10 @@ namespace positions {
 
 template <int dimension, typename float_type>
 class lattice
+  : public position
 {
+    typedef mdsim::host::position _Base;
+
 public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
