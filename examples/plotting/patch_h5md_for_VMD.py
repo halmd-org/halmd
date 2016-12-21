@@ -52,11 +52,14 @@ if not "particles" in f:
 s = None
 for p in f["particles"].itervalues():
     # make species time-independent
+    species = None
     if "species" in p.keys():
         species = p["species/value"][0]
         del p["species"]
         p["species"] = species
-        s = numpy.append(s, species) if s != None else species
+    else:
+        species = 0
+    s = numpy.append(s, species) if s != None else species
 
     # add image data and fold back particle positions to periodic box
     if "image" not in p.keys() and "position" in p.keys():
