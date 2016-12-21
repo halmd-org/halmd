@@ -77,6 +77,13 @@ function test_writer(chemical_potential, args)
     if args.output then
         local file = halmd.io.writers.h5md({path = ("%s.h5"):format(args.output)})
         local writer = chemical_potential:writer({file = file, every = 1, species = {"A", "B"}})
+
+        -- write positions of test particles
+        local box = mdsim.box({length = args.box_length})
+        local test_group = mdsim.particle_groups.all({particle = chemical_potential.test_particle})
+        observables.phase_space({box = box, group = test_group})
+            :writer({file = file, fields = {"position"}, every = 1})
+
         sampler:sample() -- sample current state
         writer:disconnect()
     end

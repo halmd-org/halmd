@@ -61,6 +61,6 @@ execute_halmd(
   --verbose --verbose # debug level
 )
 
-#file(REMOVE
-#  "${OUTPUT_PREFIX}.h5"
-#)
+file(REMOVE
+  "${OUTPUT_PREFIX}.h5"
+)
