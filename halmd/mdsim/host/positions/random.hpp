@@ -29,6 +29,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/position.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -39,17 +40,20 @@ namespace positions {
 
 template <int dimension, typename float_type>
 class random
+  : public position
 {
+    typedef mdsim::host::position _Base;
+
 public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef halmd::random::host::random random_type;
+    typedef halmd::random::host::random rng_type;
 
     random(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
-      , std::shared_ptr<random_type> random
+      , std::shared_ptr<rng_type> rng
       , vector_type const& slab
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
@@ -75,7 +79,7 @@ private:
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** random number generator */
-    std::shared_ptr<random_type> random_;
+    std::shared_ptr<rng_type> rng_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 

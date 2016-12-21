@@ -1,8 +1,6 @@
 /*
- * Copyright © 2016      Arthur Straube
- * Copyright © 2008-2016 Felix Höfling
- * Copyright © 2013      Nicolas Höft
- * Copyright © 2008-2011 Peter Colberg
+ * Copyright © 2016 Arthur Straube
+ * Copyright © 2016 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -22,11 +20,8 @@
  */
 
 #include <algorithm>
-#include <boost/array.hpp>
 #include <cmath>
 #include <functional>
-#include <limits>
-#include <numeric>
 
 #include <halmd/mdsim/host/positions/random.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -42,14 +37,14 @@ template <int dimension, typename float_type>
 random<dimension, float_type>::random(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
-  , std::shared_ptr<random_type> random
+  , std::shared_ptr<rng_type> rng
   , vector_type const& slab
   , std::shared_ptr<logger> logger
 )
   // dependency injection
   : particle_(particle)
   , box_(box)
-  , random_(random)
+  , rng_(rng)
   , logger_(logger)
   , slab_(slab)
 {
@@ -82,7 +77,7 @@ void random<dimension, float_type>::set()
     for (auto &r : *position) {
         // assign to each component uniform random values from [-1/2, 1/2)
         for (unsigned int i = 0; i < dimension; ++i) {
-            r[i] = random_->uniform<float_type>() - float_type(.5);
+            r[i] = rng_->uniform<float_type>() - float_type(.5);
         }
         // scale each component by slab size
         r = element_prod(r, length);
@@ -102,7 +97,7 @@ void random<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("positions")
             [
-                class_<random>()
+                class_<random, _Base>()
                     .property("slab", &random::slab)
                     .def("set", &random::set)
                     .scope
@@ -114,7 +109,7 @@ void random<dimension, float_type>::luaopen(lua_State* L)
               , def("random", &std::make_shared<random
                   , std::shared_ptr<particle_type>
                     , std::shared_ptr<box_type const>
-                    , std::shared_ptr<random_type>
+                    , std::shared_ptr<rng_type>
                     , vector_type const&
                     , std::shared_ptr<logger>
                   >)

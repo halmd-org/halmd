@@ -1,8 +1,6 @@
 --
 -- Copyright © 2016 Arthur Straube
--- Copyright © 2010 Felix Höfling
--- Copyright © 2013 Nicolas Höft
--- Copyright © 2010 Peter Colberg
+-- Copyright © 2016 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -40,13 +38,14 @@ local random = assert(libhalmd.mdsim.positions.random)
 --
 
 ---
--- Construct Random module
+-- Construct random module
 --
 -- :param table args: keyword arguments
--- :param args.particle: Instance of :class:`halmd.mdsim.particle`.
--- :param args.box: Instance of :mod:`halmd.mdsim.box`.
--- :param table args.slab: Vector specifying the fraction of the box size to be
---   filled *(optional)*.
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :mod:`halmd.mdsim.box`
+-- :param table args.slab: vector specifying the fraction of the box size to be
+--   filled *(optional)*
+-- :param args.logger: module logger *(optional)*
 --
 -- .. attribute:: slab
 --
