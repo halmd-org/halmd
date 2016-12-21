@@ -70,7 +70,7 @@ function test_methods(chemical_potential)
     assert(rel_error(chemical_potential.temperature, 1.5) < 1e-6)
 
     chemical_potential:set_position()
-    chemical_potential:sample(1)(nil) -- FIXME nil shouldn't be needed
+    chemical_potential:sample(0)(nil) -- FIXME nil shouldn't be needed
 end
 
 function test_writer(chemical_potential, args)
@@ -86,6 +86,37 @@ function test_writer(chemical_potential, args)
 
         sampler:sample() -- sample current state
         writer:disconnect()
+    end
+end
+
+function test_single_particle(args)
+    -- construct prerequisites
+    local box = mdsim.box({length = {5, 5, 5}})
+    local particle = mdsim.particle({particles = 1, species = 1, dimension = box.dimension})
+    particle:set_position({{0,0,0}})
+
+    -- construct chemical potential module
+    local chemical_potential = observables.chemical_potential({
+        box = box
+      , particle = particle
+      , temperature = 2
+      , test_particles = {1e7}
+    })
+
+    -- define interaction
+    chemical_potential:add_force({"pair"
+      , particle = particle
+      , potential = mdsim.potentials.pair.lennard_jones({})
+    })
+
+    -- compute chemical potential and check with result
+    -- obtained from quadrature of the Boltzmann factor over the box
+    local result = chemical_potential:sample(0)(nil)
+    print(("chemical potential of a single Lennard-Jones particle in the box: %.4g ± %.1g")
+            :format(result:mean(), result:error_of_mean()))
+    local reference = -0.0365878169
+    if not (math.abs(result:mean() - reference) < 5 * result:error_of_mean()) then
+        error(("mismatch in chemical potential [%f != %f]"):format(result:mean(), reference))
     end
 end
 
@@ -112,5 +143,9 @@ function main(args)
     test_writer(chemical_potential, args)
 
     chemical_potential:disconnect()
+
+    if #args.box_length == 3 then
+        test_single_particle(args)
+    end
 end
 
