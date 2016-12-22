@@ -116,7 +116,7 @@ function main(args)
     -- 1) construct module including test particles
     -- 2) define interactions with real particles
     -- 3) setup result writer
-    if args.chemical_potential then
+    if args.chemical_potential.temperature then
         local param = args.chemical_potential
         local chemical_potential = observables.chemical_potential({
             box = box
