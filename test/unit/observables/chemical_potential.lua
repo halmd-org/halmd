@@ -101,7 +101,7 @@ function test_single_particle(args)
         box = box
       , particle = particle
       , temperature = 2
-      , test_particles = {1e7}
+      , test_particles = {8e6} -- maximum particle number supported for CUDA compute capability 2.0
       , position = "lattice"
     })
 
