@@ -1,7 +1,6 @@
 /*
- * Copyright © 2016      Arthur Straube
- * Copyright © 2008-2016 Felix Höfling
- * Copyright © 2008-2011 Peter Colberg
+ * Copyright © 2016 Arthur Straube
+ * Copyright © 2016 Felix Höfling
  *
  * This file is part of HALMD.
  *
