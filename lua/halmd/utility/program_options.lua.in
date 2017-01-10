@@ -19,7 +19,6 @@
 --
 
 local utility = require("halmd.utility") -- utility.sorted
-local random = require("halmd.random")
 
 ---
 -- .. _program_options:
@@ -575,7 +574,7 @@ end
 --
 function argument_parser.random_seed_action(args, key, value)
     -- seed the random number generator
-    random.generator({seed = value})
+    halmd.random.generator({seed = value})
 end
 
 
