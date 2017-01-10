@@ -92,9 +92,9 @@ public:
             auto& sample_data = sample_->data();
 
             // copy velocities using index map
-            std::size_t tag = 0;
+            std::size_t id = 0;
             for (std::size_t i : group) {
-                sample_data[tag++] = data[i];
+                sample_data[id++] = data[i];
             }
             array_observer_ = array_->cache_observer();
         }
@@ -113,9 +113,9 @@ public:
         auto data = make_cache_mutable(array_->mutable_data());
         auto const& sample_data = std::static_pointer_cast<sample_type const>(sample)->data();
 
-        std::size_t tag = 0;
+        std::size_t id = 0;
         for (std::size_t i : group) {
-            (*data)[i] = sample_data[tag++];
+            (*data)[i] = sample_data[id++];
         }
     }
 
@@ -246,9 +246,9 @@ public:
             auto& sample_position = this->sample_->data();
 
             // copy and periodically extend positions using index map
-            std::size_t tag = 0;
+            std::size_t id = 0;
             for (std::size_t i : group) {
-                auto& r = sample_position[tag++];
+                auto& r = sample_position[id++];
                 r = particle_position[i];
                 box_->extend_periodic(r, particle_image[i]);
             }
@@ -271,11 +271,11 @@ public:
 
         auto const& sample_position = std::static_pointer_cast<sample_type const>(sample)->data();
 
-        std::size_t tag = 0;
+        std::size_t id = 0;
         for (std::size_t i : group) {
             auto& r = (*particle_position)[i];
             auto& image = (*particle_image)[i];
-            r = sample_position[tag++];
+            r = sample_position[id++];
             image = 0;
 
             // The host implementation of reduce_periodic wraps the position at

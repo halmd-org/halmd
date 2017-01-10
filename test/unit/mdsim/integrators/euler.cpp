@@ -369,7 +369,7 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
     // independently (in correspondence to the definition of operator- for
     // dsfloat).
     //
-    // Caveat: overwrites particle tags in g_v (which are not used anyway)
+    // Caveat: overwrites particle ids in g_v (which are not used anyway)
     try {
         cuda::configure(particle->dim.grid, particle->dim.block);
         apply_negate_wrapper::kernel.apply(&*position.begin(), &*velocity->begin(), position.capacity());

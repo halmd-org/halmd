@@ -58,8 +58,8 @@ public:
     typedef vector_type position_type;
     typedef vector_type image_type;
     typedef vector_type velocity_type;
-    typedef unsigned int tag_type;
-    typedef unsigned int reverse_tag_type;
+    typedef unsigned int id_type;
+    typedef unsigned int reverse_id_type;
     typedef unsigned int species_type;
     typedef float mass_type;
     typedef vector_type force_type;
@@ -69,8 +69,8 @@ public:
     typedef float4 gpu_position_type;
     typedef float4 gpu_velocity_type;
     typedef gpu_vector_type gpu_image_type;
-    typedef tag_type gpu_tag_type;
-    typedef reverse_tag_type gpu_reverse_tag_type;
+    typedef id_type gpu_id_type;
+    typedef reverse_id_type gpu_reverse_id_type;
     typedef gpu_vector_type gpu_force_type;
     typedef en_pot_type gpu_en_pot_type;
     typedef typename stress_pot_type::value_type gpu_stress_pot_type;
@@ -78,8 +78,8 @@ public:
     typedef cuda::vector<gpu_position_type> position_array_type;
     typedef cuda::vector<gpu_image_type> image_array_type;
     typedef cuda::vector<gpu_velocity_type> velocity_array_type;
-    typedef cuda::vector<gpu_tag_type> tag_array_type;
-    typedef cuda::vector<gpu_reverse_tag_type> reverse_tag_array_type;
+    typedef cuda::vector<gpu_id_type> id_array_type;
+    typedef cuda::vector<gpu_reverse_id_type> reverse_id_array_type;
     typedef cuda::vector<gpu_force_type> force_array_type;
     typedef cuda::vector<gpu_en_pot_type> en_pot_array_type;
     typedef cuda::vector<gpu_stress_pot_type> stress_pot_array_type;
@@ -279,35 +279,35 @@ public:
     }
 
     /**
-     * Returns const reference to particle tags.
+     * Returns const reference to particle ids.
      */
-    cache<tag_array_type> const& tag() const
+    cache<id_array_type> const& id() const
     {
-        return data<gpu_tag_type>("g_tag");
+        return data<gpu_id_type>("g_id");
     }
 
     /**
-     * Returns non-const reference to particle tags.
+     * Returns non-const reference to particle ids.
      */
-    cache<tag_array_type>& tag()
+    cache<id_array_type>& id()
     {
-        return mutable_data<gpu_tag_type>("g_tag");
+        return mutable_data<gpu_id_type>("g_id");
     }
 
     /**
-     * Returns const reference to particle reverse tags.
+     * Returns const reference to particle reverse ids.
      */
-    cache<reverse_tag_array_type> const& reverse_tag() const
+    cache<reverse_id_array_type> const& reverse_id() const
     {
-        return data<gpu_reverse_tag_type>("g_reverse_tag");
+        return data<gpu_reverse_id_type>("g_reverse_id");
     }
 
     /**
-     * Returns non-const reference to particle reverse tags.
+     * Returns non-const reference to particle reverse ids.
      */
-    cache<reverse_tag_array_type>& reverse_tag()
+    cache<reverse_id_array_type>& reverse_id()
     {
-        return mutable_data<gpu_reverse_tag_type>("g_reverse_tag");
+        return mutable_data<gpu_reverse_id_type>("g_reverse_id");
     }
 
     /**
@@ -590,43 +590,43 @@ set_mass(particle_type& particle, iterator_type const& first)
 }
 
 /**
- * Copy particle tags to given array.
+ * Copy particle ids to given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-get_tag(particle_type const& particle, iterator_type const& first)
+get_id(particle_type const& particle, iterator_type const& first)
 {
-    return particle.template get_data<typename particle_type::tag_type>("tag", first);
+    return particle.template get_data<typename particle_type::id_type>("id", first);
 }
 
 /**
- * Copy particle tags from given array.
+ * Copy particle ids from given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-set_tag(particle_type& particle, iterator_type const& first)
+set_id(particle_type& particle, iterator_type const& first)
 {
-    return particle.template set_data<typename particle_type::tag_type>("tag", first);
+    return particle.template set_data<typename particle_type::id_type>("id", first);
 }
 
 /**
- * Copy particle reverse tags to given array.
+ * Copy particle reverse ids to given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-get_reverse_tag(particle_type const& particle, iterator_type const& first)
+get_reverse_id(particle_type const& particle, iterator_type const& first)
 {
-    return particle.template get_data<typename particle_type::reverse_tag_type>("reverse_tag", first);
+    return particle.template get_data<typename particle_type::reverse_id_type>("reverse_id", first);
 }
 
 /**
- * Copy particle reverse tags from given array.
+ * Copy particle reverse ids from given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-set_reverse_tag(particle_type& particle, iterator_type const& first)
+set_reverse_id(particle_type& particle, iterator_type const& first)
 {
-    return particle.template set_data<typename particle_type::reverse_tag_type>("reverse_tag", first);
+    return particle.template set_data<typename particle_type::reverse_id_type>("reverse_id", first);
 }
 
 /**

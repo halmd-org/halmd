@@ -57,8 +57,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     auto position = make_cache_mutable(register_data<position_type>("position")->mutable_data());
     auto image = make_cache_mutable(register_data<image_type>("image")->mutable_data());
     auto velocity = make_cache_mutable(register_data<velocity_type>("velocity")->mutable_data());
-    auto tag = make_cache_mutable(register_data<tag_type>("tag")->mutable_data());
-    auto reverse_tag = make_cache_mutable(register_data<reverse_tag_type>("reverse_tag")->mutable_data());
+    auto id = make_cache_mutable(register_data<id_type>("id")->mutable_data());
+    auto reverse_id = make_cache_mutable(register_data<reverse_id_type>("reverse_id")->mutable_data());
     auto species = make_cache_mutable(register_data<species_type>("species")->mutable_data());
     auto mass = make_cache_mutable(register_data<mass_type>("mass")->mutable_data());
     auto force = make_cache_mutable(register_data<force_type>("force", [this]() { this->update_force_(); })->mutable_data());
@@ -73,8 +73,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     std::fill(position->begin(), position->end(), 0);
     std::fill(image->begin(), image->end(), 0);
     std::fill(velocity->begin(), velocity->end(), 0);
-    std::iota(tag->begin(), tag->end(), 0);
-    std::iota(reverse_tag->begin(), reverse_tag->end(), 0);
+    std::iota(id->begin(), id->end(), 0);
+    std::iota(reverse_id->begin(), reverse_id->end(), 0);
     std::fill(species->begin(), species->end(), 0);
     std::fill(mass->begin(), mass->end(), 1);
     std::fill(force->begin(), force->end(), 0);
@@ -105,22 +105,22 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     auto position = make_cache_mutable(mutable_data<position_type>("position"));
     auto image = make_cache_mutable(mutable_data<image_type>("image"));
     auto velocity = make_cache_mutable(mutable_data<velocity_type>("velocity"));
-    auto tag = make_cache_mutable(mutable_data<tag_type>("tag"));
-    auto reverse_tag = make_cache_mutable(mutable_data<reverse_tag_type>("reverse_tag"));
+    auto id = make_cache_mutable(mutable_data<id_type>("id"));
+    auto reverse_id = make_cache_mutable(mutable_data<reverse_id_type>("reverse_id"));
     auto species = make_cache_mutable(mutable_data<species_type>("species"));
     auto mass = make_cache_mutable(mutable_data<mass_type>("mass"));
 
     permute(position->begin(), position->end(), index.begin());
     permute(image->begin(), image->end(), index.begin());
     permute(velocity->begin(), velocity->end(), index.begin());
-    permute(tag->begin(), tag->end(), index.begin());
+    permute(id->begin(), id->end(), index.begin());
     permute(species->begin(), species->end(), index.begin());
     permute(mass->begin(), mass->end(), index.begin());
     // no permutation of forces
 
-    // update reverse tags
+    // update reverse ids
     for (unsigned int i = 0; i < nparticle_; ++i) {
-        (*reverse_tag)[(*tag)[i]] = i;
+        (*reverse_id)[(*id)[i]] = i;
     }
 }
 

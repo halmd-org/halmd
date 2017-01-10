@@ -335,74 +335,74 @@ static void test_velocity(particle_type& particle)
 }
 
 /**
- * Test initialisation, getter and setter of particle tags.
+ * Test initialisation, getter and setter of particle ids.
  */
 template <typename particle_type>
-static void test_tag(particle_type& particle)
+static void test_id(particle_type& particle)
 {
-    typedef typename particle_type::tag_type tag_type;
+    typedef typename particle_type::id_type id_type;
     particle_type const& const_particle = particle;
 
-    // check that tags default to ascending sequence of integers
-    std::vector<tag_type> tag(particle.nparticle());
+    // check that ids default to ascending sequence of integers
+    std::vector<id_type> id(particle.nparticle());
     BOOST_CHECK(
-        get_tag(const_particle, tag.begin()) == tag.end()
+        get_id(const_particle, id.begin()) == id.end()
     );
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        tag.begin()
-      , tag.end()
-      , boost::counting_iterator<tag_type>(0)
-      , boost::counting_iterator<tag_type>(particle.nparticle())
+        id.begin()
+      , id.end()
+      , boost::counting_iterator<id_type>(0)
+      , boost::counting_iterator<id_type>(particle.nparticle())
     );
 
-    // reverse order of particle tags
+    // reverse order of particle ids
     BOOST_CHECK(
-        set_tag(particle, tag.rbegin()) == tag.rend()
+        set_id(particle, id.rbegin()) == id.rend()
     );
     BOOST_CHECK(
-        get_tag(const_particle, tag.begin()) == tag.end()
+        get_id(const_particle, id.begin()) == id.end()
     );
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        tag.rbegin()
-      , tag.rend()
-      , boost::counting_iterator<tag_type>(0)
-      , boost::counting_iterator<tag_type>(particle.nparticle())
+        id.rbegin()
+      , id.rend()
+      , boost::counting_iterator<id_type>(0)
+      , boost::counting_iterator<id_type>(particle.nparticle())
     );
 }
 
 /**
- * Test initialisation, getter and setter of particle reverse tags.
+ * Test initialisation, getter and setter of particle reverse ids.
  */
 template <typename particle_type>
-static void test_reverse_tag(particle_type& particle)
+static void test_reverse_id(particle_type& particle)
 {
-    typedef typename particle_type::reverse_tag_type reverse_tag_type;
+    typedef typename particle_type::reverse_id_type reverse_id_type;
     particle_type const& const_particle = particle;
 
-    // check that reverse tags default to ascending sequence of integers
-    std::vector<reverse_tag_type> reverse_tag(particle.nparticle());
+    // check that reverse ids default to ascending sequence of integers
+    std::vector<reverse_id_type> reverse_id(particle.nparticle());
     BOOST_CHECK(
-        get_reverse_tag(const_particle, reverse_tag.begin()) == reverse_tag.end()
+        get_reverse_id(const_particle, reverse_id.begin()) == reverse_id.end()
     );
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        reverse_tag.begin()
-      , reverse_tag.end()
-      , boost::counting_iterator<reverse_tag_type>(0)
-      , boost::counting_iterator<reverse_tag_type>(particle.nparticle())
+        reverse_id.begin()
+      , reverse_id.end()
+      , boost::counting_iterator<reverse_id_type>(0)
+      , boost::counting_iterator<reverse_id_type>(particle.nparticle())
     );
 
-    // reverse order of reverse particle tags
+    // reverse order of reverse particle ids
     BOOST_CHECK(
-        set_reverse_tag(particle, reverse_tag.rbegin()) == reverse_tag.rend()
+        set_reverse_id(particle, reverse_id.rbegin()) == reverse_id.rend()
     );
     BOOST_CHECK(
-        get_reverse_tag(const_particle, reverse_tag.begin()) == reverse_tag.end()
+        get_reverse_id(const_particle, reverse_id.begin()) == reverse_id.end()
     );
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        reverse_tag.rbegin()
-      , reverse_tag.rend()
-      , boost::counting_iterator<reverse_tag_type>(0)
-      , boost::counting_iterator<reverse_tag_type>(particle.nparticle())
+        reverse_id.rbegin()
+      , reverse_id.rend()
+      , boost::counting_iterator<reverse_id_type>(0)
+      , boost::counting_iterator<reverse_id_type>(particle.nparticle())
     );
 }
 
@@ -682,17 +682,17 @@ test_suite_host(std::size_t nparticle, unsigned int nspecies, boost::unit_test::
     };
     ts->add(BOOST_TEST_CASE( velocity ));
 
-    auto tag = [=]() {
+    auto id = [=]() {
         particle_type particle(nparticle, nspecies);
-        test_tag(particle);
+        test_id(particle);
     };
-    ts->add(BOOST_TEST_CASE( tag ));
+    ts->add(BOOST_TEST_CASE( id ));
 
-    auto reverse_tag = [=]() {
+    auto reverse_id = [=]() {
         particle_type particle(nparticle, nspecies);
-        test_reverse_tag(particle);
+        test_reverse_id(particle);
     };
-    ts->add(BOOST_TEST_CASE( reverse_tag ));
+    ts->add(BOOST_TEST_CASE( reverse_id ));
 
     auto species = [=]() {
         particle_type particle(nparticle, nspecies);
@@ -751,19 +751,19 @@ test_suite_gpu(std::size_t nparticle, unsigned int nspecies, boost::unit_test::t
     };
     ts->add(BOOST_TEST_CASE( velocity ));
 
-    auto tag = [=]() {
+    auto id = [=]() {
         set_cuda_device device;
         particle_type particle(nparticle, nspecies);
-        test_tag(particle);
+        test_id(particle);
     };
-    ts->add(BOOST_TEST_CASE( tag ));
+    ts->add(BOOST_TEST_CASE( id ));
 
-    auto reverse_tag = [=]() {
+    auto reverse_id = [=]() {
         set_cuda_device device;
         particle_type particle(nparticle, nspecies);
-        test_reverse_tag(particle);
+        test_reverse_id(particle);
     };
-    ts->add(BOOST_TEST_CASE( reverse_tag ));
+    ts->add(BOOST_TEST_CASE( reverse_id ));
 
     auto species = [=]() {
         set_cuda_device device;

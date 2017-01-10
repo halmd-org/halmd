@@ -151,9 +151,9 @@ public:
             auto offset = array_->offset();
             auto stride = array_->stride();
 
-            size_t tag = 0;
+            size_t id = 0;
             for (size_t i : group) {
-                sample_data[tag++] = *reinterpret_cast<data_type const*>(&data[offset + i * stride]);
+                sample_data[id++] = *reinterpret_cast<data_type const*>(&data[offset + i * stride]);
             }
 
             group_observer_ = particle_group_->ordered();
@@ -179,9 +179,9 @@ public:
         auto offset = array_->offset();
         auto stride = array_->stride();
 
-        size_t tag = 0;
+        size_t id = 0;
         for(size_t i : group) {
-            *reinterpret_cast<data_type*>(&data[offset + i * stride]) = sample_data[tag++];
+            *reinterpret_cast<data_type*>(&data[offset + i * stride]) = sample_data[id++];
         }
 #ifdef USE_VERLET_DSFUN
         if(data.capacity() >= data.size() + nthreads_ * stride) {
@@ -371,9 +371,9 @@ public:
             auto image_offset = image_array_->offset();
             auto image_stride = image_array_->stride();
 
-            size_t tag = 0;
+            size_t id = 0;
             for (size_t i : group) {
-                auto& r = sample_position[tag++];
+                auto& r = sample_position[id++];
                 r = *reinterpret_cast<typename sample_type::data_type const*>(&particle_position[position_offset + i * position_stride]);
                 box_->extend_periodic(r, *reinterpret_cast<typename sample_type::data_type const*>(&particle_image[image_offset + i * image_stride]));
             }

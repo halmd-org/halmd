@@ -99,7 +99,7 @@ public:
 
 private:
     typedef typename particle_type::position_array_type position_array_type;
-    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
+    typedef typename particle_type::reverse_id_array_type reverse_id_array_type;
     typedef typename particle_type::species_array_type species_array_type;
     typedef typename particle_type::species_type species_type;
     typedef typename particle_type::size_type size_type;

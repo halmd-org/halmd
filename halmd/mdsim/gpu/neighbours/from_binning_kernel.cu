@@ -33,9 +33,9 @@ namespace from_binning_kernel {
 
 /** (cutoff lengths + neighbour list skin)² */
 texture<float> rr_cut_skin_;
-/** positions, tags of particle1 */
+/** positions, ids of particle1 */
 texture<float4> r1_;
-/** positions, tags of particle2 */
+/** positions, ids of particle2 */
 texture<float4> r2_;
 
 /**

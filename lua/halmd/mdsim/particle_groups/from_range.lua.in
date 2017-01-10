@@ -39,7 +39,7 @@ local mdsim   = {
 --    -- construct particle instance for given simulation domain
 --    local system = halmd.mdsim.particle({particles = 10000, species = 2})
 --
---    -- select each species, assuming particles of a species have contiguous tags
+--    -- select each species, assuming particles of a species have contiguous ids
 --    local group_A = halmd.mdsim.particle_groups.from_range({particle = system, range = {1, 5000}, label = "A"})
 --    local group_B = halmd.mdsim.particle_groups.from_range({particle = system, range = {5001, 10000}, label = "B"})
 --
@@ -48,18 +48,18 @@ local mdsim   = {
 local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 
 ---
--- Construct particle group from tag range.
+-- Construct particle group from id range.
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
--- :param table args.range: particle tag range ``{first, last}``
+-- :param table args.range: particle id range ``{first, last}``
 -- :param string args.label: group label
 -- :param boolean args.global: particle group can comprise the whole simulation
 --                             world (*default:* ``false``)
 --
 -- .. note::
 --
---    Particle tags are 1-based, i.e. the first particle has tag 1.
+--    Particle ids are 1-based, i.e. the first particle has id 1.
 --
 -- .. attribute:: label
 --
@@ -117,7 +117,7 @@ local M = module(function(args)
 
     local logger = log.logger({prefix = ("group (%s)"):format(label)})
 
-    -- construct particle group from tag range
+    -- construct particle group from id range
     local self = from_range(particle, range, logger)
 
     -- capture C++ method to_particle

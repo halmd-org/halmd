@@ -52,7 +52,7 @@ function main(args)
     -- create system state
     local particle = mdsim.particle({dimension = 3, particles = nparticle, species = 2})
 
-    -- set particle species, with continuous range of tags per species:
+    -- set particle species, with continuous range of ids per species:
     -- construct array with particle species: (0, 0, … 0, 1, 1, … 1)
     local species = {}
     for i = 1, ngroup[1] do table.insert(species, 0) end

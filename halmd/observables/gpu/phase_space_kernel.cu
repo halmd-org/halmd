@@ -51,7 +51,7 @@ template<int dimension> image<dimension>::type image<dimension>::tex_;
  */
 template <typename vector_type, typename T>
 __global__ void sample_position(
-    unsigned int const* g_reverse_tag
+    unsigned int const* g_reverse_id
   , T* g_r
   , vector_type box_length
   , unsigned int npart
@@ -62,13 +62,13 @@ __global__ void sample_position(
 
     if (GTID < npart) {
         // permutation index
-        uint const rtag = g_reverse_tag[GTID];
+        uint const rid = g_reverse_id[GTID];
         // fetch particle from texture caches
         unsigned int type;
         vector_type r;
-        tie(r, type) <<= tex1Dfetch(r_, rtag);
+        tie(r, type) <<= tex1Dfetch(r_, rid);
         // extend particle positions in periodic box
-        vector_type img = tex1Dfetch(image<dimension>::tex_, rtag);
+        vector_type img = tex1Dfetch(image<dimension>::tex_, rid);
         box_kernel::extend_periodic(r, img, box_length);
         // store particle in global memory
         g_r[GTID] <<= tie(r, type);
@@ -80,7 +80,7 @@ __global__ void sample_position(
  */
 template <typename vector_type, typename coalesced_vector_type>
 __global__ void reduce_periodic(
-    unsigned int const* g_reverse_tag
+    unsigned int const* g_reverse_id
   , float4* g_r
   , coalesced_vector_type* g_image
   , vector_type box_length
@@ -90,15 +90,15 @@ __global__ void reduce_periodic(
     enum { dimension = vector_type::static_size };
 
     if (GTID < npart) {
-        unsigned int rtag = g_reverse_tag[GTID];
+        unsigned int rid = g_reverse_id[GTID];
         vector_type r;
         unsigned int type;
-        tie(r, type) <<= tex1Dfetch(r_, rtag);
+        tie(r, type) <<= tex1Dfetch(r_, rid);
 
         vector_type image = box_kernel::reduce_periodic(r, box_length);
 
-        g_image[rtag] = image;
-        g_r[rtag] <<= tie(r, type);
+        g_image[rid] = image;
+        g_r[rid] <<= tie(r, type);
     }
 }
 
@@ -130,15 +130,15 @@ template<typename T> input<T>::type input<T>::tex_;
 
 template <typename T>
 __global__ void sample(
-        unsigned int const* g_reverse_tag
+        unsigned int const* g_reverse_id
         , T *data
         , unsigned int npart
 ) {
     if (GTID < npart) {
         // permutation index
-        uint const rtag = g_reverse_tag[GTID];
+        uint const rid = g_reverse_id[GTID];
         // fetch particle data from texture caches
-        data[GTID] = tex1Dfetch(input<T>::tex_, rtag);
+        data[GTID] = tex1Dfetch(input<T>::tex_, rid);
     }
 }
 

@@ -40,17 +40,17 @@ __global__ void rescale(
 {
     for (unsigned int i = GTID; i < nparticle; i += GTDIM) {
         vector_type v;
-        unsigned int tag;
+        unsigned int id;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) <<= tie(g_v[i], g_v[i + size]);
+        tie(v, id) <<= tie(g_v[i], g_v[i + size]);
 #else
-        tie(v, tag) <<= g_v[i];
+        tie(v, id) <<= g_v[i];
 #endif
         v *= factor;
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + size]) <<= tie(v, tag);
+        tie(g_v[i], g_v[i + size]) <<= tie(v, id);
 #else
-        g_v[i] <<= tie(v, tag);
+        g_v[i] <<= tie(v, id);
 #endif
     }
 }
@@ -70,17 +70,17 @@ __global__ void rescale_group(
     for (unsigned int n = GTID; n < nparticle; n += GTDIM) {
         unsigned int i = g_group[n];
         vector_type v;
-        unsigned int tag;
+        unsigned int id;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) <<= tie(g_v[i], g_v[i + size]);
+        tie(v, id) <<= tie(g_v[i], g_v[i + size]);
 #else
-        tie(v, tag) <<= g_v[i];
+        tie(v, id) <<= g_v[i];
 #endif
         v *= factor;
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + size]) <<= tie(v, tag);
+        tie(g_v[i], g_v[i + size]) <<= tie(v, id);
 #else
-        g_v[i] <<= tie(v, tag);
+        g_v[i] <<= tie(v, id);
 #endif
     }
 }
@@ -98,17 +98,17 @@ __global__ void shift(
 {
     for (unsigned int i = GTID; i < nparticle; i += GTDIM) {
         vector_type v;
-        unsigned int tag;
+        unsigned int id;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) <<= tie(g_v[i], g_v[i + size]);
+        tie(v, id) <<= tie(g_v[i], g_v[i + size]);
 #else
-        tie(v, tag) <<= g_v[i];
+        tie(v, id) <<= g_v[i];
 #endif
         v += delta;
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + size]) <<= tie(v, tag);
+        tie(g_v[i], g_v[i + size]) <<= tie(v, id);
 #else
-        g_v[i] <<= tie(v, tag);
+        g_v[i] <<= tie(v, id);
 #endif
     }
 }
@@ -128,17 +128,17 @@ __global__ void shift_group(
     for (unsigned int n = GTID; n < nparticle; n += GTDIM) {
         unsigned int i = g_group[n];
         vector_type v;
-        unsigned int tag;
+        unsigned int id;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) <<= tie(g_v[i], g_v[i + size]);
+        tie(v, id) <<= tie(g_v[i], g_v[i + size]);
 #else
-        tie(v, tag) <<= g_v[i];
+        tie(v, id) <<= g_v[i];
 #endif
         v += delta;
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + size]) <<= tie(v, tag);
+        tie(g_v[i], g_v[i + size]) <<= tie(v, id);
 #else
-        g_v[i] <<= tie(v, tag);
+        g_v[i] <<= tie(v, id);
 #endif
     }
 }
@@ -157,18 +157,18 @@ __global__ void shift_rescale(
 {
     for (unsigned int i = GTID; i < nparticle; i += GTDIM) {
         vector_type v;
-        unsigned int tag;
+        unsigned int id;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) <<= tie(g_v[i], g_v[i + size]);
+        tie(v, id) <<= tie(g_v[i], g_v[i + size]);
 #else
-        tie(v, tag) <<= g_v[i];
+        tie(v, id) <<= g_v[i];
 #endif
         v += delta;
         v *= factor;
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + size]) <<= tie(v, tag);
+        tie(g_v[i], g_v[i + size]) <<= tie(v, id);
 #else
-        g_v[i] <<= tie(v, tag);
+        g_v[i] <<= tie(v, id);
 #endif
     }
 }
@@ -189,18 +189,18 @@ __global__ void shift_rescale_group(
     for (unsigned int n = GTID; n < nparticle; n += GTDIM) {
         unsigned int i = g_group[n];
         vector_type v;
-        unsigned int tag;
+        unsigned int id;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) <<= tie(g_v[i], g_v[i + size]);
+        tie(v, id) <<= tie(g_v[i], g_v[i + size]);
 #else
-        tie(v, tag) <<= g_v[i];
+        tie(v, id) <<= g_v[i];
 #endif
         v += delta;
         v *= factor;
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + size]) <<= tie(v, tag);
+        tie(g_v[i], g_v[i + size]) <<= tie(v, id);
 #else
-        g_v[i] <<= tie(v, tag);
+        g_v[i] <<= tie(v, id);
 #endif
     }
 }

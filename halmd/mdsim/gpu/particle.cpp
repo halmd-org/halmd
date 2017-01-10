@@ -68,8 +68,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     auto position_array = register_data<gpu_position_type>("g_position");
     auto image_array = register_data<gpu_image_type>("g_image");
     auto velocity_array = register_data<gpu_velocity_type>("g_velocity");
-    auto tag_array = register_data<gpu_tag_type>("g_tag");
-    auto reverse_tag_array = register_data<gpu_reverse_tag_type>("g_reverse_tag");
+    auto id_array = register_data<gpu_id_type>("g_id");
+    auto reverse_id_array = register_data<gpu_reverse_id_type>("g_reverse_id");
     auto force_array = register_data<gpu_force_type>("g_force", [this]() { this->update_force_(); });
     auto en_pot_array = register_data<gpu_en_pot_type>("g_en_pot", [this]() { this->update_force_(true); });
     auto stress_pot_array = register_data<gpu_stress_pot_type>("g_stress_pot", [this]() { this->update_force_(true); });
@@ -83,8 +83,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     // register host wrappers for other data
     register_host_data_wrapper<force_type>("force", force_array);
     register_host_data_wrapper<image_type>("image", image_array);
-    register_host_data_wrapper<tag_type>("tag", tag_array);
-    register_host_data_wrapper<reverse_tag_type>("reverse_tag", reverse_tag_array);
+    register_host_data_wrapper<id_type>("id", id_array);
+    register_host_data_wrapper<reverse_id_type>("reverse_id", reverse_id_array);
     register_host_data_wrapper<en_pot_type>("en_pot", en_pot_array);
     register_host_data_wrapper<stress_pot_type>("stress_pot", stress_pot_array);
 
@@ -95,8 +95,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     auto g_position = make_cache_mutable(position_array->mutable_data());
     auto g_image = make_cache_mutable(image_array->mutable_data());
     auto g_velocity = make_cache_mutable(velocity_array->mutable_data());
-    auto g_tag = make_cache_mutable(tag_array->mutable_data());
-    auto g_reverse_tag = make_cache_mutable(reverse_tag_array->mutable_data());
+    auto g_id = make_cache_mutable(id_array->mutable_data());
+    auto g_reverse_id = make_cache_mutable(reverse_id_array->mutable_data());
     auto g_force = make_cache_mutable(force_array->mutable_data());
     auto g_en_pot = make_cache_mutable(en_pot_array->mutable_data());
     auto g_stress_pot = make_cache_mutable(stress_pot_array->mutable_data());
@@ -154,8 +154,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
         g_velocity->reserve(dim.threads());
 #endif
         g_image->reserve(dim.threads());
-        g_tag->reserve(dim.threads());
-        g_reverse_tag->reserve(dim.threads());
+        g_id->reserve(dim.threads());
+        g_reverse_id->reserve(dim.threads());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to allocate particles in global device memory");
@@ -167,8 +167,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     cuda::memset(g_position->begin(), g_position->begin() + g_position->capacity(), 0);
     cuda::memset(g_velocity->begin(), g_velocity->begin() + g_velocity->capacity(), 0);
     cuda::memset(g_image->begin(), g_image->begin() + g_image->capacity(), 0);
-    iota(g_tag->begin(), g_tag->begin() + g_tag->capacity(), 0);
-    iota(g_reverse_tag->begin(), g_reverse_tag->begin() + g_reverse_tag->capacity(), 0);
+    iota(g_id->begin(), g_id->begin() + g_id->capacity(), 0);
+    iota(g_reverse_id->begin(), g_reverse_id->begin() + g_reverse_id->capacity(), 0);
     cuda::memset(g_force->begin(), g_force->begin() + g_force->capacity(), 0);
     cuda::memset(g_en_pot->begin(), g_en_pot->begin() + g_en_pot->capacity(), 0);
     cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
@@ -176,7 +176,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     // set particle masses to unit mass
     set_mass(
         *this
-      , boost::make_transform_iterator(boost::counting_iterator<tag_type>(0), [](tag_type) {
+      , boost::make_transform_iterator(boost::counting_iterator<mass_type>(0), [](mass_type) {
             return 1;
         })
     );
@@ -211,35 +211,35 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     auto g_position = make_cache_mutable(mutable_data<gpu_position_type>("g_position"));
     auto g_image = make_cache_mutable(mutable_data<gpu_image_type>("g_image"));
     auto g_velocity = make_cache_mutable(mutable_data<gpu_velocity_type>("g_velocity"));
-    auto g_tag = make_cache_mutable(mutable_data<gpu_tag_type>("g_tag"));
-    auto g_reverse_tag = make_cache_mutable(mutable_data<gpu_reverse_tag_type>("g_reverse_tag"));
+    auto g_id = make_cache_mutable(mutable_data<gpu_id_type>("g_id"));
+    auto g_reverse_id = make_cache_mutable(mutable_data<gpu_reverse_id_type>("g_reverse_id"));
 
     scoped_timer_type timer(runtime_.rearrange);
 
     cuda::vector<gpu_position_type> position(nparticle_);
     cuda::vector<gpu_image_type> image(nparticle_);
     cuda::vector<gpu_velocity_type> velocity(nparticle_);
-    cuda::vector<gpu_tag_type> tag(nparticle_);
+    cuda::vector<gpu_id_type> id(nparticle_);
 
     position.reserve(g_position->capacity());
     image.reserve(g_image->capacity());
     velocity.reserve(g_velocity->capacity());
-    tag.reserve(g_reverse_tag->capacity());
+    id.reserve(g_reverse_id->capacity());
 
     cuda::configure(dim.grid, dim.block);
     get_particle_kernel<dimension>().r.bind(*g_position);
     get_particle_kernel<dimension>().image.bind(*g_image);
     get_particle_kernel<dimension>().v.bind(*g_velocity);
-    get_particle_kernel<dimension>().tag.bind(*g_tag);
-    get_particle_kernel<dimension>().rearrange(g_index, position, image, velocity, tag, nparticle_);
+    get_particle_kernel<dimension>().id.bind(*g_id);
+    get_particle_kernel<dimension>().rearrange(g_index, position, image, velocity, id, nparticle_);
 
     position.swap(*g_position);
     image.swap(*g_image);
     velocity.swap(*g_velocity);
-    cuda::copy(tag.begin(), tag.begin() + tag.capacity(), g_tag->begin());
+    cuda::copy(id.begin(), id.begin() + id.capacity(), g_id->begin());
 
-    iota(g_reverse_tag->begin(), g_reverse_tag->begin() + g_reverse_tag->capacity(), 0);
-    radix_sort(tag.begin(), tag.end(), g_reverse_tag->begin());
+    iota(g_reverse_id->begin(), g_reverse_id->begin() + g_reverse_id->capacity(), 0);
+    radix_sort(id.begin(), id.end(), g_reverse_id->begin());
 }
 
 template <int dimension, typename float_type>

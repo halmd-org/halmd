@@ -35,7 +35,7 @@ namespace host {
 namespace particle_groups {
 
 /**
- * Select particles of a given particle instance by a contiguous range of particle tags.
+ * Select particles of a given particle instance by a contiguous range of particle ids.
  */
 template <typename particle_type>
 class all
