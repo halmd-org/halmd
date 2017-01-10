@@ -37,7 +37,7 @@ namespace gpu {
 namespace particle_groups {
 
 /**
- * Select particles of a given particle instance by a contiguous range of particle tags.
+ * Select particles of a given particle instance by a contiguous range of particle IDs.
  */
 template <typename particle_type>
 class from_range
@@ -49,7 +49,7 @@ public:
     typedef std::pair<size_type, size_type> range_type;
 
     /**
-     * Select by tag range [begin, end).
+     * Select by ID range [begin, end).
      */
     from_range(
         std::shared_ptr<particle_type const> particle
@@ -78,12 +78,12 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    /** validate tag range */
+    /** validate ID range */
     range_type const& check_range(range_type const&);
 
     /** particle instance */
     std::shared_ptr<particle_type const> const particle_;
-    /** particle tag range */
+    /** particle ID range */
     range_type const range_;
     /** module logger */
     std::shared_ptr<logger> logger_;
@@ -93,9 +93,9 @@ private:
     cache<array_type> unordered_;
     /** number of particles */
     cache<size_type> size_;
-    /** cache observer of particle reverse tags */
+    /** cache observer of particle reverse IDs */
     cache<> ordered_cache_;
-    /** cache observer of particle reverse tags */
+    /** cache observer of particle reverse IDs */
     cache<> unordered_cache_;
 };
 

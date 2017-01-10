@@ -43,16 +43,16 @@
 #include <numeric>
 
 /**
- * Returns randomly shuffled particle tags.
+ * Returns randomly shuffled particle ids.
  */
 template <typename size_type>
 static std::vector<size_type>
-make_random_tag(size_type nparticle)
+make_random_id(size_type nparticle)
 {
-    std::vector<size_type> tag(nparticle);
-    std::iota(tag.begin(), tag.end(), 0);
-    std::random_shuffle(tag.begin(), tag.end());
-    return std::move(tag);
+    std::vector<size_type> id(nparticle);
+    std::iota(id.begin(), id.end(), 0);
+    std::random_shuffle(id.begin(), id.end());
+    return std::move(id);
 }
 
 /**
@@ -86,13 +86,13 @@ test_ordered(
 
     halmd::accumulator<double> elapsed;
     for (size_type i = 0; i < repeat; ++i) {
-        std::vector<size_type> reverse_tag = make_random_tag(nparticle);
+        std::vector<size_type> reverse_id = make_random_id(nparticle);
 
         BOOST_CHECK( size_cache == group->size() );
         BOOST_CHECK( ordered_cache == group->ordered() );
-        BOOST_CHECK( set_reverse_tag(
+        BOOST_CHECK( set_reverse_id(
             *particle
-          , reverse_tag.begin()) == reverse_tag.end()
+          , reverse_id.begin()) == reverse_id.end()
         );
         {
             halmd::scoped_timer<halmd::timer> t(elapsed);
@@ -109,8 +109,8 @@ test_ordered(
         BOOST_CHECK_EQUAL_COLLECTIONS(
             ordered.begin()
           , ordered.end()
-          , reverse_tag.begin()
-          , reverse_tag.end()
+          , reverse_id.begin()
+          , reverse_id.end()
         );
     }
     BOOST_TEST_MESSAGE( "  " << mean(elapsed) * 1e3 << " ± " << error_of_mean(elapsed) * 1e3 << " ms per iteration" );
@@ -146,13 +146,13 @@ test_unordered(
 
     halmd::accumulator<double> elapsed;
     for (size_type i = 0; i < repeat; ++i) {
-        std::vector<size_type> reverse_tag = make_random_tag(nparticle);
+        std::vector<size_type> reverse_id = make_random_id(nparticle);
 
         BOOST_CHECK( size_cache == group->size() );
         BOOST_CHECK( unordered_cache == group->unordered() );
-        BOOST_CHECK( set_reverse_tag(
+        BOOST_CHECK( set_reverse_id(
             *particle
-          , reverse_tag.begin()) == reverse_tag.end()
+          , reverse_id.begin()) == reverse_id.end()
         );
         {
             halmd::scoped_timer<halmd::timer> t(elapsed);

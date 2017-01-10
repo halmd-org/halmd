@@ -132,7 +132,7 @@ public:
 
 private:
     typedef typename particle_type::position_array_type position_array_type;
-    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
+    typedef typename particle_type::reverse_id_array_type reverse_id_array_type;
     typedef typename binning_type::array_type cell_array_type;
 
     typedef utility::profiler::accumulator_type accumulator_type;

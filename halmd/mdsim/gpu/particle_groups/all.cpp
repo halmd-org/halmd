@@ -42,7 +42,7 @@ template <typename particle_type>
 cache<typename all<particle_type>::array_type> const&
 all<particle_type>::ordered()
 {
-    return particle_->reverse_tag();
+    return particle_->reverse_id();
 }
 
 template <typename particle_type>

@@ -38,9 +38,9 @@ struct from_binning_wrapper
 
     /** (cutoff lengths + neighbour list skin)² */
     cuda::texture<float> rr_cut_skin;
-    /** positions, tags of particle1 */
+    /** positions, IDs of particle1 */
     cuda::texture<float4> r1;
-    /** positions, tags of particle2 */
+    /** positions, IDs of particle2 */
     cuda::texture<float4> r2;
 
     /** update neighbour lists */

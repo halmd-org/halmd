@@ -78,7 +78,8 @@ end
 --
 --    During simulation, particle arrays are reordered in memory according
 --    to a space-filling curve. To access particles in initial order, use
---    :meth:`get_reverse_tag` to retrieve the current particle indices.
+--    :meth:`get_reverse_id` to retrieve a map from particle IDs to current
+--    particle indices in memory.
 --
 -- .. method:: get(name)
 --
@@ -117,21 +118,21 @@ end
 --
 --    Set particle velocities to given sequence.
 --
--- .. method:: get_tag()
+-- .. method:: get_id()
 --
---    Returns sequence with particle tags.
+--    Returns sequence with particle IDs.
 --
--- .. method:: set_tag(tag)
+-- .. method:: set_id(id)
 --
---    Set particle tags to given sequence.
+--    Set particle IDs to given sequence.
 --
--- .. method:: get_reverse_tag()
+-- .. method:: get_reverse_id()
 --
---    Returns sequence with particle reverse tags.
+--    Returns sequence with reverse particle IDs.
 --
--- .. method:: set_reverse_tag(reverse_tag)
+-- .. method:: set_reverse_id(reverse_id)
 --
---    Set particle reverse tags to given sequence.
+--    Set reverse particle IDs to given sequence.
 --
 -- .. method:: get_species()
 --
@@ -238,7 +239,7 @@ local M = module(function(args)
     local self = particle(nparticle, nspecies)
 
     -- temporarily redirect removed get_* functions to the new get("*")
-    for _,name in ipairs({"position", "image", "velocity", "tag", "reverse_tag", "species",
+    for _,name in ipairs({"position", "image", "velocity", "id", "reverse_id", "species",
       "mass", "force", "potential_energy", "stress_pot"}) do
         self["get_"..name] = function(self) return self:get(name) end
         self["set_"..name] = function(self, data) self:set(name, data) end

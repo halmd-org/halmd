@@ -51,7 +51,7 @@ function main(args)
 
     -- create system state
     local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = nspecies})
-    -- set particle species, with continuous range of tags per species
+    -- set particle species, with continuous range of IDs per species
     local species = {}
     local groups = {}
     local offset = 0

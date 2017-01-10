@@ -91,8 +91,8 @@ __global__ void assign_cells(
     int* g_ret
   , unsigned int const* g_cell
   , unsigned int const* g_cell_offset
-  , unsigned int const* g_itag
-  , unsigned int* g_otag
+  , unsigned int const* g_iid
+  , unsigned int* g_oid
   , unsigned int const nbox
   , unsigned int const cell_size
 )
@@ -112,17 +112,17 @@ __global__ void assign_cells(
         // global offset of this thread's particle
         const unsigned int n = offset + i;
         // mark as virtual particle
-        unsigned int tag = particle_kernel::placeholder;
+        unsigned int id = particle_kernel::placeholder;
         // mark as real particle if appropriate
         if (offset != particle_kernel::placeholder && n < nbox && g_cell[n] == BID) {
-            tag = g_itag[n];
+            id = g_iid[n];
         }
         // return failure if any cell list is fully occupied
-        if (tag != particle_kernel::placeholder && (i + 1) == cell_size) {
+        if (id != particle_kernel::placeholder && (i + 1) == cell_size) {
             *g_ret = EXIT_FAILURE;
         }
         // store particle in this block's cell
-        g_otag[BID * cell_size + i] = tag;
+        g_oid[BID * cell_size + i] = id;
     }
 }
 

@@ -102,10 +102,10 @@ template <int dimension, typename float_type>
 cache<typename from_particle<dimension, float_type>::array_type> const&
 from_particle<dimension, float_type>::g_neighbour()
 {
-    cache<reverse_tag_array_type> const& reverse_tag_cache1 = particle1_->reverse_tag();
-    cache<reverse_tag_array_type> const& reverse_tag_cache2 = particle2_->reverse_tag();
+    cache<reverse_id_array_type> const& reverse_id_cache1 = particle1_->reverse_id();
+    cache<reverse_id_array_type> const& reverse_id_cache2 = particle2_->reverse_id();
 
-    auto current_cache = std::tie(reverse_tag_cache1, reverse_tag_cache2);
+    auto current_cache = std::tie(reverse_id_cache1, reverse_id_cache2);
 
     if (neighbour_cache_ != current_cache|| displacement1_->compute() > r_skin_ / 2
         || displacement2_->compute() > r_skin_ / 2) {

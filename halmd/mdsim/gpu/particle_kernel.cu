@@ -40,8 +40,8 @@ static texture<unsigned int> ntypes_;
 static texture<float4> r_;
 /** velocities, masses */
 static texture<float4> v_;
-/** tags */
-static texture<unsigned int> tag_;
+/** IDs */
+static texture<unsigned int> id_;
 
 /** minimum image vectors */
 template<int dimension>
@@ -63,7 +63,7 @@ __global__ void rearrange(
   , float4* g_r
   , aligned_vector_type* g_image
   , float4* g_v
-  , unsigned int* g_tag
+  , unsigned int* g_id
   , unsigned int npart
 )
 {
@@ -83,8 +83,8 @@ __global__ void rearrange(
         // select correct image texture depending on the space dimension
         g_image[GTID] = tex1Dfetch(image<dimension>::tex_, i);
 
-        // copy particle tags
-        g_tag[GTID] = tex1Dfetch(tag_, i);
+        // copy particle IDs
+        g_id[GTID] = tex1Dfetch(id_, i);
     }
 }
 
@@ -98,7 +98,7 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
   , particle_kernel::r_
   , particle_kernel::image<dimension>::tex_
   , particle_kernel::v_
-  , particle_kernel::tag_
+  , particle_kernel::id_
 #ifdef USE_VERLET_DSFUN
   , particle_kernel::rearrange<fixed_vector<dsfloat, dimension> >
 #else
