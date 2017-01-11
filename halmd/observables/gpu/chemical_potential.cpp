@@ -94,7 +94,7 @@ chemical_potential<dimension, float_type>::sample()
     if (mu_ex_cache_ != en_pot_cache) {
         LOG_TRACE("sample excess chemical potential");
         scoped_timer_type timer(runtime_.sample);
-/*
+
         // iterate over energies of test particles, for each species separately
         auto const& en_pot = read_cache(en_pot_cache);
         auto it = en_pot.begin();
@@ -102,27 +102,21 @@ chemical_potential<dimension, float_type>::sample()
         for (unsigned int s = 0; s < ntest_particle_.size(); ++s) {
             unsigned int n = ntest_particle_[s];           // number of particles of species s
 
-            // accumulate exp(-E/kT) for particles in range (it, it + n)
-            accumulator<double> acc;
-            std::for_each(it, it + n, [&](double x) {
-                if (std::isfinite(x)) {         // catch NaN/Inf etc.
-                    acc(exp(-x / temperature_));
-                }
-                else {
-                    acc(0);
-                }
-            });
+            // accumulate exp(-E/kT) for particles in range (it, it + n),
+            // pass parametrised instance of functor as 3rd argument
+            accumulator<double> acc = compute_partition_sum_(&*it, &*(it + n), partition_sum_type(temperature_))();
+            assert(count(acc) == n);
             it += n;
 
             // compute μ_ex = -kT log( <exp(-E/kT)> ) and store with statistics
-            double Z = mean(acc);
+            double z = mean(acc);
             mu_ex_[s] = accumulator<double>(
-                - temperature_ * log(Z)                                     // mean
-              , pow(temperature_ / Z, 2) * variance(acc)                    // variance
-              , count(acc)                                                  // number of test particles of this species
+                - temperature_ * log(z)                                          // mean
+              , pow(temperature_ / z, 2) * variance(acc)                         // variance
+              , count(acc)                                                       // number of test particles of this species
             );
         }
-*/
+
         mu_ex_cache_ = en_pot_cache;
     }
     return mu_ex_;

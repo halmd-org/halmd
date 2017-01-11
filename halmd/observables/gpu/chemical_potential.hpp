@@ -22,10 +22,12 @@
 #ifndef HALMD_OBSERVABLES_GPU_CHEMICAL_POTENTIAL_HPP
 #define HALMD_OBSERVABLES_GPU_CHEMICAL_POTENTIAL_HPP
 
+#include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/position.hpp>
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/observables/gpu/chemical_potential_kernel.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -126,6 +128,10 @@ private:
 
     /** module logger */
     std::shared_ptr<logger> logger_;
+
+    /** functor to compute partition sum on the GPU */
+    typedef partition_sum<dsfloat> partition_sum_type;
+    reduction<partition_sum_type> compute_partition_sum_;
 
     typedef halmd::utility::profiler::accumulator_type accumulator_type;
     typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
