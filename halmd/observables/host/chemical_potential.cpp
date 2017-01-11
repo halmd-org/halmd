@@ -47,7 +47,7 @@ chemical_potential<dimension, float_type>::chemical_potential(
     set_temperature(temperature);
 
     std::ostringstream str;
-    std::copy(ntest_particle_.begin(), ntest_particle_.end(), std::ostream_iterator<double>(str, " "));
+    std::copy(ntest_particle_.begin(), ntest_particle_.end(), std::ostream_iterator<unsigned int>(str, " "));
     LOG("number of test particles: " << str.str());
 
     // construct particle instance for test particles

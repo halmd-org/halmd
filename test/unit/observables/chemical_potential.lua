@@ -91,11 +91,23 @@ function test_writer(chemical_potential, args)
     end
 end
 
-function test_single_particle(args)
+function test_single_particle()
+    local box_length = {5, 5, 5}
+    local positions = {{0, 0, 0}}
+    local reference = -0.0365878169
+    test_single_particle_impl(box_length, positions, reference)
+
+    box_length = {10, 10, 10}
+    positions = {{0, 0, 0}, {1, 1, -1}}
+    reference = -0.00954
+    test_single_particle_impl(box_length, positions, reference)
+end
+
+function test_single_particle_impl(box_length, positions, reference)
     -- construct prerequisites
-    local box = mdsim.box({length = {5, 5, 5}})
-    local particle = mdsim.particle({particles = 1, species = 1, dimension = box.dimension})
-    particle:set_position({{0,0,0}})
+    local box = mdsim.box({length = box_length})
+    local particle = mdsim.particle({particles = #positions, species = 1, dimension = box.dimension})
+    particle:set_position(positions)
 
     -- construct chemical potential module
     local chemical_potential = observables.chemical_potential({
@@ -109,15 +121,14 @@ function test_single_particle(args)
     -- define interaction
     chemical_potential:add_force({"pair"
       , particle = particle
-      , potential = mdsim.potentials.pair.lennard_jones({})
+      , potential = mdsim.potentials.pair.lennard_jones({}) -- :truncate({cutoff = 4})
     })
 
     -- compute chemical potential and check with result
     -- obtained from quadrature of the Boltzmann factor over the box
     local result = chemical_potential:sample(0)(nil)
-    print(("chemical potential of a single Lennard-Jones particle in the box: %.4g ± %.1g")
-            :format(result:mean(), result:error_of_mean()))
-    local reference = -0.0365878169
+    print(("chemical potential of a %d Lennard-Jones particle(s) in the box: %.4g ± %.1g")
+            :format(#positions, result:mean(), result:error_of_mean()))
     if not (math.abs(result:mean() - reference) < 5 * result:error_of_mean()) then
         error(("mismatch in chemical potential [%f != %f]"):format(result:mean(), reference))
     end
@@ -148,7 +159,6 @@ function main(args)
     chemical_potential:disconnect()
 
     if #args.box_length == 3 then
-        test_single_particle(args)
+        test_single_particle()
     end
 end
-

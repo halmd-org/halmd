@@ -123,6 +123,7 @@ function main(args)
           , particle = particle
           , temperature = param.temperature
           , test_particles = { param.test_particles }
+          , position = "lattice"
         })
 
         chemical_potential:add_force({"pair_trunc"
@@ -255,5 +256,5 @@ function define_args(parser)
 
     local chemical_potential = parser:add_argument_group("chemical-potential", {help = "sampling of chemical potential"})
     chemical_potential:add_argument("temperature", {type = "number", help = "temperature"})
-    chemical_potential:add_argument("test-particles", {type = "number", default = 1000, help = "number of test particles"})
+    chemical_potential:add_argument("test-particles", {type = "number", default = 100000, help = "number of test particles"})
 end
