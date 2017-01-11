@@ -67,7 +67,11 @@ __global__ void compute_cell(
     fixed_vector<float, dimension> r;
     unsigned int type;
     tie(r, type) <<= g_r[GTID];
-    g_cell[GTID] = compute_cell_index(r, cell_length, ncell);
+    if (type == -1U) {
+        g_cell[GTID] = -1U;
+    } else {
+        g_cell[GTID] = compute_cell_index(r, cell_length, ncell);
+    }
 }
 
 /**

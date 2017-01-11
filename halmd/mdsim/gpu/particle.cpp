@@ -159,22 +159,13 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     // initialise 'ghost' particles to zero and sets their species to -1U
     // this avoids potential nonsense computations resulting in denormalised numbers
     cuda::configure(dim_.grid, dim_.block);
-    get_particle_kernel<dimension>().initialize_position_species(&*g_position->begin(), nparticle_);
-    cuda::memset(g_velocity->begin(), g_velocity->begin() + g_velocity->capacity(), 0);
+    get_particle_kernel<dimension>().initialize(&*g_position->begin(), &*g_velocity->begin(), nparticle_);
     cuda::memset(g_image->begin(), g_image->begin() + g_image->capacity(), 0);
     iota(g_id->begin(), g_id->begin() + g_id->capacity(), 0);
     iota(g_reverse_id->begin(), g_reverse_id->begin() + g_reverse_id->capacity(), 0);
     cuda::memset(g_force->begin(), g_force->begin() + g_force->capacity(), 0);
     cuda::memset(g_en_pot->begin(), g_en_pot->begin() + g_en_pot->capacity(), 0);
     cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
-
-    // set particle masses to unit mass
-    set_mass(
-        *this
-      , boost::make_transform_iterator(boost::counting_iterator<mass_type>(0), [](mass_type) {
-            return 1;
-        })
-    );
 
     try {
         cuda::copy(nparticle_, get_particle_kernel<dimension>().nbox);

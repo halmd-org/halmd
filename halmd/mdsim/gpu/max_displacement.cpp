@@ -86,7 +86,7 @@ void max_displacement<dimension, float_type>::zero()
     LOG_TRACE("zero maximum squared displacement");
 
     scoped_timer_type timer(runtime_.zero);
-    cuda::copy(position.begin(), position.end(), g_r0_.begin());
+    cuda::copy(position.begin(), position.begin() + particle_->nparticle(), g_r0_.begin());
     displacement_ = 0;
     position_cache_ = position_cache;
 }

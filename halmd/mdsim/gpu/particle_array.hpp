@@ -266,8 +266,8 @@ public:
      * @param stride stride of the underlying gpu data
      * @param offset offset of the typed data within the underlying gpu data
      */
-    particle_array_typed(size_t stride, size_t offset)
-      : stride_(stride), offset_(offset)
+    particle_array_typed(size_t stride, size_t offset, size_t nparticle)
+      : stride_(stride), offset_(offset), nparticle_(nparticle)
     {}
 
     /**
@@ -289,8 +289,10 @@ public:
         auto mem = get_gpu_memory();
         auto it = first;
         // TODO: handle sizes & ghost particles
-        for(size_t i = offset_; i < mem.size(); i += stride_) {
-            converter.set(mem, i, *it++);
+        size_t offset = offset_;
+        for (size_t i = 0; i < nparticle_; i++) {
+            converter.set(mem, offset, *it++);
+            offset += stride_;
         }
         // TODO: handle dsfloat data correctly here for tuple arrays
         // TODO: set_gpu_data automatically clears the high precision
@@ -315,8 +317,10 @@ public:
         auto data = get_gpu_data();
         auto it = first;
         // TODO: handle sizes & ghost particles
-        for(size_t i = offset_; i < data.size(); i += stride_) {
-            *it++ = converter.get(data, i);
+        size_t offset = offset_;
+        for(size_t i = 0; i < nparticle_; i++) {
+            *it++ = converter.get(data, offset);
+            offset += stride_;
         }
         return it;
     }
@@ -348,11 +352,12 @@ public:
     {
         auto data = get_gpu_data();
         luaponte::object table = luaponte::newtable(L);
-        std::size_t j = 1;
+        std::size_t offset = offset_;
         // TODO: handle ghost particles
-        for(size_t i = offset_; i < data.size(); i += stride_) {
-            auto&& value = converter.get(data, i);
+        for(std::size_t j = 1; j <= nparticle_; j++) {
+            auto&& value = converter.get(data, offset);
             table[j++] = boost::cref(value);
+            offset += stride_;
         }
         return table;
     }
@@ -367,11 +372,18 @@ public:
         return offset_;
     }
 
+    size_t nparticle() const
+    {
+        return nparticle_;
+    }
+
 private:
     /** gpu data stride */
     size_t stride_;
     /** typed data offset */
     size_t offset_;
+    /** number of particles */
+    size_t nparticle_;
     /** particle data converter */
     detail::particle_data_converter<T> converter;
 };
@@ -390,9 +402,8 @@ public:
      * @param update_function update function
      */
     particle_array_gpu(unsigned int nparticle, unsigned int size, std::function<void()> update_function)
-      : particle_array_typed<T>(sizeof(T), 0), data_(nparticle), update_function_(update_function)
+      : particle_array_typed<T>(sizeof(T), 0, nparticle), data_(size), update_function_(update_function)
     {
-        make_cache_mutable(data_)->reserve(size);
         if (!update_function_) {
             update_function_ = [](){};
         }
@@ -510,7 +521,7 @@ public:
      */
     template<typename gpu_type>
     particle_array_host_wrapper(const std::shared_ptr<particle_array_gpu<gpu_type>> &parent, size_t offset, bool is_tuple)
-      : particle_array_typed<host_type>(sizeof(gpu_type), offset), is_tuple_(is_tuple), parent_(parent)
+      : particle_array_typed<host_type>(sizeof(gpu_type), offset, parent->nparticle()), is_tuple_(is_tuple), parent_(parent)
     {}
 
     /**

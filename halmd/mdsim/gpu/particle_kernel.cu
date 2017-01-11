@@ -56,10 +56,11 @@ struct image
 template<int dimension> image<dimension>::type image<dimension>::tex_;
 
 /**
- * initialize particle positions and species
+ * initialize particle positions and species, velocity and mass
  */
-__global__ void initialize_position_species(
+__global__ void initialize(
     float4* g_r
+  , float4* g_v
   , unsigned int size
 )
 {
@@ -68,9 +69,12 @@ __global__ void initialize_position_species(
 #ifdef USE_VERLET_DSFUN
     fixed_vector<dsfloat, 3> r (0.0);
     tie(g_r[GTID], g_r[GTID + threads]) <<= tie(r, type);
+    g_v[GTID] = make_float4(0,0,0,1);
+    g_v[GTID + threads] = make_float4(0,0,0,0);
 #else
     fixed_vector<float, 3> r (0.0f);
     g_r[GTID] <<= tie(r, type);
+    g_v[GTID] = make_float4(0,0,0,1);
 #endif
 }
 
@@ -119,7 +123,7 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
   , particle_kernel::image<dimension>::tex_
   , particle_kernel::v_
   , particle_kernel::id_
-  , particle_kernel::initialize_position_species
+  , particle_kernel::initialize
 #ifdef USE_VERLET_DSFUN
   , particle_kernel::rearrange<fixed_vector<dsfloat, dimension> >
 #else

@@ -73,7 +73,7 @@ void lattice<dimension, float_type>::set()
     gpu_vector_type length = static_cast<gpu_vector_type>(element_prod(box_->length(), slab_));
     gpu_vector_type offset = -length / 2;
 
-    fcc(&*position->begin(), &*position->end(), length, offset);
+    fcc(&*position->begin(), &*(position->begin() + particle_->nparticle()), length, offset);
 
     // reset particle image vectors
     cuda::memset(image->begin(), image->begin() + image->capacity(), 0);

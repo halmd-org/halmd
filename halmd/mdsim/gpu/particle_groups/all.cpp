@@ -32,6 +32,7 @@ template <typename particle_type>
 all<particle_type>::all(std::shared_ptr<particle_type const> particle)
   : particle_(particle)
   , unordered_(particle_->nparticle())
+  , ordered_(particle_->nparticle())
   , size_(particle_->nparticle())
 {
     auto unordered = make_cache_mutable(unordered_);
@@ -42,7 +43,12 @@ template <typename particle_type>
 cache<typename all<particle_type>::array_type> const&
 all<particle_type>::ordered()
 {
-    return particle_->reverse_id();
+    if (!(ordered_observer_ == particle_->reverse_id())) {
+        auto reverse_id = read_cache(particle_->reverse_id());
+        cuda::copy(reverse_id.begin(), reverse_id.begin() + particle_->nparticle(), make_cache_mutable(ordered_)->begin());
+        ordered_observer_ = particle_->reverse_id();
+    }
+    return ordered_;
 }
 
 template <typename particle_type>
