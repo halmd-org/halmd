@@ -537,42 +537,50 @@ function argument_parser:parse_args(args)
     return self._pcall(vm.notify, vm, {})
 end
 
+argument_parser.action = {}
+
 ---
--- Substitute date/time helper action.
+-- .. class:: halmd.utility.program_options.argument_parser.action
 --
--- :param table args: parsed arguments
--- :param string key: args table key of this argument
--- :param value: parsed value of this argument
+--    .. method:: substitute_date_time(args, key, value)
 --
--- Helper function that can be used as action argument for argument_parser:add_argument
--- and substitutes day and time in the parsed value of the argument.
+--       Substitute date/time helper action.
 --
--- Example::
+--       :param table args: parsed arguments
+--       :param string key: args table key of this argument
+--       :param value: parsed value of this argument
 --
---    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
---        default = "lennard_jones_%Y%m%d_%H%M%S", help = "prefix of output files"})
+--       Helper function that can be used as action argument for argument_parser:add_argument
+--       and substitutes day and time in the parsed value of the argument.
 --
-function argument_parser.substitute_date_time_action(args, key, value)
+--       Example::
+--
+--          parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
+--              default = "lennard_jones_%Y%m%d_%H%M%S", help = "prefix of output files"})
+--
+function argument_parser.action.substitute_date_time(args, key, value)
     -- substitute current time
     args[key] = os.date(value)
 end
 
 ---
--- Random seed helper action.
+--    .. method:: random_seed(args, key, value)
 --
--- :param table args: parsed arguments
--- :param string key: args table key of this argument
--- :param value: parsed value of this argument
+--       Random seed helper action.
 --
--- Helper function that can be used as action argument for argument_parser:add_argument
--- and initializes the RNG with a given seed.
+--       :param table args: parsed arguments
+--       :param string key: args table key of this argument
+--       :param value: parsed value of this argument
 --
--- Example::
+--       Helper function that can be used as action argument for argument_parser:add_argument
+--       and initializes the RNG with a given seed.
 --
---    parser:add_argument("random-seed", {type = "integer", action = parser.random_seed_action,
---        help = "seed for random number generator"})
+--       Example::
 --
-function argument_parser.random_seed_action(args, key, value)
+--          parser:add_argument("random-seed", {type = "integer", action = parser.action.random_seed,
+--              help = "seed for random number generator"})
+--
+function argument_parser.action.random_seed(args, key, value)
     -- seed the random number generator
     halmd.random.generator({seed = value})
 end
