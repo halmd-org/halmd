@@ -73,7 +73,7 @@ function main(args)
     local lattice = mdsim.positions.lattice({box = box, particle = particle})
     lattice:set()
     -- randomly shuffle the positions
---    particle.data["position"] = random.generator({memory = "host"}):shuffle(particle.data["position"])
+    particle.data["position"] = random.generator({memory = "host"}):shuffle(particle.data["position"])
     -- set initial particle velocities
     local boltzmann = mdsim.velocities.boltzmann({
         particle = particle
