@@ -57,12 +57,12 @@ function main(args)
     local species = {}
     for i = 1, ngroup[1] do table.insert(species, 0) end
     for i = 1, ngroup[2] do table.insert(species, 1) end
-    particle:set_species(species)
+    particle.data["species"] = species
 
     -- set initial particle positions, randomise the particle species
     mdsim.positions.lattice({box = box, particle = particle}):set()
     -- randomly shuffle the positions
-    particle:set_position(random.generator({memory = "host"}):shuffle(particle:get_position()))
+    particle.data["position"] = random.generator({memory = "host"}):shuffle(particle.data["position"])
 
     -- set initial particle velocities
     mdsim.velocities.boltzmann({particle = particle, temperature = temperature}):set()

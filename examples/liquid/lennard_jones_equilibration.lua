@@ -55,7 +55,7 @@ function main(args)
         local nparticle = assert(args.particles[s + 1])
         for i = 1, nparticle do table.insert(species, s) end
     end
-    particle:set_species(species)
+    particle.data["species"] = species
     -- set initial particle positions
     local lattice = mdsim.positions.lattice({box = box, particle = particle})
     lattice:set()

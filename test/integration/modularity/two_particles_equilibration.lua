@@ -64,11 +64,11 @@ local function setup(args)
         })
         offset = offset + n
     end
-    particle:set_species(species)
+    particle.data["species"] = species
     -- set initial particle positions
     mdsim.positions.lattice({box = box, particle = particle}):set()
     -- randomly shuffle the positions
-    particle:set_position(random.generator({memory = "host"}):shuffle(particle:get_position()))
+    particle.data["position"] = random.generator({memory = "host"}):shuffle(particle.data["position"])
     -- set initial particle velocities
     mdsim.velocities.boltzmann({particle = particle, temperature = temp0}):set()
 

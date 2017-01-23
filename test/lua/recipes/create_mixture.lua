@@ -20,15 +20,15 @@ for s = 1, #nparticle do
         table.insert(species, s - 1)    -- species values are 0-based 
     end
 end
-particle:set_species(species)
+particle.data["species"] = species
 
 -- set particle positions sequentially on an fcc lattice
 mdsim.positions.lattice({box = box, particle = particle}):set()
 
 -- shuffle positions randomly
-local r = particle:get_position()
+local r = particle.data["position"]
 r = random.generator({memory = "host"}):shuffle(r)
-particle:set_position(r)
+particle.data["position"] = r
 
 -- set initial particle velocities
 mdsim.velocities.boltzmann({particle = particle, temperature = temperature}):set()

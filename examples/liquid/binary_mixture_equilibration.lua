@@ -68,12 +68,12 @@ function main(args)
         })
         offset = offset + nparticle
     end
-    particle:set_species(species)
+    particle.data["species"] = species
     -- set initial particle positions sequentially on an fcc lattice
     local lattice = mdsim.positions.lattice({box = box, particle = particle})
     lattice:set()
     -- randomly shuffle the positions
---    particle:set_position(random.generator({memory = "host"}):shuffle(particle:get_position()))
+--    particle.data["position"] = random.generator({memory = "host"}):shuffle(particle.data["position"])
     -- set initial particle velocities
     local boltzmann = mdsim.velocities.boltzmann({
         particle = particle
