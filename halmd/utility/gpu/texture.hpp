@@ -18,6 +18,9 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#ifndef HALMD_UTILITY_GPU_TEXTURE_HPP
+#define HALMD_UTILITY_GPU_TEXTURE_HPP
+
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #ifdef __CUDACC__
@@ -56,3 +59,5 @@ private:
 
 } // namespace halmd
 } // namespace cuda
+
+#endif /* ! HALMD_UTILTIY_GPU_TEXTURE_HPP */
