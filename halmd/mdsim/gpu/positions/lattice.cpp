@@ -73,7 +73,7 @@ void lattice<dimension, float_type>::set()
     gpu_vector_type length = static_cast<gpu_vector_type>(element_prod(box_->length(), slab_));
     gpu_vector_type offset = -length / 2;
 
-    fcc(&*position->begin(), &*(position->begin() + particle_->nparticle()), length, offset);
+    fcc(position->data(), particle_->nparticle(), length, offset);
 
     // reset particle image vectors
     cuda::memset(image->begin(), image->begin() + image->capacity(), 0);
@@ -113,7 +113,7 @@ void lattice<dimension, float_type>::set()
 template <int dimension, typename float_type>
 template <typename position_iterator>
 void lattice<dimension, float_type>::fcc(
-    position_iterator first, position_iterator last
+    position_iterator first, size_t npart
   , gpu_vector_type const& length, gpu_vector_type const& offset
 )
 {
@@ -123,15 +123,14 @@ void lattice<dimension, float_type>::fcc(
     // determine maximal lattice constant
     // use the same floating point precision as the CUDA device,
     // assign lattice coordinates to (sub-)volume of the box
-    LOG_TRACE("generating fcc lattice for " << last - first << " particles, box: " << length << ", offset: " << offset);
-    size_t npart = last - first;
-    float_type u = lattice_type(1).size();
-    float_type V = accumulate(
+    LOG_TRACE("generating fcc lattice for " << npart << " particles, box: " << length << ", offset: " << offset);
+    float u = lattice_type(1).size();
+    float V = accumulate(
         length.begin(), length.end()
-      , float_type(1) / ceil(npart / u)
-      , multiplies<float_type>()
+      , float(1) / ceil(npart / u)
+      , multiplies<float>()
     );
-    float_type a = pow(V, float_type(1) / dimension);
+    float a = pow(V, float(1) / dimension);
     index_type n(length / a);
     while (npart > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
         gpu_vector_type t;
@@ -167,7 +166,7 @@ void lattice<dimension, float_type>::fcc(
 
     try {
         cuda::configure(particle_->dim().grid, particle_->dim().block);
-        get_lattice_kernel<lattice_type>().lattice(first, npart, a, skip, offset, n);
+        get_lattice_kernel<float_type, lattice_type>().lattice(first, npart, a, skip, offset, n);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -211,12 +210,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_positions_lattice(lua_State* L)
 {
     lattice<3, float>::luaopen(L);
     lattice<2, float>::luaopen(L);
+    lattice<3, dsfloat>::luaopen(L);
+    lattice<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class lattice<3, float>;
 template class lattice<2, float>;
+template class lattice<3, dsfloat>;
+template class lattice<2, dsfloat>;
 
 } // namespace mdsim
 } // namespace gpu

@@ -36,10 +36,11 @@ namespace mdsim {
 namespace gpu {
 namespace positions {
 
-template <int dimension, typename float_type>
+template <int dimension, typename float_type_>
 class lattice
 {
 public:
+    typedef float_type_ float_type;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef typename particle_type::vector_type vector_type;
@@ -77,12 +78,12 @@ private:
     typename box_type::vector_type slab_;
 
     /**
-     *  assign range of particle positions [first, last) to fcc lattice
+     *  assign range of particle positions [first, first+npart) to fcc lattice
      *  of extents 'length' with origin at 'offset'
      */
     template <typename position_iterator>
     void fcc(
-        position_iterator first, position_iterator last
+        position_iterator first, size_t npart
       , gpu_vector_type const& length, gpu_vector_type const& offset
     );
 
