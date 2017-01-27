@@ -65,7 +65,7 @@ public:
     typedef unsigned int species_type;
     typedef float mass_type;
     typedef vector_type force_type;
-    typedef float_type en_pot_type;
+    typedef float en_pot_type;
     typedef stress_tensor_wrapper<typename type_traits<dimension, float>::stress_tensor_type> stress_pot_type;
 
     typedef gpu_hp_vector_type gpu_position_type;

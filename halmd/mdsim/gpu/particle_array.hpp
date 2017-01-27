@@ -716,7 +716,8 @@ public:
     {
         auto const& g_input = read_cache(data());
         cuda::host::vector<uint8_t> mem(g_input.size() * sizeof(type));
-        cuda::copy(g_input.storage().begin(), g_input.storage().begin() + g_input.capacity(),
+        mem.reserve(g_input.size() * sizeof(hp_type));
+        cuda::copy(g_input.storage().begin(), g_input.storage().begin() + g_input.storage().size(),
                    reinterpret_cast<type*>(&*mem.begin()));
         return mem;
     }
@@ -759,7 +760,7 @@ public:
      */
     template<typename gpu_type>
     particle_array_host_wrapper(const std::shared_ptr<particle_array_gpu<gpu_type>> &parent, size_t offset, bool is_tuple)
-      : particle_array_typed<host_type>(sizeof(gpu_type), offset, parent->nparticle()), is_tuple_(is_tuple), parent_(parent)
+      : particle_array_typed<host_type>(parent->stride(), offset, parent->nparticle()), is_tuple_(is_tuple), parent_(parent)
     {}
 
     /**
@@ -873,8 +874,8 @@ particle_array::create_packed_wrapper(std::shared_ptr<particle_array_gpu<gpu_typ
      *       on almost all CUDA kernels using the packed data, though.
      */
     typedef typename std::tuple_element<field, tuple_type>::type host_type;
-    static constexpr size_t offset = (field == 0) ? 0 : (sizeof(gpu_type) - sizeof(host_type));
     static_assert(std::tuple_size<tuple_type>::value == 2, "invalid tuple");
+    size_t offset = (field == 0) ? 0 : (parent->stride() - sizeof(host_type));
     return std::make_shared<particle_array_host_wrapper<host_type>>(parent, offset, true);
 }
 

@@ -348,7 +348,7 @@ public:
 
     void reserve(size_type size)
     {
-        data_.reserve(size);
+        data_.reserve(size * 2);
     }
 
     void swap(vector_type& v)
