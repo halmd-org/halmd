@@ -71,24 +71,6 @@ __global__ void initialize(
     g_v[GTID] <<= make_tuple(r, 1.0f);
 }
 
-template<typename float_type>
-struct texFetch;
-
-template<>
-struct texFetch<float> {
-    static __device__ float4 fetch(texture<float4> tex, int i) {
-        return tex1Dfetch(tex, i);
-    }
-};
-
-template<>
-struct texFetch<dsfloat> {
-    static __device__ tuple<float4,float4> fetch(texture<float4> tex, int i) {
-        return make_tuple(tex1Dfetch(tex, i), tex1Dfetch(tex, i+GTDIM));
-    }
-};
-
-
 /**
  * rearrange particles by a given permutation
  */

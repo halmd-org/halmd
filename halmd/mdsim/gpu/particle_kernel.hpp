@@ -22,8 +22,8 @@
 #define HALMD_MDSIM_GPU_PARTICLE_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-
 #include <halmd/mdsim/type_traits.hpp>
+#include <halmd/utility/gpu/texture.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -34,17 +34,18 @@ struct particle_wrapper
 {
     typedef typename type_traits<dimension, float_type>::gpu::vector_type vector_type;
     typedef typename type_traits<dimension, float_type>::gpu::coalesced_vector_type aligned_vector_type;
+    typedef typename type_traits<4, float_type>::gpu::coalesced_hp_vector_type aligned_hp_vector_type;
     typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
 
     cuda::symbol<unsigned int> nbox;
     cuda::symbol<unsigned int> ntype;
     cuda::texture<unsigned int> ntypes;
     /** positions, types */
-    cuda::texture<float4> r;
+    cuda::halmd::texture<aligned_hp_vector_type> r;
     /** minimum image vectors */
     cuda::texture<aligned_vector_type> image;
     /** velocities, masses */
-    cuda::texture<float4> v;
+    cuda::halmd::texture<aligned_hp_vector_type> v;
     /** ids */
     cuda::texture<unsigned int> id;
     /** initialize particle positions and species, velocity and mass */

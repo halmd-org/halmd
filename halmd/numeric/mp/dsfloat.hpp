@@ -353,7 +353,7 @@ public:
 
     void swap(vector_type& v)
     {
-        data_.swap(v);
+        data_.swap(v.data_);
     }
 
     pointer data()
@@ -376,21 +376,22 @@ public:
         return data();
     }
 
-    operator cuda::vector<T>& () {
+    cuda::vector<T>& storage() {
         return data_;
     }
 
-    operator cuda::vector<T> const& () const {
+    cuda::vector<T> const& storage() const {
         return data_;
     }
+
 private:
     cuda::vector<T> data_;
 };
 
 template<typename T>
 inline dsfloat_ptr<T>::dsfloat_ptr(dsfloat_vector<T>& v)
-        : hi(&*(((cuda::vector<T>&)v).begin()))
-        , lo(&*(((cuda::vector<T>&)v).begin()+v.size()))
+        : hi(&*(v.storage().begin()))
+        , lo(&*(v.storage().begin()+v.size()))
 {
 }
 #endif
