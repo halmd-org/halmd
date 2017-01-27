@@ -63,30 +63,13 @@ static void test_dsfloat_performance() {
     }
     {
         halmd::accumulator<double> elapsed;
+        halmd::dsfloat_vector<float4> data(memsize);
 
         for (auto i = 0; i < iterations; i++) {
             cuda::configure(dim.grid, dim.block);
             {
                 halmd::scoped_timer<halmd::timer> t(elapsed);
-                dsfloat_kernel_wrapper::kernel.test2(data, increment);
-                cuda::thread::synchronize();
-            }
-        }
-        BOOST_TEST_MESSAGE("  " << mean(elapsed) * 1e3 << " ± " << error_of_mean(elapsed) * 1e3 << " ms per iteration");
-    }
-    {
-        cuda::vector<float4> data1(memsize);
-        cuda::vector<float4> unused(memsize * 32);
-        cuda::vector<float4> data2(memsize);
-        halmd::accumulator<double> elapsed;
-        cuda::memset(data1.begin(), data1.begin() + data1.capacity(), 0);
-        cuda::memset(data2.begin(), data2.begin() + data2.capacity(), 0);
-
-        for (auto i = 0; i < iterations; i++) {
-            cuda::configure(dim.grid, dim.block);
-            {
-                halmd::scoped_timer<halmd::timer> t(elapsed);
-                dsfloat_kernel_wrapper::kernel.test2({ data1, data2 }, increment);
+                dsfloat_kernel_wrapper::kernel.test2(data.data(), increment);
                 cuda::thread::synchronize();
             }
         }
@@ -126,13 +109,14 @@ static void test_dsfloat_overload()
 
         cuda::memset(data.begin(), data.begin()+data.capacity(), 0);
 
+        halmd::dsfloat_vector<float4> dsdata (256);
         cuda::configure(dim.grid, dim.block);
-        dsfloat_kernel_overloaded_wrapper<halmd::dsfloat>::kernel.test(data, dsfloat_increment);
+        dsfloat_kernel_overloaded_wrapper<halmd::dsfloat>::kernel.test(dsdata, dsfloat_increment);
         cuda::thread::synchronize();
 
         {
             cuda::host::vector<float4> tmp (256);
-            cuda::copy(data.begin(), data.end(), tmp.begin());
+            cuda::copy(((cuda::vector<float4>&)dsdata).begin(), ((cuda::vector<float4>&)dsdata).end(), tmp.begin());
             int ignored;
             for (auto i = 0; i < 256; i++) {
                 halmd::tie(result2[i], ignored) <<= tmp[i];

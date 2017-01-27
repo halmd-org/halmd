@@ -159,7 +159,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     // initialise 'ghost' particles to zero and sets their species to -1U
     // this avoids potential nonsense computations resulting in denormalised numbers
     cuda::configure(dim_.grid, dim_.block);
-    get_particle_kernel<dimension>().initialize(&*g_position->begin(), &*g_velocity->begin(), nparticle_);
+    get_particle_kernel<float_type, dimension>().initialize(g_position->data(), g_velocity->data(), nparticle_);
     cuda::memset(g_image->begin(), g_image->begin() + g_image->capacity(), 0);
     iota(g_id->begin(), g_id->begin() + g_id->capacity(), 0);
     iota(g_reverse_id->begin(), g_reverse_id->begin() + g_reverse_id->capacity(), 0);
@@ -168,8 +168,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
 
     try {
-        cuda::copy(nparticle_, get_particle_kernel<dimension>().nbox);
-        cuda::copy(nspecies_, get_particle_kernel<dimension>().ntype);
+        cuda::copy(nparticle_, get_particle_kernel<float_type, dimension>().nbox);
+        cuda::copy(nspecies_, get_particle_kernel<float_type, dimension>().ntype);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy particle parameters to device symbols");
@@ -202,22 +202,17 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
 
     scoped_timer_type timer(runtime_.rearrange);
 
-    cuda::vector<gpu_position_type> position(nparticle_);
-    cuda::vector<gpu_image_type> image(nparticle_);
-    cuda::vector<gpu_velocity_type> velocity(nparticle_);
-    cuda::vector<gpu_id_type> id(nparticle_);
-
-    position.reserve(g_position->capacity());
-    image.reserve(g_image->capacity());
-    velocity.reserve(g_velocity->capacity());
-    id.reserve(g_reverse_id->capacity());
+    position_array_type position(array_size_);
+    image_array_type image(array_size_);
+    velocity_array_type velocity(array_size_);
+    id_array_type id(array_size_);
 
     cuda::configure(dim_.grid, dim_.block);
-    get_particle_kernel<dimension>().r.bind(*g_position);
-    get_particle_kernel<dimension>().image.bind(*g_image);
-    get_particle_kernel<dimension>().v.bind(*g_velocity);
-    get_particle_kernel<dimension>().id.bind(*g_id);
-    get_particle_kernel<dimension>().rearrange(g_index, position, image, velocity, id, nparticle_);
+    get_particle_kernel<float_type, dimension>().r.bind(*g_position);
+    get_particle_kernel<float_type, dimension>().image.bind(*g_image);
+    get_particle_kernel<float_type, dimension>().v.bind(*g_velocity);
+    get_particle_kernel<float_type, dimension>().id.bind(*g_id);
+    get_particle_kernel<float_type, dimension>().rearrange(g_index, position, image, velocity, id, nparticle_);
 
     position.swap(*g_position);
     image.swap(*g_image);
@@ -225,7 +220,7 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     cuda::copy(id.begin(), id.begin() + id.capacity(), g_id->begin());
 
     iota(g_reverse_id->begin(), g_reverse_id->begin() + g_reverse_id->capacity(), 0);
-    radix_sort(id.begin(), id.end(), g_reverse_id->begin());
+    radix_sort(id.begin(), id.begin() + nparticle_, g_reverse_id->begin());
 }
 
 template <int dimension, typename float_type>
@@ -279,11 +274,24 @@ static bool equal(std::shared_ptr<T const> self, std::shared_ptr<T const> other)
     return self == other;
 }
 
+template<typename float_type>
+struct variant_name;
+
+template<>
+struct variant_name<float> {
+    static constexpr const char *name = "float";
+};
+
+template<>
+struct variant_name<dsfloat> {
+    static constexpr const char *name = "dsfloat";
+};
+
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static std::string class_name = "particle_" + std::to_string(dimension);
+    static std::string class_name = "particle_" + std::string(variant_name<float_type>::name) + "_" + std::to_string(dimension);
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -324,12 +332,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle(lua_State* L)
 {
     particle<3, float>::luaopen(L);
     particle<2, float>::luaopen(L);
+    particle<3, dsfloat>::luaopen(L);
+    particle<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class particle<3, float>;
 template class particle<2, float>;
+template class particle<3, dsfloat>;
+template class particle<2, dsfloat>;
 
 } // namespace gpu
 } // namespace mdsim

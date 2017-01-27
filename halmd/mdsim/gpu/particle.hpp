@@ -44,15 +44,17 @@ namespace gpu {
 
 class particle_group;
 
-template <int dimension, typename float_type>
+template <int dimension, typename float_type_>
 class particle
 {
 public:
+    typedef float_type_ float_type;
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 
     typedef typename type_traits<dimension, float_type>::vector_type vector_type;
-    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
+    typedef typename type_traits<dimension, float_type>::gpu::coalesced_vector_type gpu_vector_type;
+    typedef typename type_traits<4, float_type>::gpu::coalesced_hp_vector_type gpu_hp_vector_type;
 
     typedef unsigned int size_type;
     typedef vector_type position_type;
@@ -64,10 +66,10 @@ public:
     typedef float mass_type;
     typedef vector_type force_type;
     typedef float_type en_pot_type;
-    typedef stress_tensor_wrapper<typename type_traits<dimension, float_type>::stress_tensor_type> stress_pot_type;
+    typedef stress_tensor_wrapper<typename type_traits<dimension, float>::stress_tensor_type> stress_pot_type;
 
-    typedef float4 gpu_position_type;
-    typedef float4 gpu_velocity_type;
+    typedef gpu_hp_vector_type gpu_position_type;
+    typedef gpu_hp_vector_type gpu_velocity_type;
     typedef gpu_vector_type gpu_image_type;
     typedef id_type gpu_id_type;
     typedef reverse_id_type gpu_reverse_id_type;
@@ -75,14 +77,14 @@ public:
     typedef en_pot_type gpu_en_pot_type;
     typedef typename stress_pot_type::value_type gpu_stress_pot_type;
 
-    typedef cuda::vector<gpu_position_type> position_array_type;
-    typedef cuda::vector<gpu_image_type> image_array_type;
-    typedef cuda::vector<gpu_velocity_type> velocity_array_type;
-    typedef cuda::vector<gpu_id_type> id_array_type;
-    typedef cuda::vector<gpu_reverse_id_type> reverse_id_array_type;
-    typedef cuda::vector<gpu_force_type> force_array_type;
-    typedef cuda::vector<gpu_en_pot_type> en_pot_array_type;
-    typedef cuda::vector<gpu_stress_pot_type> stress_pot_array_type;
+    typedef typename particle_array_gpu<gpu_position_type>::vector_type position_array_type;
+    typedef typename particle_array_gpu<gpu_image_type>::vector_type image_array_type;
+    typedef typename particle_array_gpu<gpu_velocity_type>::vector_type velocity_array_type;
+    typedef typename particle_array_gpu<gpu_id_type>::vector_type id_array_type;
+    typedef typename particle_array_gpu<gpu_reverse_id_type>::vector_type reverse_id_array_type;
+    typedef typename particle_array_gpu<gpu_force_type>::vector_type force_array_type;
+    typedef typename particle_array_gpu<gpu_en_pot_type>::vector_type en_pot_array_type;
+    typedef typename particle_array_gpu<gpu_stress_pot_type>::vector_type stress_pot_array_type;
 
     void rearrange(cuda::vector<unsigned int> const& g_index);
 
@@ -220,7 +222,7 @@ public:
      * throws an exception if the array does not exist or has an invalid type
      */
     template<typename T>
-    cache<cuda::vector<T>> const &data(const std::string &name) const {
+    cache<typename particle_array_gpu<T>::vector_type> const &data(const std::string &name) const {
         return particle_array::cast_gpu<T>(get_array(name))->data();
     }
 
@@ -233,7 +235,7 @@ public:
      * throws an exception if the array does not exist or has an invalid type
      */
     template<typename T>
-    cache<cuda::vector<T>>& mutable_data(const std::string &name) {
+    cache<typename particle_array_gpu<T>::vector_type>& mutable_data(const std::string &name) {
         return particle_array::cast_gpu<T>(get_array(name))->mutable_data();
     }
 

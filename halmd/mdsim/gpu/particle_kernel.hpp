@@ -29,11 +29,12 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 
-template <int dimension>
+template <typename float_type, int dimension>
 struct particle_wrapper
 {
-    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
-    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type aligned_vector_type;
+    typedef typename type_traits<dimension, float_type>::gpu::vector_type vector_type;
+    typedef typename type_traits<dimension, float_type>::gpu::coalesced_vector_type aligned_vector_type;
+    typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
 
     cuda::symbol<unsigned int> nbox;
     cuda::symbol<unsigned int> ntype;
@@ -47,16 +48,16 @@ struct particle_wrapper
     /** ids */
     cuda::texture<unsigned int> id;
     /** initialize particle positions and species, velocity and mass */
-    cuda::function<void (float4*, float4*, unsigned int)> initialize;
+    cuda::function<void (ptr_type, ptr_type, unsigned int)> initialize;
     /** rearrange particles by a given permutation */
-    cuda::function<void (unsigned int const*, float4*, aligned_vector_type*, float4*, unsigned int*, unsigned int)> rearrange;
+    cuda::function<void (unsigned int const*, ptr_type, aligned_vector_type*, ptr_type, unsigned int*, unsigned int)> rearrange;
     static particle_wrapper const kernel;
 };
 
-template <int dimension>
-particle_wrapper<dimension> const& get_particle_kernel()
+template <typename float_type, int dimension>
+particle_wrapper<float_type, dimension> const& get_particle_kernel()
 {
-    return particle_wrapper<dimension>::kernel;
+    return particle_wrapper<float_type, dimension>::kernel;
 }
 
 } // namespace mdsim

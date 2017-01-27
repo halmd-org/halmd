@@ -27,30 +27,10 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 
-template<typename T>
-struct dsfloat_ptr {
-#ifndef __CUDACC__
-    dsfloat_ptr(cuda::vector<T> v) : hi (&*v.begin()), lo (&*(v.begin()+v.size())) {
-    }
-    dsfloat_ptr(cuda::vector<T> v1, cuda::vector<T> v2) : hi (&*v1.begin()), lo (&*v2.begin()) {
-    }
-#endif
-
-    T *hi;
-    T *lo;
-
-    HALMD_GPU_ENABLED halmd::tuple<T&, T&> operator[] (unsigned int idx) {
-        return halmd::tie(hi[idx], lo[idx]);
-    };
-    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const {
-        return halmd::tie(hi[idx], lo[idx]);
-    };
-};
-
 struct dsfloat_kernel_wrapper
 {
     cuda::function <void (float4*, halmd::fixed_vector<halmd::dsfloat,3>)> test1;
-    cuda::function <void (dsfloat_ptr<float4>, halmd::fixed_vector<halmd::dsfloat,3>)> test2;
+    cuda::function <void (halmd::dsfloat_ptr<float4>, halmd::fixed_vector<halmd::dsfloat,3>)> test2;
 
     static dsfloat_kernel_wrapper kernel;
 };
@@ -64,7 +44,7 @@ struct dsfloat_traits {
 
 template<int dimension>
 struct dsfloat_traits<halmd::dsfloat, dimension> {
-    typedef dsfloat_ptr<typename halmd::mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type> ptr_type;
+    typedef halmd::dsfloat_ptr<typename halmd::mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type> ptr_type;
 };
 
 template<typename float_type>
