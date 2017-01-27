@@ -26,6 +26,7 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/iterator.hpp>
+#include <halmd/utility/gpu/texture.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -80,7 +81,7 @@ public:
     /**
      * Returns reference to texture with velocities and masses.
      */
-    static cuda::texture<float4> const& get()
+    static cuda::halmd::texture<float4> const& get()
     {
         return texture_;
     }
@@ -89,7 +90,7 @@ private:
     /** sum over mass × square of velocity vector */
     float_type mv2_;
     /** texture with velocities and masses */
-    static cuda::texture<float4> const texture_;
+    static cuda::halmd::texture<float4> const texture_;
 };
 
 /**
@@ -137,7 +138,7 @@ public:
     /**
      * Returns reference to texture with positions and species.
      */
-    static cuda::texture<float4> const& get_position()
+    static cuda::halmd::texture<float4> const& get_position()
     {
         return position_texture_;
     }
@@ -153,7 +154,7 @@ public:
     /**
      * Returns reference to texture with velocities and masses.
      */
-    static cuda::texture<float4> const& get_velocity()
+    static cuda::halmd::texture<float4> const& get_velocity()
     {
         return velocity_texture_;
     }
@@ -164,11 +165,11 @@ private:
     /** sum over mass */
     float_type m_;
     /** texture with positions and species */
-    static cuda::texture<float4> const position_texture_;
+    static cuda::halmd::texture<float4> const position_texture_;
     /** texture with images */
     static cuda::texture<coalesced_vector_type> const image_texture_;
     /** texture with velocities and masses */
-    static cuda::texture<float4> const velocity_texture_;
+    static cuda::halmd::texture<float4> const velocity_texture_;
 };
 
 /**
@@ -217,7 +218,7 @@ public:
     /**
      * Returns reference to texture with velocities and masses.
      */
-    static cuda::texture<float4> const& get()
+    static cuda::halmd::texture<float4> const& get()
     {
         return texture_;
     }
@@ -228,7 +229,7 @@ private:
     /** sum over mass */
     float_type m_;
     /** texture with velocities and masses */
-    static cuda::texture<float4> const texture_;
+    static cuda::halmd::texture<float4> const texture_;
 };
 
 /**
@@ -389,7 +390,7 @@ public:
     /**
      * Returns reference to texture with velocities.
      */
-    static cuda::texture<float4> const& get_velocity()
+    static cuda::halmd::texture<float4> const& get_velocity()
     {
         return velocity_texture_;
     }
@@ -404,7 +405,7 @@ public:
 
 private:
     /** texture with velocities */
-    static cuda::texture<float4> const velocity_texture_;
+    static cuda::halmd::texture<float4> const velocity_texture_;
     /** texture with stress tensors */
     static cuda::texture<float> const stress_pot_texture_;
     /**

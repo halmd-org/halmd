@@ -25,6 +25,8 @@
 #include <halmd/numeric/blas/blas.hpp>
 #ifdef __CUDACC__
 #include <halmd/utility/gpu/texture.cuh>
+#else
+#include <type_traits>
 #endif
 
 namespace cuda {
@@ -37,6 +39,13 @@ class texture : public cuda::texture<T> {
 public:
 #ifdef __CUDACC__
     texture(::texture<T> &tex) : cuda::texture<T>(tex) {}
+#else /* ! __CUDACC__ */
+    void bind(cuda::vector<T> const& array) const {
+        cuda::texture<T>::bind(array);
+    }
+    void bind(dsfloat_vector<float4> const& array, typename std::enable_if<std::is_same<T, float4>::value>::type* = 0) const {
+        cuda::texture<T>::bind(array.storage());
+    }
 #endif /* ! __CUDACC__ */
 };
 
