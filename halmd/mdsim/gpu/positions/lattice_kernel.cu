@@ -30,9 +30,9 @@ namespace gpu {
 namespace positions {
 namespace lattice_kernel {
 
-template <typename float_type, typename vector_type, typename lattice_type>
+template <typename ptr_type, typename vector_type, typename lattice_type>
 __global__ void lattice(
-    typename type_traits<4, float_type>::gpu::ptr_type g_r
+    ptr_type g_r
   , unsigned int npart
   , float a
   , unsigned int skip
@@ -56,7 +56,7 @@ __global__ void lattice(
         uint nvacancies = (skip > 1) ? (i / (skip - 1)) : 0;
 
         // compute primitive lattice vector
-        fixed_vector<float_type, dimension> e = lattice(i + nvacancies);
+        fixed_vector<float, dimension> e = lattice(i + nvacancies);
 
         // scale with lattice constant and shift origin of lattice to offset
         r = e * a + offset; //< cast sum to dsfloat-based type
@@ -69,13 +69,13 @@ __global__ void lattice(
 
 template <typename float_type, typename lattice_type>
 lattice_wrapper<float_type, lattice_type> const lattice_wrapper<float_type, lattice_type>::kernel = {
-    lattice_kernel::lattice<float_type, fixed_vector<float_type, dimension>, lattice_type>
+    lattice_kernel::lattice<ptr_type, fixed_vector<float_type, dimension>, lattice_type>
 };
 
 template class lattice_wrapper<float, close_packed_lattice<fixed_vector<float, 3>, fixed_vector<unsigned int, 3> > >;
 template class lattice_wrapper<float, close_packed_lattice<fixed_vector<float, 2>, fixed_vector<unsigned int, 2> > >;
-template class lattice_wrapper<dsfloat, close_packed_lattice<fixed_vector<dsfloat, 3>, fixed_vector<unsigned int, 3> > >;
-template class lattice_wrapper<dsfloat, close_packed_lattice<fixed_vector<dsfloat, 2>, fixed_vector<unsigned int, 2> > >;
+template class lattice_wrapper<dsfloat, close_packed_lattice<fixed_vector<float, 3>, fixed_vector<unsigned int, 3> > >;
+template class lattice_wrapper<dsfloat, close_packed_lattice<fixed_vector<float, 2>, fixed_vector<unsigned int, 2> > >;
 
 } // namespace mdsim
 } // namespace gpu

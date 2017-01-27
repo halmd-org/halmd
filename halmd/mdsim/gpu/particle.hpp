@@ -52,9 +52,9 @@ public:
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 
-    typedef typename type_traits<dimension, float_type>::vector_type vector_type;
-    typedef typename type_traits<dimension, float_type>::gpu::coalesced_vector_type gpu_vector_type;
-    typedef typename type_traits<4, float_type>::gpu::coalesced_hp_vector_type gpu_hp_vector_type;
+    typedef typename type_traits<dimension, float>::vector_type vector_type;
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
+    typedef typename type_traits<4, float_type>::gpu::coalesced_vector_type gpu_hp_vector_type;
 
     typedef unsigned int size_type;
     typedef vector_type position_type;

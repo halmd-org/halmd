@@ -58,10 +58,10 @@ template<int dimension> image<dimension>::type image<dimension>::tex_;
 /**
  * initialize particle positions and species, velocity and mass
  */
- template<typename float_type>
+ template<typename ptr_type, typename float_type>
 __global__ void initialize(
-    typename type_traits<4, float_type>::gpu::ptr_type g_r
-  , typename type_traits<4, float_type>::gpu::ptr_type g_v
+    ptr_type g_r
+  , ptr_type g_v
   , unsigned int size
 )
 {
@@ -74,30 +74,28 @@ __global__ void initialize(
 /**
  * rearrange particles by a given permutation
  */
-template <typename float_type, int dimension, typename aligned_vector_type>
+template <typename ptr_type, typename float_type, int dimension, typename aligned_vector_type>
 __global__ void rearrange(
     unsigned int const* g_index
-  , typename type_traits<4, float_type>::gpu::ptr_type g_r
+  , ptr_type g_r
   , aligned_vector_type* g_image
-  , typename type_traits<4, float_type>::gpu::ptr_type g_v
+  , ptr_type g_v
   , unsigned int* g_id
   , unsigned int npart
 )
 {
     typedef fixed_vector<float_type, dimension> vector_type;
-    /*if (GTID < npart)*/ {
-        int const i = (GTID < npart) ? g_index[GTID] : GTID;
+    int const i = (GTID < npart) ? g_index[GTID] : GTID;
 
-        // copy position and velocity as float4 values, and image vector
-        g_r[GTID] = texFetch<float_type>::fetch(r_, i);
-        g_v[GTID] = texFetch<float_type>::fetch(v_, i);
+    // copy position and velocity as float4 values, and image vector
+    g_r[GTID] = texFetch<float_type>::fetch(r_, i);
+    g_v[GTID] = texFetch<float_type>::fetch(v_, i);
 
-        // select correct image texture depending on the space dimension
-        g_image[GTID] = tex1Dfetch(image<dimension>::tex_, i);
+    // select correct image texture depending on the space dimension
+    g_image[GTID] = tex1Dfetch(image<dimension>::tex_, i);
 
-        // copy particle ids
-        g_id[GTID] = tex1Dfetch(id_, i);
-    }
+    // copy particle ids
+    g_id[GTID] = tex1Dfetch(id_, i);
 }
 
 } // namespace particle_kernel
@@ -111,8 +109,8 @@ particle_wrapper<float_type, dimension> const particle_wrapper<float_type, dimen
   , particle_kernel::image<dimension>::tex_
   , particle_kernel::v_
   , particle_kernel::id_
-  , particle_kernel::initialize<float_type>
-  , particle_kernel::rearrange<float_type, dimension>
+  , particle_kernel::initialize<ptr_type, float_type>
+  , particle_kernel::rearrange<ptr_type, float_type, dimension>
 };
 
 template class particle_wrapper<float, 3>;

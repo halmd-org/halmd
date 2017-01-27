@@ -30,9 +30,9 @@ namespace velocity_kernel {
 /**
  * Rescale magnitude of all velocities by 'factor'
  */
-template <typename float_type, int dimension>
+template <typename ptr_type, typename float_type, int dimension>
 __global__ void rescale(
-    typename type_traits<4, float_type>::gpu::ptr_type g_v
+    ptr_type g_v
   , unsigned int nparticle
   , unsigned int size
   , dsfloat factor
@@ -50,9 +50,9 @@ __global__ void rescale(
 /**
  * Rescale magnitude of velocities of group by 'factor'
  */
-template <typename float_type, int dimension>
+template <typename ptr_type, typename float_type, int dimension>
 __global__ void rescale_group(
-    typename type_traits<4, float_type>::gpu::ptr_type g_v
+    ptr_type g_v
   , unsigned int const* g_group
   , unsigned int nparticle
   , unsigned int size
@@ -72,9 +72,9 @@ __global__ void rescale_group(
 /**
  * Shift all velocities by 'delta'
  */
-template <typename float_type, int dimension>
+template <typename ptr_type, typename float_type, int dimension>
 __global__ void shift(
-    typename type_traits<4, float_type>::gpu::ptr_type g_v
+    ptr_type g_v
   , unsigned int nparticle
   , unsigned int size
   , fixed_vector<dsfloat, dimension> delta
@@ -92,9 +92,9 @@ __global__ void shift(
 /**
  * Shift velocities of group by 'delta'
  */
-template <typename float_type, int dimension>
+template <typename ptr_type, typename float_type, int dimension>
 __global__ void shift_group(
-    typename type_traits<4, float_type>::gpu::ptr_type g_v
+    ptr_type g_v
   , unsigned int const* g_group
   , unsigned int nparticle
   , unsigned int size
@@ -114,9 +114,9 @@ __global__ void shift_group(
 /**
  * First shift, then rescale all velocities
  */
-template <typename float_type, int dimension>
+template <typename ptr_type, typename float_type, int dimension>
 __global__ void shift_rescale(
-    typename type_traits<4, float_type>::gpu::ptr_type g_v
+    ptr_type g_v
   , unsigned int nparticle
   , unsigned int size
   , fixed_vector<dsfloat, dimension> delta
@@ -136,9 +136,9 @@ __global__ void shift_rescale(
 /**
  * First shift, then rescale velocities of group
  */
-template <typename float_type, int dimension>
+template <typename ptr_type, typename float_type, int dimension>
 __global__ void shift_rescale_group(
-    typename type_traits<4, float_type>::gpu::ptr_type g_v
+    ptr_type g_v
   , unsigned int const* g_group
   , unsigned int nparticle
   , unsigned int size
@@ -161,12 +161,12 @@ __global__ void shift_rescale_group(
 
 template <typename float_type, int dimension>
 velocity_wrapper<float_type, dimension> const velocity_wrapper<float_type, dimension>::kernel = {
-    velocity_kernel::rescale<float_type, dimension>
-  , velocity_kernel::rescale_group<float_type, dimension>
-  , velocity_kernel::shift<float_type, dimension>
-  , velocity_kernel::shift_group<float_type, dimension>
-  , velocity_kernel::shift_rescale<float_type, dimension>
-  , velocity_kernel::shift_rescale_group<float_type, dimension>
+    velocity_kernel::rescale<ptr_type, float_type, dimension>
+  , velocity_kernel::rescale_group<ptr_type, float_type, dimension>
+  , velocity_kernel::shift<ptr_type, float_type, dimension>
+  , velocity_kernel::shift_group<ptr_type, float_type, dimension>
+  , velocity_kernel::shift_rescale<ptr_type, float_type, dimension>
+  , velocity_kernel::shift_rescale_group<ptr_type, float_type, dimension>
 };
 
 template class velocity_wrapper<float, 3>;

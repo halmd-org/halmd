@@ -626,9 +626,10 @@ template<size_t N>
 class particle_array_gpu<fixed_vector<dsfloat, N>>
         : public particle_array_typed<fixed_vector<dsfloat, N>>
 {
+private:
+    typedef typename type_traits<N, float>::gpu::coalesced_vector_type type;
+    typedef typename type_traits<N, dsfloat>::gpu::coalesced_vector_type hp_type;
 public:
-    typedef typename type_traits<N, dsfloat>::gpu::coalesced_vector_type type;
-    typedef typename type_traits<N, dsfloat>::gpu::coalesced_hp_vector_type hp_type;
     typedef dsfloat_vector<type> vector_type;
 
     /**

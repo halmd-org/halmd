@@ -32,9 +32,9 @@ namespace gpu {
 template <typename float_type, int dimension>
 struct particle_wrapper
 {
-    typedef typename type_traits<dimension, float_type>::gpu::vector_type vector_type;
-    typedef typename type_traits<dimension, float_type>::gpu::coalesced_vector_type aligned_vector_type;
-    typedef typename type_traits<4, float_type>::gpu::coalesced_hp_vector_type aligned_hp_vector_type;
+    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type aligned_vector_type;
+    typedef typename type_traits<4, float_type>::gpu::coalesced_vector_type aligned_hp_vector_type;
     typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
 
     cuda::symbol<unsigned int> nbox;
