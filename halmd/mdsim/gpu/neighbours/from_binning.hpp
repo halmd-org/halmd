@@ -56,7 +56,7 @@ public:
     typedef boost::numeric::ublas::matrix<float> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef gpu::binning<dimension, float_type> binning_type;
-    typedef max_displacement<dimension, float> displacement_type;
+    typedef max_displacement<dimension, float_type> displacement_type;
     struct defaults;
 
     enum algorithm
@@ -70,7 +70,8 @@ public:
     static void luaopen(lua_State* L);
 
     from_binning(
-        std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+        std::shared_ptr<particle_type const> particle1
+      , std::shared_ptr<particle_type const> particle2
       , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>> binning
       , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
       , std::shared_ptr<box_type const> box
@@ -92,13 +93,13 @@ public:
     }
 
     //! returns neighbour list skin in MD units
-    float_type r_skin() const
+    float r_skin() const
     {
         return r_skin_;
     }
 
     //! returns neighbour list skin in MD units
-    float_type cell_occupancy() const
+    float cell_occupancy() const
     {
         return nu_cell_;
     }
@@ -190,7 +191,7 @@ private:
 template <int dimension, typename float_type>
 struct from_binning<dimension, float_type>::defaults
 {
-    static float_type occupancy();
+    static float occupancy();
 };
 
 } // namespace neighbours

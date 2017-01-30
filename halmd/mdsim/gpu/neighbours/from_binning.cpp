@@ -44,7 +44,8 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_binning<dimension, float_type>::from_binning(
-    std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+    std::shared_ptr<particle_type const> particle1
+  , std::shared_ptr<particle_type const> particle2
   , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>> binning
   , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
   , std::shared_ptr<box_type const> box
@@ -55,8 +56,8 @@ from_binning<dimension, float_type>::from_binning(
   , std::shared_ptr<logger> logger
 )
   // dependency injection
-  : particle1_(particle.first)
-  , particle2_(particle.second)
+  : particle1_(particle1)
+  , particle2_(particle2)
   , binning1_(binning.first)
   , binning2_(binning.second)
   , displacement1_(displacement.first)
@@ -122,8 +123,8 @@ from_binning<dimension, float_type>::g_neighbour()
 
     auto current_cache = std::tie(reverse_id_cache1, reverse_id_cache2);
 
-    if (neighbour_cache_ != current_cache || displacement1_->compute() > r_skin_ / 2
-        || displacement2_->compute() > r_skin_ / 2) {
+    if (neighbour_cache_ != current_cache || float(displacement1_->compute()) > float(r_skin_ / 2)
+        || float(displacement2_->compute()) > float(r_skin_ / 2)) {
         on_prepend_update_();
         update();
         displacement1_->zero();
@@ -261,15 +262,28 @@ void from_binning<dimension, float_type>::update()
 }
 
 template <int dimension, typename float_type>
-float_type from_binning<dimension, float_type>::defaults::occupancy() {
+float from_binning<dimension, float_type>::defaults::occupancy() {
     return 0.4;
 }
+
+template<typename float_type>
+struct variant_name;
+
+template<>
+struct variant_name<float> {
+    static constexpr const char *name = "float";
+};
+
+template<>
+struct variant_name<dsfloat> {
+    static constexpr const char *name = "dsfloat";
+};
 
 template <int dimension, typename float_type>
 void from_binning<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    std::string const defaults_name("defaults_" +  std::to_string(dimension));
+    std::string const defaults_name("defaults_" + std::string(variant_name<float_type>::name) + "_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -288,7 +302,8 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &from_binning::runtime_)
               , def("from_binning", &std::make_shared<from_binning
-                  , std::pair<std::shared_ptr<particle_type const>,  std::shared_ptr<particle_type const>>
+                  , std::shared_ptr<particle_type const>
+                  , std::shared_ptr<particle_type const>
                   , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>>
                   , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>>
                   , std::shared_ptr<box_type const>
