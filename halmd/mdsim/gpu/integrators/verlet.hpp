@@ -84,7 +84,7 @@ private:
     /** module logger */
     std::shared_ptr<logger> logger_;
     /** CUDA C++ wrapper */
-    verlet_wrapper<dimension> const* wrapper_;
+    verlet_wrapper<float_type, dimension> const* wrapper_;
     /** integration time-step */
     float_type timestep_;
     /** profiling runtime accumulators */

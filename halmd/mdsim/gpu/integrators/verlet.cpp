@@ -42,7 +42,7 @@ verlet<dimension, float_type>::verlet(
   , box_(box)
   , logger_(logger)
   // reference CUDA C++ verlet_wrapper
-  , wrapper_(&verlet_wrapper<dimension>::wrapper)
+  , wrapper_(&verlet_wrapper<float_type, dimension>::wrapper)
 {
     set_timestep(timestep);
 }
@@ -76,10 +76,10 @@ void verlet<dimension, float_type>::integrate()
     try {
         cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_->integrate(
-            &*position->begin()
-          , &*image->begin()
-          , &*velocity->begin()
-          , &*force.begin()
+            position->data()
+          , image->data()
+          , velocity->data()
+          , force.data()
           , timestep_
           , static_cast<vector_type>(box_->length())
         );
@@ -109,8 +109,8 @@ void verlet<dimension, float_type>::finalize()
     try {
         cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_->finalize(
-            &*velocity->begin()
-          , &*force.begin()
+            velocity->data()
+          , force.data()
           , timestep_
         );
         cuda::thread::synchronize();
@@ -159,12 +159,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet(lua_State* L)
 {
     verlet<3, float>::luaopen(L);
     verlet<2, float>::luaopen(L);
+    verlet<3, dsfloat>::luaopen(L);
+    verlet<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class verlet<3, float>;
 template class verlet<2, float>;
+template class verlet<3, dsfloat>;
+template class verlet<2, dsfloat>;
 
 } // namespace mdsim
 } // namespace gpu
