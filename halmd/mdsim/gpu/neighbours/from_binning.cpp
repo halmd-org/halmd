@@ -235,7 +235,7 @@ void from_binning<dimension, float_type>::update()
             kernel->r2.bind(position2);
             kernel->update_neighbours_naive(
                 g_ret
-              , only_single<float_type>::get(position1)
+              , only_single<float_type>::get(position1).data()
               , particle1_->nparticle()
               , particle1_ == particle2_
               , &*g_neighbour->begin()

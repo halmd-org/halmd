@@ -21,6 +21,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/max_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/gpu/only_single.hpp>
 
 #include <algorithm>
 #include <exception>
@@ -86,7 +87,7 @@ void max_displacement<dimension, float_type>::zero()
     LOG_TRACE("zero maximum squared displacement");
 
     scoped_timer_type timer(runtime_.zero);
-    cuda::copy(position.begin(), position.begin() + particle_->nparticle(), g_r0_.begin());
+    cuda::copy(only_single<float_type>::get(position).begin(), only_single<float_type>::get(position).begin() + particle_->nparticle(), g_r0_.begin());
     displacement_ = 0;
     position_cache_ = position_cache;
 }
@@ -112,7 +113,7 @@ float_type max_displacement<dimension, float_type>::compute()
               , dim_reduce_.threads_per_block() * sizeof(float)
             );
             displacement_impl_(
-                &*position.begin()
+                only_single<float_type>::get(position).data()
               , g_r0_
               , g_rr_
               , particle_->nparticle()
@@ -158,12 +159,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_max_displacement(lua_State* L)
 {
     max_displacement<3, float>::luaopen(L);
     max_displacement<2, float>::luaopen(L);
+    max_displacement<3, dsfloat>::luaopen(L);
+    max_displacement<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class max_displacement<3, float>;
 template class max_displacement<2, float>;
+template class max_displacement<3, dsfloat>;
+template class max_displacement<2, dsfloat>;
 
 } // namespace mdsim
 } // namespace gpu

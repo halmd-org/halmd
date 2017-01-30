@@ -180,7 +180,7 @@ void binning<dimension, float_type>::update()
         // compute cell indices for particle positions
         cuda::configure(particle_->dim().grid, particle_->dim().block);
         kernel->compute_cell(
-            only_single<float_type>::get(position)
+            only_single<float_type>::get(position).data()
           , g_cell_index_
           , cell_length_
           , static_cast<fixed_vector<uint, dimension> >(ncell_)

@@ -33,16 +33,16 @@ namespace halmd {
 template<typename float_type>
 struct only_single {
     template<typename T>
-    static auto get(T const& vec) -> decltype(vec.data()) {
-        return vec.data();
+    static auto get(T const& vec) -> decltype(vec) {
+        return vec;
     }
 };
 
 template<>
 struct only_single<dsfloat> {
     template<typename T>
-    static auto get(T const& vec) -> decltype(vec.storage().data()) {
-        return vec.storage().data();
+    static auto get(T const& vec) -> decltype(vec.storage()) {
+        return vec.storage();
     }
 };
 
