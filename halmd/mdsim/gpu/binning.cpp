@@ -27,6 +27,7 @@
 #include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
+#include <halmd/utility/gpu/only_single.hpp>
 
 
 namespace halmd {
@@ -157,28 +158,6 @@ binning<dimension, float_type>::g_cell()
     }
     return g_cell_;
 }
-
-/*
- * Temporary wrapper class for obtaining a float4 pointer from cuda::vector and dsfloat_vector
- * in a unified manner. The dsfloat_vector version only uses the significant half of the dsfloats.
- * At a later point (after all kernels have been adjusted for dsfloat data types) an implicit conversion
- * between dsfloat_ptr and float4* could be recreated to avoid the need for this wrapper.
- */
-template<typename float_type>
-struct only_single {
-    template<typename T>
-    static auto get(T const& vec) -> decltype(vec.data()) {
-        return vec.data();
-    }
-};
-
-template<>
-struct only_single<dsfloat> {
-    template<typename T>
-    static auto get(T const& vec) -> decltype(vec.storage().data()) {
-        return vec.storage().data();
-    }
-};
 
 /**
  * Update cell lists

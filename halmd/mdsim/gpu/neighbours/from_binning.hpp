@@ -53,10 +53,10 @@ private:
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
+    typedef boost::numeric::ublas::matrix<float> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef gpu::binning<dimension, float_type> binning_type;
-    typedef max_displacement<dimension, float_type> displacement_type;
+    typedef max_displacement<dimension, float> displacement_type;
     struct defaults;
 
     enum algorithm
@@ -156,15 +156,15 @@ private:
     std::shared_ptr<logger> logger_;
 
     /** neighbour list skin in MD units */
-    float_type r_skin_;
+    float r_skin_;
     /** maximum cutoff length */
-    float_type r_cut_max_;
+    float r_cut_max_;
     /** (cutoff lengths + neighbour list skin)² */
     matrix_type rr_cut_skin_;
     /** (cutoff lengths + neighbour list skin)² */
-    cuda::vector<float_type> g_rr_cut_skin_;
+    cuda::vector<float> g_rr_cut_skin_;
     /** FIXME average desired cell occupancy */
-    float_type nu_cell_;
+    float nu_cell_;
     /** preferred algorithm for update */
     algorithm preferred_algorithm_;
     /** neighbour lists */

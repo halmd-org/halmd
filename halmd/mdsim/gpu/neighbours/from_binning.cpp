@@ -24,6 +24,7 @@
 #include <halmd/mdsim/gpu/neighbours/from_binning_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
+#include <halmd/utility/gpu/only_single.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -92,11 +93,11 @@ void from_binning<dimension, float_type>::set_occupancy(double cell_occupancy)
     nu_cell_ = cell_occupancy;
     // volume of n-dimensional sphere with neighbour list radius
     // volume of unit sphere: V_d = π^(d/2) / Γ(1+d/2), Γ(1) = 1, Γ(1/2) = √π
-    float_type unit_sphere[5] = {0, 2, M_PI, 4 * M_PI / 3, M_PI * M_PI / 2 };
+    float unit_sphere[5] = {0, 2, M_PI, 4 * M_PI / 3, M_PI * M_PI / 2 };
     assert(dimension <= 4);
-    float_type neighbour_sphere = unit_sphere[dimension] * std::pow(r_cut_max_ + r_skin_, dimension);
+    float neighbour_sphere = unit_sphere[dimension] * std::pow(r_cut_max_ + r_skin_, dimension);
     // partial number density
-    float_type density = particle2_->nparticle() / box_->volume();
+    float density = particle2_->nparticle() / box_->volume();
     // number of placeholders per neighbour list
     size_ = static_cast<size_t>(ceil(neighbour_sphere * (density / cell_occupancy)));
     // at least cell_size (or warp_size?) placeholders
@@ -234,7 +235,7 @@ void from_binning<dimension, float_type>::update()
             kernel->r2.bind(position2);
             kernel->update_neighbours_naive(
                 g_ret
-              , &*position1.begin()
+              , only_single<float_type>::get(position1)
               , particle1_->nparticle()
               , particle1_ == particle2_
               , &*g_neighbour->begin()
@@ -314,12 +315,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_neighbours_from_binning(lua_State* 
 {
     from_binning<3, float>::luaopen(L);
     from_binning<2, float>::luaopen(L);
+    from_binning<3, dsfloat>::luaopen(L);
+    from_binning<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class from_binning<3, float>;
 template class from_binning<2, float>;
+template class from_binning<3, dsfloat>;
+template class from_binning<2, dsfloat>;
 
 } // namespace neighbours
 } // namespace gpu
