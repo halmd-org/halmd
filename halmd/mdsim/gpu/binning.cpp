@@ -92,7 +92,7 @@ binning<dimension, float_type>::binning(
     // compute derived values
     cell_length_ = element_div(static_cast<vector_type>(box_->length()), static_cast<vector_type>(ncell_));
 
-    LOG("neighbour list skin: " << r_skin_);
+    LOG("neighbour list skin: " << float(r_skin_));
     LOG("number of cells per dimension: " << ncell_);
     LOG("edge lengths of cells: " << cell_length_);
 
@@ -150,7 +150,7 @@ template <int dimension, typename float_type>
 cache<typename binning<dimension, float_type>::array_type> const&
 binning<dimension, float_type>::g_cell()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
+    auto const& position_cache = particle_->position();
     if (cell_cache_ != position_cache) {
         update();
         cell_cache_ = position_cache;
@@ -158,13 +158,35 @@ binning<dimension, float_type>::g_cell()
     return g_cell_;
 }
 
+/*
+ * Temporary wrapper class for obtaining a float4 pointer from cuda::vector and dsfloat_vector
+ * in a unified manner. The dsfloat_vector version only uses the significant half of the dsfloats.
+ * At a later point (after all kernels have been adjusted for dsfloat data types) an implicit conversion
+ * between dsfloat_ptr and float4* could be recreated to avoid the need for this wrapper.
+ */
+template<typename float_type>
+struct only_single {
+    template<typename T>
+    static auto get(T const& vec) -> decltype(vec.data()) {
+        return vec.data();
+    }
+};
+
+template<>
+struct only_single<dsfloat> {
+    template<typename T>
+    static auto get(T const& vec) -> decltype(vec.storage().data()) {
+        return vec.storage().data();
+    }
+};
+
 /**
  * Update cell lists
  */
 template <int dimension, typename float_type>
 void binning<dimension, float_type>::update()
 {
-    position_array_type const& position = read_cache(particle_->position());
+    auto const& position = read_cache(particle_->position());
     auto g_cell = make_cache_mutable(g_cell_);
 
     LOG_TRACE("update cell lists");
@@ -179,7 +201,7 @@ void binning<dimension, float_type>::update()
         // compute cell indices for particle positions
         cuda::configure(particle_->dim().grid, particle_->dim().block);
         kernel->compute_cell(
-            &*position.begin()
+            only_single<float_type>::get(position)
           , g_cell_index_
           , cell_length_
           , static_cast<fixed_vector<uint, dimension> >(ncell_)
@@ -251,12 +273,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_binning(lua_State* L)
 {
     binning<3, float>::luaopen(L);
     binning<2, float>::luaopen(L);
+    binning<3, dsfloat>::luaopen(L);
+    binning<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class binning<3, float>;
 template class binning<2, float>;
+template class binning<3, dsfloat>;
+template class binning<2, dsfloat>;
 
 } // namespace gpu
 } // namespace mdsim
