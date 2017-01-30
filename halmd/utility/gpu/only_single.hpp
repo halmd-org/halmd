@@ -36,12 +36,20 @@ struct only_single {
     static auto get(T const& vec) -> decltype(vec) {
         return vec;
     }
+    template<typename T>
+    static auto get(T& vec) -> decltype(vec) {
+        return vec;
+    }
 };
 
 template<>
 struct only_single<dsfloat> {
     template<typename T>
     static auto get(T const& vec) -> decltype(vec.storage()) {
+        return vec.storage();
+    }
+    template<typename T>
+    static auto get(T& vec) -> decltype(vec.storage()) {
         return vec.storage();
     }
 };

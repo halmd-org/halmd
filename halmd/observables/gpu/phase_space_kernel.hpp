@@ -25,6 +25,7 @@
 
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/utility/gpu/texture.hpp>
 
 namespace halmd {
 namespace observables {
@@ -37,7 +38,7 @@ struct phase_space_wrapper
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
     /** positions, types */
-    cuda::texture<float4> r;
+    cuda::halmd::texture<float4> r;
     /** minimum image vectors */
     cuda::texture<coalesced_vector_type> image;
     /** sample position for all particle of a single species */
@@ -53,7 +54,7 @@ struct phase_space_sample_wrapper
 {
     typedef T type;
 
-    cuda::texture<T> input;
+    cuda::halmd::texture<T> input;
     cuda::function<void (unsigned int const*, T*, unsigned int)> sample;
     cuda::function<void (unsigned int const*, T*, unsigned int)> set;
 

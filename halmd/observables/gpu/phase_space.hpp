@@ -64,7 +64,7 @@ public:
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;
-    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef fixed_vector<float, dimension> vector_type;
 
     /**
      * Construct phase_space sampler from particle group.

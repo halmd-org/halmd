@@ -43,7 +43,8 @@ public:
     void bind(cuda::vector<T> const& array) const {
         cuda::texture<T>::bind(array);
     }
-    void bind(dsfloat_vector<float4> const& array, typename std::enable_if<std::is_same<T, float4>::value>::type* = 0) const {
+    template<typename U>
+    void bind(dsfloat_vector<U> const& array, typename std::enable_if<(std::is_same<U, float>::value || std::is_same<U, float2>::value || std::is_same<U, float4>::value) && std::is_same<U, T>::value>::type* = 0) const {
         cuda::texture<T>::bind(array.storage());
     }
 #endif /* ! __CUDACC__ */

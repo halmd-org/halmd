@@ -320,10 +320,10 @@ struct gpu_host_modules
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef halmd::observables::gpu::phase_space<dimension, float_type> phase_space_type;
-    typedef typename halmd::observables::host::samples::sample<dimension, float_type> input_position_sample_type;
-    typedef typename halmd::observables::host::samples::sample<dimension, float_type> input_velocity_sample_type;
+    typedef typename halmd::observables::host::samples::sample<dimension, float> input_position_sample_type;
+    typedef typename halmd::observables::host::samples::sample<dimension, float> input_velocity_sample_type;
     typedef typename halmd::observables::host::samples::sample<1, unsigned int> input_species_sample_type;
-    typedef typename halmd::observables::host::samples::sample<1, float_type> input_mass_sample_type;
+    typedef typename halmd::observables::host::samples::sample<1, float> input_mass_sample_type;
     typedef host_samples<gpu_host_modules> samples_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     static bool const gpu = true;
@@ -337,10 +337,10 @@ struct gpu_gpu_modules
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef halmd::observables::gpu::phase_space<dimension, float_type> phase_space_type;
-    typedef typename halmd::observables::host::samples::sample<dimension, float_type> input_position_sample_type;
-    typedef typename halmd::observables::host::samples::sample<dimension, float_type> input_velocity_sample_type;
+    typedef typename halmd::observables::host::samples::sample<dimension, float> input_position_sample_type;
+    typedef typename halmd::observables::host::samples::sample<dimension, float> input_velocity_sample_type;
     typedef typename halmd::observables::host::samples::sample<1, unsigned int> input_species_sample_type;
-    typedef typename halmd::observables::host::samples::sample<1, float_type> input_mass_sample_type;
+    typedef typename halmd::observables::host::samples::sample<1, float> input_mass_sample_type;
     typedef gpu_samples<gpu_gpu_modules> samples_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     static bool const gpu = true;
@@ -348,14 +348,18 @@ struct gpu_gpu_modules
 
 BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_2d, halmd::device ) {
     phase_space<gpu_host_modules<2, float> >().test();
+    phase_space<gpu_host_modules<2, halmd::dsfloat> >().test();
 }
 BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_3d, halmd::device ) {
     phase_space<gpu_host_modules<3, float> >().test();
+    phase_space<gpu_host_modules<3, halmd::dsfloat> >().test();
 }
 BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_2d, halmd::device ) {
     phase_space<gpu_gpu_modules<2, float> >().test();
+    phase_space<gpu_gpu_modules<2, halmd::dsfloat> >().test();
 }
 BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_3d, halmd::device ) {
     phase_space<gpu_gpu_modules<3, float> >().test();
+    phase_space<gpu_gpu_modules<3, halmd::dsfloat> >().test();
 }
 #endif // HALMD_WITH_GPU
