@@ -21,6 +21,7 @@
 
 #include <halmd/observables/gpu/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/gpu/only_single.hpp>
 
 using namespace std;
 
@@ -102,7 +103,7 @@ density_mode<dimension, float_type>::acquire()
 
             // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
             wrapper_type::kernel.compute(
-                position, &*group.begin(), group.size()
+                only_single<float_type>::get(position).data(), &*group.begin(), group.size()
               , g_sin_block_, g_cos_block_, nq_
             );
             cuda::thread::synchronize();
@@ -169,12 +170,16 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_density_mode(lua_State* L)
 {
     density_mode<3, float>::luaopen(L);
     density_mode<2, float>::luaopen(L);
+    density_mode<3, dsfloat>::luaopen(L);
+    density_mode<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class density_mode<3, float>;
 template class density_mode<2, float>;
+template class density_mode<3, dsfloat>;
+template class density_mode<2, dsfloat>;
 
 }  // namespace gpu
 }  // namespace observables
