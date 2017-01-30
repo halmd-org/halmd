@@ -178,7 +178,7 @@ private:
 template <int dimension, typename float_type>
 struct from_particle<dimension, float_type>::defaults
 {
-    static float_type occupancy();
+    static float occupancy();
 };
 
 } // namespace neighbours

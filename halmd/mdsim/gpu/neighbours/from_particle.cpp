@@ -174,7 +174,7 @@ void from_particle<dimension, float_type>::update()
 }
 
 template <int dimension, typename float_type>
-float_type from_particle<dimension, float_type>::defaults::occupancy() {
+float from_particle<dimension, float_type>::defaults::occupancy() {
     return 0.4;
 }
 
