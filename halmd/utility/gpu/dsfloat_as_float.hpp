@@ -17,8 +17,8 @@
  * Public License along with this program. If not, see
  * <http://www.gnu.org/licenses/>.
  */
-#ifndef HALMD_UTILITY_GPU_ONLY_SINGLE_HPP
-#define HALMD_UTILITY_GPU_ONLY_SINGLE_HPP
+#ifndef HALMD_UTILITY_GPU_DSFLOAT_AS_FLOAT_HPP
+#define HALMD_UTILITY_GPU_DSFLOAT_AS_FLOAT_HPP
 
 #include <halmd/numeric/mp/dsfloat.hpp>
 
@@ -30,30 +30,33 @@ namespace halmd {
  * At a later point (after all kernels have been adjusted for dsfloat data types) an implicit conversion
  * between dsfloat_ptr and float4* could be recreated to avoid the need for this wrapper.
  */
-template<typename float_type>
-struct only_single {
-    template<typename T>
-    static auto get(T const& vec) -> decltype(vec) {
-        return vec;
-    }
-    template<typename T>
-    static auto get(T& vec) -> decltype(vec) {
-        return vec;
+
+namespace detail {
+
+template<typename... Ts> struct make_void { typedef void type;};
+template<typename... Ts> using void_t = typename make_void<Ts...>::type;
+
+template<typename T, typename = void>
+struct dsfloat_as_float_helper {
+    static auto remove(T& vec) -> decltype(vec) {
+        return  vec;
     }
 };
 
-template<>
-struct only_single<dsfloat> {
-    template<typename T>
-    static auto get(T const& vec) -> decltype(vec.storage()) {
-        return vec.storage();
-    }
-    template<typename T>
-    static auto get(T& vec) -> decltype(vec.storage()) {
-        return vec.storage();
+template<typename T>
+struct dsfloat_as_float_helper<T, void_t<decltype(std::declval<T const&>().storage())>> {
+    static auto remove(T& vec) -> decltype(vec.storage()) {
+        return  vec.storage();
     }
 };
+
+} // namespace detail
+
+template<typename T>
+auto dsfloat_as_float(T &vec) -> decltype(detail::dsfloat_as_float_helper<T>::remove(vec)) {
+    return detail::dsfloat_as_float_helper<T>::remove(vec);
+}
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_GPU_ONLY_SINGLE_HPP */
+#endif /* ! HALMD_UTILITY_GPU_DSFLOAT_AS_FLOAT_HPP */

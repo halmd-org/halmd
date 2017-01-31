@@ -49,7 +49,7 @@
 # include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
-# include <halmd/utility/gpu/only_single.hpp>
+# include <halmd/utility/gpu/dsfloat_as_float.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
@@ -377,9 +377,9 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
     // Caveat: overwrites particle ids in g_v (which are not used anyway)
     try {
         cuda::configure(particle->dim().grid, particle->dim().block);
-        apply_negate_wrapper::kernel.apply(only_single<float_type>::get(position).data()
-                                         , only_single<float_type>::get(*velocity).data()
-                                         , only_single<float_type>::get(position).capacity());
+        apply_negate_wrapper::kernel.apply(dsfloat_as_float(position).data()
+                                         , dsfloat_as_float(*velocity).data()
+                                         , dsfloat_as_float(position).capacity());
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {

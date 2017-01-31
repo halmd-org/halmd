@@ -35,6 +35,7 @@
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/signal.hpp>
 #include <halmd/utility/timer.hpp>
+#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 namespace halmd {
 namespace observables {
@@ -285,31 +286,6 @@ static const std::unordered_map<
 };
 
 
-// TEMPORARY HACK START
-template<typename... Ts> struct make_void { typedef void type;};
-template<typename... Ts> using void_t = typename make_void<Ts...>::type;
-
-template<typename T, typename = void>
-struct remove_dsfloat_helper {
-    static auto remove(T &vec) -> decltype(vec) {
-        return  vec;
-    }
-};
-
-template<typename T>
-struct remove_dsfloat_helper<T, void_t<decltype(std::declval<T const&>().storage())>> {
-    static auto remove(T &vec) -> decltype(vec.storage()) {
-        return  vec.storage();
-    }
-};
-
-template<typename T>
-auto remove_dsfloat(T& vec) -> decltype(remove_dsfloat_helper<T>::remove(vec)) {
-    return remove_dsfloat_helper<T>::remove(vec);
-}
-// TEMPORARY HACK END
-
-
 /**
  * specialized phase_space sampler for host position data
  *
@@ -428,7 +404,7 @@ public:
             cuda::configure(dim_.grid, dim_.block);
             phase_space_wrapper<dimension>::kernel.reduce_periodic(
                 &*group.begin()
-              , remove_dsfloat(*position).data() // TODO: is this correct for dsfloats?
+              , dsfloat_as_float(*position).data() // TODO: is this correct for dsfloats?
               , &*image->begin()
               , static_cast<fixed_vector<scalar_type, dimension>>(box_->length())
               , group.size()
@@ -548,7 +524,7 @@ public:
             cuda::configure(dim_.grid, dim_.block);
             phase_space_sample_wrapper<sample_data_type>::kernel.set(
                 &*group.begin()
-              , remove_dsfloat(*data).data() // TODO: is this correct for dsfloats?
+              , dsfloat_as_float(*data).data() // TODO: is this correct for dsfloats?
               , group.size()
             );
         }
@@ -772,7 +748,7 @@ public:
             cuda::configure(this->dim_.grid, this->dim_.block);
             phase_space_wrapper<dimension>::kernel.reduce_periodic(
                 &*group.begin()
-              , remove_dsfloat(*position).data() // TODO: is this correct for dsfloats?
+              , dsfloat_as_float(*position).data() // TODO: is this correct for dsfloats?
               , &*image->begin()
               , static_cast<fixed_vector<float, dimension>>(box_->length())
               , group.size()

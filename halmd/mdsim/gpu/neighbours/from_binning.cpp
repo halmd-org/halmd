@@ -24,7 +24,7 @@
 #include <halmd/mdsim/gpu/neighbours/from_binning_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
-#include <halmd/utility/gpu/only_single.hpp>
+#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -236,7 +236,7 @@ void from_binning<dimension, float_type>::update()
             kernel->r2.bind(position2);
             kernel->update_neighbours_naive(
                 g_ret
-              , only_single<float_type>::get(position1).data()
+              , dsfloat_as_float(position1).data()
               , particle1_->nparticle()
               , particle1_ == particle2_
               , &*g_neighbour->begin()

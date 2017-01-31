@@ -28,7 +28,7 @@
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/gpu/only_single.hpp>
+#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 using namespace std;
 
@@ -193,8 +193,8 @@ float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
     scoped_timer_type timer(runtime_.propagate);
 
     // compute total kinetic energy multiplied by 2
-    float_type en_kin_2 = 2 * compute_en_kin_(only_single<gpu_float_type>::get(velocity).data()
-                                            , only_single<gpu_float_type>::get(velocity).data() + velocity.size())();
+    float_type en_kin_2 = 2 * compute_en_kin_(dsfloat_as_float(velocity).data()
+                                            , dsfloat_as_float(velocity).data() + velocity.size())();
 
     // head of the chain
     v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) / mass_xi_[1] * timestep_4_;

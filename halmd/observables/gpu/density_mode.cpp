@@ -21,7 +21,7 @@
 
 #include <halmd/observables/gpu/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/gpu/only_single.hpp>
+#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 using namespace std;
 
@@ -103,7 +103,7 @@ density_mode<dimension, float_type>::acquire()
 
             // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
             wrapper_type::kernel.compute(
-                only_single<float_type>::get(position).data(), &*group.begin(), group.size()
+                dsfloat_as_float(position).data(), &*group.begin(), group.size()
               , g_sin_block_, g_cos_block_, nq_
             );
             cuda::thread::synchronize();

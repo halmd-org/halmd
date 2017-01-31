@@ -27,7 +27,7 @@
 #include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
-#include <halmd/utility/gpu/only_single.hpp>
+#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 
 namespace halmd {
@@ -180,7 +180,7 @@ void binning<dimension, float_type>::update()
         // compute cell indices for particle positions
         cuda::configure(particle_->dim().grid, particle_->dim().block);
         kernel->compute_cell(
-            only_single<float_type>::get(position).data()
+            dsfloat_as_float(position).data()
           , g_cell_index_
           , cell_length_
           , static_cast<fixed_vector<uint, dimension> >(ncell_)
