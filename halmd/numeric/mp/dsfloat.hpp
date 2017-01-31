@@ -39,6 +39,8 @@ namespace mp {
 struct dsfloat;
 template<typename T>
 struct dsfloat_ptr;
+template<typename T>
+struct dsfloat_const_ptr;
 #ifndef __CUDACC__
 template<typename T>
 class dsfloat_vector;
@@ -51,6 +53,7 @@ class dsfloat_vector;
 // import into top-level namespace
 using detail::numeric::mp::dsfloat;
 using detail::numeric::mp::dsfloat_ptr;
+using detail::numeric::mp::dsfloat_const_ptr;
 #ifndef __CUDACC__
 using detail::numeric::mp::dsfloat_vector;
 #endif
@@ -303,15 +306,29 @@ inline HALMD_GPU_ENABLED dsfloat min(dsfloat const& v, dsfloat const& w)
 template<typename T>
 struct dsfloat_ptr {
 #ifndef __CUDACC__
-    explicit dsfloat_ptr(dsfloat_vector<T> &v);
+    explicit dsfloat_ptr(dsfloat_vector<T>& v);
 #endif
 
-    T *hi;
-    T *lo;
+    T* hi;
+    T* lo;
 
     HALMD_GPU_ENABLED halmd::tuple<T&, T&> operator[] (unsigned int idx) {
         return tie(hi[idx], lo[idx]);
     };
+    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const {
+        return tie(hi[idx], lo[idx]);
+    };
+};
+
+template<typename T>
+struct dsfloat_const_ptr {
+#ifndef __CUDACC__
+    explicit dsfloat_const_ptr(dsfloat_vector<T> const& v);
+#endif
+
+    T const* hi;
+    T const* lo;
+
     HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const {
         return tie(hi[idx], lo[idx]);
     };
@@ -324,7 +341,7 @@ public:
     typedef dsfloat_vector<T> vector_type;
     typedef T value_type;
     typedef dsfloat_ptr<T> pointer;
-    typedef dsfloat_ptr<T> const const_pointer;
+    typedef dsfloat_const_ptr<T> const const_pointer;
     typedef size_t size_type;
 
     dsfloat_vector(size_type size) : data_(size * 2)
@@ -368,7 +385,7 @@ public:
 
     const_pointer data() const
     {
-        return pointer(*this);
+        return const_pointer(*this);
     }
 
     operator const_pointer() const
@@ -392,6 +409,13 @@ template<typename T>
 inline dsfloat_ptr<T>::dsfloat_ptr(dsfloat_vector<T>& v)
         : hi(&*(v.storage().begin()))
         , lo(&*(v.storage().begin()+v.size()))
+{
+}
+
+template<typename T>
+inline dsfloat_const_ptr<T>::dsfloat_const_ptr(dsfloat_vector<T> const& v)
+  : hi(&*(v.storage().begin()))
+    , lo(&*(v.storage().begin()+v.size()))
 {
 }
 #endif

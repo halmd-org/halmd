@@ -49,6 +49,7 @@
 # include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
+# include <halmd/utility/gpu/only_single.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
@@ -86,6 +87,7 @@ struct test_euler
     typedef typename modules_type::position_sample_type position_sample_type;
     typedef typename modules_type::velocity_sample_type velocity_sample_type;
     typedef typename modules_type::phase_space_type phase_space_type;
+    typedef typename modules_type::vector_type hp_vector_type;
 
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
@@ -313,6 +315,18 @@ BOOST_AUTO_TEST_CASE( euler_host_3d_overdamped ) {
 #endif
 
 #ifdef HALMD_WITH_GPU
+
+// FIXME define numeric_limits for dsfloat
+// see, e.g., http://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
+template<typename T>
+struct dsfloat_aware_numeric_limits : public numeric_limits<T> {
+};
+template<>
+struct dsfloat_aware_numeric_limits<dsfloat> {
+    static dsfloat epsilon() { return std::pow(double(2), -44); }
+    static float min() { return std::numeric_limits<float>::min(); }
+};
+
 /**
  * Specify concretely which modules to use: Gpu modules.
  */
@@ -328,22 +342,13 @@ struct gpu_modules
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
-    typedef observables::host::samples::sample<dimension, float_type> position_sample_type;
-    typedef observables::host::samples::sample<dimension, float_type> velocity_sample_type;
+    typedef observables::host::samples::sample<dimension, float> position_sample_type;
+    typedef observables::host::samples::sample<dimension, float> velocity_sample_type;
     typedef observables::gpu::phase_space<dimension, float_type> phase_space_type;
 
     static bool const gpu = true;
 
-#ifndef USE_VERLET_DSFUN
-    typedef typename std::numeric_limits<float_type> numeric_limits;
-#else
-    // FIXME define numeric_limits for dsfloat
-    // see, e.g., http://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
-    struct numeric_limits {
-        static float_type epsilon() { return std::pow(float_type(2), -44); }
-        static float_type min() { return std::numeric_limits<float>::min(); }
-    };
-#endif
+    typedef dsfloat_aware_numeric_limits<float_type> numeric_limits;
 
     static void set_velocity(std::shared_ptr<particle_type> particle);
 };
@@ -372,7 +377,9 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
     // Caveat: overwrites particle ids in g_v (which are not used anyway)
     try {
         cuda::configure(particle->dim().grid, particle->dim().block);
-        apply_negate_wrapper::kernel.apply(&*position.begin(), &*velocity->begin(), position.capacity());
+        apply_negate_wrapper::kernel.apply(only_single<float_type>::get(position).data()
+                                         , only_single<float_type>::get(*velocity).data()
+                                         , only_single<float_type>::get(position).capacity());
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -383,15 +390,19 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
 
 BOOST_FIXTURE_TEST_CASE( euler_gpu_2d_linear, device ) {
     test_euler<gpu_modules<2, float> >().linear_motion();
+    test_euler<gpu_modules<2, dsfloat> >().linear_motion();
 }
 BOOST_FIXTURE_TEST_CASE( euler_gpu_3d_linear, device ) {
     test_euler<gpu_modules<3, float> >().linear_motion();
+    test_euler<gpu_modules<3, dsfloat> >().linear_motion();
 }
 
 BOOST_FIXTURE_TEST_CASE( euler_gpu_2d_overdamped, device ) {
     test_euler<gpu_modules<2, float> >().overdamped_motion();
+    test_euler<gpu_modules<2, dsfloat> >().overdamped_motion();
 }
 BOOST_FIXTURE_TEST_CASE( euler_gpu_3d_overdamped, device ) {
     test_euler<gpu_modules<3, float> >().overdamped_motion();
+    test_euler<gpu_modules<3, dsfloat> >().overdamped_motion();
 }
 #endif // HALMD_WITH_GPU

@@ -44,25 +44,25 @@ namespace gpu {
 template <int N, typename value_type>
 struct basic_vector_type;
 
-template <> struct basic_vector_type<2, float> { typedef float2 type; typedef type* ptr_type; };
-template <> struct basic_vector_type<3, float> { typedef float3 type; typedef type* ptr_type; };
-template <> struct basic_vector_type<4, float> { typedef float4 type; typedef type* ptr_type; };
+template <> struct basic_vector_type<2, float> { typedef float2 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
+template <> struct basic_vector_type<3, float> { typedef float3 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
+template <> struct basic_vector_type<4, float> { typedef float4 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 
-template <> struct basic_vector_type<2, dsfloat> { typedef fixed_vector<dsfloat, 2> type; typedef dsfloat_ptr<float2> ptr_type; };
-template <> struct basic_vector_type<3, dsfloat> { typedef fixed_vector<dsfloat, 3> type; typedef dsfloat_ptr<float3> ptr_type; };
-template <> struct basic_vector_type<4, dsfloat> { typedef fixed_vector<dsfloat, 4> type; typedef dsfloat_ptr<float4> ptr_type; };
+template <> struct basic_vector_type<2, dsfloat> { typedef fixed_vector<dsfloat, 2> type; typedef dsfloat_ptr<float2> ptr_type; typedef dsfloat_const_ptr<float2> const_ptr_type; };
+template <> struct basic_vector_type<3, dsfloat> { typedef fixed_vector<dsfloat, 3> type; typedef dsfloat_ptr<float3> ptr_type; typedef dsfloat_const_ptr<float3> const_ptr_type; };
+template <> struct basic_vector_type<4, dsfloat> { typedef fixed_vector<dsfloat, 4> type; typedef dsfloat_ptr<float4> ptr_type; typedef dsfloat_const_ptr<float4> const_ptr_type; };
 
-// template <> struct basic_vector_type<2, double> { typedef double2 type; typedef type* ptr_type; };
-// template <> struct basic_vector_type<3, double> { typedef double3 type; typedef type* ptr_type; };
-// template <> struct basic_vector_type<4, double> { typedef double4 type; typedef type* ptr_type; };
+// template <> struct basic_vector_type<2, double> { typedef double2 type; typedef type const* const_ptr_type; };
+// template <> struct basic_vector_type<3, double> { typedef double3 type; typedef type const* const_ptr_type; };
+// template <> struct basic_vector_type<4, double> { typedef double4 type; typedef type const* const_ptr_type; };
 
-template <> struct basic_vector_type<2, int> { typedef int2 type; typedef type* ptr_type; };
-template <> struct basic_vector_type<3, int> { typedef int3 type; typedef type* ptr_type; };
-template <> struct basic_vector_type<4, int> { typedef int4 type; typedef type* ptr_type; };
+template <> struct basic_vector_type<2, int> { typedef int2 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
+template <> struct basic_vector_type<3, int> { typedef int3 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
+template <> struct basic_vector_type<4, int> { typedef int4 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 
-template <> struct basic_vector_type<2, unsigned int> { typedef uint2 type; typedef type* ptr_type; };
-template <> struct basic_vector_type<3, unsigned int> { typedef uint3 type; typedef type* ptr_type; };
-template <> struct basic_vector_type<4, unsigned int> { typedef uint4 type; typedef type* ptr_type; };
+template <> struct basic_vector_type<2, unsigned int> { typedef uint2 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
+template <> struct basic_vector_type<3, unsigned int> { typedef uint3 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
+template <> struct basic_vector_type<4, unsigned int> { typedef uint4 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 
 /**
  * definition of non-scalar GPU types
@@ -77,6 +77,7 @@ struct type_traits<4, value_type>
     typedef typename basic_vector_type<4, value_type>::type coalesced_vector_type;
     typedef typename basic_vector_type<4, value_type>::type vector_type;
     typedef typename basic_vector_type<4, value_type>::ptr_type ptr_type;
+    typedef typename basic_vector_type<4, value_type>::const_ptr_type const_ptr_type;
 };
 
 template <typename value_type>
@@ -85,6 +86,7 @@ struct type_traits<3, value_type>
     typedef typename basic_vector_type<4, value_type>::type coalesced_vector_type;
     typedef typename basic_vector_type<3, value_type>::type vector_type;
     typedef typename basic_vector_type<4, value_type>::ptr_type ptr_type;
+    typedef typename basic_vector_type<4, value_type>::const_ptr_type const_ptr_type;
 };
 
 template <typename value_type>
@@ -93,6 +95,7 @@ struct type_traits<2, value_type>
     typedef typename basic_vector_type<2, value_type>::type coalesced_vector_type;
     typedef typename basic_vector_type<2, value_type>::type vector_type;
     typedef typename basic_vector_type<2, value_type>::ptr_type ptr_type;
+    typedef typename basic_vector_type<2, value_type>::const_ptr_type const_ptr_type;
 };
 
 template <typename value_type>
@@ -101,6 +104,7 @@ struct type_traits<1, value_type>
     typedef value_type coalesced_vector_type;
     typedef value_type vector_type;
     typedef typename basic_vector_type<1, value_type>::ptr_type ptr_type;
+    typedef typename basic_vector_type<1, value_type>::const_ptr_type const_ptr_type;
 };
 
 }} // namespace detail::gpu

@@ -40,11 +40,11 @@ namespace euler_kernel {
  * @param timestep      integration timestep
  * @param box_length    edge lengths of cuboid box
  */
-template <int dimension, typename float_type, typename gpu_vector_type>
+template <typename ptr_type, typename const_ptr_type, int dimension, typename float_type, typename gpu_vector_type>
 __global__ void integrate(
-    float4* g_position
+    ptr_type g_position
   , gpu_vector_type* g_image
-  , float4 const* g_velocity
+  , const_ptr_type g_velocity
   , float timestep
   , fixed_vector<float, dimension> box_length
 )
@@ -60,13 +60,8 @@ __global__ void integrate(
     vector_type r, v;
     unsigned int species;
     float mass;
-#ifdef USE_VERLET_DSFUN
-    tie(r, species) <<= tie(g_position[thread], g_position[thread + nthread]);
-    tie(v, mass) <<= tie(g_velocity[thread], g_velocity[thread + nthread]);
-#else
     tie(r, species) <<= g_position[thread];
     tie(v, mass) <<= g_velocity[thread];
-#endif
 
     // Euler integration
     r += v * timestep;
@@ -74,11 +69,7 @@ __global__ void integrate(
     float_vector_type image = box_kernel::reduce_periodic(r, box_length);
 
     // store position, species, image in global memory
-#ifdef USE_VERLET_DSFUN
-    tie(g_position[thread], g_position[thread + nthread]) <<= tie(r, species);
-#else
     g_position[thread] <<= tie(r, species);
-#endif
     if (!(image == float_vector_type(0))) {
         g_image[thread] = image + static_cast<float_vector_type>(g_image[thread]);
     }
@@ -86,18 +77,16 @@ __global__ void integrate(
 
 } // namespace euler_kernel
 
-template <int dimension>
-euler_wrapper<dimension> const euler_wrapper<dimension>::kernel = {
-#ifdef USE_VERLET_DSFUN
-    euler_kernel::integrate<dimension, dsfloat>
-#else
-    euler_kernel::integrate<dimension, float>
-#endif
+template <typename float_type, int dimension>
+euler_wrapper<float_type, dimension> const euler_wrapper<float_type, dimension>::kernel = {
+    euler_kernel::integrate<ptr_type, const_ptr_type, dimension, float_type>
 };
 
 // explicit instantiation
-template class euler_wrapper<3>;
-template class euler_wrapper<2>;
+template class euler_wrapper<float, 3>;
+template class euler_wrapper<float, 2>;
+template class euler_wrapper<dsfloat, 3>;
+template class euler_wrapper<dsfloat, 2>;
 
 } // namespace integrators
 } // namespace gpu

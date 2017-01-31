@@ -31,16 +31,18 @@ namespace mdsim {
 namespace gpu {
 namespace integrators {
 
-template <int dimension>
+template <typename float_type, int dimension>
 struct euler_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
     typedef fixed_vector<float, dimension> vector_type;
+    typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
+    typedef typename type_traits<4, float_type>::gpu::const_ptr_type const_ptr_type;
 
     cuda::function <void (
-        float4*
+        ptr_type
       , coalesced_vector_type*
-      , float4 const*
+      , const_ptr_type
       , float
       , vector_type
     )> integrate;

@@ -76,9 +76,9 @@ void euler<dimension, float_type>::integrate()
     try {
         cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_type::kernel.integrate(
-            &*position->begin()
-          , &*image->begin()
-          , &*velocity.begin()
+            position->data()
+          , image->data()
+          , velocity.data()
           , timestep_
           , static_cast<vector_type>(box_->length())
         );
@@ -144,12 +144,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_euler(lua_State* L)
 {
     euler<3, float>::luaopen(L);
     euler<2, float>::luaopen(L);
+    euler<3, dsfloat>::luaopen(L);
+    euler<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class euler<3, float>;
 template class euler<2, float>;
+template class euler<3, dsfloat>;
+template class euler<2, dsfloat>;
 
 } // namespace integrators
 } // namespace gpu
