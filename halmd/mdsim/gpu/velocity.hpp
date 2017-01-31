@@ -38,8 +38,8 @@ inline void rescale_velocity(particle_type& particle, double factor)
     auto velocity = make_cache_mutable(particle.velocity());
 
     cuda::configure(particle.dim().grid, particle.dim().block);
-    get_velocity_kernel<particle_type::velocity_type::static_size>().rescale(
-        &*velocity->begin()
+    get_velocity_kernel<typename particle_type::float_type, particle_type::velocity_type::static_size>().rescale(
+        velocity->data()
       , particle.nparticle()
       , particle.dim().threads()
       , factor
@@ -59,9 +59,9 @@ inline void rescale_velocity_group(particle_type& particle, particle_group& grou
         (unordered.size() + particle.dim().threads_per_block() - 1) / particle.dim().threads_per_block()
       , particle.dim().block
     );
-    get_velocity_kernel<particle_type::velocity_type::static_size>().rescale_group(
-        &*velocity->begin()
-      , &*unordered.begin()
+    get_velocity_kernel<typename particle_type::float_type, particle_type::velocity_type::static_size>().rescale_group(
+        velocity->data()
+      , unordered.data()
       , unordered.size()
       , particle.dim().threads()
       , factor
@@ -77,8 +77,8 @@ inline void shift_velocity(particle_type& particle, fixed_vector<double, particl
     auto velocity = make_cache_mutable(particle.velocity());
 
     cuda::configure(particle.dim().grid, particle.dim().block);
-    get_velocity_kernel<particle_type::velocity_type::static_size>().shift(
-        &*velocity->begin()
+    get_velocity_kernel<typename particle_type::float_type, particle_type::velocity_type::static_size>().shift(
+        velocity->data()
       , particle.nparticle()
       , particle.dim().threads()
       , delta
@@ -98,9 +98,9 @@ inline void shift_velocity_group(particle_type& particle, particle_group& group,
         (unordered.size() + particle.dim().threads_per_block() - 1) / particle.dim().threads_per_block()
       , particle.dim().block
     );
-    get_velocity_kernel<particle_type::velocity_type::static_size>().shift_group(
-        &*velocity->begin()
-      , &*unordered.begin()
+    get_velocity_kernel<typename particle_type::float_type, particle_type::velocity_type::static_size>().shift_group(
+        velocity->data()
+      , unordered.data()
       , unordered.size()
       , particle.dim().threads()
       , delta
@@ -116,8 +116,8 @@ inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double,
     auto velocity = make_cache_mutable(particle.velocity());
 
     cuda::configure(particle.dim().grid, particle.dim().block);
-    get_velocity_kernel<particle_type::velocity_type::static_size>().shift_rescale(
-        &*velocity->begin()
+    get_velocity_kernel<typename particle_type::float_type, particle_type::velocity_type::static_size>().shift_rescale(
+        velocity->data()
       , particle.nparticle()
       , particle.dim().threads()
       , delta
@@ -138,9 +138,9 @@ inline void shift_rescale_velocity_group(particle_type& particle, particle_group
         (unordered.size() + particle.dim().threads_per_block() - 1) / particle.dim().threads_per_block()
       , particle.dim().block
     );
-    get_velocity_kernel<particle_type::velocity_type::static_size>().shift_rescale_group(
-        &*velocity->begin()
-      , &*unordered.begin()
+    get_velocity_kernel<typename particle_type::float_type, particle_type::velocity_type::static_size>().shift_rescale_group(
+        velocity->data()
+      , unordered.data()
       , unordered.size()
       , particle.dim().threads()
       , delta

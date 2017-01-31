@@ -42,7 +42,7 @@ template<int dimension>
 struct image
 {
     // instantiate a separate texture for each aligned vector type
-    typedef texture<typename particle_group_wrapper<dimension>::aligned_vector_type> type;
+    typedef texture<typename particle_group_wrapper<float, dimension>::aligned_vector_type> type;
     static type tex_;
 };
 // instantiate static members
@@ -51,12 +51,12 @@ template<int dimension> image<dimension>::type image<dimension>::tex_;
 /**
  * copy a subset of a particle instance (particle group) to another particle instance
  */
-template <typename vector_type, typename aligned_vector_type>
+template <typename ptr_type, typename float_type, typename vector_type, typename aligned_vector_type>
 __global__ void particle_group_to_particle(
     unsigned int const* g_index
-  , float4* g_r
+  , ptr_type g_v
   , aligned_vector_type* g_image
-  , float4* g_v
+  , ptr_type g_r
   , unsigned int npart
 )
 {
@@ -66,12 +66,8 @@ __global__ void particle_group_to_particle(
         int const i = g_index[GTID];
 
         // copy position and velocity as float4 values, and image vector
-        g_r[GTID] = tex1Dfetch(r_, i);
-        g_v[GTID] = tex1Dfetch(v_, i);
-#ifdef USE_VERLET_DSFUN
-        g_r[GTID + GTDIM] = tex1Dfetch(r_, i + GTDIM);
-        g_v[GTID + GTDIM] = tex1Dfetch(v_, i + GTDIM);
-#endif
+        g_r[GTID] = texFetch<float_type>::fetch(r_, i);
+        g_v[GTID] = texFetch<float_type>::fetch(v_, i);
 
         // copy image vector with its type depending on the space dimension
         g_image[GTID] = tex1Dfetch(image<dimension>::tex_, i);
@@ -80,21 +76,19 @@ __global__ void particle_group_to_particle(
 
 } // namespace particle_group_kernel
 
-template <int dimension>
-particle_group_wrapper<dimension> const
-particle_group_wrapper<dimension>::kernel = {
+template <typename float_type, int dimension>
+particle_group_wrapper<float_type, dimension> const
+particle_group_wrapper<float_type, dimension>::kernel = {
     particle_group_kernel::r_
   , particle_group_kernel::image<dimension>::tex_
   , particle_group_kernel::v_
-#ifdef USE_VERLET_DSFUN
-  , particle_group_kernel::particle_group_to_particle<fixed_vector<dsfloat, dimension> >
-#else
-  , particle_group_kernel::particle_group_to_particle<fixed_vector<float, dimension> >
-#endif
+  , particle_group_kernel::particle_group_to_particle<ptr_type, float_type, fixed_vector<float_type, dimension> >
 };
 
-template class particle_group_wrapper<3>;
-template class particle_group_wrapper<2>;
+template class particle_group_wrapper<float, 3>;
+template class particle_group_wrapper<float, 2>;
+template class particle_group_wrapper<dsfloat, 3>;
+template class particle_group_wrapper<dsfloat, 2>;
 
 } // namespace gpu
 } // namespace mdsim

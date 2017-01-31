@@ -23,6 +23,7 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
+#include <halmd/utility/gpu/texture.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -66,7 +67,7 @@ struct pair_trunc_wrapper
       , float
     )> compute_aux;
     /** positions, types */
-    cuda::texture<float4> r2;
+    cuda::halmd::texture<float4> r2;
 
     static pair_trunc_wrapper const kernel;
 };

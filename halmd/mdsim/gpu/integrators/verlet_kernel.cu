@@ -34,11 +34,11 @@ namespace verlet_kernel {
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
  */
-template <int dimension, typename float_type, typename gpu_vector_type>
+template <typename ptr_type, int dimension, typename float_type, typename gpu_vector_type>
 __global__ void integrate(
-    float4* g_position
+    ptr_type g_position
   , gpu_vector_type* g_image
-  , float4* g_velocity
+  , ptr_type g_velocity
   , gpu_vector_type const* g_force
   , float timestep
   , fixed_vector<float, dimension> box_length
@@ -55,13 +55,8 @@ __global__ void integrate(
     vector_type r, v;
     unsigned int species;
     float mass;
-#ifdef USE_VERLET_DSFUN
-    tie(r, species) <<= tie(g_position[thread], g_position[thread + nthread]);
-    tie(v, mass) <<= tie(g_velocity[thread], g_velocity[thread + nthread]);
-#else
     tie(r, species) <<= g_position[thread];
     tie(v, mass) <<= g_velocity[thread];
-#endif
     float_vector_type f = g_force[thread];
 
     // advance position by full step, velocity by half step
@@ -70,13 +65,8 @@ __global__ void integrate(
     float_vector_type image = box_kernel::reduce_periodic(r, box_length);
 
     // store position, species, velocity, mass, image in global memory
-#ifdef USE_VERLET_DSFUN
-    tie(g_position[thread], g_position[thread + nthread]) <<= tie(r, species);
-    tie(g_velocity[thread], g_velocity[thread + nthread]) <<= tie(v, mass);
-#else
     g_position[thread] <<= tie(r, species);
     g_velocity[thread] <<= tie(v, mass);
-#endif
     if (!(image == float_vector_type(0))) {
         g_image[thread] = image + static_cast<float_vector_type>(g_image[thread]);
     }
@@ -85,9 +75,9 @@ __global__ void integrate(
 /**
  * Second leapfrog half-step of velocity-Verlet algorithm
  */
-template <int dimension, typename float_type, typename gpu_vector_type>
+template <typename ptr_type, int dimension, typename float_type, typename gpu_vector_type>
 __global__ void finalize(
-    float4* g_velocity
+    ptr_type g_velocity
   , gpu_vector_type const* g_force
   , float timestep
 )
@@ -99,39 +89,28 @@ __global__ void finalize(
     // read velocity, mass, force from global memory
     fixed_vector<float_type, dimension> v;
     float mass;
-#ifdef USE_VERLET_DSFUN
-    tie(v, mass) <<= tie(g_velocity[thread], g_velocity[thread + nthread]);
-#else
     tie(v, mass) <<= g_velocity[thread];
-#endif
     fixed_vector<float, dimension> f = g_force[thread];
 
     // advance velocity by half step
     v += f * (timestep / 2) / mass;
 
     // store velocity, mass in global memory
-#ifdef USE_VERLET_DSFUN
-    tie(g_velocity[thread], g_velocity[thread + nthread]) <<= tie(v, mass);
-#else
     g_velocity[thread] <<= tie(v, mass);
-#endif
 }
 
 } // namespace verlet_kernel
 
-template <int dimension>
-verlet_wrapper<dimension> const verlet_wrapper<dimension>::wrapper = {
-#ifdef USE_VERLET_DSFUN
-    verlet_kernel::integrate<dimension, dsfloat>
-  , verlet_kernel::finalize<dimension, dsfloat>
-#else
-    verlet_kernel::integrate<dimension, float>
-  , verlet_kernel::finalize<dimension, float>
-#endif
+template <typename float_type, int dimension>
+verlet_wrapper<float_type, dimension> const verlet_wrapper<float_type, dimension>::wrapper = {
+    verlet_kernel::integrate<ptr_type, dimension, float_type>
+  , verlet_kernel::finalize<ptr_type, dimension, float_type>
 };
 
-template class verlet_wrapper<3>;
-template class verlet_wrapper<2>;
+template class verlet_wrapper<float, 3>;
+template class verlet_wrapper<float, 2>;
+template class verlet_wrapper<dsfloat, 3>;
+template class verlet_wrapper<dsfloat, 2>;
 
 } // namespace mdsim
 } // namespace gpu

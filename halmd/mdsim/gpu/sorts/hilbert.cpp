@@ -27,6 +27,7 @@
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/gpu/sorts/hilbert.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 using namespace halmd::algorithm::gpu;
 
@@ -47,7 +48,7 @@ hilbert<dimension, float_type>::hilbert(
   , logger_(logger)
 {
     // FIXME set Hilbert space-filling curve recursion depth
-    float_type max_length = *std::max_element(box_->length().begin(), box_->length().end());
+    float max_length = *std::max_element(box_->length().begin(), box_->length().end());
     depth_ = static_cast<unsigned int>(std::ceil(std::log(max_length) / M_LN2));
     // 32-bit integer for 2D/3D Hilbert code allows a maximum of 16/10 levels
     depth_ = std::min((dimension == 3) ? 10U : 16U, depth_);
@@ -98,7 +99,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 
     cuda::configure(particle_->dim().grid, particle_->dim().block);
     wrapper_type::kernel.map(
-        &*position.begin()
+        dsfloat_as_float(position).data()
       , g_map
       , static_cast<vector_type>(box_->length())
     );
@@ -158,12 +159,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_sorts_hilbert(lua_State* L)
 {
     hilbert<3, float>::luaopen(L);
     hilbert<2, float>::luaopen(L);
+    hilbert<3, dsfloat>::luaopen(L);
+    hilbert<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class hilbert<3, float>;
 template class hilbert<2, float>;
+template class hilbert<3, dsfloat>;
+template class hilbert<2, dsfloat>;
 
 } // namespace sorts
 } // namespace gpu

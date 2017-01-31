@@ -39,6 +39,7 @@
 # include <halmd/mdsim/gpu/velocity.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
+# include <halmd/utility/gpu/texture.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
@@ -203,8 +204,10 @@ struct gpu_modules
 
 BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_2d, halmd::device ) {
     boltzmann<gpu_modules<2, float> >().test();
+    boltzmann<gpu_modules<2, halmd::dsfloat> >().test();
 }
 BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_3d, halmd::device ) {
     boltzmann<gpu_modules<3, float> >().test();
+    boltzmann<gpu_modules<3, halmd::dsfloat> >().test();
 }
 #endif // HALMD_WITH_GPU

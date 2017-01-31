@@ -87,12 +87,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle_groups_all(lua_State* L)
 {
     all<particle<3, float>>::luaopen(L);
     all<particle<2, float>>::luaopen(L);
+    all<particle<3, dsfloat>>::luaopen(L);
+    all<particle<2, dsfloat>>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class all<particle<3, float>>;
 template class all<particle<2, float>>;
+template class all<particle<3, dsfloat>>;
+template class all<particle<2, dsfloat>>;
 
 } // namespace particle_groups
 } // namespace gpu

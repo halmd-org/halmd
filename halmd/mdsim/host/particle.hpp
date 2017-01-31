@@ -41,10 +41,11 @@ namespace halmd {
 namespace mdsim {
 namespace host {
 
-template <int dimension, typename float_type>
+template <int dimension, typename float_type_>
 class particle
 {
 public:
+    typedef float_type_ float_type;
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 

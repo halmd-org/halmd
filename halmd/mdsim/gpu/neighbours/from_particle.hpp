@@ -64,7 +64,7 @@ private:
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
+    typedef boost::numeric::ublas::matrix<float> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef max_displacement<dimension, float_type> displacement_type;
     struct defaults;
@@ -74,7 +74,8 @@ public:
     static void luaopen(lua_State* L);
 
     from_particle(
-        std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+        std::shared_ptr<particle_type const> particle1
+      , std::shared_ptr<particle_type const> particle2
       , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
@@ -149,15 +150,15 @@ private:
     std::shared_ptr<logger> logger_;
 
     /** neighbour list skin in MD units */
-    float_type r_skin_;
+    float r_skin_;
     /** maximum cutoff length */
-    float_type r_cut_max_;
+    float r_cut_max_;
     /** (cutoff lengths + neighbour list skin)² */
     matrix_type rr_cut_skin_;
     /** (cutoff lengths + neighbour list skin)² */
-    cuda::vector<float_type> g_rr_cut_skin_;
+    cuda::vector<float> g_rr_cut_skin_;
     /** FIXME average desired cell occupancy */
-    float_type nu_cell_;
+    float nu_cell_;
     /** neighbour lists */
     cache<array_type> g_neighbour_;
     /** cache observer for neighbour list update */
@@ -177,7 +178,7 @@ private:
 template <int dimension, typename float_type>
 struct from_particle<dimension, float_type>::defaults
 {
-    static float_type occupancy();
+    static float occupancy();
 };
 
 } // namespace neighbours

@@ -107,7 +107,9 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_morse(lua_State* L)
     morse<float>::luaopen(L);
     forces::pair_full<3, float, morse<float> >::luaopen(L);
     forces::pair_full<2, float, morse<float> >::luaopen(L);
-    truncations::truncations_luaopen<float, morse<float> >(L);
+    forces::pair_full<3, dsfloat, morse<float> >::luaopen(L);
+    forces::pair_full<2, dsfloat, morse<float> >::luaopen(L);
+    truncations::truncations_luaopen<morse<float> >(L);
     return 0;
 }
 
@@ -124,6 +126,10 @@ namespace forces {
 template class pair_full<3, float, potentials::pair::morse<float> >;
 template class pair_full<2, float, potentials::pair::morse<float> >;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::morse<float>)
+
+template class pair_full<3, dsfloat, potentials::pair::morse<float> >;
+template class pair_full<2, dsfloat, potentials::pair::morse<float> >;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(dsfloat, potentials::pair::morse<float>)
 
 } // namespace forces
 } // namespace gpu

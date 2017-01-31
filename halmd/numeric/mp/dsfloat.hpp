@@ -29,6 +29,7 @@
 
 #include <halmd/numeric/mp/dsfun.hpp>
 #include <halmd/utility/tuple.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd {
 namespace detail {
@@ -36,6 +37,14 @@ namespace numeric {
 namespace mp {
 
 struct dsfloat;
+template<typename T>
+struct dsfloat_ptr;
+template<typename T>
+struct dsfloat_const_ptr;
+#ifndef __CUDACC__
+template<typename T>
+class dsfloat_vector;
+#endif
 
 } // namespace mp
 } // namespace numeric
@@ -43,6 +52,11 @@ struct dsfloat;
 
 // import into top-level namespace
 using detail::numeric::mp::dsfloat;
+using detail::numeric::mp::dsfloat_ptr;
+using detail::numeric::mp::dsfloat_const_ptr;
+#ifndef __CUDACC__
+using detail::numeric::mp::dsfloat_vector;
+#endif
 
 } // namespace halmd
 
@@ -288,6 +302,123 @@ inline HALMD_GPU_ENABLED dsfloat min(dsfloat const& v, dsfloat const& w)
 {
     return v.hi == w.hi ? (v.lo <= w.lo ? v : w) : (v.hi < w.hi ? v : w);
 }
+
+template<typename T>
+struct dsfloat_ptr {
+#ifndef __CUDACC__
+    explicit dsfloat_ptr(dsfloat_vector<T>& v);
+#endif
+
+    T* hi;
+    T* lo;
+
+    HALMD_GPU_ENABLED halmd::tuple<T&, T&> operator[] (unsigned int idx) {
+        return tie(hi[idx], lo[idx]);
+    };
+    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const {
+        return tie(hi[idx], lo[idx]);
+    };
+};
+
+template<typename T>
+struct dsfloat_const_ptr {
+#ifndef __CUDACC__
+    explicit dsfloat_const_ptr(dsfloat_vector<T> const& v);
+#endif
+
+    T const* hi;
+    T const* lo;
+
+    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const {
+        return tie(hi[idx], lo[idx]);
+    };
+};
+
+#ifndef __CUDACC__
+template<typename T>
+class dsfloat_vector {
+public:
+    typedef dsfloat_vector<T> vector_type;
+    typedef T value_type;
+    typedef dsfloat_ptr<T> pointer;
+    typedef dsfloat_const_ptr<T> const const_pointer;
+    typedef size_t size_type;
+
+    dsfloat_vector(size_type size) : data_(size * 2)
+    {
+    }
+
+    size_type size() const
+    {
+        return data_.size() / 2;
+    }
+
+    size_type capacity() const
+    {
+        return data_.capacity() / 2;
+    }
+
+    void resize(size_type size)
+    {
+        data_.resize(size * 2);
+    }
+
+    void reserve(size_type size)
+    {
+        data_.reserve(size * 2);
+    }
+
+    void swap(vector_type& v)
+    {
+        data_.swap(v.data_);
+    }
+
+    pointer data()
+    {
+        return pointer(*this);
+    }
+
+    operator pointer()
+    {
+        return data();
+    }
+
+    const_pointer data() const
+    {
+        return const_pointer(*this);
+    }
+
+    operator const_pointer() const
+    {
+        return data();
+    }
+
+    cuda::vector<T>& storage() {
+        return data_;
+    }
+
+    cuda::vector<T> const& storage() const {
+        return data_;
+    }
+
+private:
+    cuda::vector<T> data_;
+};
+
+template<typename T>
+inline dsfloat_ptr<T>::dsfloat_ptr(dsfloat_vector<T>& v)
+        : hi(&*(v.storage().begin()))
+        , lo(&*(v.storage().begin()+v.size()))
+{
+}
+
+template<typename T>
+inline dsfloat_const_ptr<T>::dsfloat_const_ptr(dsfloat_vector<T> const& v)
+  : hi(&*(v.storage().begin()))
+    , lo(&*(v.storage().begin()+v.size()))
+{
+}
+#endif
 
 } // namespace mp
 } // namespace numeric

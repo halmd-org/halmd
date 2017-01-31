@@ -294,16 +294,6 @@ public:
             converter.set(mem, offset, *it++);
             offset += stride_;
         }
-        // TODO: handle dsfloat data correctly here for tuple arrays
-        // TODO: set_gpu_data automatically clears the high precision
-        //       part of dsfloat data. This is fine for cases in which
-        //       this function sets all data at once, but results in a
-        //       potential loss of (the high precision part of) data for
-        //       tupled arrays, if only one member of a tuple is set, but
-        //       the other one is retained.
-#ifdef USE_VERLET_DSFUN
-        LOG_WARNING_ONCE("full dsfloat data cleared by tuple element update");
-#endif
         set_gpu_data(mem);
         return it;
     }
@@ -388,12 +378,141 @@ private:
     detail::particle_data_converter<T> converter;
 };
 
+/** particle array base class with type information - specialization for dsfloats */
+template<size_t N>
+class particle_array_typed<fixed_vector<dsfloat, N>> : public particle_array
+{
+public:
+    /**
+     * typed particle array constructor
+     *
+     * @param stride stride of the underlying gpu data
+     * @param offset offset of the typed data within the underlying gpu data
+     */
+    particle_array_typed(size_t stride, size_t offset, size_t nparticle)
+            : stride_(stride), offset_(offset), nparticle_(nparticle)
+    {}
+
+    /**
+     * query data type
+     *
+     * @return RTTI typeid of the stored data
+     */
+    virtual std::type_info const& type() const
+    {
+        return typeid(fixed_vector<dsfloat, N>);
+    }
+
+    /**
+     * set data with iterator
+     */
+    template <typename iterator_type>
+    iterator_type set_data(iterator_type const& first)
+    {
+        auto mem = get_gpu_memory();
+        auto it = first;
+        // TODO: handle sizes & ghost particles
+        size_t offset = offset_;
+        for (size_t i = 0; i < nparticle_; i++) {
+            *reinterpret_cast<fixed_vector<float, N>*>(&mem[offset]) = *it++;
+            offset += stride_;
+        }
+        offset = mem.size() + offset_;
+        for (size_t i = 0; i < nparticle_; i++) {
+            *reinterpret_cast<fixed_vector<float, N>*>(&mem[offset]) = fixed_vector<float, N> (0.0f);
+            offset += stride_;
+        }
+        set_gpu_data(mem);
+        return it;
+    }
+
+    /**
+     * get data with iterator
+     */
+    template <typename iterator_type>
+    iterator_type get_data(iterator_type const& first) const
+    {
+        auto data = get_gpu_data();
+        auto it = first;
+        // TODO: handle sizes & ghost particles
+        size_t offset = offset_;
+        for(size_t i = 0; i < nparticle_; i++) {
+            *it++ = *reinterpret_cast<fixed_vector<float, N> const*>(&data[offset]);
+            offset += stride_;
+        }
+        return it;
+    }
+
+    /**
+     * set data from lua table
+     *
+     * @param table lua table containing the data
+     */
+    virtual void set_lua(luaponte::object table)
+    {
+        auto mem = get_gpu_memory();
+        size_t i = offset_;
+        // TODO: handle size mismatch & ghost particles
+        for(luaponte::iterator it(table), end; it != end && i < mem.size(); ++it) {
+            *reinterpret_cast<fixed_vector<float, N>*>(&mem[i]) = luaponte::object_cast<fixed_vector<float, N>>(*it);
+            i += stride_;
+        }
+        for(i = mem.size() + offset_; i < mem.capacity(); i += stride_) {
+            *reinterpret_cast<fixed_vector<float, N>*>(&mem[i]) = fixed_vector<float, N> (0.0f);
+        }
+        set_gpu_data(mem);
+    }
+
+    /**
+     * convert data to lua table
+     *
+     * @param L lua state (passed in by luaponte)
+     * @return lua table containing a copy of the data
+     */
+    virtual luaponte::object get_lua(lua_State *L) const
+    {
+        auto data = get_gpu_data();
+        luaponte::object table = luaponte::newtable(L);
+        std::size_t offset = offset_;
+        // TODO: handle ghost particles
+        for(std::size_t j = 1; j <= nparticle_; j++) {
+            table[j++] = boost::cref(*reinterpret_cast<fixed_vector<float, N> const*>(&data[offset]));
+            offset += stride_;
+        }
+        return table;
+    }
+
+    size_t stride() const
+    {
+        return stride_;
+    }
+
+    size_t offset() const
+    {
+        return offset_;
+    }
+
+    size_t nparticle() const
+    {
+        return nparticle_;
+    }
+
+private:
+    /** gpu data stride */
+    size_t stride_;
+    /** typed data offset */
+    size_t offset_;
+    /** number of particles */
+    size_t nparticle_;
+};
+
 /** typed gpu particle array */
 template<typename T>
 class particle_array_gpu
   : public particle_array_typed<T>
 {
 public:
+    typedef cuda::vector<T> vector_type;
     /**
      * gpu particle array constructor
      *
@@ -440,7 +559,7 @@ public:
      * to update the data, so calling it here could result
      * in infinite loops
      */
-    cache<cuda::vector<T>>& mutable_data()
+    cache<vector_type>& mutable_data()
     {
         return data_;
     }
@@ -450,7 +569,7 @@ public:
      *
      * @return const reference to the cached cuda vector
      */
-    cache<cuda::vector<T>> const& data() const
+    cache<vector_type> const& data() const
     {
         update_function_();
         return data_;
@@ -463,7 +582,9 @@ public:
      */
     virtual cuda::host::vector<uint8_t> get_gpu_memory() const
     {
-        return cuda::host::vector<uint8_t>(data_->size() * sizeof(T));
+        cuda::host::vector<uint8_t> mem(data_->size() * sizeof(T));
+        mem.reserve(data_->capacity());
+        return mem;
     }
 
     /**
@@ -490,15 +611,133 @@ public:
     {
         auto output = make_cache_mutable(data_);
         auto ptr = reinterpret_cast<T const*>(&*mem.begin());
-#ifdef USE_VERLET_DSFUN
-        cuda::memset(output->begin(), output->begin() + output->capacity(), 0);
-#endif
-        cuda::copy(ptr, ptr+output->size(), output->begin());
+        cuda::copy(ptr, ptr + (mem.size() / sizeof (T)), output->begin());
     }
 
 private:
     /** cached cuda::vector */
-    cache<cuda::vector<T>> data_;
+    cache<vector_type> data_;
+    /** optional update function */
+    std::function<void()> update_function_;
+};
+
+/** typed gpu particle array - specialization for dsfloats */
+template<size_t N>
+class particle_array_gpu<fixed_vector<dsfloat, N>>
+        : public particle_array_typed<fixed_vector<dsfloat, N>>
+{
+private:
+    typedef typename type_traits<N, float>::gpu::coalesced_vector_type type;
+    typedef typename type_traits<N, dsfloat>::gpu::coalesced_vector_type hp_type;
+public:
+    typedef dsfloat_vector<type> vector_type;
+
+    /**
+     * gpu particle array constructor
+     *
+     * @param nparticle number of particles
+     * @param size size of the underlying cuda::vector
+     * @param update_function update function
+     */
+    particle_array_gpu(unsigned int nparticle, unsigned int size, std::function<void()> update_function)
+            : particle_array_typed<hp_type>(sizeof(type), 0, nparticle)
+            , data_(size), update_function_(update_function)
+    {
+        if (!update_function_) {
+            update_function_ = [](){};
+        }
+    }
+
+    /**
+     * query gpu flag
+     *
+     * @return true
+     */
+    virtual bool gpu() const
+    {
+        return true;
+    }
+
+    /**
+     * query cache observer
+     *
+     * @return a cache observer reflecting the current state of the cache
+     */
+    virtual cache<> cache_observer() const
+    {
+        return cache<>(data_);
+    }
+
+    /**
+     * obtain non-const reference to the stored data
+     *
+     * @return non-const reference to the cached cuda vector
+     *
+     * note that this function intentionally does not call
+     * the update function, the reason being that the update
+     * function will most likely want to use this method
+     * to update the data, so calling it here could result
+     * in infinite loops
+     */
+    cache<vector_type>& mutable_data()
+    {
+        return data_;
+    }
+
+    /**
+     * obtain const reference to the stored data
+     *
+     * @return const reference to the cached cuda vector
+     */
+    cache<vector_type> const& data() const
+    {
+        update_function_();
+        return data_;
+    }
+
+    /**
+     * get memory
+     *
+     * @return a page-locked memory vector to be filled with data and passed to set_data
+     */
+    virtual cuda::host::vector<uint8_t> get_gpu_memory() const
+    {
+        cuda::host::vector<uint8_t> mem(data_->size() * sizeof(type));
+        mem.reserve(data_->size() * sizeof(hp_type));
+        return mem;
+    }
+
+    /**
+     * get data
+     *
+     * @return a page-locked memory vector containing the contents of the underlying gpu data
+     */
+    virtual cuda::host::vector<uint8_t> get_gpu_data() const
+    {
+        auto const& g_input = read_cache(data());
+        cuda::host::vector<uint8_t> mem(g_input.size() * sizeof(type));
+        mem.reserve(g_input.size() * sizeof(hp_type));
+        cuda::copy(g_input.storage().begin(), g_input.storage().begin() + g_input.storage().size(),
+                   reinterpret_cast<type*>(&*mem.begin()));
+        return mem;
+    }
+
+    /**
+     * set data
+     *
+     * @param memory page-locked memory vector containing data to be copied to the underlying gpu data
+     *               should have been obtained with get_memory
+     */
+    virtual void set_gpu_data(cuda::host::vector<uint8_t> const& mem)
+    {
+        cuda::vector<type> &output = make_cache_mutable(data_)->storage();
+        auto ptr = reinterpret_cast<type const*>(&*mem.begin());
+        cuda::copy(ptr, ptr + (mem.capacity() / sizeof (type)), output.begin());
+    }
+
+private:
+    /** cached cuda::vector */
+    cache<vector_type> data_;
     /** optional update function */
     std::function<void()> update_function_;
 };
@@ -521,7 +760,7 @@ public:
      */
     template<typename gpu_type>
     particle_array_host_wrapper(const std::shared_ptr<particle_array_gpu<gpu_type>> &parent, size_t offset, bool is_tuple)
-      : particle_array_typed<host_type>(sizeof(gpu_type), offset, parent->nparticle()), is_tuple_(is_tuple), parent_(parent)
+      : particle_array_typed<host_type>(parent->stride(), offset, parent->nparticle()), is_tuple_(is_tuple), parent_(parent)
     {}
 
     /**
@@ -635,8 +874,8 @@ particle_array::create_packed_wrapper(std::shared_ptr<particle_array_gpu<gpu_typ
      *       on almost all CUDA kernels using the packed data, though.
      */
     typedef typename std::tuple_element<field, tuple_type>::type host_type;
-    static constexpr size_t offset = (field == 0) ? 0 : (sizeof(gpu_type) - sizeof(host_type));
     static_assert(std::tuple_size<tuple_type>::value == 2, "invalid tuple");
+    size_t offset = (field == 0) ? 0 : (parent->stride() - sizeof(host_type));
     return std::make_shared<particle_array_host_wrapper<host_type>>(parent, offset, true);
 }
 

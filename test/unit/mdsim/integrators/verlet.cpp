@@ -79,12 +79,13 @@ struct ideal_gas
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     static unsigned int const dimension = vector_type::static_size;
+    typedef fixed_vector<float, dimension> float_vector_type;
 
     float density;
     float temp;
     double timestep;
     unsigned int npart;
-    vector_type box_ratios;
+    float_vector_type box_ratios;
     typename modules_type::slab_type slab;
 
     std::shared_ptr<box_type> box;
@@ -135,14 +136,13 @@ template <typename modules_type>
 ideal_gas<modules_type>::ideal_gas()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
-    typedef typename modules_type::vector_type vector_type;
 
     // set module parameters
     density = 1;
     temp = 1;
     double timestep = 0.001;
     npart = 1000;
-    box_ratios = (dimension == 3) ? vector_type{1., 2., 1.01} : vector_type{1., 2.};
+    box_ratios = (dimension == 3) ? float_vector_type{1., 2., 1.01} : float_vector_type{1., 2.};
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
     double volume = npart / density;
     double edge_length = pow(volume / det, 1. / dimension);
@@ -291,8 +291,10 @@ struct gpu_modules
 
 BOOST_FIXTURE_TEST_CASE( ideal_gas_gpu_2d, device ) {
     ideal_gas<gpu_modules<2, float> >().test();
+    ideal_gas<gpu_modules<2, dsfloat> >().test();
 }
 BOOST_FIXTURE_TEST_CASE( ideal_gas_gpu_3d, device ) {
     ideal_gas<gpu_modules<3, float> >().test();
+    ideal_gas<gpu_modules<3, dsfloat> >().test();
 }
 #endif // HALMD_WITH_GPU

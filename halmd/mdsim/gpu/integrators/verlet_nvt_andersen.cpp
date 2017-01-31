@@ -49,7 +49,7 @@ verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::verlet_nvt_an
 {
     set_timestep(timestep);
     set_temperature(temperature);
-    LOG("collision rate with heat bath: " << coll_rate_);
+    LOG("collision rate with heat bath: " << float(coll_rate_));
 }
 
 /**
@@ -66,8 +66,8 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_temperature(double temperature)
 {
     temperature_ = temperature;
-    sqrt_temperature_ = std::sqrt(temperature_);
-    LOG("temperature of heat bath: " << temperature_);
+    sqrt_temperature_ = std::sqrt(temperature);
+    LOG("temperature of heat bath: " << float(temperature_));
 }
 
 /**
@@ -90,10 +90,10 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrat
     try {
         cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_type::kernel.integrate(
-            &*position->begin()
-          , &*image->begin()
-          , &*velocity->begin()
-          , &*force.begin()
+            position->data()
+          , image->data()
+          , velocity->data()
+          , force.data()
           , timestep_
           , static_cast<vector_type>(box_->length())
         );
@@ -125,8 +125,8 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize
         // the kernel makes use of the random number generator
         cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
         wrapper_type::kernel.finalize(
-            &*velocity->begin()
-          , &*force.begin()
+            velocity->data()
+          , force.data()
           , timestep_
           , sqrt_temperature_
           , coll_prob_
@@ -186,12 +186,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet_nvt_andersen(lua
 {
     verlet_nvt_andersen<3, float, random::gpu::rand48>::luaopen(L);
     verlet_nvt_andersen<2, float, random::gpu::rand48>::luaopen(L);
+    verlet_nvt_andersen<3, dsfloat, random::gpu::rand48>::luaopen(L);
+    verlet_nvt_andersen<2, dsfloat, random::gpu::rand48>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class verlet_nvt_andersen<3, float, random::gpu::rand48>;
 template class verlet_nvt_andersen<2, float, random::gpu::rand48>;
+template class verlet_nvt_andersen<3, dsfloat, random::gpu::rand48>;
+template class verlet_nvt_andersen<2, dsfloat, random::gpu::rand48>;
 
 } // namespace integrators
 } // namespace gpu

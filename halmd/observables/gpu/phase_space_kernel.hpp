@@ -25,6 +25,7 @@
 
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/utility/gpu/texture.hpp>
 
 namespace halmd {
 namespace observables {
@@ -37,7 +38,7 @@ struct phase_space_wrapper
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
     /** positions, types */
-    cuda::texture<float4> r;
+    cuda::halmd::texture<float4> r;
     /** minimum image vectors */
     cuda::texture<coalesced_vector_type> image;
     /** sample position for all particle of a single species */
@@ -48,14 +49,27 @@ struct phase_space_wrapper
     static phase_space_wrapper const kernel;
 };
 
+namespace detail {
+
 template<typename T>
+struct sample_ptr_type {
+    typedef T* ptr_type;
+};
+
+template<size_t dimension>
+struct sample_ptr_type<fixed_vector<dsfloat, dimension> > {
+    typedef typename mdsim::type_traits<dimension, dsfloat>::gpu::ptr_type ptr_type;
+};
+
+} // namespace detail
+
+template<typename input_data_type, typename sample_data_type = input_data_type>
 struct phase_space_sample_wrapper
 {
-    typedef T type;
-
-    cuda::texture<T> input;
-    cuda::function<void (unsigned int const*, T*, unsigned int)> sample;
-    cuda::function<void (unsigned int const*, T*, unsigned int)> set;
+    cuda::halmd::texture<sample_data_type> input;
+    typedef typename detail::sample_ptr_type<input_data_type>::ptr_type ptr_type;
+    cuda::function<void (unsigned int const*, sample_data_type*, unsigned int)> sample;
+    cuda::function<void (unsigned int const*, ptr_type, unsigned int)> set;
 
     static phase_space_sample_wrapper const kernel;
 };

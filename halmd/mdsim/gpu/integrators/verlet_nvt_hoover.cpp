@@ -28,6 +28,7 @@
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 using namespace std;
 
@@ -124,10 +125,10 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
     try {
         cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_type::kernel.integrate(
-            &*position->begin()
-          , &*image->begin()
-          , &*velocity->begin()
-          , &*force.begin()
+            position->data()
+          , image->data()
+          , velocity->data()
+          , force.data()
           , timestep_
           , scale
           , static_cast<vector_type>(box_->length())
@@ -157,7 +158,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 
     try {
         cuda::configure(particle_->dim().grid, particle_->dim().block);
-        wrapper_type::kernel.finalize(&*velocity->begin(), &*force.begin(), timestep_);
+        wrapper_type::kernel.finalize(velocity->data(), force.data(), timestep_);
         cuda::thread::synchronize();
 
         float_type scale = propagate_chain();
@@ -165,7 +166,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
         // rescale velocities
         scoped_timer_type timer2(runtime_.rescale);
         cuda::configure(particle_->dim().grid, particle_->dim().block);
-        wrapper_type::kernel.rescale(&*velocity->begin(), scale);
+        wrapper_type::kernel.rescale(velocity->data(), scale);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -192,7 +193,8 @@ float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
     scoped_timer_type timer(runtime_.propagate);
 
     // compute total kinetic energy multiplied by 2
-    float_type en_kin_2 = 2 * compute_en_kin_(&*velocity.begin(), &*velocity.end())();
+    float_type en_kin_2 = 2 * compute_en_kin_(dsfloat_as_float(velocity).data()
+                                            , dsfloat_as_float(velocity).data() + velocity.size())();
 
     // head of the chain
     v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) / mass_xi_[1] * timestep_4_;
@@ -314,24 +316,18 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet_nvt_hoover(lua_State* L)
 {
-#ifdef USE_VERLET_DSFUN
     verlet_nvt_hoover<3, double>::luaopen(L);
     verlet_nvt_hoover<2, double>::luaopen(L);
-#else
     verlet_nvt_hoover<3, float>::luaopen(L);
     verlet_nvt_hoover<2, float>::luaopen(L);
-#endif
     return 0;
 }
 
 // explicit instantiation
-#ifdef USE_VERLET_DSFUN
 template class verlet_nvt_hoover<3, double>;
 template class verlet_nvt_hoover<2, double>;
-#else
 template class verlet_nvt_hoover<3, float>;
 template class verlet_nvt_hoover<2, float>;
-#endif
 
 } // namespace integrators
 } // namespace gpu

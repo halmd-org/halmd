@@ -24,6 +24,7 @@
 #include <halmd/mdsim/gpu/neighbours/from_particle_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
+#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -41,7 +42,8 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_particle<dimension, float_type>::from_particle(
-    std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+    std::shared_ptr<particle_type const> particle1
+  , std::shared_ptr<particle_type const> particle2
   , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
   , std::shared_ptr<box_type const> box
   , matrix_type const& r_cut
@@ -50,8 +52,8 @@ from_particle<dimension, float_type>::from_particle(
   , std::shared_ptr<logger> logger
 )
   // dependency injection
-  : particle1_(particle.first)
-  , particle2_(particle.second)
+  : particle1_(particle1)
+  , particle2_(particle2)
   , displacement1_(displacement.first)
   , displacement2_(displacement.second)
   , box_(box)
@@ -80,11 +82,11 @@ void from_particle<dimension, float_type>::set_occupancy(double cell_occupancy)
     nu_cell_ = cell_occupancy;
     // volume of n-dimensional sphere with neighbour list radius
     // volume of unit sphere: V_d = π^(d/2) / Γ(1+d/2), Γ(1) = 1, Γ(1/2) = √π
-    float_type unit_sphere[5] = {0, 2, M_PI, 4 * M_PI / 3, M_PI * M_PI / 2 };
+    float unit_sphere[5] = {0, 2, M_PI, 4 * M_PI / 3, M_PI * M_PI / 2 };
     assert(dimension <= 4);
-    float_type neighbour_sphere = unit_sphere[dimension] * std::pow(r_cut_max_ + r_skin_, dimension);
+    float neighbour_sphere = unit_sphere[dimension] * std::pow(r_cut_max_ + r_skin_, dimension);
     // partial number density
-    float_type density = particle1_->nparticle() / box_->volume();
+    float density = particle1_->nparticle() / box_->volume();
     // number of placeholders per neighbour list
     size_ = static_cast<size_t>(ceil(neighbour_sphere * (density / nu_cell_)));
     // at least cell_size (or warp_size?) placeholders
@@ -107,8 +109,8 @@ from_particle<dimension, float_type>::g_neighbour()
 
     auto current_cache = std::tie(reverse_id_cache1, reverse_id_cache2);
 
-    if (neighbour_cache_ != current_cache|| displacement1_->compute() > r_skin_ / 2
-        || displacement2_->compute() > r_skin_ / 2) {
+    if (neighbour_cache_ != current_cache|| float(displacement1_->compute()) > float(r_skin_ / 2)
+        || float(displacement2_->compute()) > float(r_skin_ / 2)) {
         on_prepend_update_();
         update();
         displacement1_->zero();
@@ -149,9 +151,9 @@ void from_particle<dimension, float_type>::update()
         , particle1_->dim().threads_per_block() * (sizeof(unsigned int) + sizeof(vector_type))
         );
         get_from_particle_kernel<dimension>().update(
-            &*position1.begin()
+          dsfloat_as_float(position1).data()
         , particle1_->nparticle()
-        , &*position2.begin()
+        , dsfloat_as_float(position2).data()
         , particle2_->nparticle()
         , particle1_->nspecies()
         , particle2_->nspecies()
@@ -172,15 +174,28 @@ void from_particle<dimension, float_type>::update()
 }
 
 template <int dimension, typename float_type>
-float_type from_particle<dimension, float_type>::defaults::occupancy() {
+float from_particle<dimension, float_type>::defaults::occupancy() {
     return 0.4;
 }
+
+template<typename float_type>
+struct variant_name;
+
+template<>
+struct variant_name<float> {
+    static constexpr const char *name = "float";
+};
+
+template<>
+struct variant_name<dsfloat> {
+    static constexpr const char *name = "dsfloat";
+};
 
 template <int dimension, typename float_type>
 void from_particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    std::string const defaults_name("defaults_" +  std::to_string(dimension));
+    std::string const defaults_name("defaults_" + std::string(variant_name<float_type>::name) + "_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -199,7 +214,8 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &from_particle::runtime_)
               , def("from_particle", &std::make_shared<from_particle
-                    , std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
+                    , std::shared_ptr<particle_type const>
+                    , std::shared_ptr<particle_type const>
                     , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>>
                     , std::shared_ptr<box_type const>
                     , matrix_type const&
@@ -223,12 +239,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_neighbours_from_particle(lua_State*
 {
     from_particle<3, float>::luaopen(L);
     from_particle<2, float>::luaopen(L);
+    from_particle<3, dsfloat>::luaopen(L);
+    from_particle<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class from_particle<3, float>;
 template class from_particle<2, float>;
+template class from_particle<3, dsfloat>;
+template class from_particle<2, dsfloat>;
 
 } // namespace neighbours
 } // namespace gpu

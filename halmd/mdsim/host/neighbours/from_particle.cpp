@@ -36,7 +36,8 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_particle<dimension, float_type>::from_particle(
-    std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+    std::shared_ptr<particle_type const> particle1
+  , std::shared_ptr<particle_type const> particle2
   , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
   , std::shared_ptr<box_type const> box
   , matrix_type const& r_cut
@@ -44,8 +45,8 @@ from_particle<dimension, float_type>::from_particle(
   , std::shared_ptr<logger> logger
 )
   // dependency injection
-  : particle1_(particle.first)
-  , particle2_(particle.second)
+  : particle1_(particle1)
+  , particle2_(particle2)
   , displacement1_(displacement.first)
   , displacement2_(displacement.second)
   , box_(box)
@@ -162,7 +163,8 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &from_particle::runtime_)
               , def("from_particle", &std::make_shared<from_particle
-                        , std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
+                        , std::shared_ptr<particle_type const>
+                        , std::shared_ptr<particle_type const>
                         , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>>
                         , std::shared_ptr<box_type const>
                         , matrix_type const&
