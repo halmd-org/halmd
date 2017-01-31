@@ -359,17 +359,14 @@ template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::gpu::potentials::pair::lennard_jones<float_type> base_potential_type;
+    typedef mdsim::gpu::potentials::pair::lennard_jones<float> base_potential_type;
     typedef mdsim::gpu::potentials::pair::truncations::shifted<base_potential_type> potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::gpu::binning<dimension, float_type> binning_type;
     typedef mdsim::gpu::neighbours::from_binning<dimension, float_type> neighbour_type;
     typedef mdsim::gpu::max_displacement<dimension, float_type> max_displacement_type;
-#ifdef USE_VERLET_DSFUN
-    typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
-#else
-    typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, float> integrator_type;
-#endif
+    typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension,
+    typename std::conditional<std::is_same<float_type, dsfloat>::value, double, float_type>::type> integrator_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
@@ -381,8 +378,10 @@ struct gpu_modules
 
 BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_2d, device ) {
     verlet_nvt_hoover<gpu_modules<2, float> >().test();
+    verlet_nvt_hoover<gpu_modules<2, halmd::dsfloat> >().test();
 }
 BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_3d, device ) {
     verlet_nvt_hoover<gpu_modules<3, float> >().test();
+    verlet_nvt_hoover<gpu_modules<3, halmd::dsfloat> >().test();
 }
 #endif // HALMD_WITH_GPU
