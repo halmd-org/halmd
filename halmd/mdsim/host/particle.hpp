@@ -234,7 +234,7 @@ public:
     }
 
     /**
-     * Returns const reference to particle ids.
+     * Returns const reference to particle IDs.
      */
     cache<id_array_type> const& id() const
     {
@@ -242,7 +242,7 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle ids.
+     * Returns non-const reference to particle IDs.
      */
     cache<id_array_type>& id()
     {
@@ -250,7 +250,7 @@ public:
     }
 
     /**
-     * Returns const reference to particle reverse ids.
+     * Returns const reference to particle reverse IDs.
      */
     cache<reverse_id_array_type> const& reverse_id() const
     {
@@ -258,7 +258,7 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle reverse ids.
+     * Returns non-const reference to particle reverse IDs.
      */
     cache<reverse_id_array_type>& reverse_id()
     {
@@ -538,7 +538,7 @@ set_velocity(particle_type& particle, iterator_type const& first)
 }
 
 /**
- * Copy particle ids to given array.
+ * Copy particle IDs to given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
@@ -548,7 +548,7 @@ get_id(particle_type const& particle, iterator_type const& first)
 }
 
 /**
- * Copy particle ids from given array.
+ * Copy particle IDs from given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
@@ -558,7 +558,7 @@ set_id(particle_type& particle, iterator_type const& first)
 }
 
 /**
- * Copy particle reverse ids to given array.
+ * Copy particle reverse IDs to given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
@@ -568,7 +568,7 @@ get_reverse_id(particle_type const& particle, iterator_type const& first)
 }
 
 /**
- * Copy particle reverse ids from given array.
+ * Copy particle reverse IDs from given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type

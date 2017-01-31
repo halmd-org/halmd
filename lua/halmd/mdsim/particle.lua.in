@@ -74,11 +74,29 @@ end
 --
 --    Device where the particle memory resides.
 --
+-- .. attribute:: data
+--
+--    Pseudo-table providing access to the particle data::
+--
+--        table = particle.data["position"]
+--        particle.data["position"] = table
+--
+--    Per default a particle instance contains the following named data arrays:
+--    "position", "image", "velocity", "id", "reverse_id", "species", "mass",
+--    "force", "en_pot", "stress_pot"
+--
+-- .. warning::
+--
+--    Accessing particle data using this table is equivalent
+--    to calling :meth:`get` resp. :meth:`set` and involves
+--    a full copy of the data to a lua table.
+--
 -- .. warning::
 --
 --    During simulation, particle arrays are reordered in memory according
 --    to a space-filling curve. To access particles in initial order, use
---    :meth:`get_reverse_id` to retrieve the current particle indices.
+--    :meth:`get_reverse_id` to retrieve a map from particle IDs to current
+--    particle indices in memory.
 --
 -- .. method:: get(name)
 --
@@ -92,74 +110,6 @@ end
 --
 --    :param string name: identifier of the particle array
 --    :param table data: table containing the data
---
--- .. method:: get_position()
---
---    Returns sequence with particle positions.
---
--- .. method:: set_position(position)
---
---    Set particle positions to given sequence.
---
--- .. method:: get_image()
---
---    Returns sequence with particle images.
---
--- .. method:: set_image(image)
---
---    Set particle images to given sequence.
---
--- .. method:: get_velocity()
---
---    Returns sequence with particle velocities.
---
--- .. method:: set_velocity(velocity)
---
---    Set particle velocities to given sequence.
---
--- .. method:: get_id()
---
---    Returns sequence with particle ids.
---
--- .. method:: set_id(id)
---
---    Set particle ids to given sequence.
---
--- .. method:: get_reverse_id()
---
---    Returns sequence with particle reverse ids.
---
--- .. method:: set_reverse_id(reverse_id)
---
---    Set particle reverse ids to given sequence.
---
--- .. method:: get_species()
---
---    Returns sequence with particle species.
---
--- .. method:: set_species(species)
---
---    Set particle species to given sequence.
---
--- .. method:: get_mass()
---
---    Returns sequence with particle masses.
---
--- .. method:: set_mass(mass)
---
---    Set particle masses to given sequence.
---
--- .. method:: get_force()
---
---    Returns unordered sequence with particle forces.
---
--- .. method:: get_potential_energy()
---
---    Returns unordered sequence with potential energies.
---
--- .. method:: get_stress_pot()
---
---    Returns unordered sequence with potential parts of stress tensors.
 --
 -- .. method:: shift_velocity(vector)
 --
@@ -237,12 +187,15 @@ local M = module(function(args)
     -- construct particle instance
     local self = particle(nparticle, nspecies)
 
-    -- temporarily redirect removed get_* functions to the new get("*")
-    for _,name in ipairs({"position", "image", "velocity", "id", "reverse_id", "species",
-      "mass", "force", "potential_energy", "stress_pot"}) do
-        self["get_"..name] = function(self) return self:get(name) end
-        self["set_"..name] = function(self, data) self:set(name, data) end
-    end
+    -- add data field for accessing the particle arrays
+    self.data = setmetatable({}, {
+        __index = function(table, key)
+            return self:get(key)
+        end,
+        __newindex = function(table, key, value)
+            self:set(key, value)
+        end
+    })
 
     -- store particle label as Lua property
     self.label = property(function(self)

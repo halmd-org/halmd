@@ -51,7 +51,7 @@ function main(args)
 
     -- create system state
     local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = nspecies})
-    -- set particle species, with continuous range of ids per species
+    -- set particle species, with continuous range of IDs per species
     local species = {}
     local groups = {}
     local offset = 0
@@ -68,12 +68,12 @@ function main(args)
         })
         offset = offset + nparticle
     end
-    particle:set_species(species)
+    particle.data["species"] = species
     -- set initial particle positions sequentially on an fcc lattice
     local lattice = mdsim.positions.lattice({box = box, particle = particle})
     lattice:set()
     -- randomly shuffle the positions
---    particle:set_position(random.generator({memory = "host"}):shuffle(particle:get_position()))
+    particle.data["position"] = random.generator({memory = "host"}):shuffle(particle.data["position"])
     -- set initial particle velocities
     local boltzmann = mdsim.velocities.boltzmann({
         particle = particle
@@ -184,7 +184,7 @@ end
 -- Parse command-line arguments.
 --
 function define_args(parser)
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
+    parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
         default = "binary_mixture_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {4000, 1000}, help = "number of particles"})

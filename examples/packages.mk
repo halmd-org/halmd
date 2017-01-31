@@ -267,13 +267,13 @@ distclean-luatrace: clean-luatrace
 ## Boost C++ libraries with C++11 ABI
 ##
 
-BOOST_VERSION = 1.58.0
-BOOST_RELEASE = 1_58_0
+BOOST_VERSION = 1.63.0
+BOOST_RELEASE = 1_63_0
 BOOST_ABI = c++11
 BOOST_TOOLSET = gcc
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
-BOOST_TARBALL_SHA256 = fdfc204fc33ec79c99b9a74944c3e54bd78be4f7f15e260c0e2700a36dc7d3e5
+BOOST_TARBALL_SHA256 = beae2529f759f6b3bf3f4969a19c2e9d6f0c503edcb2de4a61d1428519fcb3b0
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)-$(BOOST_ABI)
 BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged toolset=$(BOOST_TOOLSET) cxxflags="-fPIC -std=$(BOOST_ABI)" dll-path=$(BOOST_INSTALL_DIR)/lib
@@ -333,10 +333,12 @@ env-boost:
 ##
 ## HDF5 library
 ##
-HDF5_VERSION = 1.8.16
+HDF5_VERSION = 1.8.18
+HDF5_MAJOR_VERSION = $(shell echo $(HDF5_VERSION) | cut -f1 -d.)
+HDF5_MINOR_VERSION = $(shell echo $(HDF5_VERSION) | cut -f2 -d.)
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
-HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
-HDF5_TARBALL_SHA256 = 13aaae5ba10b70749ee1718816a4b4bfead897c2fcb72c24176e759aec4598c6
+HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_MAJOR_VERSION).$(HDF5_MINOR_VERSION)/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
+HDF5_TARBALL_SHA256 = 01c6deadf4211f86922400da82c7a8b5b50dc8fc1ce0b5912de3066af316a48c
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
 HDF5_CONFIGURE_FLAGS = --enable-shared --enable-cxx --enable-fortran
@@ -676,21 +678,18 @@ env-gdb:
 ##
 ## Clang C++ compiler
 ##
-CLANG_VERSION = 3.6.0
+CLANG_VERSION = 3.9.1
 LLVM_TARBALL = llvm-$(CLANG_VERSION).src.tar.xz
 LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
-LLVM_TARBALL_SHA256 = b39a69e501b49e8f73ff75c9ad72313681ee58d6f430bfad4d81846fe92eb9ce
+LLVM_TARBALL_SHA256 = 1fd90354b9cf19232e8f168faf2220e79be555df3aa743242700879e8fd329ee
 CFE_TARBALL = cfe-$(CLANG_VERSION).src.tar.xz
 CFE_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CFE_TARBALL)
-CFE_TARBALL_SHA256 = be0e69378119fe26f0f2f74cffe82b7c26da840c9733fe522ed3c1b66b11082d
-CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
-CLANG_CONFIGURE_FLAGS = --enable-optimized --enable-bindings=none --enable-shared
-CLANG_BUILD_FLAGS = REQUIRES_RTTI=1
+CFE_TARBALL_SHA256 = e6c4cebb96dee827fa0470af313dff265af391cb6da8d429842ef208c8f25e63
+CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).build
+CLANG_SOURCE_DIR = llvm-$(CLANG_VERSION).src
+CLANG_CMAKE_FLAGS = -DCMAKE_BUILD_TYPE=Release
+CLANG_BUILD_FLAGS =
 CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
-
-ifdef CLANG_GCC_TOOLCHAIN
-    CLANG_CONFIGURE_FLAGS += --with-gcc-toolchain=$(CLANG_GCC_TOOLCHAIN)
-endif
 
 .fetch-clang-$(CLANG_VERSION):
 	@$(RM) $(LLVM_TARBALL)
@@ -704,15 +703,15 @@ endif
 fetch-clang: .fetch-clang-$(CLANG_VERSION)
 
 .extract-clang-$(CLANG_VERSION): .fetch-clang-$(CLANG_VERSION)
-	$(RM) $(CLANG_BUILD_DIR)
+	$(RM) $(CLANG_SOURCE_DIR)
 	$(TAR) -xJf $(LLVM_TARBALL)
-	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xJf $(CURDIR)/$(CFE_TARBALL) && mv cfe-$(CLANG_VERSION).src clang
+	cd $(CLANG_SOURCE_DIR)/tools && $(TAR) -xJf $(CURDIR)/$(CFE_TARBALL) && mv cfe-$(CLANG_VERSION).src clang
 	@$(TOUCH) $@
 
 extract-clang: .extract-clang-$(CLANG_VERSION)
 
 .configure-clang-$(CLANG_VERSION): .extract-clang-$(CLANG_VERSION)
-	cd $(CLANG_BUILD_DIR) && ./configure $(CLANG_CONFIGURE_FLAGS) --prefix=$(CLANG_INSTALL_DIR)
+	$(RM) ${CLANG_BUILD_DIR} && ${MKDIR} ${CLANG_BUILD_DIR} && cd ${CLANG_BUILD_DIR} && ${CMAKE} ../${CLANG_SOURCE_DIR} ${CLANG_CMAKE_FLAGS} -DCMAKE_INSTALL_PREFIX=${CLANG_INSTALL_DIR}
 	@$(TOUCH) $@
 
 configure-clang: .configure-clang-$(CLANG_VERSION)
@@ -730,7 +729,7 @@ clean-clang:
 	@$(RM) .build-clang-$(CLANG_VERSION)
 	@$(RM) .configure-clang-$(CLANG_VERSION)
 	@$(RM) .extract-clang-$(CLANG_VERSION)
-	$(RM) $(CLANG_BUILD_DIR)
+	$(RM) $(CLANG_BUILD_DIR) ${CLANG_SOURCE_DIR}
 
 distclean-clang: clean-clang
 	@$(RM) .fetch-clang-$(CLANG_VERSION)
@@ -746,10 +745,10 @@ env-clang:
 ## GMP (GNU Multiple Precision Arithmetic Library)
 ##
 
-GMP_VERSION = 5.1.3
+GMP_VERSION = 6.1.2
 GMP_TARBALL = gmp-$(GMP_VERSION).tar.bz2
 GMP_TARBALL_URL = http://ftp.gnu.org/gnu/gmp/$(GMP_TARBALL)
-GMP_TARBALL_SHA256 = 752079520b4690531171d0f4532e40f08600215feefede70b24fabdc6f1ab160
+GMP_TARBALL_SHA256 = 5275bb04f4863a13516b2f39392ac5e272f5e1bb8057b18aec1c9b79d73d8fb2
 GMP_BUILD_DIR = gmp-$(GMP_VERSION)
 GMP_INSTALL_DIR = $(CURDIR)/.gmp-$(GMP_VERSION)
 
@@ -908,10 +907,10 @@ distclean-mpc: clean-mpc
 ## ISL (Integer Set Library)
 ##
 
-ISL_VERSION = 0.14
+ISL_VERSION = 0.16.1
 ISL_TARBALL = isl-$(ISL_VERSION).tar.bz2
 ISL_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(ISL_TARBALL)
-ISL_TARBALL_SHA256 = 7e3c02ff52f8540f6a85534f54158968417fd676001651c8289c705bd0228f36
+ISL_TARBALL_SHA256 = 412538bb65c799ac98e17e8cfcdacbb257a57362acfaaff254b0fcae970126d2
 ISL_BUILD_DIR = isl-$(ISL_VERSION)
 ISL_INSTALL_DIR = $(CURDIR)/.isl-$(ISL_VERSION)
 
@@ -962,10 +961,10 @@ distclean-isl: clean-isl
 ## GCC (GNU Compiler Collection)
 ##
 
-GCC_VERSION = 5.1.0
+GCC_VERSION = 6.3.0
 GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
 GCC_TARBALL_URL = http://ftp.gwdg.de/pub/misc/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
-GCC_TARBALL_SHA256 = b7dafdf89cbb0e20333dbf5b5349319ae06e3d1a30bf3515b5488f7e89dca5ad
+GCC_TARBALL_SHA256 = f06ae7f3f790fbf0f018f6d40e844451e6bc3b7bc96e128e63b09825c1f8b29f
 GCC_BUILD_DIR = gcc-$(GCC_VERSION)
 GCC_BUILD_FLAGS = --enable-cxx-flags=-fPIC --enable-languages=c,c++,fortran,lto --disable-multilib
 GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)

@@ -215,7 +215,7 @@ void script::run()
     if (lua_pcall(L, 0, 0, stacktrace_index)) {
         size_t len = 0;
         const char *errmsg = lua_tolstring(L, -1, &len);
-        std::string error("cannot execute run script: " + std::string(errmsg, len));
+        std::string error(std::string(errmsg, len));
         lua_pop(L, 1);
         throw std::runtime_error(error);
     }

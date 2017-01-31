@@ -36,7 +36,7 @@ local phase_space = assert(libhalmd.observables.phase_space)
 -- A phase_space sampler acquires particle coordinates from an instance of
 -- particle or particle_group. The sampler can copy particle data from
 -- host to host, gpu to host, or gpu to gpu memory. The particles are
--- ordered by id, which guarantees that a particle has the same array
+-- ordered by ID, which guarantees that a particle has the same array
 -- index over the course of the simulation.
 --
 

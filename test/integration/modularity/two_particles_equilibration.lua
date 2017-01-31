@@ -47,7 +47,7 @@ local function setup(args)
 
     -- create system state for all particles first
     local particle = mdsim.particle({dimension = dimension, particles = np[1] + np[2], species = 2})
-    -- set particle species, with continuous range of ids per species
+    -- set particle species, with continuous range of IDs per species
     local species = {}
     local groups = {}
     local offset = 0
@@ -64,11 +64,11 @@ local function setup(args)
         })
         offset = offset + n
     end
-    particle:set_species(species)
+    particle.data["species"] = species
     -- set initial particle positions
     mdsim.positions.lattice({box = box, particle = particle}):set()
     -- randomly shuffle the positions
-    particle:set_position(random.generator({memory = "host"}):shuffle(particle:get_position()))
+    particle.data["position"] = random.generator({memory = "host"}):shuffle(particle.data["position"])
     -- set initial particle velocities
     mdsim.velocities.boltzmann({particle = particle, temperature = temp0}):set()
 

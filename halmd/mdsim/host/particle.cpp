@@ -123,7 +123,7 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     permute(mass->begin(), mass->begin() + nparticle_, index.begin());
     // no permutation of forces
 
-    // update reverse ids
+    // update reverse IDs
     for (unsigned int i = 0; i < nparticle_; ++i) {
         (*reverse_id)[(*id)[i]] = i;
     }

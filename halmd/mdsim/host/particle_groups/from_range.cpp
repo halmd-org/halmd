@@ -53,10 +53,10 @@ typename from_range<particle_type>::range_type const&
 from_range<particle_type>::check_range(range_type const& range)
 {
     if (range.second <= range.first) {
-        throw std::invalid_argument("particle_group: inverse id ranges not allowed");
+        throw std::invalid_argument("particle_group: inverse ID ranges not allowed");
     }
     if (range.second > particle_->nparticle()) {
-        throw std::invalid_argument("particle_group: id range exceeds particle array");
+        throw std::invalid_argument("particle_group: ID range exceeds particle array");
     }
     return range;
 }
@@ -112,7 +112,7 @@ from_range<particle_type>::size()
 
 /**
  * This function serves as a Lua wrapper around the C++ constructor,
- * converting from a 1-based particle id range to a 0-based range.
+ * converting from a 1-based particle ID range to a 0-based range.
  */
 template <typename particle_type>
 static std::shared_ptr<from_range<particle_type> >

@@ -41,7 +41,7 @@ static texture<unsigned int> ntypes_;
 static texture<float4> r_;
 /** velocities, masses */
 static texture<float4> v_;
-/** ids */
+/** IDs */
 static texture<unsigned int> id_;
 
 /** minimum image vectors */
@@ -107,7 +107,7 @@ __global__ void rearrange(
         // select correct image texture depending on the space dimension
         g_image[GTID] = tex1Dfetch(image<dimension>::tex_, i);
 
-        // copy particle ids
+        // copy particle IDs
         g_id[GTID] = tex1Dfetch(id_, i);
     }
 }

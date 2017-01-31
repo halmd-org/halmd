@@ -44,7 +44,7 @@ struct particle_wrapper
     cuda::texture<aligned_vector_type> image;
     /** velocities, masses */
     cuda::texture<float4> v;
-    /** ids */
+    /** IDs */
     cuda::texture<unsigned int> id;
     /** initialize particle positions and species, velocity and mass */
     cuda::function<void (float4*, float4*, unsigned int)> initialize;

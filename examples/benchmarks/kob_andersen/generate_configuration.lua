@@ -52,17 +52,17 @@ function main(args)
     -- create system state
     local particle = mdsim.particle({dimension = 3, particles = nparticle, species = 2})
 
-    -- set particle species, with continuous range of ids per species:
+    -- set particle species, with continuous range of IDs per species:
     -- construct array with particle species: (0, 0, … 0, 1, 1, … 1)
     local species = {}
     for i = 1, ngroup[1] do table.insert(species, 0) end
     for i = 1, ngroup[2] do table.insert(species, 1) end
-    particle:set_species(species)
+    particle.data["species"] = species
 
     -- set initial particle positions, randomise the particle species
     mdsim.positions.lattice({box = box, particle = particle}):set()
     -- randomly shuffle the positions
-    particle:set_position(random.generator({memory = "host"}):shuffle(particle:get_position()))
+    particle.data["position"] = random.generator({memory = "host"}):shuffle(particle.data["position"])
 
     -- set initial particle velocities
     mdsim.velocities.boltzmann({particle = particle, temperature = temperature}):set()
@@ -121,6 +121,6 @@ end
 function define_args()
     local parser = utility.program_options.argument_parser()
 
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
+    parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
         default = "kob_andersen_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 end
