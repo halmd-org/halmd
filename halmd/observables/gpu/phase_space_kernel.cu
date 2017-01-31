@@ -128,32 +128,49 @@ struct input
 // instantiate static members
 template<typename T> input<T>::type input<T>::tex_;
 
-template <typename T>
+template<typename T, typename U>
+struct converter {
+    static __device__ T const& convert (U const& u) {
+        return u;
+    }
+};
+
+template<size_t dimension, typename U>
+struct converter<fixed_vector<dsfloat, dimension>, U> {
+    static __device__ tuple<U,U> convert (U const& u) {
+        return make_tuple(u, U());
+    }
+};
+
+template <typename ptr_type, typename vector_type, typename T>
 __global__ void sample(
         unsigned int const* g_reverse_id
-        , T *data
+        , ptr_type data
         , unsigned int npart
 ) {
     if (GTID < npart) {
         // permutation index
         uint const rid = g_reverse_id[GTID];
         // fetch particle data from texture caches
-        data[GTID] = tex1Dfetch(input<T>::tex_, rid);
+        data[GTID] = converter<vector_type, T>::convert(tex1Dfetch(input<T>::tex_, rid));
     }
 }
 
 } // namespace phase_space_sample_kernel
 
-template <typename T>
-phase_space_sample_wrapper<T> const phase_space_sample_wrapper<T>::kernel = {
-        phase_space_sample_kernel::input<T>::tex_,
-        phase_space_sample_kernel::sample<T>,
-        phase_space_sample_kernel::sample<T>
+template <typename input_data_type, typename sample_data_type>
+phase_space_sample_wrapper<input_data_type, sample_data_type> const phase_space_sample_wrapper<input_data_type, sample_data_type>::kernel = {
+        phase_space_sample_kernel::input<sample_data_type>::tex_,
+        phase_space_sample_kernel::sample<sample_data_type*, sample_data_type, sample_data_type>,
+        phase_space_sample_kernel::sample<ptr_type, input_data_type, sample_data_type>
 };
 
 template class phase_space_sample_wrapper<float>;
 template class phase_space_sample_wrapper<float2>;
 template class phase_space_sample_wrapper<float4>;
+
+template class phase_space_sample_wrapper<fixed_vector<dsfloat, 2>, float2>;
+template class phase_space_sample_wrapper<fixed_vector<dsfloat, 4>, float4>;
 
 template class phase_space_sample_wrapper<int>;
 template class phase_space_sample_wrapper<int2>;

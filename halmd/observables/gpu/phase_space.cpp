@@ -438,6 +438,7 @@ template<int dimension, typename input_data_type, typename sample_data_type = in
 class phase_space_sampler_gpu_typed
   : public phase_space_sampler
 {
+    typedef phase_space_sample_wrapper<input_data_type, sample_data_type> sample_wrapper;
 public:
     typedef samples::sample<dimension, sample_data_type> sample_type;
     typedef mdsim::gpu::particle_group particle_group_type;
@@ -486,9 +487,9 @@ public:
             auto& sample_data = sample_->data();
 
             try {
-                phase_space_sample_wrapper<sample_data_type>::kernel.input.bind(data);
+                sample_wrapper::kernel.input.bind(data);
                 cuda::configure(dim_.grid, dim_.block);
-                phase_space_sample_wrapper<sample_data_type>::kernel.sample(
+                sample_wrapper::kernel.sample(
                     &*group.begin()
                   , &*sample_data.begin()
                   , group.size()
@@ -520,11 +521,11 @@ public:
 
         auto data = make_cache_mutable(array_->mutable_data());
         try {
-            phase_space_sample_wrapper<sample_data_type>::kernel.input.bind(sample->data());
+            sample_wrapper::kernel.input.bind(sample->data());
             cuda::configure(dim_.grid, dim_.block);
-            phase_space_sample_wrapper<sample_data_type>::kernel.set(
+            sample_wrapper::kernel.set(
                 &*group.begin()
-              , dsfloat_as_float(*data).data() // TODO: is this correct for dsfloats?
+              , data->data()
               , group.size()
             );
         }
