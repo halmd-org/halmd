@@ -239,7 +239,7 @@ local M = module(function(args)
     if not particle[memory] then
         error(("unsupported particle memory type '%s'"):format(memory), 2)
     end
-    local precision = args and args.precision or (device.gpu and "single" or "double")
+    local precision = args and args.precision or "double"
     if not particle[memory][precision] then
         error(("unsupported particle float type '%s'"):format(float_type), 2)
     end
@@ -264,6 +264,10 @@ local M = module(function(args)
 
     self.memory = property(function(self)
         return memory
+    end)
+
+    self.precision = property(function(self)
+        return precision
     end)
 
     -- sequence of signal connections
