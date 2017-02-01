@@ -26,6 +26,9 @@
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
+#ifndef __CUDACC__
+#include <halmd/numeric/mp/dsfloat_vector.hpp>
+#endif
 
 struct dsfloat_kernel_wrapper
 {

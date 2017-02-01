@@ -27,6 +27,7 @@
 #include <halmd/utility/gpu/texture.cuh>
 #else
 #include <type_traits>
+#include <halmd/numeric/mp/dsfloat_vector.hpp>
 #endif
 
 namespace cuda {

@@ -25,6 +25,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/numeric/mp/dsfloat_vector.hpp>
 
 namespace halmd {
 namespace mdsim {
