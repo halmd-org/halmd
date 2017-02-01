@@ -51,28 +51,20 @@ public:
     typedef dsfloat_const_ptr<T> const const_pointer;
     typedef size_t size_type;
 
-    dsfloat_vector(size_type size) : data_(size * 2)
+    dsfloat_vector(size_type size) : data_(size)
     {
+        data_.reserve(size * 2);
     }
 
     size_type size() const
     {
-        return data_.size() / 2;
-    }
-
-    size_type capacity() const
-    {
-        return data_.capacity() / 2;
+        return data_.size();
     }
 
     void resize(size_type size)
     {
-        data_.resize(size * 2);
-    }
-
-    void reserve(size_type size)
-    {
         data_.reserve(size * 2);
+        data_.resize(size);
     }
 
     void swap(vector_type& v)
@@ -84,7 +76,7 @@ public:
     {
         return pointer {
             &*data_.begin()
-          , &*(data_.begin() + (data_.size()/2))
+          , &*(data_.begin() + data_.size())
         };
     }
 
@@ -97,7 +89,7 @@ public:
     {
         return const_pointer {
             &*data_.begin()
-          , &*(data_.begin() + (data_.size()/2))
+          , &*(data_.begin() + data_.size())
         };
     }
 
@@ -106,15 +98,11 @@ public:
         return data();
     }
 
-    cuda::vector<T>& storage() {
-        return data_;
-    }
-
-    cuda::vector<T> const& storage() const {
-        return data_;
-    }
-
     operator cuda::vector<T> const&() const {
+        return data_;
+    }
+
+    operator cuda::vector<T>&() {
         return data_;
     }
 

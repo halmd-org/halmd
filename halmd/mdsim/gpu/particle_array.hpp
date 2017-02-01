@@ -715,10 +715,10 @@ public:
      */
     virtual cuda::host::vector<uint8_t> get_gpu_data() const
     {
-        auto const& g_input = read_cache(data());
-        cuda::host::vector<uint8_t> mem(g_input.size() * sizeof(type));
-        mem.reserve(g_input.size() * sizeof(hp_type));
-        cuda::copy(g_input.storage().begin(), g_input.storage().begin() + g_input.storage().size(),
+        cuda::vector<type> const& g_input = read_cache(data());
+        cuda::host::vector<uint8_t> mem(data_->size() * sizeof(type));
+        mem.reserve(data_->size() * sizeof(hp_type));
+        cuda::copy(g_input.begin(), g_input.begin() + g_input.capacity(),
                    reinterpret_cast<type*>(&*mem.begin()));
         return mem;
     }
@@ -731,7 +731,7 @@ public:
      */
     virtual void set_gpu_data(cuda::host::vector<uint8_t> const& mem)
     {
-        cuda::vector<type> &output = make_cache_mutable(data_)->storage();
+        cuda::vector<type> &output = *make_cache_mutable(data_);
         auto ptr = reinterpret_cast<type const*>(&*mem.begin());
         cuda::copy(ptr, ptr + (mem.capacity() / sizeof (type)), output.begin());
     }

@@ -21,7 +21,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/max_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 #include <algorithm>
 #include <exception>
@@ -82,12 +81,12 @@ template <int dimension, typename float_type>
 void max_displacement<dimension, float_type>::zero()
 {
     cache<position_array_type> const& position_cache = particle_->position();
-    position_array_type const& position = read_cache(position_cache);
+    cuda::vector<float4> const& position = read_cache(position_cache);
 
     LOG_TRACE("zero maximum squared displacement");
 
     scoped_timer_type timer(runtime_.zero);
-    cuda::copy(dsfloat_as_float(position).begin(), dsfloat_as_float(position).begin() + particle_->nparticle(), g_r0_.begin());
+    cuda::copy(position.begin(), position.begin() + particle_->nparticle(), g_r0_.begin());
     displacement_ = 0;
     position_cache_ = position_cache;
 }
@@ -113,7 +112,7 @@ float_type max_displacement<dimension, float_type>::compute()
               , dim_reduce_.threads_per_block() * sizeof(float)
             );
             displacement_impl_(
-                dsfloat_as_float(position).data()
+                position.data()
               , g_r0_
               , g_rr_
               , particle_->nparticle()

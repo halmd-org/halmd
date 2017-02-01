@@ -28,7 +28,6 @@
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 using namespace std;
 
@@ -188,13 +187,12 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 template <int dimension, typename float_type>
 float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
-    velocity_array_type const& velocity = read_cache(particle_->velocity());
+    cuda::vector<float4> const& velocity = read_cache(particle_->velocity());
 
     scoped_timer_type timer(runtime_.propagate);
 
     // compute total kinetic energy multiplied by 2
-    float_type en_kin_2 = 2 * compute_en_kin_(dsfloat_as_float(velocity).data()
-                                            , dsfloat_as_float(velocity).data() + velocity.size())();
+    float_type en_kin_2 = 2 * compute_en_kin_(&*velocity.begin(), &*velocity.end())();
 
     // head of the chain
     v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) / mass_xi_[1] * timestep_4_;

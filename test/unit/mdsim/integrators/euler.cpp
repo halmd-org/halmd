@@ -49,7 +49,6 @@
 # include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
-# include <halmd/utility/gpu/dsfloat_as_float.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
@@ -361,8 +360,8 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
     typedef typename particle_type::vector_type vector_type;
     typedef apply_wrapper<negate_, vector_type, float4, vector_type, float4> apply_negate_wrapper;
 
-    auto const& position = read_cache(particle->position());
-    auto velocity = make_cache_mutable(particle->velocity());
+    cuda::vector<float4> const& position = read_cache(particle->position());
+    cuda::vector<float4>& velocity = *make_cache_mutable(particle->velocity());
 
     // copy -g_r[i] to g_v[i]
     //
@@ -377,9 +376,10 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
     // Caveat: overwrites particle ids in g_v (which are not used anyway)
     try {
         cuda::configure(particle->dim().grid, particle->dim().block);
-        apply_negate_wrapper::kernel.apply(dsfloat_as_float(position).data()
-                                         , dsfloat_as_float(*velocity).data()
-                                         , dsfloat_as_float(position).capacity());
+
+        apply_negate_wrapper::kernel.apply(position.data()
+                                         , velocity.data()
+                                         , position.capacity());
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {

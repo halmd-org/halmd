@@ -307,6 +307,10 @@ struct dsfloat_ptr {
     HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const {
         return tie(hi[idx], lo[idx]);
     };
+
+    operator T*() const {
+        return hi;
+    }
 };
 
 template<typename T>
@@ -317,6 +321,10 @@ struct dsfloat_const_ptr {
     HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const {
         return tie(hi[idx], lo[idx]);
     };
+
+    operator T const*() const {
+        return hi;
+    }
 };
 
 } // namespace mp

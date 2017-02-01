@@ -27,7 +27,6 @@
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/gpu/sorts/hilbert.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 using namespace halmd::algorithm::gpu;
 
@@ -99,7 +98,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 
     cuda::configure(particle_->dim().grid, particle_->dim().block);
     wrapper_type::kernel.map(
-        dsfloat_as_float(position).data()
+        position.data()
       , g_map
       , static_cast<vector_type>(box_->length())
     );

@@ -30,8 +30,6 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
-#include <halmd/utility/gpu/dsfloat_as_float.hpp>
-
 #include <memory>
 
 namespace halmd {
@@ -195,8 +193,8 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
 
     cuda::configure(particle1_->dim().grid, particle1_->dim().block);
     gpu_wrapper::kernel.compute(
-        dsfloat_as_float(position1).data()
-      , dsfloat_as_float(position2).data()
+        position1.data()
+      , position2.data()
       , particle2_->nparticle()
       , &*force->begin()
       , nullptr
@@ -232,8 +230,8 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
 
     cuda::configure(particle1_->dim().grid, particle1_->dim().block);
     gpu_wrapper::kernel.compute_aux(
-        dsfloat_as_float(position1).data()
-      , dsfloat_as_float(position2).data()
+        position1.data()
+      , position2.data()
       , particle2_->nparticle()
       , &*force->begin()
       , &*en_pot->begin()

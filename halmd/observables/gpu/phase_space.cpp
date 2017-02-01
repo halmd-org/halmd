@@ -35,7 +35,6 @@
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/signal.hpp>
 #include <halmd/utility/timer.hpp>
-#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 namespace halmd {
 namespace observables {
@@ -404,7 +403,7 @@ public:
             cuda::configure(dim_.grid, dim_.block);
             phase_space_wrapper<dimension>::kernel.reduce_periodic(
                 &*group.begin()
-              , dsfloat_as_float(*position).data() // TODO: is this correct for dsfloats?
+              , position->data() // TODO: is this correct for dsfloats?
               , &*image->begin()
               , static_cast<fixed_vector<scalar_type, dimension>>(box_->length())
               , group.size()
@@ -749,7 +748,7 @@ public:
             cuda::configure(this->dim_.grid, this->dim_.block);
             phase_space_wrapper<dimension>::kernel.reduce_periodic(
                 &*group.begin()
-              , dsfloat_as_float(*position).data() // TODO: is this correct for dsfloats?
+              , position->data() // TODO: is this correct for dsfloats?
               , &*image->begin()
               , static_cast<fixed_vector<float, dimension>>(box_->length())
               , group.size()

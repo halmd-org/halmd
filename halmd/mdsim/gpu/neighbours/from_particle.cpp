@@ -24,7 +24,6 @@
 #include <halmd/mdsim/gpu/neighbours/from_particle_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
-#include <halmd/utility/gpu/dsfloat_as_float.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -151,9 +150,9 @@ void from_particle<dimension, float_type>::update()
         , particle1_->dim().threads_per_block() * (sizeof(unsigned int) + sizeof(vector_type))
         );
         get_from_particle_kernel<dimension>().update(
-          dsfloat_as_float(position1).data()
+          position1.data()
         , particle1_->nparticle()
-        , dsfloat_as_float(position2).data()
+        , position2.data()
         , particle2_->nparticle()
         , particle1_->nspecies()
         , particle2_->nspecies()
