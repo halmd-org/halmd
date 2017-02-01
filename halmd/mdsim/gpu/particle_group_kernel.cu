@@ -20,6 +20,7 @@
 
 #include <halmd/mdsim/gpu/particle_group_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
+#include <halmd/utility/gpu/texture.cuh>
 #include <halmd/utility/tuple.hpp>
 
 /** positions, types */

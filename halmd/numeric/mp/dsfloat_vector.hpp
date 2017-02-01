@@ -114,6 +114,10 @@ public:
         return data_;
     }
 
+    operator cuda::vector<T> const&() const {
+        return data_;
+    }
+
 private:
     cuda::vector<T> data_;
 };

@@ -23,7 +23,6 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/utility/gpu/texture.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -41,11 +40,11 @@ struct particle_wrapper
     cuda::symbol<unsigned int> ntype;
     cuda::texture<unsigned int> ntypes;
     /** positions, types */
-    cuda::halmd::texture<aligned_hp_vector_type> r;
+    cuda::texture<float4> r;
     /** minimum image vectors */
     cuda::texture<aligned_vector_type> image;
     /** velocities, masses */
-    cuda::halmd::texture<aligned_hp_vector_type> v;
+    cuda::texture<float4> v;
     /** IDs */
     cuda::texture<unsigned int> id;
     /** initialize particle positions and species, velocity and mass */

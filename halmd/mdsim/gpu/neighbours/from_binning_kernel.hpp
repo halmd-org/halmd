@@ -24,7 +24,6 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
-#include <halmd/utility/gpu/texture.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -40,9 +39,9 @@ struct from_binning_wrapper
     /** (cutoff lengths + neighbour list skin)² */
     cuda::texture<float> rr_cut_skin;
     /** positions, IDs of particle1 */
-    cuda::halmd::texture<float4> r1;
+    cuda::texture<float4> r1;
     /** positions, IDs of particle2 */
-    cuda::halmd::texture<float4> r2;
+    cuda::texture<float4> r2;
 
     /** update neighbour lists */
     cuda::function<void (

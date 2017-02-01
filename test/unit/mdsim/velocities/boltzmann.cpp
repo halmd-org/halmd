@@ -39,7 +39,6 @@
 # include <halmd/mdsim/gpu/velocity.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
-# include <halmd/utility/gpu/texture.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 

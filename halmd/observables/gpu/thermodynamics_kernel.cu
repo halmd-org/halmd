@@ -117,11 +117,11 @@ __device__ void stress_tensor<dimension, float_type>::operator()(size_type i)
 }
 
 template <int dimension, typename float_type>
-cuda::halmd::texture<float4> const
+cuda::texture<float4> const
 kinetic_energy<dimension, float_type>::texture_ = velocity_;
 
 template <int dimension, typename float_type>
-cuda::halmd::texture<float4> const
+cuda::texture<float4> const
 centre_of_mass<dimension, float_type>::position_texture_ = position_;
 
 template <int dimension, typename float_type>
@@ -129,11 +129,11 @@ cuda::texture<typename centre_of_mass<dimension, float_type>::coalesced_vector_t
 centre_of_mass<dimension, float_type>::image_texture_ = image<dimension>::tex_;
 
 template <int dimension, typename float_type>
-cuda::halmd::texture<float4> const
+cuda::texture<float4> const
 centre_of_mass<dimension, float_type>::velocity_texture_ = velocity_;
 
 template <int dimension, typename float_type>
-cuda::halmd::texture<float4> const
+cuda::texture<float4> const
 velocity_of_centre_of_mass<dimension, float_type>::texture_ = velocity_;
 
 template <typename float_type>
@@ -149,7 +149,7 @@ cuda::texture<float> const
 stress_tensor<dimension, float_type>::stress_pot_texture_ = stress_pot_;
 
 template <int dimension, typename float_type>
-cuda::halmd::texture<float4> const
+cuda::texture<float4> const
 stress_tensor<dimension, float_type>::velocity_texture_ = velocity_;
 
 template class observables::gpu::kinetic_energy<3, dsfloat>;

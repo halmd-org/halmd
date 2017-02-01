@@ -24,6 +24,7 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
+#include <halmd/utility/gpu/texture.cuh>
 #include <halmd/utility/tuple.hpp>
 
 namespace halmd {

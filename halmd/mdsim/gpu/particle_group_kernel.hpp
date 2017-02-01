@@ -21,9 +21,7 @@
 #define HALMD_MDSIM_GPU_PARTICLE_GROUP_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/utility/gpu/texture.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -37,11 +35,11 @@ struct particle_group_wrapper
     typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
 
     /** positions, types */
-    cuda::halmd::texture<typename type_traits<4, float_type>::gpu::coalesced_vector_type> r;
+    cuda::texture<float4> r;
     /** minimum image vectors */
     cuda::texture<aligned_vector_type> image;
     /** velocities, masses */
-    cuda::halmd::texture<typename type_traits<4, float_type>::gpu::coalesced_vector_type> v;
+    cuda::texture<float4> v;
     /** copy particle group data (position, species, velocities, masses) into particle instance */
     cuda::function<void (unsigned int const*, ptr_type, aligned_vector_type*, ptr_type, unsigned int)> particle_group_to_particle;
 
