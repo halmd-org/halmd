@@ -127,10 +127,10 @@ void lattice<dimension, float_type>::fcc(
     float u = lattice_type(1).size();
     float V = accumulate(
         length.begin(), length.end()
-      , float(1) / ceil(npart / u)
+      , 1.f / ceil(npart / u)
       , multiplies<float>()
     );
-    float a = pow(V, float(1) / dimension);
+    float a = pow(V, 1.f / dimension);
     index_type n(length / a);
     while (npart > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
         gpu_vector_type t;

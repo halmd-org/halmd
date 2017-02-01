@@ -29,7 +29,7 @@ namespace mdsim {
 namespace gpu {
 namespace integrators {
 
-template <typename float_type, int dimension>
+template <int dimension, typename float_type>
 struct verlet_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;

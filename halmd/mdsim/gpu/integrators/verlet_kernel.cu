@@ -34,7 +34,7 @@ namespace verlet_kernel {
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
  */
-template <typename ptr_type, int dimension, typename float_type, typename gpu_vector_type>
+template <int dimension, typename float_type, typename ptr_type, typename gpu_vector_type>
 __global__ void integrate(
     ptr_type g_position
   , gpu_vector_type* g_image
@@ -75,7 +75,7 @@ __global__ void integrate(
 /**
  * Second leapfrog half-step of velocity-Verlet algorithm
  */
-template <typename ptr_type, int dimension, typename float_type, typename gpu_vector_type>
+template <int dimension, typename float_type, typename ptr_type, typename gpu_vector_type>
 __global__ void finalize(
     ptr_type g_velocity
   , gpu_vector_type const* g_force
@@ -101,16 +101,16 @@ __global__ void finalize(
 
 } // namespace verlet_kernel
 
-template <typename float_type, int dimension>
-verlet_wrapper<float_type, dimension> const verlet_wrapper<float_type, dimension>::wrapper = {
-    verlet_kernel::integrate<ptr_type, dimension, float_type>
-  , verlet_kernel::finalize<ptr_type, dimension, float_type>
+template <int dimension, typename float_type>
+verlet_wrapper<dimension, float_type> const verlet_wrapper<dimension, float_type>::wrapper = {
+    verlet_kernel::integrate<dimension, float_type, ptr_type>
+  , verlet_kernel::finalize<dimension, float_type, ptr_type>
 };
 
-template class verlet_wrapper<float, 3>;
-template class verlet_wrapper<float, 2>;
-template class verlet_wrapper<dsfloat, 3>;
-template class verlet_wrapper<dsfloat, 2>;
+template class verlet_wrapper<3, float>;
+template class verlet_wrapper<2, float>;
+template class verlet_wrapper<3, dsfloat>;
+template class verlet_wrapper<2, dsfloat>;
 
 } // namespace mdsim
 } // namespace gpu

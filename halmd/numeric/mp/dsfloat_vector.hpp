@@ -43,7 +43,8 @@ namespace numeric {
 namespace mp {
 
 template<typename T>
-class dsfloat_vector {
+class dsfloat_vector
+{
 public:
     typedef dsfloat_vector<T> vector_type;
     typedef T value_type;

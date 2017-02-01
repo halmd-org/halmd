@@ -24,7 +24,7 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/texture.cuh>
+#include <halmd/utility/gpu/texfetch.cuh>
 #include <halmd/utility/tuple.hpp>
 
 namespace halmd {
@@ -50,7 +50,7 @@ template<int dimension>
 struct image
 {
     // instantiate a separate texture for each aligned vector type
-    typedef texture<typename particle_wrapper<float, dimension>::aligned_vector_type> type;
+    typedef texture<typename particle_wrapper<dimension, float>::aligned_vector_type> type;
     static type tex_;
 };
 // instantiate static members
@@ -59,7 +59,7 @@ template<int dimension> image<dimension>::type image<dimension>::tex_;
 /**
  * initialize particle positions and species, velocity and mass
  */
- template<typename ptr_type, typename float_type>
+ template<typename float_type, typename ptr_type>
 __global__ void initialize(
     ptr_type g_r
   , ptr_type g_v
@@ -75,7 +75,7 @@ __global__ void initialize(
 /**
  * rearrange particles by a given permutation
  */
-template <typename ptr_type, typename float_type, int dimension, typename aligned_vector_type>
+template <int dimension, typename float_type, typename ptr_type, typename aligned_vector_type>
 __global__ void rearrange(
     unsigned int const* g_index
   , ptr_type g_r
@@ -101,8 +101,8 @@ __global__ void rearrange(
 
 } // namespace particle_kernel
 
-template <typename float_type, int dimension>
-particle_wrapper<float_type, dimension> const particle_wrapper<float_type, dimension>::kernel = {
+template <int dimension, typename float_type>
+particle_wrapper<dimension, float_type> const particle_wrapper<dimension, float_type>::kernel = {
     particle_kernel::nbox_
   , particle_kernel::ntype_
   , particle_kernel::ntypes_
@@ -110,14 +110,14 @@ particle_wrapper<float_type, dimension> const particle_wrapper<float_type, dimen
   , particle_kernel::image<dimension>::tex_
   , particle_kernel::v_
   , particle_kernel::id_
-  , particle_kernel::initialize<ptr_type, float_type>
-  , particle_kernel::rearrange<ptr_type, float_type, dimension>
+  , particle_kernel::initialize<float_type, ptr_type>
+  , particle_kernel::rearrange<dimension, float_type, ptr_type>
 };
 
-template class particle_wrapper<float, 3>;
-template class particle_wrapper<float, 2>;
-template class particle_wrapper<dsfloat, 3>;
-template class particle_wrapper<dsfloat, 2>;
+template class particle_wrapper<3, float>;
+template class particle_wrapper<2, float>;
+template class particle_wrapper<3, dsfloat>;
+template class particle_wrapper<2, dsfloat>;
 
 } // namespace gpu
 } // namespace mdsim

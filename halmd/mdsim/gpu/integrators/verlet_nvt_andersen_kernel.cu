@@ -44,7 +44,7 @@ namespace verlet_nvt_andersen_kernel {
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
  */
-template <typename ptr_type, int dimension, typename float_type, typename gpu_vector_type>
+template <int dimension, typename float_type, typename ptr_type, typename gpu_vector_type>
 __global__ void integrate(
     ptr_type g_position
   , gpu_vector_type* g_image
@@ -96,7 +96,7 @@ __global__ void integrate(
  * @param nplace number of placeholder particles
  * @param rng random number generator
  */
-template <typename ptr_type, int dimension, typename float_type, typename gpu_vector_type, typename rng_type>
+template <int dimension, typename float_type, typename ptr_type, typename gpu_vector_type, typename rng_type>
 __global__ void finalize(
     ptr_type g_velocity
   , gpu_vector_type const* g_force
@@ -175,17 +175,17 @@ __global__ void finalize(
 
 } // namespace verlet_nvt_andersen_kernel
 
-template <typename float_type, int dimension, typename rng_type>
-verlet_nvt_andersen_wrapper<float_type, dimension, rng_type> const
-verlet_nvt_andersen_wrapper<float_type, dimension, rng_type>::kernel = {
-    verlet_nvt_andersen_kernel::integrate<ptr_type, dimension, float_type>
-  , verlet_nvt_andersen_kernel::finalize<ptr_type, dimension, float_type>
+template <int dimension, typename float_type, typename rng_type>
+verlet_nvt_andersen_wrapper<dimension, float_type, rng_type> const
+verlet_nvt_andersen_wrapper<dimension, float_type, rng_type>::kernel = {
+    verlet_nvt_andersen_kernel::integrate<dimension, float_type, ptr_type>
+  , verlet_nvt_andersen_kernel::finalize<dimension, float_type, ptr_type>
 };
 
-template class verlet_nvt_andersen_wrapper<float, 3, random::gpu::rand48_rng>;
-template class verlet_nvt_andersen_wrapper<float, 2, random::gpu::rand48_rng>;
-template class verlet_nvt_andersen_wrapper<dsfloat, 3, random::gpu::rand48_rng>;
-template class verlet_nvt_andersen_wrapper<dsfloat, 2, random::gpu::rand48_rng>;
+template class verlet_nvt_andersen_wrapper<3, float, random::gpu::rand48_rng>;
+template class verlet_nvt_andersen_wrapper<2, float, random::gpu::rand48_rng>;
+template class verlet_nvt_andersen_wrapper<3, dsfloat, random::gpu::rand48_rng>;
+template class verlet_nvt_andersen_wrapper<2, dsfloat, random::gpu::rand48_rng>;
 
 } // namespace mdsim
 } // namespace gpu

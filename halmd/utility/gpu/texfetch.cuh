@@ -29,17 +29,21 @@ template<typename float_type>
 struct texFetch;
 
 template<>
-struct texFetch<float> {
+struct texFetch<float>
+{
     template<typename T>
-    static __device__ T fetch(texture<T> tex, int i) {
+    static __device__ T fetch(texture<T> tex, int i)
+    {
         return tex1Dfetch(tex, i);
     }
 };
 
 template<>
-struct texFetch<dsfloat> {
+struct texFetch<dsfloat>
+{
     template<typename T>
-    static __device__ tuple<T, T> fetch(texture<T> tex, int i) {
+    static __device__ tuple<T, T> fetch(texture<T> tex, int i)
+    {
         return make_tuple(tex1Dfetch(tex, i), tex1Dfetch(tex, i + GTDIM));
     }
 };

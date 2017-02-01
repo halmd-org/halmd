@@ -91,7 +91,7 @@ binning<dimension, float_type>::binning(
     // compute derived values
     cell_length_ = element_div(static_cast<vector_type>(box_->length()), static_cast<vector_type>(ncell_));
 
-    LOG("neighbour list skin: " << float(r_skin_));
+    LOG("neighbour list skin: " << r_skin_);
     LOG("number of cells per dimension: " << ncell_);
     LOG("edge lengths of cells: " << cell_length_);
 

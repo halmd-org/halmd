@@ -42,7 +42,7 @@ verlet<dimension, float_type>::verlet(
   , box_(box)
   , logger_(logger)
   // reference CUDA C++ verlet_wrapper
-  , wrapper_(&verlet_wrapper<float_type, dimension>::wrapper)
+  , wrapper_(&verlet_wrapper<dimension, float_type>::wrapper)
 {
     set_timestep(timestep);
 }

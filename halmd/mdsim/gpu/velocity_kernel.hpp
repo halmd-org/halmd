@@ -32,7 +32,7 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 
-template <typename float_type, int dimension>
+template <int dimension, typename float_type>
 struct velocity_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
@@ -46,10 +46,10 @@ struct velocity_wrapper
     static velocity_wrapper const kernel;
 };
 
-template <typename float_type, int dimension>
-velocity_wrapper<float_type, dimension> const& get_velocity_kernel()
+template <int dimension, typename float_type>
+velocity_wrapper<dimension, float_type> const& get_velocity_kernel()
 {
-    return velocity_wrapper<float_type, dimension>::kernel;
+    return velocity_wrapper<dimension, float_type>::kernel;
 }
 
 } // namespace mdsim

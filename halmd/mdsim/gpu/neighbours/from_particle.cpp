@@ -145,7 +145,7 @@ void from_particle<dimension, float_type>::update()
         cuda::memset(g_overflow, 0);
         get_from_particle_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
         cuda::configure(
-            particle1_->dim().grid
+          particle1_->dim().grid
         , particle1_->dim().block
         , particle1_->dim().threads_per_block() * (sizeof(unsigned int) + sizeof(vector_type))
         );
@@ -181,12 +181,14 @@ template<typename float_type>
 struct variant_name;
 
 template<>
-struct variant_name<float> {
+struct variant_name<float>
+{
     static constexpr const char *name = "float";
 };
 
 template<>
-struct variant_name<dsfloat> {
+struct variant_name<dsfloat>
+{
     static constexpr const char *name = "dsfloat";
 };
 

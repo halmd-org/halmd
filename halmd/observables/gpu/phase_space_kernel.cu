@@ -129,15 +129,19 @@ struct input
 template<typename T> input<T>::type input<T>::tex_;
 
 template<typename T, typename U>
-struct converter {
-    static __device__ T const& convert (U const& u) {
+struct converter
+{
+    static __device__ T const& convert (U const& u)
+    {
         return u;
     }
 };
 
 template<size_t dimension, typename U>
-struct converter<fixed_vector<dsfloat, dimension>, U> {
-    static __device__ tuple<U,U> convert (U const& u) {
+struct converter<fixed_vector<dsfloat, dimension>, U>
+{
+    static __device__ tuple<U,U> convert (U const& u)
+    {
         return make_tuple(u, U());
     }
 };

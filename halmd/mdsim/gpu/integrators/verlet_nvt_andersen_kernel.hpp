@@ -29,7 +29,7 @@ namespace mdsim {
 namespace gpu {
 namespace integrators {
 
-template <typename float_type, int dimension, typename rng_type>
+template <int dimension, typename float_type, typename rng_type>
 struct verlet_nvt_andersen_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;

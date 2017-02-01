@@ -30,7 +30,7 @@ namespace velocity_kernel {
 /**
  * Rescale magnitude of all velocities by 'factor'
  */
-template <typename ptr_type, typename float_type, int dimension>
+template <int dimension, typename float_type, typename ptr_type>
 __global__ void rescale(
     ptr_type g_v
   , unsigned int nparticle
@@ -50,7 +50,7 @@ __global__ void rescale(
 /**
  * Rescale magnitude of velocities of group by 'factor'
  */
-template <typename ptr_type, typename float_type, int dimension>
+template <int dimension, typename float_type, typename ptr_type>
 __global__ void rescale_group(
     ptr_type g_v
   , unsigned int const* g_group
@@ -72,7 +72,7 @@ __global__ void rescale_group(
 /**
  * Shift all velocities by 'delta'
  */
-template <typename ptr_type, typename float_type, int dimension>
+template <int dimension, typename float_type, typename ptr_type>
 __global__ void shift(
     ptr_type g_v
   , unsigned int nparticle
@@ -92,7 +92,7 @@ __global__ void shift(
 /**
  * Shift velocities of group by 'delta'
  */
-template <typename ptr_type, typename float_type, int dimension>
+template <int dimension, typename float_type, typename ptr_type>
 __global__ void shift_group(
     ptr_type g_v
   , unsigned int const* g_group
@@ -114,7 +114,7 @@ __global__ void shift_group(
 /**
  * First shift, then rescale all velocities
  */
-template <typename ptr_type, typename float_type, int dimension>
+template <int dimension, typename float_type, typename ptr_type>
 __global__ void shift_rescale(
     ptr_type g_v
   , unsigned int nparticle
@@ -136,7 +136,7 @@ __global__ void shift_rescale(
 /**
  * First shift, then rescale velocities of group
  */
-template <typename ptr_type, typename float_type, int dimension>
+template <int dimension, typename float_type, typename ptr_type>
 __global__ void shift_rescale_group(
     ptr_type g_v
   , unsigned int const* g_group
@@ -159,20 +159,20 @@ __global__ void shift_rescale_group(
 
 } // namespace velocity_kernel
 
-template <typename float_type, int dimension>
-velocity_wrapper<float_type, dimension> const velocity_wrapper<float_type, dimension>::kernel = {
-    velocity_kernel::rescale<ptr_type, float_type, dimension>
-  , velocity_kernel::rescale_group<ptr_type, float_type, dimension>
-  , velocity_kernel::shift<ptr_type, float_type, dimension>
-  , velocity_kernel::shift_group<ptr_type, float_type, dimension>
-  , velocity_kernel::shift_rescale<ptr_type, float_type, dimension>
-  , velocity_kernel::shift_rescale_group<ptr_type, float_type, dimension>
+template <int dimension, typename float_type>
+velocity_wrapper<dimension, float_type> const velocity_wrapper<dimension, float_type>::kernel = {
+    velocity_kernel::rescale<dimension, float_type, ptr_type>
+  , velocity_kernel::rescale_group<dimension, float_type, ptr_type>
+  , velocity_kernel::shift<dimension, float_type, ptr_type>
+  , velocity_kernel::shift_group<dimension, float_type, ptr_type>
+  , velocity_kernel::shift_rescale<dimension, float_type, ptr_type>
+  , velocity_kernel::shift_rescale_group<dimension, float_type, ptr_type>
 };
 
-template class velocity_wrapper<float, 3>;
-template class velocity_wrapper<float, 2>;
-template class velocity_wrapper<dsfloat, 3>;
-template class velocity_wrapper<dsfloat, 2>;
+template class velocity_wrapper<3, float>;
+template class velocity_wrapper<2, float>;
+template class velocity_wrapper<3, dsfloat>;
+template class velocity_wrapper<2, dsfloat>;
 
 } // namespace mdsim
 } // namespace gpu

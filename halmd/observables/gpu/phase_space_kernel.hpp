@@ -51,12 +51,14 @@ struct phase_space_wrapper
 namespace detail {
 
 template<typename T>
-struct sample_ptr_type {
+struct sample_ptr_type
+{
     typedef T* ptr_type;
 };
 
 template<size_t dimension>
-struct sample_ptr_type<fixed_vector<dsfloat, dimension> > {
+struct sample_ptr_type<fixed_vector<dsfloat, dimension> >
+{
     typedef typename mdsim::type_traits<dimension, dsfloat>::gpu::ptr_type ptr_type;
 };
 

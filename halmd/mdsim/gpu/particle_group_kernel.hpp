@@ -27,7 +27,7 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 
-template <typename float_type, int dimension>
+template <int dimension, typename float_type>
 struct particle_group_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;

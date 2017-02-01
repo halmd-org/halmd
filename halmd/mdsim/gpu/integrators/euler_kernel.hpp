@@ -31,7 +31,7 @@ namespace mdsim {
 namespace gpu {
 namespace integrators {
 
-template <typename float_type, int dimension>
+template <int dimension, typename float_type>
 struct euler_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;

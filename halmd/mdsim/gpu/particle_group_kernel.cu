@@ -20,7 +20,7 @@
 
 #include <halmd/mdsim/gpu/particle_group_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/texture.cuh>
+#include <halmd/utility/gpu/texfetch.cuh>
 #include <halmd/utility/tuple.hpp>
 
 /** positions, types */
@@ -43,7 +43,7 @@ template<int dimension>
 struct image
 {
     // instantiate a separate texture for each aligned vector type
-    typedef texture<typename particle_group_wrapper<float, dimension>::aligned_vector_type> type;
+    typedef texture<typename particle_group_wrapper<dimension, float>::aligned_vector_type> type;
     static type tex_;
 };
 // instantiate static members
@@ -52,7 +52,7 @@ template<int dimension> image<dimension>::type image<dimension>::tex_;
 /**
  * copy a subset of a particle instance (particle group) to another particle instance
  */
-template <typename ptr_type, typename float_type, typename vector_type, typename aligned_vector_type>
+template <typename float_type, typename vector_type, typename ptr_type, typename aligned_vector_type>
 __global__ void particle_group_to_particle(
     unsigned int const* g_index
   , ptr_type g_v
@@ -77,19 +77,19 @@ __global__ void particle_group_to_particle(
 
 } // namespace particle_group_kernel
 
-template <typename float_type, int dimension>
-particle_group_wrapper<float_type, dimension> const
-particle_group_wrapper<float_type, dimension>::kernel = {
+template <int dimension, typename float_type>
+particle_group_wrapper<dimension, float_type> const
+particle_group_wrapper<dimension, float_type>::kernel = {
     particle_group_kernel::r_
   , particle_group_kernel::image<dimension>::tex_
   , particle_group_kernel::v_
-  , particle_group_kernel::particle_group_to_particle<ptr_type, float_type, fixed_vector<float_type, dimension> >
+  , particle_group_kernel::particle_group_to_particle<float_type, fixed_vector<float_type, dimension>, ptr_type>
 };
 
-template class particle_group_wrapper<float, 3>;
-template class particle_group_wrapper<float, 2>;
-template class particle_group_wrapper<dsfloat, 3>;
-template class particle_group_wrapper<dsfloat, 2>;
+template class particle_group_wrapper<3, float>;
+template class particle_group_wrapper<2, float>;
+template class particle_group_wrapper<3, dsfloat>;
+template class particle_group_wrapper<2, dsfloat>;
 
 } // namespace gpu
 } // namespace mdsim

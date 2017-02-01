@@ -236,7 +236,7 @@ void test_smooth_r4<float_type>::test()
             // (see lennard_jones.cpp from unit tests)
             float const tolerance = 8 * eps * (1 + rcut/(rcut - std::sqrt(rr))) + 10 * eps;
 
-            BOOST_CHECK_SMALL(norm_inf(fval * r - f), std::max(norm_inf(fval * r), float(1)) * tolerance * 2);
+            BOOST_CHECK_SMALL(norm_inf(fval * r - f), std::max(norm_inf(fval * r), 1.f) * tolerance * 2);
             BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 2 * tolerance);
         }
         else {

@@ -28,7 +28,7 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 
-template <typename float_type, int dimension>
+template <int dimension, typename float_type>
 struct particle_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
@@ -54,10 +54,10 @@ struct particle_wrapper
     static particle_wrapper const kernel;
 };
 
-template <typename float_type, int dimension>
-particle_wrapper<float_type, dimension> const& get_particle_kernel()
+template <int dimension, typename float_type>
+particle_wrapper<dimension, float_type> const& get_particle_kernel()
 {
-    return particle_wrapper<float_type, dimension>::kernel;
+    return particle_wrapper<dimension, float_type>::kernel;
 }
 
 } // namespace mdsim

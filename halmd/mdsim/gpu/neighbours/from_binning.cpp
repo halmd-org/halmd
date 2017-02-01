@@ -269,12 +269,14 @@ template<typename float_type>
 struct variant_name;
 
 template<>
-struct variant_name<float> {
+struct variant_name<float>
+{
     static constexpr const char *name = "float";
 };
 
 template<>
-struct variant_name<dsfloat> {
+struct variant_name<dsfloat>
+{
     static constexpr const char *name = "dsfloat";
 };
 

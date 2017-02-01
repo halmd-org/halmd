@@ -297,32 +297,39 @@ inline HALMD_GPU_ENABLED dsfloat min(dsfloat const& v, dsfloat const& w)
 }
 
 template<typename T>
-struct dsfloat_ptr {
+struct dsfloat_ptr
+{
     T* hi;
     T* lo;
 
-    HALMD_GPU_ENABLED halmd::tuple<T&, T&> operator[] (unsigned int idx) {
+    HALMD_GPU_ENABLED halmd::tuple<T&, T&> operator[] (unsigned int idx)
+    {
         return tie(hi[idx], lo[idx]);
     };
-    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const {
+    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const
+    {
         return tie(hi[idx], lo[idx]);
     };
 
-    operator T*() const {
+    operator T*() const
+    {
         return hi;
     }
 };
 
 template<typename T>
-struct dsfloat_const_ptr {
+struct dsfloat_const_ptr
+{
     T const* hi;
     T const* lo;
 
-    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const {
+    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const
+    {
         return tie(hi[idx], lo[idx]);
     };
 
-    operator T const*() const {
+    operator T const*() const
+    {
         return hi;
     }
 };

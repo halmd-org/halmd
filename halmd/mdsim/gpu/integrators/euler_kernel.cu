@@ -40,7 +40,7 @@ namespace euler_kernel {
  * @param timestep      integration timestep
  * @param box_length    edge lengths of cuboid box
  */
-template <typename ptr_type, typename const_ptr_type, int dimension, typename float_type, typename gpu_vector_type>
+template <int dimension, typename float_type, typename ptr_type, typename const_ptr_type, typename gpu_vector_type>
 __global__ void integrate(
     ptr_type g_position
   , gpu_vector_type* g_image
@@ -77,16 +77,16 @@ __global__ void integrate(
 
 } // namespace euler_kernel
 
-template <typename float_type, int dimension>
-euler_wrapper<float_type, dimension> const euler_wrapper<float_type, dimension>::kernel = {
-    euler_kernel::integrate<ptr_type, const_ptr_type, dimension, float_type>
+template <int dimension, typename float_type>
+euler_wrapper<dimension, float_type> const euler_wrapper<dimension, float_type>::kernel = {
+    euler_kernel::integrate<dimension, float_type, ptr_type, const_ptr_type>
 };
 
 // explicit instantiation
-template class euler_wrapper<float, 3>;
-template class euler_wrapper<float, 2>;
-template class euler_wrapper<dsfloat, 3>;
-template class euler_wrapper<dsfloat, 2>;
+template class euler_wrapper<3, float>;
+template class euler_wrapper<2, float>;
+template class euler_wrapper<3, dsfloat>;
+template class euler_wrapper<2, dsfloat>;
 
 } // namespace integrators
 } // namespace gpu

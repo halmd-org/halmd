@@ -44,7 +44,7 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef euler_wrapper<float_type, dimension> wrapper_type;
+    typedef euler_wrapper<dimension, float_type> wrapper_type;
 
     static void luaopen(lua_State* L);
 

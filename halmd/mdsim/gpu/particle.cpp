@@ -114,52 +114,14 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     LOG_DEBUG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim_.threads_per_block());
 
-    //
-    // As the number of threads may exceed the nmber of particles
-    // to account for an integer number of threads per block,
-    // we need to allocate excess memory for the GPU vectors.
-    //
-    // The additional memory is allocated using reserve(), which
-    // increases the capacity() without changing the size(). The
-    // coordinates of these "virtual" particles will be ignored
-    // in cuda::copy or cuda::memset calls.
-    //
-    try {
-#ifdef USE_VERLET_DSFUN
-        //
-        // Double-single precision requires two single precision
-        // "words" per coordinate. We use the first part of a GPU
-        // vector for the higher (most significant) words of all
-        // particle positions or velocities, and the second part for
-        // the lower (least significant) words.
-        //
-        // The additional memory is allocated using reserve(), which
-        // increases the capacity() without changing the size().
-        //
-        // Take care to pass capacity() as an argument to cuda::copy
-        // or cuda::memset calls if needed, as the lower words will
-        // be ignored in the operation.
-        //
-        // Particle images remain in single precision as they
-        // contain integer values, and otherwise would not matter
-        // for the long-time stability of the integrator.
-        //
-        LOG("integrate using double-single precision");
-        g_position->reserve(2 * array_size_);
-        g_velocity->reserve(2 * array_size_);
-#else
+    if (typeid(float_type) == typeid(float)) {
         LOG_WARNING("integrate using single precision");
-#endif
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to allocate particles in global device memory");
-        throw;
     }
 
     // initialise 'ghost' particles to zero and sets their species to -1U
     // this avoids potential nonsense computations resulting in denormalised numbers
     cuda::configure(dim_.grid, dim_.block);
-    get_particle_kernel<float_type, dimension>().initialize(g_position->data(), g_velocity->data(), nparticle_);
+    get_particle_kernel<dimension, float_type>().initialize(g_position->data(), g_velocity->data(), nparticle_);
     cuda::memset(g_image->begin(), g_image->begin() + g_image->capacity(), 0);
     iota(g_id->begin(), g_id->begin() + g_id->capacity(), 0);
     iota(g_reverse_id->begin(), g_reverse_id->begin() + g_reverse_id->capacity(), 0);
@@ -168,8 +130,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
 
     try {
-        cuda::copy(nparticle_, get_particle_kernel<float_type, dimension>().nbox);
-        cuda::copy(nspecies_, get_particle_kernel<float_type, dimension>().ntype);
+        cuda::copy(nparticle_, get_particle_kernel<dimension, float_type>().nbox);
+        cuda::copy(nspecies_, get_particle_kernel<dimension, float_type>().ntype);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy particle parameters to device symbols");
@@ -208,11 +170,11 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     id_array_type id(array_size_);
 
     cuda::configure(dim_.grid, dim_.block);
-    get_particle_kernel<float_type, dimension>().r.bind(*g_position);
-    get_particle_kernel<float_type, dimension>().image.bind(*g_image);
-    get_particle_kernel<float_type, dimension>().v.bind(*g_velocity);
-    get_particle_kernel<float_type, dimension>().id.bind(*g_id);
-    get_particle_kernel<float_type, dimension>().rearrange(g_index, position, image, velocity, id, nparticle_);
+    get_particle_kernel<dimension, float_type>().r.bind(*g_position);
+    get_particle_kernel<dimension, float_type>().image.bind(*g_image);
+    get_particle_kernel<dimension, float_type>().v.bind(*g_velocity);
+    get_particle_kernel<dimension, float_type>().id.bind(*g_id);
+    get_particle_kernel<dimension, float_type>().rearrange(g_index, position, image, velocity, id, nparticle_);
 
     position.swap(*g_position);
     image.swap(*g_image);
@@ -278,12 +240,14 @@ template<typename float_type>
 struct variant_name;
 
 template<>
-struct variant_name<float> {
+struct variant_name<float>
+{
     static constexpr const char *name = "float";
 };
 
 template<>
-struct variant_name<dsfloat> {
+struct variant_name<dsfloat>
+{
     static constexpr const char *name = "dsfloat";
 };
 
