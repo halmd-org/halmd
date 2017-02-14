@@ -71,8 +71,7 @@ function main(args)
     local potential = mdsim.potentials.pair.lennard_jones({
         epsilon = {{1, 1.5}, {1.5, 0.5}} -- ((AA, AB), (BA, BB))
       , sigma = {{1, 0.8}, {0.8, 0.88}} -- ((AA, AB), (BA, BB))
-      , cutoff = 2.5
-    })
+    }):truncate({cutoff = 2.5})
     -- compute forces
     local force = mdsim.forces.pair({box = box, particle = particle, potential = potential})
 
