@@ -827,6 +827,127 @@ private:
     type ghost_init_value_;
 };
 
+/** typed gpu particle array - specialization for stress tensor */
+template<typename T>
+class particle_array_gpu<stress_tensor_wrapper<T>>
+  : public particle_array_typed<stress_tensor_wrapper<T>>
+{
+public:
+    typedef typename T::value_type value_type;
+    typedef cuda::vector<value_type> vector_type;
+
+    /**
+     * gpu particle array constructor
+     *
+     * @param nparticle number of particles
+     * @param size size of the underlying cuda::vector
+     * @param update_function update function
+     */
+    template<typename init_type, typename ghost_init_type>
+    particle_array_gpu(cuda::config const& dim, unsigned int nparticle, unsigned int size, init_type const& init_value, ghost_init_type const& ghost_init_value, std::function<void()> update_function)
+      : particle_array_typed<stress_tensor_wrapper<T>>(sizeof(value_type), 0, nparticle), data_(size * T::static_size), update_function_(update_function)
+    {
+        static_assert(sizeof(init_type) == sizeof(zero_init_t), "stress tensor has to be initialized to zero");
+        static_assert(sizeof(ghost_init_type) == sizeof(zero_init_t), "stress tensor has to be initialized to zero");
+        cuda::memset(make_cache_mutable(data_)->begin(), make_cache_mutable(data_)->end(), 0);
+        if (!update_function_) {
+            update_function_ = [](){};
+        }
+    }
+
+    /**
+     * query gpu flag
+     *
+     * @return true
+     */
+    virtual bool gpu() const
+    {
+        return true;
+    }
+
+    /**
+     * query cache observer
+     *
+     * @return a cache observer reflecting the current state of the cache
+     */
+    virtual cache<> cache_observer() const
+    {
+        return cache<>(data_);
+    }
+
+    /**
+     * obtain non-const reference to the stored data
+     *
+     * @return non-const reference to the cached cuda vector
+     *
+     * note that this function intentionally does not call
+     * the update function, the reason being that the update
+     * function will most likely want to use this method
+     * to update the data, so calling it here could result
+     * in infinite loops
+     */
+    cache<vector_type>& mutable_data()
+    {
+        return data_;
+    }
+
+    /**
+     * obtain const reference to the stored data
+     *
+     * @return const reference to the cached cuda vector
+     */
+    cache<vector_type> const& data() const
+    {
+        update_function_();
+        return data_;
+    }
+
+    /**
+     * get memory
+     *
+     * @return a page-locked memory vector to be filled with data and passed to set_data
+     */
+    virtual cuda::host::vector<uint8_t> get_gpu_memory() const
+    {
+        cuda::host::vector<uint8_t> mem(data_->size() * sizeof(value_type));
+        mem.reserve(data_->capacity());
+        return mem;
+    }
+
+    /**
+     * get data
+     *
+     * @return a page-locked memory vector containing the contents of the underlying gpu data
+     */
+    virtual cuda::host::vector<uint8_t> get_gpu_data() const
+    {
+        auto const& g_input = read_cache(data());
+        cuda::host::vector<uint8_t> mem(g_input.size() * sizeof(value_type));
+        mem.reserve(g_input.capacity() * sizeof(value_type));
+        cuda::copy(g_input.begin(), g_input.begin() + g_input.capacity(), reinterpret_cast<value_type*>(&*mem.begin()));
+        return mem;
+    }
+
+    /**
+     * set data
+     *
+     * @param memory page-locked memory vector containing data to be copied to the underlying gpu data
+     *               should have been obtained with get_memory
+     */
+    virtual void set_gpu_data(cuda::host::vector<uint8_t> const& mem)
+    {
+        auto output = make_cache_mutable(data_);
+        auto ptr = reinterpret_cast<value_type const*>(&*mem.begin());
+        cuda::copy(ptr, ptr + (mem.size() / sizeof (value_type)), output->begin());
+    }
+
+private:
+    /** cached cuda::vector */
+    cache<vector_type> data_;
+    /** optional update function */
+    std::function<void()> update_function_;
+};
+
 /**
  * wrapper to access gpu particle array as host vector
  * (e.g. for gpu particle data of type float4 this wrapper

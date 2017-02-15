@@ -75,7 +75,7 @@ public:
     typedef reverse_id_type gpu_reverse_id_type;
     typedef gpu_vector_type gpu_force_type;
     typedef en_pot_type gpu_en_pot_type;
-    typedef typename stress_pot_type::value_type gpu_stress_pot_type;
+    typedef stress_pot_type gpu_stress_pot_type;
 
     typedef typename particle_array_gpu<gpu_position_type>::vector_type position_array_type;
     typedef typename particle_array_gpu<gpu_image_type>::vector_type image_array_type;

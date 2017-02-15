@@ -107,17 +107,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     // create alias for potential energy
     data_["potential_energy"] = data_["en_pot"];
 
-    //
-    // The GPU stores the stress tensor elements in column-major order to
-    // optimise access patterns for coalescable access. Increase capacity of
-    // GPU array such that there are 4 (6) in 2D (3D) elements per particle
-    // available, although stress_pot_->size() still returns the number of
-    // particles.
-    //
-    auto g_stress_pot = make_cache_mutable(stress_pot_array->mutable_data());
-    g_stress_pot->reserve(stress_pot_type::static_size * array_size_);
-    cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
-
     LOG_DEBUG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim_.threads_per_block());
 
