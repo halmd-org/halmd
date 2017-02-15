@@ -57,9 +57,9 @@ public:
     verlet_nvt_hoover(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
-      , float_type timestep
-      , float_type temperature
-      , float_type resonance_frequency
+      , double timestep
+      , double temperature
+      , double resonance_frequency
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 

@@ -58,9 +58,9 @@ public:
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<random_type> random
-      , float_type timestep
-      , float_type temperature
-      , float_type coll_rate
+      , double timestep
+      , double temperature
+      , double coll_rate
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 

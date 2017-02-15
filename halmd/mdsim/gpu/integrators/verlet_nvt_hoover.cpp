@@ -40,9 +40,9 @@ template <int dimension, typename float_type>
 verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
-  , float_type timestep
-  , float_type temperature
-  , float_type resonance_frequency
+  , double timestep
+  , double temperature
+  , double resonance_frequency
   , std::shared_ptr<logger> logger
 )
   // public member initialisation
@@ -302,9 +302,9 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
               , def("verlet_nvt_hoover", &std::make_shared<verlet_nvt_hoover
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<box_type const>
-                  , float_type
-                  , float_type
-                  , float_type
+                  , double
+                  , double
+                  , double
                   , std::shared_ptr<logger>
                 >)
             ]
