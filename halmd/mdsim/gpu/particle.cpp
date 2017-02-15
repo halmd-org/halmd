@@ -115,7 +115,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     LOG_DEBUG("number of CUDA execution threads per block: " << dim_.threads_per_block());
 
     if (typeid(float_type) == typeid(float)) {
-        LOG_WARNING("integrate using single precision");
+        LOG("integrate using single precision");
     }
 
     // initialise 'ghost' particles to zero and sets their species to -1U
