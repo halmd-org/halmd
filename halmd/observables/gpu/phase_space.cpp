@@ -183,14 +183,13 @@ public:
         for(size_t i : group) {
             *reinterpret_cast<data_type*>(&data[offset + i * stride]) = sample_data[id++];
         }
-#ifdef USE_VERLET_DSFUN
+        // TODO: only needed for dsfloat types
         if(data.capacity() >= data.size() + nthreads_ * stride) {
             offset += nthreads_ * stride;
             for(size_t i : group) {
                 *reinterpret_cast<data_type*>(&data[offset + i * stride]) = data_type(0);
             }
         }
-#endif
         array_->set_gpu_data(data);
     }
 
@@ -285,12 +284,13 @@ static const std::unordered_map<
   , { typeid(fixed_vector<unsigned int, 4>), phase_space_sampler_typed<4, unsigned int>::create }
 };
 
+
 /**
  * specialized phase_space sampler for host position data
  *
  * does the same as the generic sampler, but additionally reduces/extends periodic positions
  */
-template<int dimension, typename scalar_type>
+template<int dimension, typename float_type, typename scalar_type>
 class phase_space_sampler_position
   : public phase_space_sampler_typed<dimension, scalar_type>
 {
@@ -393,7 +393,9 @@ public:
 
         // reduce positions on GPU
         typedef typename mdsim::type_traits<dimension, scalar_type>::gpu::coalesced_vector_type gpu_vector_type;
-        auto position = make_cache_mutable(mdsim::gpu::particle_array::cast_gpu<float4>(this->array_->parent())->mutable_data());
+        auto position = make_cache_mutable(mdsim::gpu::particle_array::cast_gpu<
+          typename mdsim::gpu::particle<dimension, float_type>::gpu_hp_vector_type
+          >(this->array_->parent())->mutable_data());
         auto image = make_cache_mutable(mdsim::gpu::particle_array::cast_gpu<gpu_vector_type>(this->image_array_->parent())->mutable_data());
         auto const& group = read_cache(this->particle_group_->ordered());
         try {
@@ -401,7 +403,7 @@ public:
             cuda::configure(dim_.grid, dim_.block);
             phase_space_wrapper<dimension>::kernel.reduce_periodic(
                 &*group.begin()
-              , &*position->begin()
+              , position->data() // TODO: is this correct for dsfloats?
               , &*image->begin()
               , static_cast<fixed_vector<scalar_type, dimension>>(box_->length())
               , group.size()
@@ -431,14 +433,15 @@ private:
  * copies the GPU data to a GPU sample and provides the actual implementation
  * for the sample related interface of phase_space
  */
-template<int dimension, typename data_type>
+template<int dimension, typename input_data_type, typename sample_data_type = input_data_type>
 class phase_space_sampler_gpu_typed
   : public phase_space_sampler
 {
+    typedef phase_space_sample_wrapper<input_data_type, sample_data_type> sample_wrapper;
 public:
-    typedef samples::sample<dimension, data_type> sample_type;
+    typedef samples::sample<dimension, sample_data_type> sample_type;
     typedef mdsim::gpu::particle_group particle_group_type;
-    typedef mdsim::gpu::particle_array_gpu<data_type> particle_array_type;
+    typedef mdsim::gpu::particle_array_gpu<input_data_type> particle_array_type;
 
     /**
      * Creates a sampler for the given particle group and particle array.
@@ -452,7 +455,7 @@ public:
       , std::shared_ptr<mdsim::gpu::particle_array> array
       , cuda::config const& dim
     )
-      : particle_group_(group), array_(mdsim::gpu::particle_array::cast_gpu<typename sample_type::data_type>(array))
+      : particle_group_(group), array_(mdsim::gpu::particle_array::cast_gpu<input_data_type>(array))
       , dim_(dim)
     {}
 
@@ -483,9 +486,9 @@ public:
             auto& sample_data = sample_->data();
 
             try {
-                phase_space_sample_wrapper<data_type>::kernel.input.bind(data);
+                sample_wrapper::kernel.input.bind(data);
                 cuda::configure(dim_.grid, dim_.block);
-                phase_space_sample_wrapper<data_type>::kernel.sample(
+                sample_wrapper::kernel.sample(
                     &*group.begin()
                   , &*sample_data.begin()
                   , group.size()
@@ -508,7 +511,7 @@ public:
      */
     virtual void set(std::shared_ptr<sample_base const> sample_)
     {
-        if(sample_->type() != typeid(gpu_sample<data_type>)) {
+        if(sample_->type() != typeid(gpu_sample<sample_data_type>)) {
             throw std::runtime_error("invalid sample data type");
         }
         auto sample = std::static_pointer_cast<sample_type const>(sample_);
@@ -517,11 +520,11 @@ public:
 
         auto data = make_cache_mutable(array_->mutable_data());
         try {
-            phase_space_sample_wrapper<data_type>::kernel.input.bind(sample->data());
+            sample_wrapper::kernel.input.bind(sample->data());
             cuda::configure(dim_.grid, dim_.block);
-            phase_space_sample_wrapper<data_type>::kernel.set(
+            sample_wrapper::kernel.set(
                 &*group.begin()
-              , &*data->begin()
+              , data->data()
               , group.size()
             );
         }
@@ -606,6 +609,9 @@ static const std::unordered_map<
       , { typeid(float2), phase_space_sampler_gpu_typed<2, float2>::create }
       , { typeid(float4), phase_space_sampler_gpu_typed<2, float4>::create }
 
+      , { typeid(fixed_vector<dsfloat, 2>), phase_space_sampler_gpu_typed<2, fixed_vector<dsfloat, 2>, float2>::create }
+      , { typeid(fixed_vector<dsfloat, 4>), phase_space_sampler_gpu_typed<2, fixed_vector<dsfloat, 4>, float4>::create }
+
       , { typeid(int), phase_space_sampler_gpu_typed<1, int>::create }
       , { typeid(int2), phase_space_sampler_gpu_typed<2, int2>::create }
       , { typeid(int4), phase_space_sampler_gpu_typed<2, int4>::create }
@@ -618,6 +624,10 @@ static const std::unordered_map<
         { typeid(float), phase_space_sampler_gpu_typed<1, float>::create }
       , { typeid(float2), phase_space_sampler_gpu_typed<2, float2>::create }
       , { typeid(float4), phase_space_sampler_gpu_typed<3, float4>::create }
+
+      , { typeid(fixed_vector<dsfloat, 2>), phase_space_sampler_gpu_typed<2, fixed_vector<dsfloat, 2>, float2>::create }
+      , { typeid(fixed_vector<dsfloat, 4>), phase_space_sampler_gpu_typed<3, fixed_vector<dsfloat, 4>, float4>::create }
+
 
       , { typeid(int), phase_space_sampler_gpu_typed<1, int>::create }
       , { typeid(int2), phase_space_sampler_gpu_typed<2, int2>::create }
@@ -636,10 +646,10 @@ static const std::unordered_map<
  */
 template<int dimension, typename data_type>
 class phase_space_sampler_gpu_position
-  : public phase_space_sampler_gpu_typed<dimension, data_type>
+  : public phase_space_sampler_gpu_typed<dimension, data_type, float4>
 {
 public:
-    typedef samples::sample<dimension, data_type> sample_type;
+    typedef samples::sample<dimension, float4> sample_type;
     typedef mdsim::gpu::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle_array_gpu<data_type> position_array_type;
@@ -661,7 +671,7 @@ public:
       , std::shared_ptr<mdsim::gpu::particle_array> image_array
       , cuda::config const& dim
     )
-      : phase_space_sampler_gpu_typed<dimension, data_type>(group, position_array, dim)
+      : phase_space_sampler_gpu_typed<dimension, data_type, float4>(group, position_array, dim)
       , box_(box)
       , image_array_(mdsim::gpu::particle_array::cast_gpu<typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type>(image_array))
     {}
@@ -727,7 +737,7 @@ public:
     virtual void set(std::shared_ptr<sample_base const> sample)
     {
         // set position data the same as any other kind of data
-        phase_space_sampler_gpu_typed<dimension, data_type>::set(sample);
+        phase_space_sampler_gpu_typed<dimension, data_type, float4>::set(sample);
 
         // reduce positions on GPU
         auto position = make_cache_mutable(this->array_->mutable_data());
@@ -738,7 +748,7 @@ public:
             cuda::configure(this->dim_.grid, this->dim_.block);
             phase_space_wrapper<dimension>::kernel.reduce_periodic(
                 &*group.begin()
-              , &*position->begin()
+              , position->data() // TODO: is this correct for dsfloats?
               , &*image->begin()
               , static_cast<fixed_vector<float, dimension>>(box_->length())
               , group.size()
@@ -795,26 +805,26 @@ phase_space<dimension, float_type>::get_sampler(std::string const& name)
     } else {
         auto array = particle_->get_array(name);
         if(!name.compare("position")) {
-            return (samplers_[name] = phase_space_sampler_position<dimension, float_type>::create
-                    (particle_group_, box_, array, particle_->get_array("image"), particle_->dim, host_cache_));
+            return (samplers_[name] = phase_space_sampler_position<dimension, float_type, float>::create
+                    (particle_group_, box_, array, particle_->get_array("image"), particle_->dim(), host_cache_));
         } else {
             if (array->gpu()) {
                 if (!name.compare("g_position")) {
-                    return (samplers_[name] = phase_space_sampler_gpu_position<dimension, float4>::create
-                            (particle_group_, box_, array, particle_->get_array("g_image"), particle_->dim));
+                    return (samplers_[name] = phase_space_sampler_gpu_position<dimension, typename mdsim::gpu::particle<dimension, float_type>::gpu_hp_vector_type>::create
+                            (particle_group_, box_, array, particle_->get_array("g_image"), particle_->dim()));
                 } else {
                     auto it = phase_space_sampler_gpu_typed_create_map[dimension-2].find(array->type());
                     if(it == phase_space_sampler_gpu_typed_create_map[dimension-2].end()) {
                         throw std::runtime_error("invalid sample type");
                     }
-                    return (samplers_[name] = it->second(particle_group_, array, particle_->dim));
+                    return (samplers_[name] = it->second(particle_group_, array, particle_->dim()));
                 }
             } else {
                 auto it = phase_space_sampler_typed_create_map.find(array->type());
                 if(it == phase_space_sampler_typed_create_map.end()) {
                     throw std::runtime_error("invalid sample type");
                 }
-                return (samplers_[name] = it->second(particle_group_, array, particle_->dim.threads(), host_cache_));
+                return (samplers_[name] = it->second(particle_group_, array, particle_->dim().threads(), host_cache_));
             }
         }
     }
@@ -876,12 +886,16 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_phase_space(lua_State* L)
 {
     phase_space<3, float>::luaopen(L);
     phase_space<2, float>::luaopen(L);
+    phase_space<3, dsfloat>::luaopen(L);
+    phase_space<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class phase_space<3, float>;
 template class phase_space<2, float>;
+template class phase_space<3, dsfloat>;
+template class phase_space<2, dsfloat>;
 
 } // namespace gpu
 } // namespace observables

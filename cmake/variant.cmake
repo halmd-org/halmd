@@ -13,12 +13,6 @@ if(HALMD_WITH_GPU)
     add_definitions(-DUSE_FORCE_DSFUN)
   endif(HALMD_VARIANT_FORCE_DSFUN)
 
-  set(HALMD_VARIANT_VERLET_DSFUN TRUE CACHE BOOL
-    "Use double-single precision functions in Verlet integrator")
-  if(HALMD_VARIANT_VERLET_DSFUN)
-    add_definitions(-DUSE_VERLET_DSFUN)
-  endif(HALMD_VARIANT_VERLET_DSFUN)
-
   set(HALMD_DEVICE_SCALE "3" CACHE STRING
     "Scale/size of the CUDA device (try to reduce in case of insufficient resources)")
   add_definitions(-DDEVICE_SCALE=${HALMD_DEVICE_SCALE})

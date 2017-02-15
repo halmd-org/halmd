@@ -108,12 +108,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_power_law(lua_State
     power_law<float>::luaopen(L);
     forces::pair_full<3, float, power_law<float> >::luaopen(L);
     forces::pair_full<2, float, power_law<float> >::luaopen(L);
-    truncations::truncations_luaopen<float, power_law<float> >(L);
+    forces::pair_full<3, dsfloat, power_law<float> >::luaopen(L);
+    forces::pair_full<2, dsfloat, power_law<float> >::luaopen(L);
+    truncations::truncations_luaopen<power_law<float> >(L);
 
     adapters::hard_core<power_law<float>>::luaopen(L);
     forces::pair_full<3, float, adapters::hard_core<power_law<float> > >::luaopen(L);
     forces::pair_full<2, float, adapters::hard_core<power_law<float> > >::luaopen(L);
-    truncations::truncations_luaopen<float, adapters::hard_core<power_law<float> > >(L);
+    forces::pair_full<3, dsfloat, adapters::hard_core<power_law<float> > >::luaopen(L);
+    forces::pair_full<2, dsfloat, adapters::hard_core<power_law<float> > >::luaopen(L);
+    truncations::truncations_luaopen<adapters::hard_core<power_law<float> > >(L);
 
     return 0;
 }
@@ -141,6 +145,13 @@ HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(
     float
   , potentials::pair::adapters::hard_core<potentials::pair::power_law<float> >
   )
+
+template class pair_full<3, dsfloat, potentials::pair::adapters::hard_core<potentials::pair::power_law<float> > >;
+template class pair_full<2, dsfloat, potentials::pair::adapters::hard_core<potentials::pair::power_law<float> > >;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(
+  dsfloat
+  , potentials::pair::adapters::hard_core<potentials::pair::power_law<float> >
+)
 
 } // namespace forces
 } // namespace gpu

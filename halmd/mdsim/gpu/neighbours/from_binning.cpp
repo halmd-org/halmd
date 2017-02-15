@@ -43,7 +43,8 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_binning<dimension, float_type>::from_binning(
-    std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+    std::shared_ptr<particle_type const> particle1
+  , std::shared_ptr<particle_type const> particle2
   , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>> binning
   , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
   , std::shared_ptr<box_type const> box
@@ -54,8 +55,8 @@ from_binning<dimension, float_type>::from_binning(
   , std::shared_ptr<logger> logger
 )
   // dependency injection
-  : particle1_(particle.first)
-  , particle2_(particle.second)
+  : particle1_(particle1)
+  , particle2_(particle2)
   , binning1_(binning.first)
   , binning2_(binning.second)
   , displacement1_(displacement.first)
@@ -92,18 +93,18 @@ void from_binning<dimension, float_type>::set_occupancy(double cell_occupancy)
     nu_cell_ = cell_occupancy;
     // volume of n-dimensional sphere with neighbour list radius
     // volume of unit sphere: V_d = π^(d/2) / Γ(1+d/2), Γ(1) = 1, Γ(1/2) = √π
-    float_type unit_sphere[5] = {0, 2, M_PI, 4 * M_PI / 3, M_PI * M_PI / 2 };
+    float unit_sphere[5] = {0, 2, M_PI, 4 * M_PI / 3, M_PI * M_PI / 2 };
     assert(dimension <= 4);
-    float_type neighbour_sphere = unit_sphere[dimension] * std::pow(r_cut_max_ + r_skin_, dimension);
+    float neighbour_sphere = unit_sphere[dimension] * std::pow(r_cut_max_ + r_skin_, dimension);
     // partial number density
-    float_type density = particle2_->nparticle() / box_->volume();
+    float density = particle2_->nparticle() / box_->volume();
     // number of placeholders per neighbour list
     size_ = static_cast<size_t>(ceil(neighbour_sphere * (density / cell_occupancy)));
     // at least cell_size (or warp_size?) placeholders
     // FIXME what is a sensible lower bound?
     size_ = std::max(size_, binning2_->cell_size());
     // number of neighbour lists
-    stride_ = particle1_->dim.threads();
+    stride_ = particle1_->dim().threads();
     // allocate neighbour lists
     auto g_neighbour = make_cache_mutable(g_neighbour_);
     g_neighbour->resize(stride_ * size_);
@@ -121,8 +122,8 @@ from_binning<dimension, float_type>::g_neighbour()
 
     auto current_cache = std::tie(reverse_id_cache1, reverse_id_cache2);
 
-    if (neighbour_cache_ != current_cache || displacement1_->compute() > r_skin_ / 2
-        || displacement2_->compute() > r_skin_ / 2) {
+    if (neighbour_cache_ != current_cache || float(displacement1_->compute()) > float(r_skin_ / 2)
+        || float(displacement2_->compute()) > float(r_skin_ / 2)) {
         on_prepend_update_();
         update();
         displacement1_->zero();
@@ -229,12 +230,12 @@ void from_binning<dimension, float_type>::update()
             );
         }
         else {
-            cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+            cuda::configure(particle1_->dim().grid, particle1_->dim().block);
             kernel->rr_cut_skin.bind(g_rr_cut_skin_);
             kernel->r2.bind(position2);
             kernel->update_neighbours_naive(
                 g_ret
-              , &*position1.begin()
+              , position1.data()
               , particle1_->nparticle()
               , particle1_ == particle2_
               , &*g_neighbour->begin()
@@ -260,15 +261,30 @@ void from_binning<dimension, float_type>::update()
 }
 
 template <int dimension, typename float_type>
-float_type from_binning<dimension, float_type>::defaults::occupancy() {
+float from_binning<dimension, float_type>::defaults::occupancy() {
     return 0.4;
 }
+
+template<typename float_type>
+struct variant_name;
+
+template<>
+struct variant_name<float>
+{
+    static constexpr const char *name = "float";
+};
+
+template<>
+struct variant_name<dsfloat>
+{
+    static constexpr const char *name = "dsfloat";
+};
 
 template <int dimension, typename float_type>
 void from_binning<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    std::string const defaults_name("defaults_" +  std::to_string(dimension));
+    std::string const defaults_name("defaults_" + std::string(variant_name<float_type>::name) + "_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -287,7 +303,8 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &from_binning::runtime_)
               , def("from_binning", &std::make_shared<from_binning
-                  , std::pair<std::shared_ptr<particle_type const>,  std::shared_ptr<particle_type const>>
+                  , std::shared_ptr<particle_type const>
+                  , std::shared_ptr<particle_type const>
                   , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>>
                   , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>>
                   , std::shared_ptr<box_type const>
@@ -314,12 +331,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_neighbours_from_binning(lua_State* 
 {
     from_binning<3, float>::luaopen(L);
     from_binning<2, float>::luaopen(L);
+    from_binning<3, dsfloat>::luaopen(L);
+    from_binning<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class from_binning<3, float>;
 template class from_binning<2, float>;
+template class from_binning<3, dsfloat>;
+template class from_binning<2, dsfloat>;
 
 } // namespace neighbours
 } // namespace gpu

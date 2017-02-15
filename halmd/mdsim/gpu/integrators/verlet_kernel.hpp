@@ -29,20 +29,21 @@ namespace mdsim {
 namespace gpu {
 namespace integrators {
 
-template <int dimension>
+template <int dimension, typename float_type>
 struct verlet_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
+    typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
 
     cuda::function <void (
-        float4*, coalesced_vector_type*, float4*
+        ptr_type, coalesced_vector_type*, ptr_type
       , coalesced_vector_type const*
       , float
       , vector_type
     )> integrate;
     cuda::function <void (
-        float4*
+        ptr_type
       , coalesced_vector_type const*
       , float
     )> finalize;

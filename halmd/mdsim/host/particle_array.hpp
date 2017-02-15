@@ -39,13 +39,17 @@ public:
     /**
      * create particle array of given type
      *
+     * @param nparticle number of particles
      * @param size number of particles
      * @param update_function optional update function
      * @return shared pointer to the new particle array
      */
     template<typename T>
-    static inline std::shared_ptr<particle_array_typed<T>> create(unsigned int size,
-      std::function<void()> update_function = std::function<void()>());
+    static inline std::shared_ptr<particle_array_typed<T>> create(
+      unsigned int nparticle
+    , unsigned int size
+    , std::function<void()> update_function = std::function<void()>()
+    );
 
     /**
      * cast generic particle array to typed data
@@ -105,8 +109,11 @@ public:
      * @param args arguments to be passed down to construct the internal raw_array container
      * @param update_function optional update function
      */
-    particle_array_typed(unsigned int size, std::function<void()> update_function = std::function<void()>())
-      : data_(size), update_function_(update_function)
+    particle_array_typed(
+      unsigned int nparticle
+    , unsigned int size
+    , std::function<void()> update_function = std::function<void()>())
+      : nparticle_(nparticle), data_(size), update_function_(update_function)
     {
         if (!update_function_) {
             update_function_ = [](){};
@@ -161,8 +168,8 @@ public:
     {
         auto output = make_cache_mutable(mutable_data());
         iterator_type input = first;
-        for (auto& value : *output) {
-            value = *input++;
+        for (unsigned int i = 0; i < nparticle_; i++) {
+            (*output)[i] = *input++;
         }
         return input;
     }
@@ -173,7 +180,7 @@ public:
     iterator_type get_data(iterator_type const& first) const
     {
         auto const& input = read_cache(data());
-        return std::copy(input.begin(), input.end(), first);
+        return std::copy(input.begin(), input.begin()+nparticle_, first);
     }
 
     /**
@@ -184,9 +191,8 @@ public:
     virtual void set_lua(luaponte::object table)
     {
         auto output = make_cache_mutable(mutable_data());
-        std::size_t i = 1;
-        for (auto& value : *output) {
-            value = luaponte::object_cast<T>(table[i++]);
+        for (unsigned int i = 0; i < nparticle_; i++) {
+            (*output)[i] = luaponte::object_cast<T>(table[i+1]);
         }
     }
     /**
@@ -198,13 +204,15 @@ public:
     virtual luaponte::object get_lua(lua_State* L) const
     {
         luaponte::object table = luaponte::newtable(L);
-        std::size_t i = 1;
-        for (auto const& x : read_cache(data())) {
-            table[i++] = boost::cref(x);
+        auto &&input = read_cache(data());
+        for (unsigned int i = 0; i < nparticle_; i++) {
+            table[i+1] = boost::cref(input[i]);
         }
         return table;
     }
 private:
+    /** number of particles */
+    unsigned int nparticle_;
     /** cached raw_array */
     cache<raw_array<T>> data_;
     /** optional update function */
@@ -212,10 +220,10 @@ private:
 };
 
 template<typename T>
-inline std::shared_ptr<particle_array_typed<T>> particle_array::create(unsigned int size,
+inline std::shared_ptr<particle_array_typed<T>> particle_array::create(unsigned int nparticle, unsigned int size,
   std::function<void()> update_function)
 {
-    return std::make_shared<particle_array_typed<T>>(size, update_function);
+    return std::make_shared<particle_array_typed<T>>(nparticle, size, update_function);
 }
 
 template<typename T>

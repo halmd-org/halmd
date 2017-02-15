@@ -21,8 +21,10 @@
  */
 
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
+#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
+#include <halmd/utility/gpu/texfetch.cuh>
 #include <halmd/utility/tuple.hpp>
 
 namespace halmd {
@@ -48,50 +50,59 @@ template<int dimension>
 struct image
 {
     // instantiate a separate texture for each aligned vector type
-    typedef texture<typename particle_wrapper<dimension>::aligned_vector_type> type;
+    typedef texture<typename particle_wrapper<dimension, float>::aligned_vector_type> type;
     static type tex_;
 };
 // instantiate static members
 template<int dimension> image<dimension>::type image<dimension>::tex_;
 
 /**
+ * initialize particle positions and species, velocity and mass
+ */
+ template<typename float_type, typename ptr_type>
+__global__ void initialize(
+    ptr_type g_r
+  , ptr_type g_v
+  , unsigned int size
+)
+{
+    unsigned int type = (GTID < size) ? 0 : placeholder;
+    fixed_vector<float_type, 3> r (0.0f);
+    g_r[GTID] <<= tie(r, type);
+    g_v[GTID] <<= make_tuple(r, 1.0f);
+}
+
+/**
  * rearrange particles by a given permutation
  */
-template <typename vector_type, typename aligned_vector_type>
+template <int dimension, typename float_type, typename ptr_type, typename aligned_vector_type>
 __global__ void rearrange(
     unsigned int const* g_index
-  , float4* g_r
+  , ptr_type g_r
   , aligned_vector_type* g_image
-  , float4* g_v
+  , ptr_type g_v
   , unsigned int* g_id
   , unsigned int npart
 )
 {
-    enum { dimension = vector_type::static_size };
-    if (GTID < npart) {
-        int const i = g_index[GTID];
+    typedef fixed_vector<float_type, dimension> vector_type;
+    int const i = (GTID < npart) ? g_index[GTID] : GTID;
 
-        // copy position and velocity as float4 values, and image vector
-        g_r[GTID] = tex1Dfetch(r_, i);
-        g_v[GTID] = tex1Dfetch(v_, i);
+    // copy position and velocity as float4 values, and image vector
+    g_r[GTID] = texFetch<float_type>::fetch(r_, i);
+    g_v[GTID] = texFetch<float_type>::fetch(v_, i);
 
-#ifdef USE_VERLET_DSFUN
-        g_r[GTID + GTDIM] = tex1Dfetch(r_, i + GTDIM);
-        g_v[GTID + GTDIM] = tex1Dfetch(v_, i + GTDIM);
-#endif
+    // select correct image texture depending on the space dimension
+    g_image[GTID] = tex1Dfetch(image<dimension>::tex_, i);
 
-        // select correct image texture depending on the space dimension
-        g_image[GTID] = tex1Dfetch(image<dimension>::tex_, i);
-
-        // copy particle IDs
-        g_id[GTID] = tex1Dfetch(id_, i);
-    }
+    // copy particle IDs
+    g_id[GTID] = tex1Dfetch(id_, i);
 }
 
 } // namespace particle_kernel
 
-template <int dimension>
-particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
+template <int dimension, typename float_type>
+particle_wrapper<dimension, float_type> const particle_wrapper<dimension, float_type>::kernel = {
     particle_kernel::nbox_
   , particle_kernel::ntype_
   , particle_kernel::ntypes_
@@ -99,15 +110,14 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
   , particle_kernel::image<dimension>::tex_
   , particle_kernel::v_
   , particle_kernel::id_
-#ifdef USE_VERLET_DSFUN
-  , particle_kernel::rearrange<fixed_vector<dsfloat, dimension> >
-#else
-  , particle_kernel::rearrange<fixed_vector<float, dimension> >
-#endif
+  , particle_kernel::initialize<float_type, ptr_type>
+  , particle_kernel::rearrange<dimension, float_type, ptr_type>
 };
 
-template class particle_wrapper<3>;
-template class particle_wrapper<2>;
+template class particle_wrapper<3, float>;
+template class particle_wrapper<2, float>;
+template class particle_wrapper<3, dsfloat>;
+template class particle_wrapper<2, dsfloat>;
 
 } // namespace gpu
 } // namespace mdsim

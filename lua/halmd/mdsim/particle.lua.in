@@ -33,14 +33,22 @@ local utility           = require("halmd.utility")
 -- grab C++ wrappers
 local particle = {}
 particle.host = {
-    [2] = assert(libhalmd.mdsim.host.particle_2)
-  , [3] = assert(libhalmd.mdsim.host.particle_3)
+    ["double"] = {
+        [2] = assert(libhalmd.mdsim.host.particle_2)
+      , [3] = assert(libhalmd.mdsim.host.particle_3)
+    }
 }
 
 if device.gpu then
     particle.gpu = {
-        [2] = assert(libhalmd.mdsim.gpu.particle_2)
-      , [3] = assert(libhalmd.mdsim.gpu.particle_3)
+        ["single"] = {
+            [2] = assert(libhalmd.mdsim.gpu.particle_float_2)
+          , [3] = assert(libhalmd.mdsim.gpu.particle_float_3)
+        },
+        ["double-single"] = {
+            [2] = assert(libhalmd.mdsim.gpu.particle_dsfloat_2)
+          , [3] = assert(libhalmd.mdsim.gpu.particle_dsfloat_3)
+        }
     }
 end
 
@@ -51,12 +59,15 @@ end
 -- :param number args.dimension: dimension of space
 -- :param number args.particles: number of particles
 -- :param number args.species: number of species (*default:* 1)
+-- :param string args.precision: floating point precision *(optional)*
 -- :param string args.memory: device where the particle information is stored *(optional)*
 -- :param string args.label: instance label (*default:* ``all``)
 --
 -- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
 -- not specified, the memory location is selected according to the compute
 -- device.
+-- The supported values for ``precision`` are ``single`` and ``double-single``
+-- for a gpu particle instance and ``double`` for a host particle instance.
 --
 -- .. attribute:: nparticle
 --
@@ -180,9 +191,13 @@ local M = module(function(args)
     if not particle[memory] then
         error(("unsupported particle memory type '%s'"):format(memory), 2)
     end
+    local precision = args and args.precision or (device.gpu and "double-single" or "double")
+    if not particle[memory][precision] then
+        error(("unsupported particle float type '%s'"):format(float_type), 2)
+    end
 
     -- select particle class
-    local particle = assert(particle[memory][dimension])
+    local particle = assert(particle[memory][precision][dimension])
 
     -- construct particle instance
     local self = particle(nparticle, nspecies)
@@ -204,6 +219,10 @@ local M = module(function(args)
 
     self.memory = property(function(self)
         return memory
+    end)
+
+    self.precision = property(function(self)
+        return precision
     end)
 
     -- sequence of signal connections

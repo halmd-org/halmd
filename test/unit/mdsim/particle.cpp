@@ -839,6 +839,8 @@ HALMD_TEST_INIT( particle )
 #ifdef HALMD_WITH_GPU
         test_suite_gpu<halmd::mdsim::gpu::particle<3, float> >(nparticle, nspecies, ts_gpu_three);
         test_suite_gpu<halmd::mdsim::gpu::particle<2, float> >(nparticle, nspecies, ts_gpu_two);
+        test_suite_gpu<halmd::mdsim::gpu::particle<3, halmd::dsfloat> >(nparticle, nspecies, ts_gpu_three);
+        test_suite_gpu<halmd::mdsim::gpu::particle<2, halmd::dsfloat> >(nparticle, nspecies, ts_gpu_two);
 #endif
     }
 }

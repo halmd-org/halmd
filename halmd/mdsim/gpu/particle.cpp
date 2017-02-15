@@ -53,11 +53,12 @@ namespace gpu {
  */
 template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
-  // FIXME default CUDA kernel execution dimensions
-  : dim(device::validate(cuda::config((nparticle + 128 - 1) / 128, 128)))
-  // allocate global device memory
-  , nparticle_(nparticle)
+  : // allocate global device memory
+    nparticle_(nparticle)
+  , array_size_((nparticle + 128 - 1) & ~(128-1))
   , nspecies_(std::max(nspecies, 1u))
+  // FIXME default CUDA kernel execution dimensions
+  , dim_(device::validate(cuda::config(array_size_/128, 128)))
   // enable auxiliary variables by default to allow sampling of initial state
   , force_zero_(true)
   , force_dirty_(true)
@@ -101,8 +102,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     auto g_en_pot = make_cache_mutable(en_pot_array->mutable_data());
     auto g_stress_pot = make_cache_mutable(stress_pot_array->mutable_data());
 
-    g_force->reserve(dim.threads());
-    g_en_pot->reserve(dim.threads());
     //
     // The GPU stores the stress tensor elements in column-major order to
     // optimise access patterns for coalescable access. Increase capacity of
@@ -110,62 +109,19 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     // available, although stress_pot_->size() still returns the number of
     // particles.
     //
-    g_stress_pot->reserve(stress_pot_type::static_size * dim.threads());
+    g_stress_pot->reserve(stress_pot_type::static_size * array_size_);
 
-    LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
-    LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
+    LOG_DEBUG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
+    LOG_DEBUG("number of CUDA execution threads per block: " << dim_.threads_per_block());
 
-    //
-    // As the number of threads may exceed the nmber of particles
-    // to account for an integer number of threads per block,
-    // we need to allocate excess memory for the GPU vectors.
-    //
-    // The additional memory is allocated using reserve(), which
-    // increases the capacity() without changing the size(). The
-    // coordinates of these "virtual" particles will be ignored
-    // in cuda::copy or cuda::memset calls.
-    //
-    try {
-#ifdef USE_VERLET_DSFUN
-        //
-        // Double-single precision requires two single precision
-        // "words" per coordinate. We use the first part of a GPU
-        // vector for the higher (most significant) words of all
-        // particle positions or velocities, and the second part for
-        // the lower (least significant) words.
-        //
-        // The additional memory is allocated using reserve(), which
-        // increases the capacity() without changing the size().
-        //
-        // Take care to pass capacity() as an argument to cuda::copy
-        // or cuda::memset calls if needed, as the lower words will
-        // be ignored in the operation.
-        //
-        // Particle images remain in single precision as they
-        // contain integer values, and otherwise would not matter
-        // for the long-time stability of the integrator.
-        //
-        LOG("integrate using double-single precision");
-        g_position->reserve(2 * dim.threads());
-        g_velocity->reserve(2 * dim.threads());
-#else
-        LOG_WARNING("integrate using single precision");
-        g_position->reserve(dim.threads());
-        g_velocity->reserve(dim.threads());
-#endif
-        g_image->reserve(dim.threads());
-        g_id->reserve(dim.threads());
-        g_reverse_id->reserve(dim.threads());
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to allocate particles in global device memory");
-        throw;
+    if (typeid(float_type) == typeid(float)) {
+        LOG("integrate using single precision");
     }
 
-    // initialise 'ghost' particles to zero
+    // initialise 'ghost' particles to zero and sets their species to -1U
     // this avoids potential nonsense computations resulting in denormalised numbers
-    cuda::memset(g_position->begin(), g_position->begin() + g_position->capacity(), 0);
-    cuda::memset(g_velocity->begin(), g_velocity->begin() + g_velocity->capacity(), 0);
+    cuda::configure(dim_.grid, dim_.block);
+    get_particle_kernel<dimension, float_type>().initialize(g_position->data(), g_velocity->data(), nparticle_);
     cuda::memset(g_image->begin(), g_image->begin() + g_image->capacity(), 0);
     iota(g_id->begin(), g_id->begin() + g_id->capacity(), 0);
     iota(g_reverse_id->begin(), g_reverse_id->begin() + g_reverse_id->capacity(), 0);
@@ -173,17 +129,9 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     cuda::memset(g_en_pot->begin(), g_en_pot->begin() + g_en_pot->capacity(), 0);
     cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
 
-    // set particle masses to unit mass
-    set_mass(
-        *this
-      , boost::make_transform_iterator(boost::counting_iterator<mass_type>(0), [](mass_type) {
-            return 1;
-        })
-    );
-
     try {
-        cuda::copy(nparticle_, get_particle_kernel<dimension>().nbox);
-        cuda::copy(nspecies_, get_particle_kernel<dimension>().ntype);
+        cuda::copy(nparticle_, get_particle_kernel<dimension, float_type>().nbox);
+        cuda::copy(nspecies_, get_particle_kernel<dimension, float_type>().ntype);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy particle parameters to device symbols");
@@ -191,7 +139,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     }
 
     LOG("number of particles: " << nparticle_);
-    LOG("number of particle placeholders: " << dim.threads());
+    LOG("number of particle placeholders: " << array_size_);
     LOG("number of particle species: " << nspecies_);
 }
 
@@ -216,22 +164,17 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
 
     scoped_timer_type timer(runtime_.rearrange);
 
-    cuda::vector<gpu_position_type> position(nparticle_);
-    cuda::vector<gpu_image_type> image(nparticle_);
-    cuda::vector<gpu_velocity_type> velocity(nparticle_);
-    cuda::vector<gpu_id_type> id(nparticle_);
+    position_array_type position(array_size_);
+    image_array_type image(array_size_);
+    velocity_array_type velocity(array_size_);
+    id_array_type id(array_size_);
 
-    position.reserve(g_position->capacity());
-    image.reserve(g_image->capacity());
-    velocity.reserve(g_velocity->capacity());
-    id.reserve(g_reverse_id->capacity());
-
-    cuda::configure(dim.grid, dim.block);
-    get_particle_kernel<dimension>().r.bind(*g_position);
-    get_particle_kernel<dimension>().image.bind(*g_image);
-    get_particle_kernel<dimension>().v.bind(*g_velocity);
-    get_particle_kernel<dimension>().id.bind(*g_id);
-    get_particle_kernel<dimension>().rearrange(g_index, position, image, velocity, id, nparticle_);
+    cuda::configure(dim_.grid, dim_.block);
+    get_particle_kernel<dimension, float_type>().r.bind(*g_position);
+    get_particle_kernel<dimension, float_type>().image.bind(*g_image);
+    get_particle_kernel<dimension, float_type>().v.bind(*g_velocity);
+    get_particle_kernel<dimension, float_type>().id.bind(*g_id);
+    get_particle_kernel<dimension, float_type>().rearrange(g_index, position, image, velocity, id, nparticle_);
 
     position.swap(*g_position);
     image.swap(*g_image);
@@ -239,7 +182,7 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     cuda::copy(id.begin(), id.begin() + id.capacity(), g_id->begin());
 
     iota(g_reverse_id->begin(), g_reverse_id->begin() + g_reverse_id->capacity(), 0);
-    radix_sort(id.begin(), id.end(), g_reverse_id->begin());
+    radix_sort(id.begin(), id.begin() + nparticle_, g_reverse_id->begin());
 }
 
 template <int dimension, typename float_type>
@@ -293,11 +236,26 @@ static bool equal(std::shared_ptr<T const> self, std::shared_ptr<T const> other)
     return self == other;
 }
 
+template<typename float_type>
+struct variant_name;
+
+template<>
+struct variant_name<float>
+{
+    static constexpr const char *name = "float";
+};
+
+template<>
+struct variant_name<dsfloat>
+{
+    static constexpr const char *name = "dsfloat";
+};
+
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static std::string class_name = "particle_" + std::to_string(dimension);
+    static std::string class_name = "particle_" + std::string(variant_name<float_type>::name) + "_" + std::to_string(dimension);
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -307,6 +265,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                 class_<particle, std::shared_ptr<particle>>(class_name.c_str())
                     .def(constructor<size_type, unsigned int>())
                     .property("nparticle", &particle::nparticle)
+                    .property("array_size", &particle::array_size)
                     .property("nspecies", &particle::nspecies)
                     .def("get", &wrap_get<particle>)
                     .def("set", &wrap_set<particle>)
@@ -337,12 +296,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle(lua_State* L)
 {
     particle<3, float>::luaopen(L);
     particle<2, float>::luaopen(L);
+    particle<3, dsfloat>::luaopen(L);
+    particle<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class particle<3, float>;
 template class particle<2, float>;
+template class particle<3, dsfloat>;
+template class particle<2, dsfloat>;
 
 } // namespace gpu
 } // namespace mdsim

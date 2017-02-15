@@ -41,10 +41,11 @@ namespace halmd {
 namespace mdsim {
 namespace host {
 
-template <int dimension, typename float_type>
+template <int dimension, typename float_type_>
 class particle
 {
 public:
+    typedef float_type_ float_type;
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 
@@ -120,7 +121,7 @@ public:
     std::shared_ptr<particle_array_typed<T>>
     register_data(std::string const& name, std::function<void()> update_function = std::function<void()>())
     {
-        auto ptr = particle_array::create<T>(nparticle_, update_function);
+        auto ptr = particle_array::create<T>(nparticle_, capacity_, update_function);
         if (!data_.insert(std::make_pair(name, ptr)).second) {
             throw std::runtime_error("a particle array named \"" + name + "\" already exists");
         }
@@ -431,6 +432,8 @@ public:
 private:
     /** number of particles */
     unsigned int nparticle_;
+    /** array size */
+    unsigned int capacity_;
     /** number of particle species */
     unsigned int nspecies_;
 

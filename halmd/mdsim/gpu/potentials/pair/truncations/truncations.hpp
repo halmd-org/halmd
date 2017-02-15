@@ -38,8 +38,10 @@ namespace truncations {
 
 #define _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_LUAOPEN(r, data, truncation) \
     truncation<potential_type>::luaopen(L);\
-    forces::pair_trunc<3, float_type, truncation<potential_type> >::luaopen(L);\
-    forces::pair_trunc<2, float_type, truncation<potential_type> >::luaopen(L);
+    forces::pair_trunc<3, float, truncation<potential_type> >::luaopen(L);\
+    forces::pair_trunc<2, float, truncation<potential_type> >::luaopen(L);\
+    forces::pair_trunc<3, dsfloat, truncation<potential_type> >::luaopen(L);\
+    forces::pair_trunc<2, dsfloat, truncation<potential_type> >::luaopen(L);
 
 #define _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(r, potential_type, truncation) \
     template class truncations::truncation<potential_type>;
@@ -49,7 +51,7 @@ namespace truncations {
     template class pair_trunc<2, BOOST_PP_TUPLE_ELEM(2,0,params), potentials::pair::truncations::truncation<BOOST_PP_TUPLE_ELEM(2,1,params)> >; \
 
 
-template<typename float_type, typename potential_type>
+template<typename potential_type>
 void truncations_luaopen(lua_State* L)
 {
     BOOST_PP_SEQ_FOR_EACH(_HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_LUAOPEN, _, HALMD_PAIR_POTENTIAL_TRUNCATIONS)

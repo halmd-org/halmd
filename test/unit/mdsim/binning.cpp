@@ -336,6 +336,30 @@ HALMD_TEST_INIT( binning )
                 };
                 ts_gpu_three->add(BOOST_TEST_CASE( non_uniform_density ));
             }
+            {
+                typedef halmd::mdsim::gpu::binning<2, halmd::dsfloat> binning_type;
+                auto non_uniform_density = [=]() {
+                    set_cuda_device device;
+                    test_non_uniform_density<binning_type>(
+                            {2 * unit, 3 * unit} // non-square box with coprime edge lengths
+                            , cell_length
+                            , compression
+                    );
+                };
+                ts_gpu_two->add(BOOST_TEST_CASE( non_uniform_density ));
+            }
+            {
+                typedef halmd::mdsim::gpu::binning<3, halmd::dsfloat> binning_type;
+                auto non_uniform_density = [=]() {
+                    set_cuda_device device;
+                    test_non_uniform_density<binning_type>(
+                            {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
+                            , cell_length
+                            , compression
+                    );
+                };
+                ts_gpu_three->add(BOOST_TEST_CASE( non_uniform_density ));
+            }
 #endif
         }
     }

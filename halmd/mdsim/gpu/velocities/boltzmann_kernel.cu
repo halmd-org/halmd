@@ -40,17 +40,18 @@ namespace boltzmann_kernel {
  * generate Maxwell-Boltzmann distributed velocities and reduce velocity
  */
 template <
-    typename vector_type
+    typename ptr_type
+  , typename vector_type
   , typename rng_type
   , int threads
   , typename T
 >
 __global__ void gaussian(
-    float4* g_v
+    ptr_type g_v
   , unsigned int npart
   , unsigned int nplace
   , float temp
-  , T* g_mv
+  , dsfloat_ptr<T> g_mv
   , dsfloat* g_mv2
   , dsfloat* g_m
   , rng_type rng
@@ -82,11 +83,7 @@ __global__ void gaussian(
     for (uint i = GTID; i < npart; i += GTDIM) {
         vector_type v;
         float mass;
-#ifdef USE_VERLET_DSFUN
-        tie(v, mass) <<= tie(g_v[i], g_v[i + nplace]);
-#else
         tie(v, mass) <<= g_v[i];
-#endif
         for (uint j = 0; j < dimension - 1; j += 2) {
             tie(v[j], v[j + 1]) = normal(rng, state, mean, sigma);
         }
@@ -102,11 +99,7 @@ __global__ void gaussian(
         mv += mass * v;
         mv2 += mass * inner_prod(v, v);
         m += mass;
-#ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + nplace]) <<= tie(v, mass);
-#else
         g_v[i] <<= tie(v, mass);
-#endif
     }
 
     // store random number generator state in global device memory
@@ -123,17 +116,18 @@ __global__ void gaussian(
 
     if (TID < 1) {
         // store block reduced value in global memory
-        tie(g_mv[blockIdx.x], g_mv[blockIdx.x + BDIM]) = split(mv);
+        g_mv[blockIdx.x] = split(mv);
         g_mv2[blockIdx.x] = mv2;
         g_m[blockIdx.x] = m;
     }
 }
 
 template <
-    typename vector_type
+    typename ptr_type
+  , typename vector_type
   , typename T
 >
-__global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp, T const* g_mv, dsfloat const* g_mv2, dsfloat const* g_m, uint size)
+__global__ void shift_rescale(ptr_type g_v, uint npart, uint nplace, dsfloat temp, dsfloat_ptr<T> const g_mv, dsfloat const* g_mv2, dsfloat const* g_m, uint size)
 {
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type float_type;
@@ -148,11 +142,7 @@ __global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp
     dsfloat m = 0;
 
     for (uint i = TID; i < size; i += TDIM) {
-#ifdef USE_VERLET_DSFUN
-        s_mv[i] = vector_type(g_mv[i], g_mv[i + size]);
-#else
-        s_mv[i] = vector_type(g_mv[i]);
-#endif
+        s_mv[i] = fixed_vector<dsfloat, dimension>(get<0>(g_mv[i]), get<1>(g_mv[i]));
         s_mv2[i] = g_mv2[i];
         s_m[i] = g_m[i];
     }
@@ -169,18 +159,10 @@ __global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp
     for (uint i = GTID; i < npart; i += GTDIM) {
         vector_type v;
         float mass;
-#ifdef USE_VERLET_DSFUN
-        tie(v, mass) <<= tie(g_v[i], g_v[i + nplace]);
-#else
         tie(v, mass) <<= g_v[i];
-#endif
         v -= vcm;
         v *= scale;
-#ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + nplace]) <<= tie(v, mass);
-#else
         g_v[i] <<= tie(v, mass);
-#endif
     }
 }
 
@@ -188,21 +170,18 @@ __global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp
 
 template <int dimension, typename float_type, typename rng_type>
 boltzmann_wrapper<dimension, float_type, rng_type> const boltzmann_wrapper<dimension, float_type, rng_type>::kernel = {
-    boltzmann_kernel::gaussian<fixed_vector<float_type, dimension>, rng_type, 32>
-  , boltzmann_kernel::gaussian<fixed_vector<float_type, dimension>, rng_type, 64>
-  , boltzmann_kernel::gaussian<fixed_vector<float_type, dimension>, rng_type, 128>
-  , boltzmann_kernel::gaussian<fixed_vector<float_type, dimension>, rng_type, 256>
-  , boltzmann_kernel::gaussian<fixed_vector<float_type, dimension>, rng_type, 512>
-  , boltzmann_kernel::shift_rescale<fixed_vector<float_type, dimension> >
+    boltzmann_kernel::gaussian<ptr_type, fixed_vector<float_type, dimension>, rng_type, 32>
+  , boltzmann_kernel::gaussian<ptr_type, fixed_vector<float_type, dimension>, rng_type, 64>
+  , boltzmann_kernel::gaussian<ptr_type, fixed_vector<float_type, dimension>, rng_type, 128>
+  , boltzmann_kernel::gaussian<ptr_type, fixed_vector<float_type, dimension>, rng_type, 256>
+  , boltzmann_kernel::gaussian<ptr_type, fixed_vector<float_type, dimension>, rng_type, 512>
+  , boltzmann_kernel::shift_rescale<ptr_type, fixed_vector<float_type, dimension> >
 };
 
-#ifdef USE_VERLET_DSFUN
 template class boltzmann_wrapper<3, dsfloat, random::gpu::rand48_rng>;
 template class boltzmann_wrapper<2, dsfloat, random::gpu::rand48_rng>;
-#else
 template class boltzmann_wrapper<3, float, random::gpu::rand48_rng>;
 template class boltzmann_wrapper<2, float, random::gpu::rand48_rng>;
-#endif
 
 } // namespace mdsim
 } // namespace gpu

@@ -58,7 +58,8 @@ public:
     static void luaopen(lua_State* L);
 
     from_particle(
-        std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+        std::shared_ptr<particle_type const> particle1
+      , std::shared_ptr<particle_type const> particle2
       , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut

@@ -49,11 +49,6 @@
 
 #include <limits>
 
-#ifndef USE_HOST_SINGLE_PRECISION
-const double eps = std::numeric_limits<double>::epsilon();
-#else
-const double eps = std::numeric_limits<float>::epsilon();
-#endif
 const float eps_float = std::numeric_limits<float>::epsilon();
 
 /**
@@ -76,6 +71,8 @@ struct boltzmann
     unsigned npart;
     double temp;
     double density;
+
+    static constexpr double tolerance = modules_type::tolerance;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<particle_type> particle;
@@ -133,7 +130,7 @@ void boltzmann<modules_type>::test()
     // shift mean velocity to zero
     halmd::fixed_vector<double, dimension> v_cm = get_v_cm(*particle, group);
     shift_velocity_group(*particle, group, -v_cm);
-    vcm_tolerance = gpu ? 0.1 * eps_float : 2 * eps;
+    vcm_tolerance = modules_type::tolerance;
     BOOST_CHECK_SMALL(norm_inf(get_v_cm(*particle, group)), vcm_tolerance);
 
     // first shift, then rescale in one step
@@ -171,6 +168,7 @@ struct host_modules
     typedef halmd::random::host::random random_type;
     typedef halmd::mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
     static bool const gpu = false;
+    static constexpr double tolerance = 2 * std::numeric_limits<float_type>::epsilon();
 };
 
 #ifndef USE_HOST_SINGLE_PRECISION
@@ -190,6 +188,17 @@ BOOST_AUTO_TEST_CASE( boltzmann_host_3d ) {
 #endif
 
 #ifdef HALMD_WITH_GPU
+template<typename T>
+struct tolerance;
+template<>
+struct tolerance<halmd::dsfloat> {
+    static constexpr double value = 0.1 * std::numeric_limits<float>::epsilon();
+};
+template<>
+struct tolerance<float> {
+    static constexpr double value = 0.2 * std::numeric_limits<float>::epsilon();
+};
+
 template <int dimension, typename float_type>
 struct gpu_modules
 {
@@ -199,12 +208,15 @@ struct gpu_modules
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef halmd::mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
     static bool const gpu = true;
+    static constexpr double tolerance = tolerance<float_type>::value;
 };
 
 BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_2d, halmd::device ) {
     boltzmann<gpu_modules<2, float> >().test();
+    boltzmann<gpu_modules<2, halmd::dsfloat> >().test();
 }
 BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_3d, halmd::device ) {
     boltzmann<gpu_modules<3, float> >().test();
+    boltzmann<gpu_modules<3, halmd::dsfloat> >().test();
 }
 #endif // HALMD_WITH_GPU

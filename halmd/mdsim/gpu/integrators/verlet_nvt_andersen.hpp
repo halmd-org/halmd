@@ -48,7 +48,7 @@ public:
 private:
     typedef typename particle_type::vector_type vector_type;
     typedef typename random_type::rng_type rng_type;
-    typedef verlet_nvt_andersen_wrapper<dimension, rng_type> wrapper_type;
+    typedef verlet_nvt_andersen_wrapper<dimension, float_type, rng_type> wrapper_type;
 
 public:
     /**

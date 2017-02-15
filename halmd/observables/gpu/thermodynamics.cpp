@@ -229,12 +229,16 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_thermodynamics(lua_State* L)
 {
     thermodynamics<3, float>::luaopen(L);
     thermodynamics<2, float>::luaopen(L);
+    thermodynamics<3, dsfloat>::luaopen(L);
+    thermodynamics<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class thermodynamics<3, float>;
 template class thermodynamics<2, float>;
+template class thermodynamics<3, dsfloat>;
+template class thermodynamics<2, dsfloat>;
 
 } // namespace gpu
 } // namespace observables
