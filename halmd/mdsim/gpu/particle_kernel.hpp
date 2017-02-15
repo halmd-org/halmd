@@ -47,8 +47,6 @@ struct particle_wrapper
     cuda::texture<float4> v;
     /** IDs */
     cuda::texture<unsigned int> id;
-    /** initialize particle positions and species, velocity and mass */
-    cuda::function<void (ptr_type, ptr_type, unsigned int)> initialize;
     /** rearrange particles by a given permutation */
     cuda::function<void (unsigned int const*, ptr_type, aligned_vector_type*, ptr_type, unsigned int*, unsigned int)> rearrange;
     static particle_wrapper const kernel;
@@ -59,6 +57,22 @@ particle_wrapper<dimension, float_type> const& get_particle_kernel()
 {
     return particle_wrapper<dimension, float_type>::kernel;
 }
+
+template<typename T>
+struct particle_initialize_wrapper
+{
+    cuda::function<void (T*, T, T, unsigned int)> initialize;
+    static particle_initialize_wrapper const kernel;
+};
+
+template<size_t dimension>
+struct dsfloat_particle_initialize_wrapper
+{
+    typedef typename type_traits<dimension, dsfloat>::gpu::ptr_type ptr_type;
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type type;
+    cuda::function<void (ptr_type, type, type, unsigned int)> initialize;
+    static dsfloat_particle_initialize_wrapper const kernel;
+};
 
 } // namespace mdsim
 } // namespace gpu

@@ -26,6 +26,7 @@
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/texfetch.cuh>
 #include <halmd/utility/tuple.hpp>
+#include "particle_kernel.hpp"
 
 namespace halmd {
 namespace mdsim {
@@ -55,22 +56,6 @@ struct image
 };
 // instantiate static members
 template<int dimension> image<dimension>::type image<dimension>::tex_;
-
-/**
- * initialize particle positions and species, velocity and mass
- */
- template<typename float_type, typename ptr_type>
-__global__ void initialize(
-    ptr_type g_r
-  , ptr_type g_v
-  , unsigned int size
-)
-{
-    unsigned int type = (GTID < size) ? 0 : placeholder;
-    fixed_vector<float_type, 3> r (0.0f);
-    g_r[GTID] <<= tie(r, type);
-    g_v[GTID] <<= make_tuple(r, 1.0f);
-}
 
 /**
  * rearrange particles by a given permutation
@@ -110,7 +95,6 @@ particle_wrapper<dimension, float_type> const particle_wrapper<dimension, float_
   , particle_kernel::image<dimension>::tex_
   , particle_kernel::v_
   , particle_kernel::id_
-  , particle_kernel::initialize<float_type, ptr_type>
   , particle_kernel::rearrange<dimension, float_type, ptr_type>
 };
 
@@ -118,6 +102,46 @@ template class particle_wrapper<3, float>;
 template class particle_wrapper<2, float>;
 template class particle_wrapper<3, dsfloat>;
 template class particle_wrapper<2, dsfloat>;
+
+template<typename T>
+static __global__ void particle_initialize_kernel (
+  T *g_v
+, T value
+, T ghost_value
+, unsigned int nparticle
+)
+{
+    g_v[GTID] = (GTID < nparticle) ? value : ghost_value;
+}
+
+template<typename T>
+particle_initialize_wrapper<T> const particle_initialize_wrapper<T>::kernel = {
+  particle_initialize_kernel<T>
+};
+
+template<typename ptr_type, typename type>
+static __global__ void dsfloat_particle_initialize_kernel (
+  ptr_type g_v
+  , type value
+  , type ghost_value
+  , unsigned int nparticle
+)
+{
+    g_v[GTID] = make_tuple((GTID < nparticle) ? value : ghost_value, type());
+}
+
+
+template<size_t N>
+dsfloat_particle_initialize_wrapper<N> const dsfloat_particle_initialize_wrapper<N>::kernel = {
+  dsfloat_particle_initialize_kernel<ptr_type, type>
+};
+
+template class particle_initialize_wrapper<unsigned int>;
+template class particle_initialize_wrapper<float>;
+template class particle_initialize_wrapper<float2>;
+template class particle_initialize_wrapper<float4>;
+template class dsfloat_particle_initialize_wrapper<4>;
+template class dsfloat_particle_initialize_wrapper<2>;
 
 } // namespace gpu
 } // namespace mdsim

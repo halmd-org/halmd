@@ -139,10 +139,10 @@ public:
      *
      * throws an exception if a particle array with the same name already exists
      */
-    template<typename T>
+    template<typename T, typename init_type, typename ghost_init_type>
     std::shared_ptr<particle_array_gpu<T>>
-    register_data(std::string const& name, std::function<void()> update_function = std::function<void()>()) {
-        auto ptr = particle_array::create<T>(nparticle_, array_size_, update_function);
+    register_data(std::string const& name, init_type const& init_value, ghost_init_type const& ghost_init_value, std::function<void()> update_function = std::function<void()>()) {
+        auto ptr = particle_array::create<T>(dim_, nparticle_, array_size_, init_value, ghost_init_value, update_function);
         if (!data_.insert(std::make_pair(name, ptr)).second) {
             throw std::runtime_error("a particle array named \"" + name + "\" already exists");
         }

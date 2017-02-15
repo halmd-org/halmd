@@ -26,6 +26,7 @@
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/numeric/mp/dsfloat_vector.hpp>
+#include <halmd/mdsim/gpu/particle_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -53,6 +54,17 @@ class particle_array_gpu;
 template<typename host_type>
 class particle_array_host_wrapper;
 
+
+typedef struct {
+} iota_init_t;
+
+static constexpr iota_init_t iota_init = {};
+
+typedef struct {
+} zero_init_t;
+
+static constexpr zero_init_t zero_init = {};
+
 /** particle array base class */
 class particle_array
   : public std::enable_shared_from_this<particle_array>
@@ -66,10 +78,13 @@ public:
      * @param update_function update function
      * @return shared pointer to the new particle array
      */
-    template<typename T>
+    template<typename T, typename init_type, typename ghost_init_type>
     static inline std::shared_ptr<particle_array_gpu<T>> create(
-      unsigned int nparticle
+      cuda::config const& dim
+    , unsigned int nparticle
     , unsigned int size
+    , init_type const& init_value
+    , ghost_init_type const& ghost_init_value
     , std::function<void()> update_function);
 
     /**
@@ -173,6 +188,16 @@ public:
     virtual bool gpu() const = 0;
 
     /**
+     * get data offset
+     */
+     virtual size_t offset() const = 0;
+
+    /**
+     * get data stride
+     */
+    virtual size_t stride() const = 0;
+
+    /**
      * set data from lua table
      *
      * @param object lua table containing the data
@@ -208,6 +233,7 @@ public:
      *               should have been obtained with get_memory
      */
     virtual void set_gpu_data(cuda::host::vector<uint8_t> const& memory) = 0;
+
 };
 
 namespace detail {
@@ -353,12 +379,12 @@ public:
         return table;
     }
 
-    size_t stride() const
+    virtual size_t stride() const
     {
         return stride_;
     }
 
-    size_t offset() const
+    virtual size_t offset() const
     {
         return offset_;
     }
@@ -521,9 +547,38 @@ public:
      * @param size size of the underlying cuda::vector
      * @param update_function update function
      */
-    particle_array_gpu(unsigned int nparticle, unsigned int size, std::function<void()> update_function)
+    template<typename init_type, typename ghost_init_type>
+    particle_array_gpu(cuda::config const& dim, unsigned int nparticle, unsigned int size, init_type const& init_value, ghost_init_type const& ghost_init_value, std::function<void()> update_function
+                       , typename std::enable_if<!std::is_same<init_type, iota_init_t>::value && !std::is_same<init_type, zero_init_t>::value>::type* = 0)
       : particle_array_typed<T>(sizeof(T), 0, nparticle), data_(size), update_function_(update_function)
     {
+        static_assert(sizeof(init_type) == sizeof(T), "invalid size of initialization value");
+        static_assert(sizeof(ghost_init_type) == sizeof(T), "invalid size of ghost initialization value");
+        cudaMemcpy(&init_value_, &init_value, sizeof(T), cudaMemcpyHostToHost);
+        cudaMemcpy(&ghost_init_value_, &ghost_init_value, sizeof(T), cudaMemcpyHostToHost);
+        cuda::configure(dim.grid, dim.block);
+        particle_initialize_wrapper<T>::kernel.initialize (make_cache_mutable(data_)->data(), init_value_, ghost_init_value_, nparticle);
+        if (!update_function_) {
+            update_function_ = [](){};
+        }
+    }
+    template<typename init_type, typename ghost_init_type>
+    particle_array_gpu(cuda::config const& dim, unsigned int nparticle, unsigned int size, init_type const& init_value, ghost_init_type const& ghost_init_value, std::function<void()> update_function
+                       , typename std::enable_if<std::is_same<init_type, iota_init_t>::value>::type* = 0)
+      : particle_array_typed<T>(sizeof(T), 0, nparticle), data_(size), update_function_(update_function)
+    {
+        cuda::configure(dim.grid, dim.block);
+        iota(make_cache_mutable(data_)->begin(), make_cache_mutable(data_)->end(), 0);
+        if (!update_function_) {
+            update_function_ = [](){};
+        }
+    }
+    template<typename init_type, typename ghost_init_type>
+    particle_array_gpu(cuda::config const& dim, unsigned int nparticle, unsigned int size, init_type const& init_value, ghost_init_type const& ghost_init_value, std::function<void()> update_function
+                       , typename std::enable_if<std::is_same<init_type, zero_init_t>::value>::type* = 0)
+      : particle_array_typed<T>(sizeof(T), 0, nparticle), data_(size), update_function_(update_function)
+    {
+        cuda::memset(make_cache_mutable(data_)->begin(), make_cache_mutable(data_)->end(), 0);
         if (!update_function_) {
             update_function_ = [](){};
         }
@@ -620,6 +675,10 @@ private:
     cache<vector_type> data_;
     /** optional update function */
     std::function<void()> update_function_;
+    /** initialization value for real particles */
+    T init_value_;
+    /** initialization value for ghost particles */
+    T ghost_init_value_;
 };
 
 /** typed gpu particle array - specialization for dsfloats */
@@ -640,10 +699,31 @@ public:
      * @param size size of the underlying cuda::vector
      * @param update_function update function
      */
-    particle_array_gpu(unsigned int nparticle, unsigned int size, std::function<void()> update_function)
+    template<typename init_type, typename ghost_init_type>
+    particle_array_gpu(cuda::config const& dim, unsigned int nparticle, unsigned int size, init_type const& init_value, ghost_init_type const& ghost_init_value, std::function<void()> update_function
+                     , typename std::enable_if<!std::is_same<init_type, zero_init_t>::value>::type* = 0)
             : particle_array_typed<hp_type>(sizeof(type), 0, nparticle)
             , data_(size), update_function_(update_function)
     {
+        static_assert(sizeof(init_type) == sizeof(type), "invalid size of initialization value");
+        static_assert(sizeof(ghost_init_type) == sizeof(type), "invalid size of ghost initialization value");
+        cudaMemcpy(&init_value_, &init_value, sizeof(type), cudaMemcpyHostToHost);
+        cudaMemcpy(&ghost_init_value_, &ghost_init_value, sizeof(type), cudaMemcpyHostToHost);
+        cuda::configure(dim.grid, dim.block);
+        dsfloat_particle_initialize_wrapper<N>::kernel.initialize (make_cache_mutable(data_)->data(), init_value_, ghost_init_value_, nparticle);
+        if (!update_function_) {
+            update_function_ = [](){};
+        }
+    }
+
+    template<typename init_type, typename ghost_init_type>
+    particle_array_gpu(cuda::config const& dim, unsigned int nparticle, unsigned int size, init_type const& init_value, ghost_init_type const& ghost_init_value, std::function<void()> update_function
+                       , typename std::enable_if<std::is_same<init_type, zero_init_t>::value>::type* = 0)
+      : particle_array_typed<hp_type>(sizeof(type), 0, nparticle)
+        , data_(size), update_function_(update_function)
+    {
+        cuda::vector<type> &data = *make_cache_mutable(data_);
+        cuda::memset(data.begin(), data.begin() + data.capacity(), 0);
         if (!update_function_) {
             update_function_ = [](){};
         }
@@ -741,6 +821,10 @@ private:
     cache<vector_type> data_;
     /** optional update function */
     std::function<void()> update_function_;
+    /** initialization value for real particles */
+    type init_value_;
+    /** initialization value for ghost particles */
+    type ghost_init_value_;
 };
 
 /**
@@ -837,13 +921,16 @@ private:
 
 // implementations of static members of particle_array
 
-template<typename T>
+template<typename T, typename init_type, typename ghost_init_type>
 inline std::shared_ptr<particle_array_gpu<T>> particle_array::create(
-  unsigned int nparticle
+  cuda::config const& dim
+, unsigned int nparticle
 , unsigned int size
+, init_type const& init_value
+, ghost_init_type const& ghost_init_value
 , std::function<void()> update_function)
 {
-    return std::make_shared<particle_array_gpu<T>>(nparticle, size, update_function);
+    return std::make_shared<particle_array_gpu<T>>(dim, nparticle, size, init_value, ghost_init_value, update_function);
 }
 
 template<typename host_type, typename gpu_type>

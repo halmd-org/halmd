@@ -65,15 +65,30 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , aux_dirty_(true)
   , aux_enabled_(true)
 {
+    // prepare initialization values
+    struct {
+        fixed_vector<float, 3> position;
+        unsigned int species;
+    } position_init_value = {
+      fixed_vector<float, 3> (0.0f), 0
+    }, position_ghost_init_value = {
+      fixed_vector<float, 3> (0.0f), -1U
+    };
+    struct {
+        fixed_vector<float, 3> velocity;
+        float mass;
+    } velocity_init_value = {
+      fixed_vector<float, 3> (0.0f), 1.0f
+    };
     // register particle arrays
-    auto position_array = register_data<gpu_position_type>("g_position");
-    auto image_array = register_data<gpu_image_type>("g_image");
-    auto velocity_array = register_data<gpu_velocity_type>("g_velocity");
-    auto id_array = register_data<gpu_id_type>("g_id");
-    auto reverse_id_array = register_data<gpu_reverse_id_type>("g_reverse_id");
-    auto force_array = register_data<gpu_force_type>("g_force", [this]() { this->update_force_(); });
-    auto en_pot_array = register_data<gpu_en_pot_type>("g_en_pot", [this]() { this->update_force_(true); });
-    auto stress_pot_array = register_data<gpu_stress_pot_type>("g_stress_pot", [this]() { this->update_force_(true); });
+    auto position_array = register_data<gpu_position_type>("g_position", position_init_value, position_ghost_init_value);
+    auto image_array = register_data<gpu_image_type>("g_image", zero_init, zero_init);
+    auto velocity_array = register_data<gpu_velocity_type>("g_velocity", velocity_init_value, velocity_init_value);
+    auto id_array = register_data<gpu_id_type>("g_id", iota_init, iota_init);
+    auto reverse_id_array = register_data<gpu_reverse_id_type>("g_reverse_id", iota_init, iota_init);
+    auto force_array = register_data<gpu_force_type>("g_force", zero_init, zero_init, [this]() { this->update_force_(); });
+    auto en_pot_array = register_data<gpu_en_pot_type>("g_en_pot", zero_init, zero_init, [this]() { this->update_force_(true); });
+    auto stress_pot_array = register_data<gpu_stress_pot_type>("g_stress_pot", zero_init, zero_init, [this]() { this->update_force_(true); });
 
     // register host data wrappers for packed data
     register_packed_data_wrapper<tuple<position_type, species_type>, 0>("position", position_array);
@@ -92,16 +107,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     // create alias for potential energy
     data_["potential_energy"] = data_["en_pot"];
 
-    // get access to the underlying cuda vectors for initialization
-    auto g_position = make_cache_mutable(position_array->mutable_data());
-    auto g_image = make_cache_mutable(image_array->mutable_data());
-    auto g_velocity = make_cache_mutable(velocity_array->mutable_data());
-    auto g_id = make_cache_mutable(id_array->mutable_data());
-    auto g_reverse_id = make_cache_mutable(reverse_id_array->mutable_data());
-    auto g_force = make_cache_mutable(force_array->mutable_data());
-    auto g_en_pot = make_cache_mutable(en_pot_array->mutable_data());
-    auto g_stress_pot = make_cache_mutable(stress_pot_array->mutable_data());
-
     //
     // The GPU stores the stress tensor elements in column-major order to
     // optimise access patterns for coalescable access. Increase capacity of
@@ -109,7 +114,9 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     // available, although stress_pot_->size() still returns the number of
     // particles.
     //
+    auto g_stress_pot = make_cache_mutable(stress_pot_array->mutable_data());
     g_stress_pot->reserve(stress_pot_type::static_size * array_size_);
+    cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
 
     LOG_DEBUG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim_.threads_per_block());
@@ -117,17 +124,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     if (typeid(float_type) == typeid(float)) {
         LOG("integrate using single precision");
     }
-
-    // initialise 'ghost' particles to zero and sets their species to -1U
-    // this avoids potential nonsense computations resulting in denormalised numbers
-    cuda::configure(dim_.grid, dim_.block);
-    get_particle_kernel<dimension, float_type>().initialize(g_position->data(), g_velocity->data(), nparticle_);
-    cuda::memset(g_image->begin(), g_image->begin() + g_image->capacity(), 0);
-    iota(g_id->begin(), g_id->begin() + g_id->capacity(), 0);
-    iota(g_reverse_id->begin(), g_reverse_id->begin() + g_reverse_id->capacity(), 0);
-    cuda::memset(g_force->begin(), g_force->begin() + g_force->capacity(), 0);
-    cuda::memset(g_en_pot->begin(), g_en_pot->begin() + g_en_pot->capacity(), 0);
-    cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
 
     try {
         cuda::copy(nparticle_, get_particle_kernel<dimension, float_type>().nbox);
