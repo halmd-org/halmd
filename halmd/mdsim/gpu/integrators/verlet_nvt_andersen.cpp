@@ -36,9 +36,9 @@ verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::verlet_nvt_an
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<random_type> random
-  , float_type timestep
-  , float_type temperature
-  , float_type coll_rate
+  , double timestep
+  , double temperature
+  , double coll_rate
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
@@ -172,9 +172,9 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::luaopen(
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<random_type>
-                  , float_type
-                  , float_type
-                  , float_type
+                  , double
+                  , double
+                  , double
                   , std::shared_ptr<logger>
                 >)
             ]
