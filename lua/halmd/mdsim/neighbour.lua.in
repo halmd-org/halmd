@@ -47,7 +47,7 @@ if device.gpu then
             [2] = assert(libhalmd.mdsim.defaults_float_2)
           , [3] = assert(libhalmd.mdsim.defaults_float_3)
         },
-        ["mixed"] = {
+        ["double-single"] = {
             [2] = assert(libhalmd.mdsim.defaults_dsfloat_2)
           , [3] = assert(libhalmd.mdsim.defaults_dsfloat_3)
         }

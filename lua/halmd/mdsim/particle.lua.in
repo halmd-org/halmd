@@ -45,7 +45,7 @@ if device.gpu then
             [2] = assert(libhalmd.mdsim.gpu.particle_float_2)
           , [3] = assert(libhalmd.mdsim.gpu.particle_float_3)
         },
-        ["mixed"] = {
+        ["double-single"] = {
             [2] = assert(libhalmd.mdsim.gpu.particle_dsfloat_2)
           , [3] = assert(libhalmd.mdsim.gpu.particle_dsfloat_3)
         }
@@ -66,6 +66,8 @@ end
 -- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
 -- not specified, the memory location is selected according to the compute
 -- device.
+-- The supported values for ``precision`` are ``single`` and ``double-single``
+-- for a gpu particle instance and ``double`` for a host particle instance.
 --
 -- .. attribute:: nparticle
 --
@@ -189,7 +191,7 @@ local M = module(function(args)
     if not particle[memory] then
         error(("unsupported particle memory type '%s'"):format(memory), 2)
     end
-    local precision = args and args.precision or (device.gpu and "mixed" or "double")
+    local precision = args and args.precision or (device.gpu and "double-single" or "double")
     if not particle[memory][precision] then
         error(("unsupported particle float type '%s'"):format(float_type), 2)
     end
