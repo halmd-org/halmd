@@ -112,7 +112,8 @@ struct verlet_nvt_hoover
     fixed_vector<double, dimension> box_ratios;
     float skin;
 
-    static constexpr double tolerance = modules_type::tolerance;
+    typedef typename modules_type::tolerance tolerance;
+    typedef typename modules_type::en_tolerance en_tolerance;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<potential_type> potential;
@@ -202,17 +203,13 @@ void verlet_nvt_hoover<modules_type>::test()
     //
     // these tolerances have no deeper justification, except that even a small
     // energy drift requires a scaling with the number of simulation steps
-#ifndef USE_HOST_SINGLE_PRECISION
-    const double en_tolerance = max(5e-5, steps * 1e-12);
-#else
-    const double en_tolerance = max(6e-5, steps * 1e-12);
-#endif
+    const double en_tolerance = max(modules_type::en_tolerance::value, steps * 1e-12);
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_nhc0), en_tolerance);
 
     //
     // test conservation of total momentum
     //
-    double vcm_tolerance = modules_type::tolerance;
+    double vcm_tolerance = modules_type::tolerance::value;
     BOOST_TEST_MESSAGE("Absolute tolerance on centre-of-mass velocity: " << vcm_tolerance);
     for (unsigned int i = 0; i < dimension; ++i) {
         BOOST_CHECK_SMALL(mean(v_cm[i]), vcm_tolerance);
@@ -315,6 +312,24 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
 }
 
+template<typename float_type>
+struct host_tolerance
+{
+    static constexpr double value = 20 * numeric_limits<float_type>::epsilon();
+};
+
+template<typename float_type>
+struct host_en_tolerance
+{
+    static double const value;
+};
+
+template<>
+double const host_en_tolerance<float>::value = 6e-5;
+
+template<>
+double const host_en_tolerance<double>::value = 5e-5;
+
 template <int dimension, typename float_type>
 struct host_modules
 {
@@ -333,7 +348,8 @@ struct host_modules
     typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
     typedef observables::host::thermodynamics<dimension, float_type> thermodynamics_type;
     static bool const gpu = false;
-    static constexpr double tolerance = 20 * numeric_limits<float_type>::epsilon();
+    typedef host_tolerance<float_type> tolerance;
+    typedef host_en_tolerance<float_type> en_tolerance;
 };
 
 #ifndef USE_HOST_SINGLE_PRECISION
@@ -354,16 +370,30 @@ BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_3d ) {
 
 #ifdef HALMD_WITH_GPU
 template<typename T>
-struct tolerance;
-template<>
-struct tolerance<dsfloat> {
-    static constexpr double value = 0.1 * numeric_limits<float>::epsilon();
+struct gpu_tolerance
+{
+    static double const value;
 };
+
 template<>
-struct tolerance<float> {
-    // TODO: Is the high tolerance reasonable?
-    static constexpr double value = 8 * numeric_limits<float>::epsilon();
+double const gpu_tolerance<dsfloat>::value = 0.1 * numeric_limits<float>::epsilon();
+
+// TODO: Is the high tolerance reasonable?
+template<>
+double const gpu_tolerance<float>::value = 8 * numeric_limits<float>::epsilon();
+
+template<typename float_type>
+struct gpu_en_tolerance
+{
+    static double const value;
 };
+
+template<>
+double const gpu_en_tolerance<float>::value = 7e-5;
+
+template<>
+double const gpu_en_tolerance<dsfloat>::value = 5e-5;
+
 
 template <int dimension, typename float_type>
 struct gpu_modules
@@ -384,7 +414,8 @@ struct gpu_modules
     typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
     static bool const gpu = true;
-    static constexpr double tolerance = tolerance<float_type>::value;
+    typedef gpu_tolerance<float_type> tolerance;
+    typedef gpu_en_tolerance<float_type> en_tolerance;
 };
 
 BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_2d, device ) {

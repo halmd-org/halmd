@@ -88,7 +88,7 @@ struct ideal_gas
     float_vector_type box_ratios;
     typename modules_type::slab_type slab;
 
-    static constexpr double tolerance = modules_type::tolerance;
+    typedef typename modules_type::tolerance tolerance;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<integrator_type> integrator;
@@ -110,7 +110,7 @@ void ideal_gas<modules_type>::test()
     position->set();
     velocity->set();
 
-    const double vcm_tolerance = tolerance;
+    const double vcm_tolerance = tolerance::value;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_tolerance);
 
     double en_kin = thermodynamics->en_kin();
@@ -242,6 +242,12 @@ make_stress_pot_from_particle(
 }
 #endif
 
+template<typename float_type>
+struct host_tolerance
+{
+    static constexpr double value = numeric_limits<float_type>::epsilon();
+};
+
 template <int dimension, typename float_type>
 struct host_modules
 {
@@ -256,7 +262,7 @@ struct host_modules
     typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
     typedef observables::host::thermodynamics<dimension, float_type> thermodynamics_type;
     static bool const gpu = false;
-    static constexpr double tolerance = numeric_limits<float_type>::epsilon();
+    typedef host_tolerance<float_type> tolerance;
 };
 
 #ifndef USE_HOST_SINGLE_PRECISION
@@ -277,14 +283,14 @@ BOOST_AUTO_TEST_CASE( ideal_gas_host_3d ) {
 
 #ifdef HALMD_WITH_GPU
 template<typename T>
-struct tolerance;
+struct gpu_tolerance;
 template<>
-struct tolerance<dsfloat> {
+struct gpu_tolerance<dsfloat> {
     static constexpr double value = 0.1 * numeric_limits<float>::epsilon();
 };
 template<>
-struct tolerance<float> {
-    static constexpr double value = 0.15 * numeric_limits<float>::epsilon();
+struct gpu_tolerance<float> {
+    static constexpr double value = 0.2 * numeric_limits<float>::epsilon();
 };
 
 template <int dimension, typename float_type>
@@ -300,7 +306,7 @@ struct gpu_modules
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
-    static constexpr double tolerance = tolerance<float_type>::value;
+    typedef gpu_tolerance<float_type> tolerance;
     static bool const gpu = true;
 };
 
