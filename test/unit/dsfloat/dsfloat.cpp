@@ -110,13 +110,17 @@ static void test_dsfloat_overload()
         cuda::memset(data.begin(), data.begin()+data.capacity(), 0);
 
         halmd::dsfloat_vector<float4> dsdata (256);
+        cuda::vector<float4> &dsdata_float4 = dsdata;
+
+        cuda::memset(dsdata_float4.begin(), dsdata_float4.begin() + dsdata_float4.capacity(), 0);
+
         cuda::configure(dim.grid, dim.block);
         dsfloat_kernel_overloaded_wrapper<halmd::dsfloat>::kernel.test(dsdata, dsfloat_increment);
         cuda::thread::synchronize();
 
         {
             cuda::host::vector<float4> tmp (256);
-            cuda::copy(((cuda::vector<float4>&)dsdata).begin(), ((cuda::vector<float4>&)dsdata).end(), tmp.begin());
+            cuda::copy(dsdata_float4.begin(), dsdata_float4.end(), tmp.begin());
             int ignored;
             for (auto i = 0; i < 256; i++) {
                 halmd::tie(result2[i], ignored) <<= tmp[i];
