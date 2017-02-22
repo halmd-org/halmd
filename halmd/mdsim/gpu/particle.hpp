@@ -25,7 +25,8 @@
 #define HALMD_MDSIM_GPU_PARTICLE_HPP
 
 #include <halmd/mdsim/force_kernel.hpp>
-#include <halmd/mdsim/gpu/particle_array.hpp>
+#include <halmd/mdsim/gpu/particle_array_gpu.hpp>
+#include <halmd/mdsim/gpu/particle_array_host.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -75,16 +76,16 @@ public:
     typedef reverse_id_type gpu_reverse_id_type;
     typedef gpu_vector_type gpu_force_type;
     typedef en_pot_type gpu_en_pot_type;
-    typedef stress_pot_type gpu_stress_pot_type;
+    typedef float gpu_stress_pot_type;
 
-    typedef typename particle_array_gpu<gpu_position_type>::vector_type position_array_type;
-    typedef typename particle_array_gpu<gpu_image_type>::vector_type image_array_type;
-    typedef typename particle_array_gpu<gpu_velocity_type>::vector_type velocity_array_type;
-    typedef typename particle_array_gpu<gpu_id_type>::vector_type id_array_type;
-    typedef typename particle_array_gpu<gpu_reverse_id_type>::vector_type reverse_id_array_type;
-    typedef typename particle_array_gpu<gpu_force_type>::vector_type force_array_type;
-    typedef typename particle_array_gpu<gpu_en_pot_type>::vector_type en_pot_array_type;
-    typedef typename particle_array_gpu<gpu_stress_pot_type>::vector_type stress_pot_array_type;
+    typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_vector_type position_array_type;
+    typedef typename particle_array_gpu<gpu_vector_type>::gpu_vector_type image_array_type;
+    typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_vector_type velocity_array_type;
+    typedef cuda::vector<unsigned int> id_array_type;
+    typedef cuda::vector<unsigned int>  reverse_id_array_type;
+    typedef typename particle_array_gpu<gpu_vector_type>::gpu_vector_type force_array_type;
+    typedef typename particle_array_gpu<float>::gpu_vector_type en_pot_array_type;
+    typedef typename particle_array_gpu<float>::gpu_vector_type stress_pot_array_type;
 
     void rearrange(cuda::vector<unsigned int> const& g_index);
 
@@ -131,59 +132,6 @@ public:
     }
 
     /**
-     * register typed particle data
-     *
-     * @param name identifier for the particle data
-     * @param update_function optional update function
-     * @return the newly created particle array
-     *
-     * throws an exception if a particle array with the same name already exists
-     */
-    template<typename T, typename init_type, typename ghost_init_type>
-    std::shared_ptr<particle_array_gpu<T>>
-    register_data(std::string const& name, init_type const& init_value, ghost_init_type const& ghost_init_value, std::function<void()> update_function = std::function<void()>()) {
-        auto ptr = particle_array::create<T>(dim_, nparticle_, array_size_, init_value, ghost_init_value, update_function);
-        if (!data_.insert(std::make_pair(name, ptr)).second) {
-            throw std::runtime_error("a particle array named \"" + name + "\" already exists");
-        }
-        return ptr;
-    }
-
-    /**
-     * register a wrapper for a tuple element of packed gpu data
-     *
-     * @param name identifier for the particle data
-     * @param parent gpu particle array
-     * @return shared pointer to the particle array wrapper
-     */
-    template<typename tuple_type, int field, typename gpu_type>
-    std::shared_ptr<particle_array>
-    register_packed_data_wrapper(std::string const& name, std::shared_ptr<particle_array_gpu<gpu_type>> const& parent) {
-        auto ptr = particle_array::create_packed_wrapper<tuple_type, field> (parent);
-        if (!data_.insert(std::make_pair(name, ptr)).second) {
-            throw std::runtime_error("a particle array named \"" + name + "\" already exists");
-        }
-        return std::static_pointer_cast<particle_array>(ptr);
-    }
-
-    /**
-     * register a wrapper for accessing gpu data with a convenient host type
-     *
-     * @param name identifier for the particle data
-     * @param parent gpu particle array
-     * @return shared pointer to the particle array wrapper
-     */
-    template<typename host_type, typename gpu_type>
-    std::shared_ptr<particle_array>
-    register_host_data_wrapper(std::string const& name, std::shared_ptr<particle_array_gpu<gpu_type>> const& parent) {
-        auto ptr = particle_array::create_host_wrapper<host_type> (parent);
-        if (!data_.insert(std::make_pair(name, ptr)).second) {
-            throw std::runtime_error("a particle array named \"" + name + "\" already exists");
-        }
-        return std::static_pointer_cast<particle_array>(ptr);
-    }
-
-    /**
      * get data from named particle array with iterator
      *
      * @param name identifier of the particle array
@@ -195,7 +143,7 @@ public:
     template<typename T, typename iterator_type>
     iterator_type get_data(std::string const& name, iterator_type const& first) const
     {
-        return particle_array::cast<T>(get_array(name))->get_data(first);
+        return particle_array_host<T>::cast(get_host_array(name))->get_data(first);
     }
 
     /**
@@ -210,7 +158,7 @@ public:
     template <typename T, typename iterator_type>
     iterator_type set_data(const std::string &name, iterator_type const& first)
     {
-        return particle_array::cast<T>(get_array(name))->set_data(first);
+        return particle_array_host<T>::cast(get_host_array(name))->set_data(first);
     }
 
     /**
@@ -222,8 +170,8 @@ public:
      * throws an exception if the array does not exist or has an invalid type
      */
     template<typename T>
-    cache<typename particle_array_gpu<T>::vector_type> const &data(const std::string &name) const {
-        return particle_array::cast_gpu<T>(get_array(name))->data();
+    cache<typename particle_array_gpu<T>::gpu_vector_type> const &data(const std::string &name) const {
+        return particle_array_gpu<T>::cast(get_gpu_array(name))->data();
     }
 
     /**
@@ -235,8 +183,8 @@ public:
      * throws an exception if the array does not exist or has an invalid type
      */
     template<typename T>
-    cache<typename particle_array_gpu<T>::vector_type>& mutable_data(const std::string &name) {
-        return particle_array::cast_gpu<T>(get_array(name))->mutable_data();
+    cache<typename particle_array_gpu<T>::gpu_vector_type>& mutable_data(const std::string &name) {
+        return particle_array_gpu<T>::cast(get_gpu_array(name))->mutable_data();
     }
 
     /**
@@ -244,7 +192,7 @@ public:
      */
     cache<position_array_type> const& position() const
     {
-        return data<gpu_position_type>("g_position");
+        return data<gpu_position_type>("position");
     }
 
     /**
@@ -252,7 +200,7 @@ public:
      */
     cache<position_array_type>& position()
     {
-        return mutable_data<gpu_position_type>("g_position");
+        return mutable_data<gpu_position_type>("position");
     }
 
     /**
@@ -260,7 +208,7 @@ public:
      */
     cache<image_array_type> const& image() const
     {
-        return data<gpu_image_type>("g_image");
+        return data<gpu_image_type>("image");
     }
 
     /**
@@ -268,7 +216,7 @@ public:
      */
     cache<image_array_type>& image()
     {
-        return mutable_data<gpu_image_type>("g_image");
+        return mutable_data<gpu_image_type>("image");
     }
 
     /**
@@ -276,7 +224,7 @@ public:
      */
     cache<velocity_array_type> const& velocity() const
     {
-        return data<gpu_velocity_type>("g_velocity");
+        return data<gpu_velocity_type>("velocity");
     }
 
     /**
@@ -284,7 +232,7 @@ public:
      */
     cache<velocity_array_type>& velocity()
     {
-        return mutable_data<gpu_velocity_type>("g_velocity");
+        return mutable_data<gpu_velocity_type>("velocity");
     }
 
     /**
@@ -292,7 +240,7 @@ public:
      */
     cache<id_array_type> const& id() const
     {
-        return data<gpu_id_type>("g_id");
+        return id_;
     }
 
     /**
@@ -300,7 +248,7 @@ public:
      */
     cache<id_array_type>& id()
     {
-        return mutable_data<gpu_id_type>("g_id");
+        return id_;
     }
 
     /**
@@ -308,7 +256,7 @@ public:
      */
     cache<reverse_id_array_type> const& reverse_id() const
     {
-        return data<gpu_reverse_id_type>("g_reverse_id");
+        return reverse_id_;
     }
 
     /**
@@ -316,7 +264,7 @@ public:
      */
     cache<reverse_id_array_type>& reverse_id()
     {
-        return mutable_data<gpu_reverse_id_type>("g_reverse_id");
+        return reverse_id_;
     }
 
     /**
@@ -324,7 +272,7 @@ public:
      */
     cache<force_array_type> const& force()
     {
-        return data<gpu_force_type>("g_force");
+        return data<gpu_force_type>("force");
     }
 
     /**
@@ -332,7 +280,7 @@ public:
      */
     cache<force_array_type>& mutable_force()
     {
-        return mutable_data<gpu_force_type>("g_force");
+        return mutable_data<gpu_force_type>("force");
     }
 
     /**
@@ -340,7 +288,7 @@ public:
      */
     cache<en_pot_array_type> const& potential_energy()
     {
-        return data<gpu_en_pot_type>("g_en_pot");
+        return data<gpu_en_pot_type>("en_pot");
     }
 
     /**
@@ -348,7 +296,7 @@ public:
      */
     cache<en_pot_array_type>& mutable_potential_energy()
     {
-        return mutable_data<gpu_en_pot_type>("g_en_pot");
+        return mutable_data<gpu_en_pot_type>("en_pot");
     }
 
     /**
@@ -356,14 +304,14 @@ public:
      */
     cache<stress_pot_array_type> const& stress_pot()
     {
-        return data<gpu_stress_pot_type>("g_stress_pot");
+        return data<gpu_stress_pot_type>("stress_pot");
     }
     /**
      * Returns non-const reference to potential part of stress tensor.
      */
     cache<stress_pot_array_type>& mutable_stress_pot()
     {
-        return mutable_data<gpu_stress_pot_type>("g_stress_pot");
+        return mutable_data<gpu_stress_pot_type>("stress_pot");
     }
 
     /**
@@ -432,19 +380,35 @@ public:
         return on_append_force_.connect(slot);
     }
 
-    std::shared_ptr<particle_array> const& get_array(std::string const& name) const
+    std::shared_ptr<particle_array_host_base> const& get_host_array(std::string const& name) const
     {
-        auto it = data_.find(name);
-        if(it == data_.end()) {
-            throw std::invalid_argument("particle array \"" + name + "\" not registered");
+        auto it = host_data_.find(name);
+        if(it == host_data_.end()) {
+            throw std::invalid_argument("host particle array \"" + name + "\" not registered");
         }
         return it->second;
     }
 
-    bool has_array(std::string const& name) const
+    std::shared_ptr<particle_array_gpu_base> const& get_gpu_array(std::string const& name) const
     {
-        return data_.find(name) != data_.end();
+        auto it = gpu_data_.find(name);
+        if(it == gpu_data_.end()) {
+            throw std::invalid_argument("gpu particle array \"" + name + "\" not registered");
+        }
+        return it->second;
     }
+
+    bool has_host_array(std::string const& name) const
+    {
+        return host_data_.find(name) != host_data_.end();
+    }
+
+    bool has_gpu_array(std::string const& name) const
+    {
+        return gpu_data_.find(name) != gpu_data_.end();
+    }
+
+    void insert(std::shared_ptr<particle> const& new_particles);
 
     /**
      * Bind class to Lua.
@@ -461,8 +425,17 @@ private:
     /** grid and block dimensions for CUDA calls */
     cuda::config dim_;
 
-    /** map of the stored particle arrays */
-    std::unordered_map<std::string, std::shared_ptr<particle_array>> data_;
+    /** particle IDs */
+    cache<id_array_type> id_;
+
+    /** particle reverse IDs */
+    cache<reverse_id_array_type> reverse_id_;
+
+    /** map of the stored gpu particle arrays */
+    std::unordered_map<std::string, std::shared_ptr<particle_array_gpu_base>> gpu_data_;
+
+    /** map of the stored host particle arrays */
+    std::unordered_map<std::string, std::shared_ptr<particle_array_host_base>> host_data_;
 
     /** flag that the force has to be reset to zero prior to reading */
     bool force_zero_;
@@ -609,7 +582,14 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_id(particle_type const& particle, iterator_type const& first)
 {
-    return particle.template get_data<typename particle_type::id_type>("id", first);
+    auto const& g_id = read_cache(particle.id());
+    cuda::host::vector<unsigned int> id(particle.nparticle());
+    cuda::copy(g_id.begin(), g_id.begin() + particle.nparticle(), id.begin());
+    auto output = first;
+    for (size_t i = 0; i < particle.nparticle(); i++) {
+        *output++ = id[i];
+    }
+    return output;
 }
 
 /**
@@ -619,7 +599,14 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_id(particle_type& particle, iterator_type const& first)
 {
-    return particle.template set_data<typename particle_type::id_type>("id", first);
+    cuda::host::vector<unsigned int> id(particle.nparticle());
+    auto input = first;
+    for (size_t i = 0; i < particle.nparticle(); i++) {
+        id[i] = *input++;
+    }
+    auto output = make_cache_mutable(particle.id());
+    cuda::copy(id.begin(), id.end(), output->begin());
+    return input;
 }
 
 /**
@@ -629,7 +616,14 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_reverse_id(particle_type const& particle, iterator_type const& first)
 {
-    return particle.template get_data<typename particle_type::reverse_id_type>("reverse_id", first);
+    auto const& g_reverse_id = read_cache(particle.reverse_id());
+    cuda::host::vector<unsigned int> reverse_id(particle.nparticle());
+    cuda::copy(g_reverse_id.begin(), g_reverse_id.begin() + particle.nparticle(), reverse_id.begin());
+    auto output = first;
+    for (size_t i = 0; i < particle.nparticle(); i++) {
+        *output++ = reverse_id[i];
+    }
+    return output;
 }
 
 /**
@@ -639,7 +633,14 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_reverse_id(particle_type& particle, iterator_type const& first)
 {
-    return particle.template set_data<typename particle_type::reverse_id_type>("reverse_id", first);
+    cuda::host::vector<unsigned int> reverse_id(particle.nparticle());
+    auto input = first;
+    for (size_t i = 0; i < particle.nparticle(); i++) {
+        reverse_id[i] = *input++;
+    }
+    auto output = make_cache_mutable(particle.reverse_id());
+    cuda::copy(reverse_id.begin(), reverse_id.end(), output->begin());
+    return input;
 }
 
 /**

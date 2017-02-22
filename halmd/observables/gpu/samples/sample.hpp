@@ -47,7 +47,11 @@ class sample
 {
 public:
     static constexpr int dimension = dimension_;
-    static constexpr bool gpu = true;
+    static constexpr bool gpu_sample = true;
+
+    virtual bool gpu() const {
+        return true;
+    }
 
     typedef data_type_ data_type;
     typedef cuda::vector<data_type> array_type;
@@ -56,7 +60,7 @@ public:
 
     virtual std::type_info const& type() const
     {
-        return typeid(gpu_sample<data_type>);
+        return typeid(data_type);
     }
 
     array_type const& data() const

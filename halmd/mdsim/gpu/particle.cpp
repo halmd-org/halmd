@@ -59,6 +59,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , nspecies_(std::max(nspecies, 1u))
   // FIXME default CUDA kernel execution dimensions
   , dim_(device::validate(cuda::config(array_size_/128, 128)))
+  , id_(array_size_)
+  , reverse_id_(array_size_)
   // enable auxiliary variables by default to allow sampling of initial state
   , force_zero_(true)
   , force_dirty_(true)
@@ -81,31 +83,41 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
       fixed_vector<float, 3> (0.0f), 1.0f
     };
     // register particle arrays
-    auto position_array = register_data<gpu_position_type>("g_position", position_init_value, position_ghost_init_value);
-    auto image_array = register_data<gpu_image_type>("g_image", zero_init, zero_init);
-    auto velocity_array = register_data<gpu_velocity_type>("g_velocity", velocity_init_value, velocity_init_value);
-    auto id_array = register_data<gpu_id_type>("g_id", iota_init, iota_init);
-    auto reverse_id_array = register_data<gpu_reverse_id_type>("g_reverse_id", iota_init, iota_init);
-    auto force_array = register_data<gpu_force_type>("g_force", zero_init, zero_init, [this]() { this->update_force_(); });
-    auto en_pot_array = register_data<gpu_en_pot_type>("g_en_pot", zero_init, zero_init, [this]() { this->update_force_(true); });
-    auto stress_pot_array = register_data<gpu_stress_pot_type>("g_stress_pot", zero_init, zero_init, [this]() { this->update_force_(true); });
+    auto gpu_position_array = gpu_data_["position"] = std::make_shared<particle_array_gpu<gpu_position_type>>
+            (dim_, nparticle_, array_size_, position_init_value, position_ghost_init_value);
+    auto gpu_image_array = gpu_data_["image"] = std::make_shared<particle_array_gpu<gpu_image_type>>
+            (dim_, nparticle_, array_size_);
+    auto gpu_velocity_array = gpu_data_["velocity"] = std::make_shared<particle_array_gpu<gpu_velocity_type>>
+            (dim_, nparticle_, array_size_, velocity_init_value, velocity_init_value);
+    auto gpu_force_array = gpu_data_["force"] = std::make_shared<particle_array_gpu<gpu_force_type>>
+            (dim_, nparticle_, array_size_, [this]() { this->update_force_(); });
+    auto gpu_en_pot_array = gpu_data_["en_pot"] = std::make_shared<particle_array_gpu<gpu_en_pot_type>>
+            (dim_, nparticle_, array_size_, [this]() { this->update_force_(); });
+    // TODO: automatically handle the larger array size for example with an explicit specialization for a stress_tensor_wrapper type
+    auto gpu_stress_pot_array = gpu_data_["stress_pot"] = std::make_shared<particle_array_gpu<gpu_stress_pot_type>>
+            (dim_, nparticle_, array_size_ * stress_pot_type::static_size, [this]() { this->update_force_(); });
 
     // register host data wrappers for packed data
-    register_packed_data_wrapper<tuple<position_type, species_type>, 0>("position", position_array);
-    register_packed_data_wrapper<tuple<position_type, species_type>, 1>("species", position_array);
-    register_packed_data_wrapper<tuple<velocity_type, mass_type>, 0>("velocity", velocity_array);
-    register_packed_data_wrapper<tuple<velocity_type, mass_type>, 1>("mass", velocity_array);
+    host_data_["position"] = std::make_shared<particle_array_host<position_type>>(gpu_position_array, 0, sizeof(float4), true);
+    host_data_["species"] = std::make_shared<particle_array_host<species_type>>(gpu_position_array, sizeof(float) * 3, sizeof(float) * 4, true);
+    host_data_["velocity"] = std::make_shared<particle_array_host<velocity_type>>(gpu_velocity_array, 0, sizeof(float4), true);
+    host_data_["mass"] = std::make_shared<particle_array_host<mass_type>>(gpu_velocity_array, sizeof(float) * 3, sizeof(float) * 4, true);
 
     // register host wrappers for other data
-    register_host_data_wrapper<force_type>("force", force_array);
-    register_host_data_wrapper<image_type>("image", image_array);
-    register_host_data_wrapper<id_type>("id", id_array);
-    register_host_data_wrapper<reverse_id_type>("reverse_id", reverse_id_array);
-    register_host_data_wrapper<en_pot_type>("en_pot", en_pot_array);
-    register_host_data_wrapper<stress_pot_type>("stress_pot", stress_pot_array);
+    host_data_["force"] = std::make_shared<particle_array_host<force_type>>(gpu_force_array, 0, sizeof(gpu_force_type));
+    host_data_["image"] = std::make_shared<particle_array_host<image_type>>(gpu_image_array, 0, sizeof(gpu_image_type));
+    host_data_["en_pot"] = std::make_shared<particle_array_host<en_pot_type>>(gpu_en_pot_array, 0, sizeof(gpu_en_pot_type));
+    host_data_["stress_pot"] = std::make_shared<particle_array_host<stress_pot_type>>(gpu_stress_pot_array, 0, sizeof(gpu_stress_pot_type));
 
     // create alias for potential energy
-    data_["potential_energy"] = data_["en_pot"];
+    host_data_["potential_energy"] = host_data_["en_pot"];
+
+    {
+        auto id = make_cache_mutable(id_);
+        auto reverse_id = make_cache_mutable(reverse_id_);
+        iota(id->begin(), id->end(), 0);
+        iota(reverse_id->begin(), reverse_id->end(), 0);
+    }
 
     LOG_DEBUG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim_.threads_per_block());
@@ -141,11 +153,9 @@ void particle<dimension, float_type>::aux_enable()
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const& g_index)
 {
-    auto g_position = make_cache_mutable(mutable_data<gpu_position_type>("g_position"));
-    auto g_image = make_cache_mutable(mutable_data<gpu_image_type>("g_image"));
-    auto g_velocity = make_cache_mutable(mutable_data<gpu_velocity_type>("g_velocity"));
-    auto g_id = make_cache_mutable(mutable_data<gpu_id_type>("g_id"));
-    auto g_reverse_id = make_cache_mutable(mutable_data<gpu_reverse_id_type>("g_reverse_id"));
+    auto g_position = make_cache_mutable(mutable_data<gpu_position_type>("position"));
+    auto g_image = make_cache_mutable(mutable_data<gpu_image_type>("image"));
+    auto g_velocity = make_cache_mutable(mutable_data<gpu_velocity_type>("velocity"));
 
     scoped_timer_type timer(runtime_.rearrange);
 
@@ -158,16 +168,18 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     get_particle_kernel<dimension, float_type>().r.bind(*g_position);
     get_particle_kernel<dimension, float_type>().image.bind(*g_image);
     get_particle_kernel<dimension, float_type>().v.bind(*g_velocity);
-    get_particle_kernel<dimension, float_type>().id.bind(*g_id);
+    get_particle_kernel<dimension, float_type>().id.bind(read_cache(id_));
     get_particle_kernel<dimension, float_type>().rearrange(g_index, position, image, velocity, id, nparticle_);
 
     position.swap(*g_position);
     image.swap(*g_image);
     velocity.swap(*g_velocity);
-    cuda::copy(id.begin(), id.begin() + id.capacity(), g_id->begin());
+    cuda::copy(id.begin(), id.begin() + id.capacity(), make_cache_mutable(id_)->begin());
 
-    iota(g_reverse_id->begin(), g_reverse_id->begin() + g_reverse_id->capacity(), 0);
-    radix_sort(id.begin(), id.begin() + nparticle_, g_reverse_id->begin());
+    auto reverse_id = make_cache_mutable(reverse_id_);
+
+    iota(reverse_id->begin(), reverse_id->begin() + reverse_id->capacity(), 0);
+    radix_sort(id.begin(), id.begin() + nparticle_, reverse_id->begin());
 }
 
 template <int dimension, typename float_type>
@@ -195,6 +207,12 @@ void particle<dimension, float_type>::update_force_(bool with_aux)
     on_append_force_();
 }
 
+template<int dimension, typename float_type>
+void particle<dimension, float_type>::insert(std::shared_ptr<particle> const &new_particles)
+{
+    // TODO
+}
+
 template <int dimension, typename float_type>
 static int wrap_dimension(particle<dimension, float_type> const&)
 {
@@ -204,13 +222,13 @@ static int wrap_dimension(particle<dimension, float_type> const&)
 template <typename particle_type>
 static luaponte::object wrap_get(particle_type const& particle, lua_State* L, std::string const& name)
 {
-    return particle.get_array(name)->get_lua(L);
+    return particle.get_host_array(name)->get_lua(L);
 }
 
 template <typename particle_type>
 static void wrap_set(particle_type const& particle, std::string const& name, luaponte::object object)
 {
-    particle.get_array(name)->set_lua(object);
+    particle.get_host_array(name)->set_lua(object);
 }
 
 template <typename T>
@@ -252,6 +270,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .property("nparticle", &particle::nparticle)
                     .property("array_size", &particle::array_size)
                     .property("nspecies", &particle::nspecies)
+                    .def("insert", &particle::insert)
                     .def("get", &wrap_get<particle>)
                     .def("set", &wrap_set<particle>)
                     .def("shift_velocity", &shift_velocity<particle>)

@@ -137,11 +137,17 @@ dsfloat_particle_initialize_wrapper<N> const dsfloat_particle_initialize_wrapper
 };
 
 template class particle_initialize_wrapper<unsigned int>;
+template class particle_initialize_wrapper<uint2>;
+template class particle_initialize_wrapper<uint4>;
+template class particle_initialize_wrapper<int>;
+template class particle_initialize_wrapper<int2>;
+template class particle_initialize_wrapper<int4>;
 template class particle_initialize_wrapper<float>;
 template class particle_initialize_wrapper<float2>;
 template class particle_initialize_wrapper<float4>;
-template class dsfloat_particle_initialize_wrapper<4>;
+template class dsfloat_particle_initialize_wrapper<1>;
 template class dsfloat_particle_initialize_wrapper<2>;
+template class dsfloat_particle_initialize_wrapper<4>;
 
 } // namespace gpu
 } // namespace mdsim

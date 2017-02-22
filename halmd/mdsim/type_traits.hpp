@@ -44,22 +44,27 @@ namespace gpu {
 template <int N, typename value_type>
 struct basic_vector_type;
 
+template <> struct basic_vector_type<1, float> { typedef float type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 template <> struct basic_vector_type<2, float> { typedef float2 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 template <> struct basic_vector_type<3, float> { typedef float3 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 template <> struct basic_vector_type<4, float> { typedef float4 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 
+template <> struct basic_vector_type<1, dsfloat> { typedef dsfloat type; typedef dsfloat_ptr<float> ptr_type; typedef dsfloat_const_ptr<float> const_ptr_type; };
 template <> struct basic_vector_type<2, dsfloat> { typedef fixed_vector<dsfloat, 2> type; typedef dsfloat_ptr<float2> ptr_type; typedef dsfloat_const_ptr<float2> const_ptr_type; };
 template <> struct basic_vector_type<3, dsfloat> { typedef fixed_vector<dsfloat, 3> type; typedef dsfloat_ptr<float3> ptr_type; typedef dsfloat_const_ptr<float3> const_ptr_type; };
 template <> struct basic_vector_type<4, dsfloat> { typedef fixed_vector<dsfloat, 4> type; typedef dsfloat_ptr<float4> ptr_type; typedef dsfloat_const_ptr<float4> const_ptr_type; };
 
+// template <> struct basic_vector_type<1, double> { typedef double type; typedef type const* const_ptr_type; };
 // template <> struct basic_vector_type<2, double> { typedef double2 type; typedef type const* const_ptr_type; };
 // template <> struct basic_vector_type<3, double> { typedef double3 type; typedef type const* const_ptr_type; };
 // template <> struct basic_vector_type<4, double> { typedef double4 type; typedef type const* const_ptr_type; };
 
+template <> struct basic_vector_type<1, int> { typedef int type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 template <> struct basic_vector_type<2, int> { typedef int2 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 template <> struct basic_vector_type<3, int> { typedef int3 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 template <> struct basic_vector_type<4, int> { typedef int4 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 
+template <> struct basic_vector_type<1, unsigned int> { typedef unsigned int type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 template <> struct basic_vector_type<2, unsigned int> { typedef uint2 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 template <> struct basic_vector_type<3, unsigned int> { typedef uint3 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
 template <> struct basic_vector_type<4, unsigned int> { typedef uint4 type; typedef type* ptr_type; typedef type const* const_ptr_type; };
@@ -127,6 +132,19 @@ struct type_traits
 
 #ifdef HALMD_WITH_GPU
     typedef detail::gpu::type_traits<dimension, value_type> gpu;
+#endif
+};
+
+template <typename value_type>
+struct type_traits<1, value_type>
+{
+    typedef value_type vector_type;
+    // diagonal elements are the first 'dimension' elements
+    // followed by the off-diagonals T_12, T_13, ..., T_23, ...
+    typedef value_type stress_tensor_type;
+
+#ifdef HALMD_WITH_GPU
+    typedef detail::gpu::type_traits<1, value_type> gpu;
 #endif
 };
 

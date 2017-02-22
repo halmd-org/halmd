@@ -62,6 +62,11 @@ struct sample_ptr_type<fixed_vector<dsfloat, dimension> >
     typedef typename mdsim::type_traits<dimension, dsfloat>::gpu::ptr_type ptr_type;
 };
 
+template<>
+struct sample_ptr_type<dsfloat> : sample_ptr_type<fixed_vector<dsfloat, 1> >
+{
+};
+
 } // namespace detail
 
 template<typename input_data_type, typename sample_data_type = input_data_type>

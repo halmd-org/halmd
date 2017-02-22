@@ -80,8 +80,8 @@ struct gpu_samples {
     typedef typename halmd::observables::gpu::samples::sample<modules_type::dimension, float4> gpu_sample_type;
 
     gpu_samples(typename modules_type::phase_space_type&& phase_space) {
-        auto g_position = phase_space.template acquire<gpu_sample_type>("g_position");
-        auto g_velocity = phase_space.template acquire<gpu_sample_type>("g_velocity");
+        auto g_position = phase_space.template acquire<gpu_sample_type>("position");
+        auto g_velocity = phase_space.template acquire<gpu_sample_type>("velocity");
 
         cuda::host::vector<float4> h_buf(g_position->data().size());
         position = std::make_shared<position_sample_type>(g_position->data().size());

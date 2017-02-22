@@ -37,18 +37,34 @@ namespace observables {
 namespace gpu {
 
 /**
- * phase space sampler abstraction
+ * phase space sampler abstraction (gpu)
  *
  * abstract base class defining the interface for the actual sampling implementation
- * this interface is implemented for each data type and for GPU and CPU samples
+ * this interface is implemented for each data type
  */
-class phase_space_sampler
+class phase_space_sampler_gpu
 {
 public:
     virtual std::shared_ptr<sample_base> acquire(void) = 0;
     virtual void set(std::shared_ptr<sample_base const> sample) = 0;
-    virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) = 0;
-    virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) = 0;
+    virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler_gpu> self) = 0;
+    virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler_gpu> self) = 0;
+    virtual void set_lua(luaponte::object sample) = 0;
+};
+
+/**
+ * phase space sampler abstraction (host)
+ *
+ * abstract base class defining the interface for the actual sampling implementation
+ * this interface is implemented for each data type
+ */
+class phase_space_sampler_host
+{
+public:
+    virtual std::shared_ptr<sample_base> acquire(void) = 0;
+    virtual void set(std::shared_ptr<sample_base const> sample) = 0;
+    virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler_host> self) = 0;
+    virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler_host> self) = 0;
     virtual void set_lua(luaponte::object sample) = 0;
 };
 
@@ -77,7 +93,11 @@ public:
     );
 
     void set(std::string const& name, std::shared_ptr<sample_base const> sample) {
-        get_sampler(name)->set(sample);
+        if (sample->gpu()) {
+            get_sampler_gpu(name)->set(sample);
+        } else {
+            get_sampler_host(name)->set(sample);
+        }
     }
 
     /**
@@ -89,14 +109,23 @@ public:
     template<typename sample_type>
     std::shared_ptr<sample_type const> acquire(std::string const& name)
     {
-        auto sample = get_sampler(name)->acquire();
-        if (sample->type() != (sample_type::gpu ? typeid(gpu_sample<typename sample_type::data_type>) : typeid(typename sample_type::data_type))) {
-            throw std::runtime_error("invalid sample data type");
+        if (sample_type::gpu_sample) {
+            auto sample = get_sampler_gpu(name)->acquire();
+            if (sample->type() != typeid(typename sample_type::data_type)) {
+                throw std::runtime_error("invalid sample data type");
+            }
+            return std::static_pointer_cast<sample_type const>(sample);
+        } else {
+            auto sample = get_sampler_host(name)->acquire();
+            if (sample->type() != typeid(typename sample_type::data_type)) {
+                throw std::runtime_error("invalid sample data type");
+            }
+            return std::static_pointer_cast<sample_type const>(sample);
         }
-        return std::static_pointer_cast<sample_type const>(sample);
     }
 
-    std::shared_ptr<phase_space_sampler> get_sampler(std::string const& name);
+    std::shared_ptr<phase_space_sampler_gpu> get_sampler_gpu(std::string const& name);
+    std::shared_ptr<phase_space_sampler_host> get_sampler_host(std::string const& name);
 
     /**
      * Bind class to Lua.
@@ -114,11 +143,15 @@ private:
     std::shared_ptr<logger> logger_;
 
     /** Associative container mapping identifiers of particle arrays to
-        already created sampler implementations */
-    std::unordered_map<std::string, std::shared_ptr<phase_space_sampler>> samplers_;
+        already created gpu sampler implementations */
+    std::unordered_map<std::string, std::shared_ptr<phase_space_sampler_gpu>> gpu_samplers_;
+
+    /** Associative container mapping identifiers of particle arrays to
+    already created gpu sampler implementations */
+    std::unordered_map<std::string, std::shared_ptr<phase_space_sampler_host>> host_samplers_;
 
     /** Associative container mapping GPU particle arrays to their host cache. */
-    std::map<mdsim::gpu::particle_array*, std::shared_ptr<phase_space_host_cache>> host_cache_;
+    std::map<mdsim::gpu::particle_array_gpu_base*, std::shared_ptr<phase_space_host_cache>> host_cache_;
 
     typedef halmd::utility::profiler::accumulator_type accumulator_type;
     typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
