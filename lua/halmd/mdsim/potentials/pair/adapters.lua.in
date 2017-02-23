@@ -118,6 +118,9 @@ end
 --   import numpy
 --   import matplotlib
 --   from matplotlib import pyplot as plot
+--   import warnings
+--
+--   warnings.filterwarnings("ignore")
 --
 --   matplotlib.rc('figure', figsize=(6, 5))
 --   matplotlib.rc('text', usetex=True)
