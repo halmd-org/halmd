@@ -272,8 +272,20 @@ HALMD_TEST_INIT( binning )
     test_suite* ts_gpu_two = BOOST_TEST_SUITE( "two" );
     ts_gpu->add(ts_gpu_two);
 
+    test_suite* ts_gpu_two_float = BOOST_TEST_SUITE( "float" );
+    ts_gpu_two->add(ts_gpu_two_float);
+
+    test_suite* ts_gpu_two_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
+    ts_gpu_two->add(ts_gpu_two_dsfloat);
+
     test_suite* ts_gpu_three = BOOST_TEST_SUITE( "three" );
     ts_gpu->add(ts_gpu_three);
+
+    test_suite* ts_gpu_three_float = BOOST_TEST_SUITE( "float" );
+    ts_gpu_three->add(ts_gpu_three_float);
+
+    test_suite* ts_gpu_three_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
+    ts_gpu_three->add(ts_gpu_three_dsfloat);
 #endif
 
     // lower bound on edge length of cells
@@ -322,7 +334,7 @@ HALMD_TEST_INIT( binning )
                       , compression
                     );
                 };
-                ts_gpu_two->add(BOOST_TEST_CASE( non_uniform_density ));
+                ts_gpu_two_float->add(BOOST_TEST_CASE( non_uniform_density ));
             }
             {
                 typedef halmd::mdsim::gpu::binning<3, float> binning_type;
@@ -334,7 +346,7 @@ HALMD_TEST_INIT( binning )
                       , compression
                     );
                 };
-                ts_gpu_three->add(BOOST_TEST_CASE( non_uniform_density ));
+                ts_gpu_three_float->add(BOOST_TEST_CASE( non_uniform_density ));
             }
             {
                 typedef halmd::mdsim::gpu::binning<2, halmd::dsfloat> binning_type;
@@ -346,7 +358,7 @@ HALMD_TEST_INIT( binning )
                             , compression
                     );
                 };
-                ts_gpu_two->add(BOOST_TEST_CASE( non_uniform_density ));
+                ts_gpu_two_dsfloat->add(BOOST_TEST_CASE( non_uniform_density ));
             }
             {
                 typedef halmd::mdsim::gpu::binning<3, halmd::dsfloat> binning_type;
@@ -358,7 +370,7 @@ HALMD_TEST_INIT( binning )
                             , compression
                     );
                 };
-                ts_gpu_three->add(BOOST_TEST_CASE( non_uniform_density ));
+                ts_gpu_three_dsfloat->add(BOOST_TEST_CASE( non_uniform_density ));
             }
 #endif
         }

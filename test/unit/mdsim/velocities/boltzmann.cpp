@@ -218,12 +218,16 @@ struct gpu_modules
     typedef gpu_tolerance<float_type> tolerance;
 };
 
-BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_2d, halmd::device ) {
+BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_float_2d, halmd::device ) {
     boltzmann<gpu_modules<2, float> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_dsfloat_2d, halmd::device ) {
     boltzmann<gpu_modules<2, halmd::dsfloat> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_3d, halmd::device ) {
+BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_float_3d, halmd::device ) {
     boltzmann<gpu_modules<3, float> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_dsfloat_3d, halmd::device ) {
     boltzmann<gpu_modules<3, halmd::dsfloat> >().test();
 }
 #endif // HALMD_WITH_GPU

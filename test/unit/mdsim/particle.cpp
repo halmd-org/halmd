@@ -822,8 +822,21 @@ HALMD_TEST_INIT( particle )
     test_suite* ts_gpu_two = BOOST_TEST_SUITE( "two" );
     ts_gpu->add(ts_gpu_two);
 
+    test_suite* ts_gpu_two_float = BOOST_TEST_SUITE( "float" );
+    ts_gpu_two->add(ts_gpu_two_float);
+
+    test_suite* ts_gpu_two_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
+    ts_gpu_two->add(ts_gpu_two_dsfloat);
+
     test_suite* ts_gpu_three = BOOST_TEST_SUITE( "three" );
     ts_gpu->add(ts_gpu_three);
+
+    test_suite* ts_gpu_three_float = BOOST_TEST_SUITE( "float" );
+    ts_gpu_three->add(ts_gpu_three_float);
+
+    test_suite* ts_gpu_three_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
+    ts_gpu_three->add(ts_gpu_three_dsfloat);
+
 #endif
 
     unsigned int const nspecies = 1;
@@ -837,10 +850,10 @@ HALMD_TEST_INIT( particle )
         test_suite_host<halmd::mdsim::host::particle<2, double> >(nparticle, nspecies, ts_host_two);
 #endif
 #ifdef HALMD_WITH_GPU
-        test_suite_gpu<halmd::mdsim::gpu::particle<3, float> >(nparticle, nspecies, ts_gpu_three);
-        test_suite_gpu<halmd::mdsim::gpu::particle<2, float> >(nparticle, nspecies, ts_gpu_two);
-        test_suite_gpu<halmd::mdsim::gpu::particle<3, halmd::dsfloat> >(nparticle, nspecies, ts_gpu_three);
-        test_suite_gpu<halmd::mdsim::gpu::particle<2, halmd::dsfloat> >(nparticle, nspecies, ts_gpu_two);
+        test_suite_gpu<halmd::mdsim::gpu::particle<3, float> >(nparticle, nspecies, ts_gpu_three_float);
+        test_suite_gpu<halmd::mdsim::gpu::particle<2, float> >(nparticle, nspecies, ts_gpu_two_float);
+        test_suite_gpu<halmd::mdsim::gpu::particle<3, halmd::dsfloat> >(nparticle, nspecies, ts_gpu_three_dsfloat);
+        test_suite_gpu<halmd::mdsim::gpu::particle<2, halmd::dsfloat> >(nparticle, nspecies, ts_gpu_two_dsfloat);
 #endif
     }
 }

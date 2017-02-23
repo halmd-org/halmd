@@ -418,12 +418,16 @@ struct gpu_modules
     typedef gpu_en_tolerance<float_type> en_tolerance;
 };
 
-BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_2d, device ) {
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_float_2d, device ) {
     verlet_nvt_hoover<gpu_modules<2, float> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_dsfloat_2d, device ) {
     verlet_nvt_hoover<gpu_modules<2, halmd::dsfloat> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_float_3d, device ) {
     verlet_nvt_hoover<gpu_modules<3, float> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_dsfloat_3d, device ) {
     verlet_nvt_hoover<gpu_modules<3, halmd::dsfloat> >().test();
 }
 #endif // HALMD_WITH_GPU
