@@ -51,7 +51,6 @@ __global__ void integrate(
 
     // kernel execution parameters
     unsigned int const thread = GTID;
-    unsigned int const nthread = GTDIM;
 
     // read position, species, velocity, mass, image, force from global memory
     vector_type r, v;
@@ -88,7 +87,6 @@ __global__ void finalize(
 {
     // kernel execution parameters
     unsigned int const thread = GTID;
-    unsigned int const nthread = GTDIM;
 
     // read velocity, mass, force from global memory
     fixed_vector<float_type, dimension> v;
@@ -111,7 +109,6 @@ __global__ void rescale(ptr_type g_velocity, float_type scale)
 {
     // kernel execution parameters
     unsigned int const thread = GTID;
-    unsigned int const nthread = GTDIM;
 
     // read velocity, mass from global memory
     fixed_vector<float_type, dimension> v;

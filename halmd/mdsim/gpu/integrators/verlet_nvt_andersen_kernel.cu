@@ -59,7 +59,6 @@ __global__ void integrate(
 
     // kernel execution parameters
     unsigned int const thread = GTID;
-    unsigned int const nthread = GTDIM;
 
     // read position, species, velocity, mass, image, force from global memory
     vector_type r, v;
