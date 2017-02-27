@@ -340,7 +340,7 @@ public:
      */
     cache<en_pot_array_type> const& potential_energy()
     {
-        return data<gpu_en_pot_type>("g_en_pot");
+        return data<gpu_en_pot_type>("g_potential_energy");
     }
 
     /**
@@ -348,7 +348,7 @@ public:
      */
     cache<en_pot_array_type>& mutable_potential_energy()
     {
-        return mutable_data<gpu_en_pot_type>("g_en_pot");
+        return mutable_data<gpu_en_pot_type>("g_potential_energy");
     }
 
     /**
@@ -356,14 +356,14 @@ public:
      */
     cache<stress_pot_array_type> const& stress_pot()
     {
-        return data<gpu_stress_pot_type>("g_stress_pot");
+        return data<gpu_stress_pot_type>("g_potential_stress_tensor");
     }
     /**
      * Returns non-const reference to potential part of stress tensor.
      */
     cache<stress_pot_array_type>& mutable_stress_pot()
     {
-        return mutable_data<gpu_stress_pot_type>("g_stress_pot");
+        return mutable_data<gpu_stress_pot_type>("g_potential_stress_tensor");
     }
 
     /**
@@ -659,7 +659,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_potential_energy(particle_type& particle, iterator_type const& first)
 {
-    return particle.template get_data<typename particle_type::en_pot_type>("en_pot", first);
+    return particle.template get_data<typename particle_type::en_pot_type>("potential_energy", first);
 }
 
 /**
@@ -669,7 +669,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_stress_pot(particle_type& particle, iterator_type const& first)
 {
-    return particle.template get_data<typename particle_type::stress_pot_type>("stress_pot", first);
+    return particle.template get_data<typename particle_type::stress_pot_type>("potential_stress_tensor", first);
 }
 
 } // namespace gpu

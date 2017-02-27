@@ -63,12 +63,9 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     auto species = make_cache_mutable(register_data<species_type>("species")->mutable_data());
     auto mass = make_cache_mutable(register_data<mass_type>("mass")->mutable_data());
     auto force = make_cache_mutable(register_data<force_type>("force", [this]() { this->update_force_(); })->mutable_data());
-    auto en_pot = make_cache_mutable(register_data<en_pot_type>("en_pot", [this]() { this->update_force_(true); })->mutable_data());
+    auto en_pot = make_cache_mutable(register_data<en_pot_type>("potential_energy", [this]() { this->update_force_(true); })->mutable_data());
     auto stress_pot = make_cache_mutable(
-            register_data<stress_pot_type>("stress_pot", [this]() { this->update_force_(true); })->mutable_data());
-
-    // potential energy alias
-    data_["potential_energy"] = data_["en_pot"];
+            register_data<stress_pot_type>("potential_stress_tensor", [this]() { this->update_force_(true); })->mutable_data());
 
     // initialize particle arrays
     std::fill(position->begin(), position->end(), 0);

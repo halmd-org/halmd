@@ -72,8 +72,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     auto id_array = register_data<gpu_id_type>("g_id");
     auto reverse_id_array = register_data<gpu_reverse_id_type>("g_reverse_id");
     auto force_array = register_data<gpu_force_type>("g_force", [this]() { this->update_force_(); });
-    auto en_pot_array = register_data<gpu_en_pot_type>("g_en_pot", [this]() { this->update_force_(true); });
-    auto stress_pot_array = register_data<gpu_stress_pot_type>("g_stress_pot", [this]() { this->update_force_(true); });
+    auto en_pot_array = register_data<gpu_en_pot_type>("g_potential_energy", [this]() { this->update_force_(true); });
+    auto stress_pot_array = register_data<gpu_stress_pot_type>("g_potential_stress_tensor", [this]() { this->update_force_(true); });
 
     // register host data wrappers for packed data
     register_packed_data_wrapper<tuple<position_type, species_type>, 0>("position", position_array);
@@ -86,11 +86,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     register_host_data_wrapper<image_type>("image", image_array);
     register_host_data_wrapper<id_type>("id", id_array);
     register_host_data_wrapper<reverse_id_type>("reverse_id", reverse_id_array);
-    register_host_data_wrapper<en_pot_type>("en_pot", en_pot_array);
-    register_host_data_wrapper<stress_pot_type>("stress_pot", stress_pot_array);
-
-    // create alias for potential energy
-    data_["potential_energy"] = data_["en_pot"];
+    register_host_data_wrapper<en_pot_type>("potential_energy", en_pot_array);
+    register_host_data_wrapper<stress_pot_type>("potential_stress_tensor", stress_pot_array);
 
     // get access to the underlying cuda vectors for initialization
     auto g_position = make_cache_mutable(position_array->mutable_data());
