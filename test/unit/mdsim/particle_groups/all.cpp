@@ -195,37 +195,33 @@ struct test_suite_gpu
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::particle_group particle_group_type;
     typedef halmd::mdsim::gpu::particle_groups::all<particle_type> all_type;
-    static void add_test(boost::unit_test::test_suite *suite
-                       , unsigned int nparticle
-                       , unsigned int nspecies
-                       , unsigned int repeat);
+    static void add_test(
+        boost::unit_test::test_suite *suite
+      , unsigned int nparticle
+      , unsigned int nspecies
+      , unsigned int repeat
+    );
 };
 
 template<int dimension, typename float_type>
-void test_suite_gpu<dimension, float_type>::add_test(boost::unit_test::test_suite *suite
-        , unsigned int nparticle
-        , unsigned int nspecies
-        , unsigned int repeat)
+void test_suite_gpu<dimension, float_type>::add_test(
+    boost::unit_test::test_suite *suite
+  , unsigned int nparticle
+  , unsigned int nspecies
+  , unsigned int repeat
+)
 {
     typedef test_suite_gpu<dimension, float_type> test_suite_type;
 
     auto ordered = [=]() {
         set_cuda_device device;
-        test_ordered<test_suite_type>(
-                nparticle
-                , nspecies
-                , repeat
-        );
+        test_ordered<test_suite_type>(nparticle, nspecies, repeat);
     };
     suite->add(BOOST_TEST_CASE( ordered ));
 
     auto unordered = [=]() {
         set_cuda_device device;
-        test_unordered<test_suite_type>(
-                nparticle
-                , nspecies
-                , repeat
-        );
+        test_unordered<test_suite_type>(nparticle, nspecies, repeat);
     };
     suite->add(BOOST_TEST_CASE( unordered ));
 }
@@ -270,20 +266,12 @@ HALMD_TEST_INIT( all )
             typedef test_suite_host<2, double> test_suite_type;
 #endif
             auto ordered = [=]() {
-                test_ordered<test_suite_type>(
-                    nparticle
-                  , nspecies
-                  , repeat
-                );
+                test_ordered<test_suite_type>(nparticle, nspecies, repeat);
             };
             ts_host_two->add(BOOST_TEST_CASE( ordered ));
 
             auto unordered = [=]() {
-                test_unordered<test_suite_type>(
-                    nparticle
-                  , nspecies
-                  , repeat
-                );
+                test_unordered<test_suite_type>(nparticle, nspecies, repeat);
             };
             ts_host_two->add(BOOST_TEST_CASE( unordered ));
         }
@@ -294,20 +282,12 @@ HALMD_TEST_INIT( all )
             typedef test_suite_host<3, double> test_suite_type;
 #endif
             auto ordered = [=]() {
-                test_ordered<test_suite_type>(
-                    nparticle
-                  , nspecies
-                  , repeat
-                );
+                test_ordered<test_suite_type>(nparticle, nspecies, repeat);
             };
             ts_host_three->add(BOOST_TEST_CASE( ordered ));
 
             auto unordered = [=]() {
-                test_unordered<test_suite_type>(
-                    nparticle
-                  , nspecies
-                  , repeat
-                );
+                test_unordered<test_suite_type>(nparticle, nspecies, repeat);
             };
             ts_host_three->add(BOOST_TEST_CASE( unordered ));
         }

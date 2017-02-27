@@ -79,37 +79,38 @@ static void test_dsfloat_performance() {
 
 static void test_dsfloat_overload()
 {
-    auto dim = cuda::config(256/128, 128);
+    unsigned int const memsize = 256;
+    auto dim = cuda::config(memsize / 128, 128);
 
     BOOST_TEST_MESSAGE( "dsfloat overload test" );
     {
-        cuda::host::vector<halmd::fixed_vector<float,3>> result1 (256);
-        cuda::host::vector<halmd::fixed_vector<float,3>> result2 (256);
+        cuda::host::vector<halmd::fixed_vector<float, 3>> result1(memsize);
+        cuda::host::vector<halmd::fixed_vector<float, 3>> result2(memsize);
 
-        halmd::fixed_vector<float,3> float_increment (0.1f);
-        halmd::fixed_vector<halmd::dsfloat,3> dsfloat_increment (0.1);
+        halmd::fixed_vector<float, 3> float_increment(0.1f);
+        halmd::fixed_vector<halmd::dsfloat, 3> dsfloat_increment(0.1);
 
-        cuda::vector<float4> data (256);
-        data.reserve(256*2);
+        cuda::vector<float4> data(memsize);
+        data.reserve(memsize * 2);
 
-        cuda::memset(data.begin(), data.begin()+data.capacity(), 0);
+        cuda::memset(data.begin(), data.begin() + data.capacity(), 0);
 
         cuda::configure(dim.grid, dim.block);
         dsfloat_kernel_overloaded_wrapper<float>::kernel.test(data, float_increment);
         cuda::thread::synchronize();
 
         {
-            cuda::host::vector<float4> tmp (256);
+            cuda::host::vector<float4> tmp(memsize);
             cuda::copy(data.begin(), data.end(), tmp.begin());
             int ignored;
-            for (auto i = 0; i < 256; i++) {
+            for (auto i = 0; i < tmp.size(); i++) {
                 halmd::tie(result1[i], ignored) <<= tmp[i];
             }
         }
 
         cuda::memset(data.begin(), data.begin()+data.capacity(), 0);
 
-        halmd::dsfloat_vector<float4> dsdata (256);
+        halmd::dsfloat_vector<float4> dsdata(memsize);
         cuda::vector<float4> &dsdata_float4 = dsdata;
 
         cuda::memset(dsdata_float4.begin(), dsdata_float4.begin() + dsdata_float4.capacity(), 0);
@@ -119,10 +120,10 @@ static void test_dsfloat_overload()
         cuda::thread::synchronize();
 
         {
-            cuda::host::vector<float4> tmp (256);
+            cuda::host::vector<float4> tmp(memsize);
             cuda::copy(dsdata_float4.begin(), dsdata_float4.end(), tmp.begin());
             int ignored;
-            for (auto i = 0; i < 256; i++) {
+            for (auto i = 0; i < tmp.size(); i++) {
                 halmd::tie(result2[i], ignored) <<= tmp[i];
             }
         }

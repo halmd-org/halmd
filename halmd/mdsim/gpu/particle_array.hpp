@@ -391,7 +391,7 @@ public:
      * @param offset offset of the typed data within the underlying gpu data
      */
     particle_array_typed(size_t stride, size_t offset, size_t nparticle)
-            : stride_(stride), offset_(offset), nparticle_(nparticle)
+      : stride_(stride), offset_(offset), nparticle_(nparticle)
     {}
 
     /**
@@ -625,7 +625,7 @@ private:
 /** typed gpu particle array - specialization for dsfloats */
 template<size_t N>
 class particle_array_gpu<fixed_vector<dsfloat, N>>
-        : public particle_array_typed<fixed_vector<dsfloat, N>>
+  : public particle_array_typed<fixed_vector<dsfloat, N>>
 {
 private:
     typedef typename type_traits<N, float>::gpu::coalesced_vector_type type;
@@ -641,7 +641,7 @@ public:
      * @param update_function update function
      */
     particle_array_gpu(unsigned int nparticle, unsigned int size, std::function<void()> update_function)
-            : particle_array_typed<hp_type>(sizeof(type), 0, nparticle)
+      : particle_array_typed<hp_type>(sizeof(type), 0, nparticle)
             , data_(size), update_function_(update_function)
     {
         if (!update_function_) {

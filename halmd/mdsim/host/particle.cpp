@@ -46,7 +46,7 @@ namespace host {
 template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
   : nparticle_(nparticle)
-  , capacity_((nparticle+128-1)&~(128-1))
+  , capacity_((nparticle + 128 - 1) & ~(128 - 1)) // round upwards to multiple of 128
   , nspecies_(std::max(nspecies, 1u))
   // enable auxiliary variables by default to allow sampling of initial state
   , force_zero_(true)
@@ -86,8 +86,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     std::fill(stress_pot->begin(), stress_pot->end(), 0);
 
     LOG("number of particles: " << nparticle_);
-    LOG("capacity: " << capacity_);
     LOG("number of particle species: " << nspecies_);
+    LOG_DEBUG("capacity of data arrays: " << capacity_);
 }
 
 template <int dimension, typename float_type>

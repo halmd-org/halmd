@@ -55,10 +55,10 @@ template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
   : // allocate global device memory
     nparticle_(nparticle)
-  , array_size_((nparticle + 128 - 1) & ~(128-1))
+  , array_size_((nparticle + 128 - 1) & ~(128 - 1)) // round upwards to multiple of 128
   , nspecies_(std::max(nspecies, 1u))
   // FIXME default CUDA kernel execution dimensions
-  , dim_(device::validate(cuda::config(array_size_/128, 128)))
+  , dim_(device::validate(cuda::config(array_size_ / 128, 128)))
   // enable auxiliary variables by default to allow sampling of initial state
   , force_zero_(true)
   , force_dirty_(true)
@@ -139,8 +139,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     }
 
     LOG("number of particles: " << nparticle_);
-    LOG("number of particle placeholders: " << array_size_);
     LOG("number of particle species: " << nspecies_);
+    LOG_DEBUG("capacity of data arrays: " << array_size_);
 }
 
 template <int dimension, typename float_type>
@@ -255,7 +255,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static std::string class_name = "particle_" + std::string(variant_name<float_type>::name) + "_" + std::to_string(dimension);
+    static std::string class_name = "particle_" + std::to_string(dimension) + "_" + std::string(variant_name<float_type>::name);
     module(L, "libhalmd")
     [
         namespace_("mdsim")

@@ -43,13 +43,13 @@ local defaults
 local algorithm
 if device.gpu then
     defaults = {
-        ["single"] = {
-            [2] = assert(libhalmd.mdsim.defaults_float_2)
-          , [3] = assert(libhalmd.mdsim.defaults_float_3)
-        },
-        ["double-single"] = {
-            [2] = assert(libhalmd.mdsim.defaults_dsfloat_2)
-          , [3] = assert(libhalmd.mdsim.defaults_dsfloat_3)
+        [2] = {
+            ["single"] = assert(libhalmd.mdsim.defaults_2_float)
+          , ["double-single"] = assert(libhalmd.mdsim.defaults_2_dsfloat)
+        }
+      , [3] = {
+            ["single"] = assert(libhalmd.mdsim.defaults_3_float)
+          , ["double-single"] = assert(libhalmd.mdsim.defaults_3_dsfloat)
         }
     }
     algorithm = {
@@ -240,10 +240,10 @@ local M = module(function(args)
     local self
     if memory == "gpu" then
         if binning then
-            occupancy = occupancy or assert(defaults[precision][dimension].from_binning.occupancy)()
+            occupancy = occupancy or assert(defaults[dimension][precision].from_binning.occupancy)()
             self = neighbours.from_binning(particle[1], particle[2], binning, displacement, box, r_cut, skin, occupancy, algorithm[preferred_algorithm], logger)
         else
-            occupancy = occupancy or assert(defaults[precision][dimension].from_particle.occupancy)()
+            occupancy = occupancy or assert(defaults[dimension][precision].from_particle.occupancy)()
             self = neighbours.from_particle(particle[1], particle[2], displacement, box, r_cut, skin, occupancy, logger)
         end
     else

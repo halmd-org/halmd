@@ -43,7 +43,7 @@ if(HALMD_WITH_GPU)
     test_unit_mdsim_integrators_euler --run_test=euler_gpu_float_2d_linear --log_level=test_suite
   )
   halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/dsfloat/2d/linear
-          test_unit_mdsim_integrators_euler --run_test=euler_gpu_dsfloat_2d_linear --log_level=test_suite
+    test_unit_mdsim_integrators_euler --run_test=euler_gpu_dsfloat_2d_linear --log_level=test_suite
   )
   halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/float/2d/overdamped
     test_unit_mdsim_integrators_euler --run_test=euler_gpu_float_2d_overdamped --log_level=test_suite
