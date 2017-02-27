@@ -36,9 +36,9 @@ verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::verlet_nvt_an
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<random_type> random
-  , float_type timestep
-  , float_type temperature
-  , float_type coll_rate
+  , double timestep
+  , double temperature
+  , double coll_rate
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
@@ -49,7 +49,7 @@ verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::verlet_nvt_an
 {
     set_timestep(timestep);
     set_temperature(temperature);
-    LOG("collision rate with heat bath: " << coll_rate_);
+    LOG("collision rate with heat bath: " << float(coll_rate_));
 }
 
 /**
@@ -66,8 +66,8 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_temperature(double temperature)
 {
     temperature_ = temperature;
-    sqrt_temperature_ = std::sqrt(temperature_);
-    LOG("temperature of heat bath: " << temperature_);
+    sqrt_temperature_ = std::sqrt(temperature);
+    LOG("temperature of heat bath: " << float(temperature_));
 }
 
 /**
@@ -88,12 +88,12 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrat
     scoped_timer_type timer(runtime_.integrate);
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        cuda::configure(particle_->dim().grid, particle_->dim().block);
         wrapper_type::kernel.integrate(
-            &*position->begin()
-          , &*image->begin()
-          , &*velocity->begin()
-          , &*force.begin()
+            position->data()
+          , image->data()
+          , velocity->data()
+          , force.data()
           , timestep_
           , static_cast<vector_type>(box_->length())
         );
@@ -125,13 +125,13 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize
         // the kernel makes use of the random number generator
         cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
         wrapper_type::kernel.finalize(
-            &*velocity->begin()
-          , &*force.begin()
+            velocity->data()
+          , force.data()
           , timestep_
           , sqrt_temperature_
           , coll_prob_
           , particle_->nparticle()
-          , particle_->dim.threads()
+          , particle_->dim().threads()
           , random_->rng().rng()
         );
         cuda::thread::synchronize();
@@ -172,9 +172,9 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::luaopen(
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<random_type>
-                  , float_type
-                  , float_type
-                  , float_type
+                  , double
+                  , double
+                  , double
                   , std::shared_ptr<logger>
                 >)
             ]
@@ -186,12 +186,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet_nvt_andersen(lua
 {
     verlet_nvt_andersen<3, float, random::gpu::rand48>::luaopen(L);
     verlet_nvt_andersen<2, float, random::gpu::rand48>::luaopen(L);
+    verlet_nvt_andersen<3, dsfloat, random::gpu::rand48>::luaopen(L);
+    verlet_nvt_andersen<2, dsfloat, random::gpu::rand48>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class verlet_nvt_andersen<3, float, random::gpu::rand48>;
 template class verlet_nvt_andersen<2, float, random::gpu::rand48>;
+template class verlet_nvt_andersen<3, dsfloat, random::gpu::rand48>;
+template class verlet_nvt_andersen<2, dsfloat, random::gpu::rand48>;
 
 } // namespace integrators
 } // namespace gpu

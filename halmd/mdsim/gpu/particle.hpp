@@ -44,15 +44,17 @@ namespace gpu {
 
 class particle_group;
 
-template <int dimension, typename float_type>
+template <int dimension, typename float_type_>
 class particle
 {
 public:
+    typedef float_type_ float_type;
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 
-    typedef typename type_traits<dimension, float_type>::vector_type vector_type;
+    typedef typename type_traits<dimension, float>::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
+    typedef typename type_traits<4, float_type>::gpu::coalesced_vector_type gpu_hp_vector_type;
 
     typedef unsigned int size_type;
     typedef vector_type position_type;
@@ -63,11 +65,11 @@ public:
     typedef unsigned int species_type;
     typedef float mass_type;
     typedef vector_type force_type;
-    typedef float_type en_pot_type;
-    typedef stress_tensor_wrapper<typename type_traits<dimension, float_type>::stress_tensor_type> stress_pot_type;
+    typedef float en_pot_type;
+    typedef stress_tensor_wrapper<typename type_traits<dimension, float>::stress_tensor_type> stress_pot_type;
 
-    typedef float4 gpu_position_type;
-    typedef float4 gpu_velocity_type;
+    typedef gpu_hp_vector_type gpu_position_type;
+    typedef gpu_hp_vector_type gpu_velocity_type;
     typedef gpu_vector_type gpu_image_type;
     typedef id_type gpu_id_type;
     typedef reverse_id_type gpu_reverse_id_type;
@@ -75,19 +77,21 @@ public:
     typedef en_pot_type gpu_en_pot_type;
     typedef typename stress_pot_type::value_type gpu_stress_pot_type;
 
-    typedef cuda::vector<gpu_position_type> position_array_type;
-    typedef cuda::vector<gpu_image_type> image_array_type;
-    typedef cuda::vector<gpu_velocity_type> velocity_array_type;
-    typedef cuda::vector<gpu_id_type> id_array_type;
-    typedef cuda::vector<gpu_reverse_id_type> reverse_id_array_type;
-    typedef cuda::vector<gpu_force_type> force_array_type;
-    typedef cuda::vector<gpu_en_pot_type> en_pot_array_type;
-    typedef cuda::vector<gpu_stress_pot_type> stress_pot_array_type;
+    typedef typename particle_array_gpu<gpu_position_type>::vector_type position_array_type;
+    typedef typename particle_array_gpu<gpu_image_type>::vector_type image_array_type;
+    typedef typename particle_array_gpu<gpu_velocity_type>::vector_type velocity_array_type;
+    typedef typename particle_array_gpu<gpu_id_type>::vector_type id_array_type;
+    typedef typename particle_array_gpu<gpu_reverse_id_type>::vector_type reverse_id_array_type;
+    typedef typename particle_array_gpu<gpu_force_type>::vector_type force_array_type;
+    typedef typename particle_array_gpu<gpu_en_pot_type>::vector_type en_pot_array_type;
+    typedef typename particle_array_gpu<gpu_stress_pot_type>::vector_type stress_pot_array_type;
 
     void rearrange(cuda::vector<unsigned int> const& g_index);
 
     /** grid and block dimensions for CUDA calls */
-    cuda::config const dim;
+    cuda::config const& dim() const {
+        return dim_;
+    }
 
     /**
      * Allocate particle arrays in GPU memory.
@@ -113,6 +117,11 @@ public:
         return nparticle_;
     }
 
+    size_type array_size() const
+    {
+        return array_size_;
+    }
+
     /**
      * Returns number of species.
      */
@@ -133,7 +142,7 @@ public:
     template<typename T>
     std::shared_ptr<particle_array_gpu<T>>
     register_data(std::string const& name, std::function<void()> update_function = std::function<void()>()) {
-        auto ptr = particle_array::create<T>(nparticle_, update_function);
+        auto ptr = particle_array::create<T>(nparticle_, array_size_, update_function);
         if (!data_.insert(std::make_pair(name, ptr)).second) {
             throw std::runtime_error("a particle array named \"" + name + "\" already exists");
         }
@@ -213,7 +222,7 @@ public:
      * throws an exception if the array does not exist or has an invalid type
      */
     template<typename T>
-    cache<cuda::vector<T>> const &data(const std::string &name) const {
+    cache<typename particle_array_gpu<T>::vector_type> const &data(const std::string &name) const {
         return particle_array::cast_gpu<T>(get_array(name))->data();
     }
 
@@ -226,7 +235,7 @@ public:
      * throws an exception if the array does not exist or has an invalid type
      */
     template<typename T>
-    cache<cuda::vector<T>>& mutable_data(const std::string &name) {
+    cache<typename particle_array_gpu<T>::vector_type>& mutable_data(const std::string &name) {
         return particle_array::cast_gpu<T>(get_array(name))->mutable_data();
     }
 
@@ -331,7 +340,7 @@ public:
      */
     cache<en_pot_array_type> const& potential_energy()
     {
-        return data<gpu_en_pot_type>("g_en_pot");
+        return data<gpu_en_pot_type>("g_potential_energy");
     }
 
     /**
@@ -339,7 +348,7 @@ public:
      */
     cache<en_pot_array_type>& mutable_potential_energy()
     {
-        return mutable_data<gpu_en_pot_type>("g_en_pot");
+        return mutable_data<gpu_en_pot_type>("g_potential_energy");
     }
 
     /**
@@ -347,14 +356,14 @@ public:
      */
     cache<stress_pot_array_type> const& stress_pot()
     {
-        return data<gpu_stress_pot_type>("g_stress_pot");
+        return data<gpu_stress_pot_type>("g_potential_stress_tensor");
     }
     /**
      * Returns non-const reference to potential part of stress tensor.
      */
     cache<stress_pot_array_type>& mutable_stress_pot()
     {
-        return mutable_data<gpu_stress_pot_type>("g_stress_pot");
+        return mutable_data<gpu_stress_pot_type>("g_potential_stress_tensor");
     }
 
     /**
@@ -445,8 +454,12 @@ public:
 private:
     /** number of particles */
     size_type nparticle_;
+    /** array size */
+    size_type array_size_;
     /** number of particle species */
     unsigned int nspecies_;
+    /** grid and block dimensions for CUDA calls */
+    cuda::config dim_;
 
     /** map of the stored particle arrays */
     std::unordered_map<std::string, std::shared_ptr<particle_array>> data_;
@@ -646,7 +659,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_potential_energy(particle_type& particle, iterator_type const& first)
 {
-    return particle.template get_data<typename particle_type::en_pot_type>("en_pot", first);
+    return particle.template get_data<typename particle_type::en_pot_type>("potential_energy", first);
 }
 
 /**
@@ -656,7 +669,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_stress_pot(particle_type& particle, iterator_type const& first)
 {
-    return particle.template get_data<typename particle_type::stress_pot_type>("stress_pot", first);
+    return particle.template get_data<typename particle_type::stress_pot_type>("potential_stress_tensor", first);
 }
 
 } // namespace gpu

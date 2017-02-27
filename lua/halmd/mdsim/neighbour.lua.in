@@ -43,8 +43,14 @@ local defaults
 local algorithm
 if device.gpu then
     defaults = {
-        [2] = assert(libhalmd.mdsim.defaults_2)
-      , [3] = assert(libhalmd.mdsim.defaults_3)
+        [2] = {
+            ["single"] = assert(libhalmd.mdsim.defaults_2_float)
+          , ["double-single"] = assert(libhalmd.mdsim.defaults_2_dsfloat)
+        }
+      , [3] = {
+            ["single"] = assert(libhalmd.mdsim.defaults_3_float)
+          , ["double-single"] = assert(libhalmd.mdsim.defaults_3_dsfloat)
+        }
     }
     algorithm = {
         shared_mem = 1
@@ -159,6 +165,10 @@ local M = module(function(args)
     if memory ~= particle[2].memory then
         error("incompatible 'memory' attributes of particle instances", 2)
     end
+    local precision = particle[1].precision
+    if precision ~= particle[2].precision then
+        error("incompatible 'precision' attributes of particle instances", 2)
+    end
     local preferred_algorithm
     if memory == "gpu" then
         preferred_algorithm = utility.assert_type(args.algorithm or "shared_mem", "string")
@@ -230,17 +240,17 @@ local M = module(function(args)
     local self
     if memory == "gpu" then
         if binning then
-            occupancy = occupancy or assert(defaults[dimension].from_binning.occupancy)()
-            self = neighbours.from_binning(particle, binning, displacement, box, r_cut, skin, occupancy, algorithm[preferred_algorithm], logger)
+            occupancy = occupancy or assert(defaults[dimension][precision].from_binning.occupancy)()
+            self = neighbours.from_binning(particle[1], particle[2], binning, displacement, box, r_cut, skin, occupancy, algorithm[preferred_algorithm], logger)
         else
-            occupancy = occupancy or assert(defaults[dimension].from_particle.occupancy)()
-            self = neighbours.from_particle(particle, displacement, box, r_cut, skin, occupancy, logger)
+            occupancy = occupancy or assert(defaults[dimension][precision].from_particle.occupancy)()
+            self = neighbours.from_particle(particle[1], particle[2], displacement, box, r_cut, skin, occupancy, logger)
         end
     else
         if binning then
-            self = neighbours.from_binning(particle, binning, displacement, box, r_cut, skin, logger)
+            self = neighbours.from_binning(particle[1], particle[2], binning, displacement, box, r_cut, skin, logger)
         else
-            self = neighbours.from_particle(particle, displacement, box, r_cut, skin, logger)
+            self = neighbours.from_particle(particle[1], particle[2], displacement, box, r_cut, skin, logger)
         end
     end
 

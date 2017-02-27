@@ -205,7 +205,38 @@ struct test_suite_gpu
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::particle_group particle_group_type;
     typedef halmd::mdsim::gpu::particle_groups::from_range<particle_type> from_range_type;
+    static void add_test(
+        boost::unit_test::test_suite *suite
+      , unsigned int nparticle
+      , unsigned int nspecies
+      , std::pair<unsigned int, unsigned int> const& range
+      , unsigned int repeat
+    );
 };
+
+template<int dimension, typename float_type>
+void test_suite_gpu<dimension, float_type>::add_test(
+    boost::unit_test::test_suite *suite
+  , unsigned int nparticle
+  , unsigned int nspecies
+  , std::pair<unsigned int, unsigned int> const& range
+  , unsigned int repeat)
+{
+    typedef test_suite_gpu<dimension, float_type> test_suite_type;
+
+    auto ordered = [=]() {
+        set_cuda_device device;
+        test_ordered<test_suite_type>(nparticle, nspecies, range, repeat);
+    };
+    suite->add(BOOST_TEST_CASE( ordered ));
+
+    auto unordered = [=]() {
+        set_cuda_device device;
+        test_unordered<test_suite_type>(nparticle, nspecies, range, repeat);
+    };
+    suite->add(BOOST_TEST_CASE( unordered ));
+}
+
 #endif
 
 /**
@@ -277,22 +308,12 @@ HALMD_TEST_INIT( from_range )
                 typedef test_suite_host<2, double> test_suite_type;
 #endif
                 auto ordered = [=]() {
-                    test_ordered<test_suite_type>(
-                        nparticle
-                      , nspecies
-                      , range
-                      , repeat
-                    );
+                    test_ordered<test_suite_type>(nparticle, nspecies, range, repeat);
                 };
                 ts_host_two->add(BOOST_TEST_CASE( ordered ));
 
                 auto unordered = [=]() {
-                    test_unordered<test_suite_type>(
-                        nparticle
-                      , nspecies
-                      , range
-                      , repeat
-                    );
+                    test_unordered<test_suite_type>(nparticle, nspecies, range, repeat);
                 };
                 ts_host_two->add(BOOST_TEST_CASE( unordered ));
             }
@@ -303,75 +324,21 @@ HALMD_TEST_INIT( from_range )
                 typedef test_suite_host<3, double> test_suite_type;
 #endif
                 auto ordered = [=]() {
-                    test_ordered<test_suite_type>(
-                        nparticle
-                      , nspecies
-                      , range
-                      , repeat
-                    );
+                    test_ordered<test_suite_type>(nparticle, nspecies, range, repeat);
                 };
                 ts_host_three->add(BOOST_TEST_CASE( ordered ));
 
                 auto unordered = [=]() {
-                    test_unordered<test_suite_type>(
-                        nparticle
-                      , nspecies
-                      , range
-                      , repeat
-                    );
+                    test_unordered<test_suite_type>(nparticle, nspecies, range, repeat);
                 };
                 ts_host_three->add(BOOST_TEST_CASE( unordered ));
             }
 #ifdef HALMD_WITH_GPU
             {
-                typedef test_suite_gpu<2, float> test_suite_type;
-
-                auto ordered = [=]() {
-                    set_cuda_device device;
-                    test_ordered<test_suite_type>(
-                        nparticle
-                      , nspecies
-                      , range
-                      , repeat
-                    );
-                };
-                ts_gpu_two->add(BOOST_TEST_CASE( ordered ));
-
-                auto unordered = [=]() {
-                    set_cuda_device device;
-                    test_unordered<test_suite_type>(
-                        nparticle
-                      , nspecies
-                      , range
-                      , repeat
-                    );
-                };
-                ts_gpu_two->add(BOOST_TEST_CASE( unordered ));
-            }
-            {
-                typedef test_suite_gpu<3, float> test_suite_type;
-
-                auto ordered = [=]() {
-                    set_cuda_device device;
-                    test_ordered<test_suite_type>(
-                        nparticle
-                      , nspecies
-                      , range
-                      , repeat
-                    );
-                };
-                ts_gpu_three->add(BOOST_TEST_CASE( ordered ));
-
-                auto unordered = [=]() {
-                    set_cuda_device device;
-                    test_unordered<test_suite_type>(
-                        nparticle
-                      , nspecies
-                      , range
-                      , repeat
-                    );
-                };
-                ts_gpu_three->add(BOOST_TEST_CASE( unordered ));
+                test_suite_gpu<2, float>::add_test(ts_gpu_two, nparticle, nspecies, range, repeat);
+                test_suite_gpu<3, float>::add_test(ts_gpu_three, nparticle, nspecies, range, repeat);
+                test_suite_gpu<2, halmd::dsfloat>::add_test(ts_gpu_two, nparticle, nspecies, range, repeat);
+                test_suite_gpu<3, halmd::dsfloat>::add_test(ts_gpu_three, nparticle, nspecies, range, repeat);
             }
 #endif
         }

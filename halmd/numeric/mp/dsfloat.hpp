@@ -29,6 +29,7 @@
 
 #include <halmd/numeric/mp/dsfun.hpp>
 #include <halmd/utility/tuple.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd {
 namespace detail {
@@ -36,6 +37,10 @@ namespace numeric {
 namespace mp {
 
 struct dsfloat;
+template<typename T>
+struct dsfloat_ptr;
+template<typename T>
+struct dsfloat_const_ptr;
 
 } // namespace mp
 } // namespace numeric
@@ -43,6 +48,8 @@ struct dsfloat;
 
 // import into top-level namespace
 using detail::numeric::mp::dsfloat;
+using detail::numeric::mp::dsfloat_ptr;
+using detail::numeric::mp::dsfloat_const_ptr;
 
 } // namespace halmd
 
@@ -288,6 +295,44 @@ inline HALMD_GPU_ENABLED dsfloat min(dsfloat const& v, dsfloat const& w)
 {
     return v.hi == w.hi ? (v.lo <= w.lo ? v : w) : (v.hi < w.hi ? v : w);
 }
+
+template<typename T>
+struct dsfloat_ptr
+{
+    T* hi;
+    T* lo;
+
+    HALMD_GPU_ENABLED halmd::tuple<T&, T&> operator[] (unsigned int idx)
+    {
+        return tie(hi[idx], lo[idx]);
+    };
+    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const
+    {
+        return tie(hi[idx], lo[idx]);
+    };
+
+    operator T*() const
+    {
+        return hi;
+    }
+};
+
+template<typename T>
+struct dsfloat_const_ptr
+{
+    T const* hi;
+    T const* lo;
+
+    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const
+    {
+        return tie(hi[idx], lo[idx]);
+    };
+
+    operator T const*() const
+    {
+        return hi;
+    }
+};
 
 } // namespace mp
 } // namespace numeric

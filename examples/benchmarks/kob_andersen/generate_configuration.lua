@@ -71,8 +71,7 @@ function main(args)
     local potential = mdsim.potentials.pair.lennard_jones({
         epsilon = {{1, 1.5}, {1.5, 0.5}} -- ((AA, AB), (BA, BB))
       , sigma = {{1, 0.8}, {0.8, 0.88}} -- ((AA, AB), (BA, BB))
-      , cutoff = 2.5
-    })
+    }):truncate({cutoff = 2.5})
     -- compute forces
     local force = mdsim.forces.pair({box = box, particle = particle, potential = potential})
 
@@ -118,9 +117,7 @@ end
 --
 -- Parse command-line arguments.
 --
-function define_args()
-    local parser = utility.program_options.argument_parser()
-
+function define_args(parser)
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
         default = "kob_andersen_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 end

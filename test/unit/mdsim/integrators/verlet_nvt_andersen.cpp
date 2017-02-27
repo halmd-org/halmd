@@ -332,10 +332,16 @@ struct gpu_modules
     static bool const gpu = true;
 };
 
-BOOST_FIXTURE_TEST_CASE( verlet_nvt_andersen_gpu_2d, device ) {
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_andersen_gpu_float_2d, device ) {
     verlet_nvt_andersen<gpu_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( verlet_nvt_andersen_gpu_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_andersen_gpu_dsfloat_2d, device ) {
+    verlet_nvt_andersen<gpu_modules<2, dsfloat> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_andersen_gpu_float_3d, device ) {
     verlet_nvt_andersen<gpu_modules<3, float> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_andersen_gpu_dsfloat_3d, device ) {
+    verlet_nvt_andersen<gpu_modules<3, dsfloat> >().test();
 }
 #endif // HALMD_WITH_GPU

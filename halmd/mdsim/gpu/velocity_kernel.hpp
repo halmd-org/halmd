@@ -32,23 +32,24 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 
-template <int dimension>
+template <int dimension, typename float_type>
 struct velocity_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
-    cuda::function<void (float4*, unsigned int, unsigned int, dsfloat)> rescale;
-    cuda::function<void (float4*, unsigned int const*, unsigned int, unsigned int, dsfloat)> rescale_group;
-    cuda::function<void (float4*, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>)> shift;
-    cuda::function<void (float4*, unsigned int const*, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>)> shift_group;
-    cuda::function<void (float4*, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>, dsfloat)> shift_rescale;
-    cuda::function<void (float4*, unsigned int const*, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>, dsfloat)> shift_rescale_group;
+    typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
+    cuda::function<void (ptr_type, unsigned int, unsigned int, dsfloat)> rescale;
+    cuda::function<void (ptr_type, unsigned int const*, unsigned int, unsigned int, dsfloat)> rescale_group;
+    cuda::function<void (ptr_type, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>)> shift;
+    cuda::function<void (ptr_type, unsigned int const*, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>)> shift_group;
+    cuda::function<void (ptr_type, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>, dsfloat)> shift_rescale;
+    cuda::function<void (ptr_type, unsigned int const*, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>, dsfloat)> shift_rescale_group;
     static velocity_wrapper const kernel;
 };
 
-template <int dimension>
-velocity_wrapper<dimension> const& get_velocity_kernel()
+template <int dimension, typename float_type>
+velocity_wrapper<dimension, float_type> const& get_velocity_kernel()
 {
-    return velocity_wrapper<dimension>::kernel;
+    return velocity_wrapper<dimension, float_type>::kernel;
 }
 
 } // namespace mdsim

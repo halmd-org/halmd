@@ -63,10 +63,14 @@ __global__ void map(
     unsigned int type;
     vector_type r;
     tie(r, type) <<= g_r[GTID];
-    r = element_div(r, box_length);
+    if (type == -1U) {
+        g_sfc[GTID] = -1U;
+    } else {
+        r = element_div(r, box_length);
 
-    // compute Hilbert code for particle
-    g_sfc[GTID] = mdsim::sorts::hilbert_kernel::map(r, depth_);
+        // compute Hilbert code for particle
+        g_sfc[GTID] = mdsim::sorts::hilbert_kernel::map(r, depth_);
+    }
 }
 
 /**

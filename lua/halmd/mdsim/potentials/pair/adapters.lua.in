@@ -121,7 +121,6 @@ end
 --
 --   matplotlib.rc('figure', figsize=(6, 5))
 --   matplotlib.rc('text', usetex=True)
---   matplotlib.rc('text.latex', preamble=r'\usepackage{amsmath}')
 --
 --   # Lennard Jones potential
 --   V = lambda r: 4 * (pow(r, -12) - pow(r, -6))
@@ -149,7 +148,7 @@ end
 --   ax.set_color_cycle(["r", "m", "g", "b"])
 --   ax.plot(r, V_c(r, r_c), label=r"$h \rightarrow 0$")
 --   for h in h:
---       ax.plot(r, V_s(r, r_c, h), label=r"$h = %.3g$" % h)
+--       ax.plot(r, V_s(r, r_c, h), label=r"$h = {0:.4g}$".format(h))
 --
 --   l = ax.legend(loc="upper right")
 --   l.legendPatch.set_alpha(0.7)
@@ -176,7 +175,6 @@ end
 --
 --   matplotlib.rc('figure', figsize=(6, 5))
 --   matplotlib.rc('text', usetex=True)
---   matplotlib.rc('text.latex', preamble=r'\usepackage{amsmath}')
 --
 --   # Lennard Jones potential
 --   V = lambda r: 4 * (pow(r, -12) - pow(r, -6))
@@ -212,7 +210,7 @@ end
 --   ax.set_color_cycle(["r", "m", "g", "b"])
 --   ax.plot(r, F_c(r, r_c), label=r"$h \rightarrow 0$")
 --   for h in h:
---       ax.plot(r, F_s(r, r_c, h), label=r"$h = %.3g$" % h)
+--       ax.plot(r, F_s(r, r_c, h), label=r"$h = {0:.4g}$".format(h))
 --
 --   l = ax.legend(loc="upper right")
 --   l.legendPatch.set_alpha(0.7)
@@ -225,7 +223,7 @@ end
 --   plot.setp(ax, ylim=(-0.5, 2.5))
 --
 --   plot.xlabel(r"$r / \sigma$")
---   plot.ylabel(r"$\sigma^2\lvert\vec{F}\left(\vec{r}\right)\rvert / \epsilon$")
+--   plot.ylabel(r"$\sigma^2|\vec{F}(\vec{r})| / \epsilon$")
 --   plot.show()
 --
 --
@@ -284,6 +282,7 @@ truncate_table = setmetatable(truncate_table, {
 
 self.truncate = function(potential, args)
     local cutoff = utility.assert_kwarg(args, "cutoff")
+    local trunctype = args[1] or "shifted"
     if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
         error("bad argument 'cutoff'", 2)
     end
@@ -291,8 +290,8 @@ self.truncate = function(potential, args)
         cutoff = numeric.scalar_matrix(potential.species, potential.species, cutoff)
     end
 
-    local newpot = truncate_table[args[1] or "shifted"](potential, cutoff, args)
-    newpot.description = args[1].." "..potential.description
+    local newpot = truncate_table[trunctype](potential, cutoff, args)
+    newpot.description = trunctype.." "..potential.description
     newpot.species = potential.species
     newpot.memory = potential.memory
     newpot.logger = potential.logger

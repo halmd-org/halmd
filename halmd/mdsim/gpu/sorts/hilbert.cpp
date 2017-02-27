@@ -47,7 +47,7 @@ hilbert<dimension, float_type>::hilbert(
   , logger_(logger)
 {
     // FIXME set Hilbert space-filling curve recursion depth
-    float_type max_length = *std::max_element(box_->length().begin(), box_->length().end());
+    float max_length = *std::max_element(box_->length().begin(), box_->length().end());
     depth_ = static_cast<unsigned int>(std::ceil(std::log(max_length) / M_LN2));
     // 32-bit integer for 2D/3D Hilbert code allows a maximum of 16/10 levels
     depth_ = std::min((dimension == 3) ? 10U : 16U, depth_);
@@ -73,11 +73,11 @@ void hilbert<dimension, float_type>::order()
     {
         scoped_timer_type timer(runtime_.order);
         cuda::vector<unsigned int> g_index(particle_->nparticle());
-        g_index.reserve(particle_->dim.threads());
+        g_index.reserve(particle_->dim().threads());
         {
 
             cuda::vector<unsigned int> g_map(particle_->nparticle());
-            g_map.reserve(particle_->dim.threads());
+            g_map.reserve(particle_->dim().threads());
             this->map(g_map);
             this->permutation(g_map, g_index);
         }
@@ -96,9 +96,9 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 
     scoped_timer_type timer(runtime_.map);
 
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    cuda::configure(particle_->dim().grid, particle_->dim().block);
     wrapper_type::kernel.map(
-        &*position.begin()
+        position.data()
       , g_map
       , static_cast<vector_type>(box_->length())
     );
@@ -110,7 +110,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index)
 {
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    cuda::configure(particle_->dim().grid, particle_->dim().block);
     wrapper_type::kernel.gen_index(g_index);
     radix_sort(g_map.begin(), g_map.end(), g_index.begin());
 }
@@ -158,12 +158,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_sorts_hilbert(lua_State* L)
 {
     hilbert<3, float>::luaopen(L);
     hilbert<2, float>::luaopen(L);
+    hilbert<3, dsfloat>::luaopen(L);
+    hilbert<2, dsfloat>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class hilbert<3, float>;
 template class hilbert<2, float>;
+template class hilbert<3, dsfloat>;
+template class hilbert<2, dsfloat>;
 
 } // namespace sorts
 } // namespace gpu

@@ -46,6 +46,7 @@ namespace host {
 template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
   : nparticle_(nparticle)
+  , capacity_((nparticle + 128 - 1) & ~(128 - 1)) // round upwards to multiple of 128
   , nspecies_(std::max(nspecies, 1u))
   // enable auxiliary variables by default to allow sampling of initial state
   , force_zero_(true)
@@ -62,20 +63,20 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     auto species = make_cache_mutable(register_data<species_type>("species")->mutable_data());
     auto mass = make_cache_mutable(register_data<mass_type>("mass")->mutable_data());
     auto force = make_cache_mutable(register_data<force_type>("force", [this]() { this->update_force_(); })->mutable_data());
-    auto en_pot = make_cache_mutable(register_data<en_pot_type>("en_pot", [this]() { this->update_force_(true); })->mutable_data());
+    auto en_pot = make_cache_mutable(register_data<en_pot_type>("potential_energy", [this]() { this->update_force_(true); })->mutable_data());
     auto stress_pot = make_cache_mutable(
-            register_data<stress_pot_type>("stress_pot", [this]() { this->update_force_(true); })->mutable_data());
-
-    // potential energy alias
-    data_["potential_energy"] = data_["en_pot"];
+            register_data<stress_pot_type>("potential_stress_tensor", [this]() { this->update_force_(true); })->mutable_data());
 
     // initialize particle arrays
     std::fill(position->begin(), position->end(), 0);
     std::fill(image->begin(), image->end(), 0);
     std::fill(velocity->begin(), velocity->end(), 0);
-    std::iota(id->begin(), id->end(), 0);
-    std::iota(reverse_id->begin(), reverse_id->end(), 0);
-    std::fill(species->begin(), species->end(), 0);
+    std::iota(id->begin(), id->begin() + nparticle_, 0);
+    std::fill(id->begin() + nparticle_, id->end(), -1U);
+    std::iota(reverse_id->begin(), reverse_id->begin() + nparticle_, 0);
+    std::fill(reverse_id->begin() + nparticle_, reverse_id->end(), -1U);
+    std::fill(species->begin(), species->begin() + nparticle_, 0);
+    std::fill(species->begin() + nparticle_, species->end(), -1U);
     std::fill(mass->begin(), mass->end(), 1);
     std::fill(force->begin(), force->end(), 0);
     std::fill(en_pot->begin(), en_pot->end(), 0);
@@ -83,6 +84,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
 
     LOG("number of particles: " << nparticle_);
     LOG("number of particle species: " << nspecies_);
+    LOG_DEBUG("capacity of data arrays: " << capacity_);
 }
 
 template <int dimension, typename float_type>
@@ -110,12 +112,12 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     auto species = make_cache_mutable(mutable_data<species_type>("species"));
     auto mass = make_cache_mutable(mutable_data<mass_type>("mass"));
 
-    permute(position->begin(), position->end(), index.begin());
-    permute(image->begin(), image->end(), index.begin());
-    permute(velocity->begin(), velocity->end(), index.begin());
-    permute(id->begin(), id->end(), index.begin());
-    permute(species->begin(), species->end(), index.begin());
-    permute(mass->begin(), mass->end(), index.begin());
+    permute(position->begin(), position->begin() + nparticle_, index.begin());
+    permute(image->begin(), image->begin() + nparticle_, index.begin());
+    permute(velocity->begin(), velocity->begin() + nparticle_, index.begin());
+    permute(id->begin(), id->begin() + nparticle_, index.begin());
+    permute(species->begin(), species->begin() + nparticle_, index.begin());
+    permute(mass->begin(), mass->begin() + nparticle_, index.begin());
     // no permutation of forces
 
     // update reverse IDs

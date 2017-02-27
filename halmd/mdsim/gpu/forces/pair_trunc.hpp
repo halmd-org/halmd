@@ -31,7 +31,6 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
-
 #include <memory>
 #include <tuple>
 
@@ -57,7 +56,7 @@ public:
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<neighbour_type> neighbour
-      , float_type aux_weight = 1
+      , float aux_weight = 1
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -105,7 +104,7 @@ private:
     /** neighbour lists */
     std::shared_ptr<neighbour_type> neighbour_;
     /** weight for auxiliary variables */
-    float_type aux_weight_;
+    float aux_weight_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
@@ -134,7 +133,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<neighbour_type> neighbour
-  , float_type aux_weight
+  , float aux_weight
   , std::shared_ptr<logger> logger
 )
   : potential_(potential)
@@ -202,9 +201,9 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
     gpu_wrapper::kernel.r2.bind(position2);
     potential_->bind_textures();
 
-    cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+    cuda::configure(particle1_->dim().grid, particle1_->dim().block);
     gpu_wrapper::kernel.compute(
-        &*position1.begin()
+        position1.data()
       , &*force->begin()
       , &*g_neighbour.begin()
       , neighbour_->size()
@@ -237,14 +236,14 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
     gpu_wrapper::kernel.r2.bind(position2);
     potential_->bind_textures();
 
-    float_type weight = aux_weight_;
+    float weight = aux_weight_;
     if (particle1_ == particle2_) {
         weight /= 2;
     }
 
-    cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+    cuda::configure(particle1_->dim().grid, particle1_->dim().block);
     gpu_wrapper::kernel.compute_aux(
-        &*position1.begin()
+        position1.data()
       , &*force->begin()
       , &*g_neighbour.begin()
       , neighbour_->size()
@@ -287,7 +286,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<neighbour_type>
-                  , float_type
+                  , float
                   , std::shared_ptr<logger>
                 >)
             ]

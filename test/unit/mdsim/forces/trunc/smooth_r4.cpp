@@ -168,7 +168,7 @@ struct test_smooth_r4
 
     typedef halmd::mdsim::box<dimension> box_type;
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef halmd::mdsim::gpu::potentials::pair::lennard_jones<float_type> base_potential_type;
+    typedef halmd::mdsim::gpu::potentials::pair::lennard_jones<float> base_potential_type;
     typedef halmd::mdsim::gpu::potentials::pair::truncations::smooth_r4<base_potential_type> potential_type;
     typedef halmd::mdsim::host::potentials::pair::lennard_jones<host_float_type> host_base_potential_type;
     typedef halmd::mdsim::host::potentials::pair::truncations::smooth_r4<host_base_potential_type> host_potential_type;
@@ -214,7 +214,7 @@ void test_smooth_r4<float_type>::test()
     std::vector<vector_type> f_list(particle->nparticle());
     BOOST_CHECK( get_force(*particle, f_list.begin()) == f_list.end() );
 
-    float_type const eps = std::numeric_limits<float_type>::epsilon();
+    float const eps = std::numeric_limits<float>::epsilon();
 
     for (unsigned int i = 0; i < npart; ++i) {
         unsigned int type1 = species[i];
@@ -234,9 +234,9 @@ void test_smooth_r4<float_type>::test()
 
             // the first term is from the smoothing, the second from the potential
             // (see lennard_jones.cpp from unit tests)
-            float_type const tolerance = 8 * eps * (1 + rcut/(rcut - std::sqrt(rr))) + 10 * eps;
+            float const tolerance = 8 * eps * (1 + rcut/(rcut - std::sqrt(rr))) + 10 * eps;
 
-            BOOST_CHECK_SMALL(norm_inf(fval * r - f), std::max(norm_inf(fval * r), float_type(1)) * tolerance * 2);
+            BOOST_CHECK_SMALL(norm_inf(fval * r - f), std::max(norm_inf(fval * r), 1.f) * tolerance * 2);
             BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 2 * tolerance);
         }
         else {
@@ -268,7 +268,7 @@ test_smooth_r4<float_type>::test_smooth_r4()
     // smoothing parameter
     host_float_type const h = 1. / 256;
 
-    float_type wca_cut = std::pow(2., 1. / 6);
+    float wca_cut = std::pow(2., 1. / 6);
     matrix_type cutoff_array(2, 2);
     cutoff_array <<=
         2.5, 2.
@@ -293,8 +293,12 @@ test_smooth_r4<float_type>::test_smooth_r4()
     particle->on_force([=](){force->apply();});
 }
 
-BOOST_FIXTURE_TEST_CASE( smooth_r4, set_cuda_device ) {
+BOOST_FIXTURE_TEST_CASE( smooth_r4_float, set_cuda_device ) {
     test_smooth_r4<float>().test();
+}
+
+BOOST_FIXTURE_TEST_CASE( smooth_r4_dsfloat, set_cuda_device ) {
+    test_smooth_r4<halmd::dsfloat>().test();
 }
 
 BOOST_AUTO_TEST_SUITE_END() // gpu
