@@ -69,8 +69,6 @@ using namespace std;
  * test NVT Verlet integrator with Nosé-Hoover chain thermostat
  */
 
-const float eps_float = numeric_limits<float>::epsilon();
-
 /**
  * heat capacity from canonical fluctuations (variance) of potential and kinetic energy
  */

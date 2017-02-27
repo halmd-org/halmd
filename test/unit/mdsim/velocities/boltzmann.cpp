@@ -49,8 +49,6 @@
 
 #include <limits>
 
-const float eps_float = std::numeric_limits<float>::epsilon();
-
 /**
  * test initialisation of particle velocities: boltzmann module
  */
