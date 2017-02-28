@@ -145,7 +145,6 @@ end
 --   # plot potentials
 --   ax = plot.axes()
 --   ax.axhline(0, 0, 1, color="k", lw=0.5, ls="--")
---   ax.set_color_cycle(["r", "m", "g", "b"])
 --   ax.plot(r, V_c(r, r_c), label=r"$h \rightarrow 0$")
 --   for h in h:
 --       ax.plot(r, V_s(r, r_c, h), label=r"$h = {0:.4g}$".format(h))
@@ -207,7 +206,6 @@ end
 --   # plot forces
 --   ax = plot.axes()
 --   ax.axhline(0, 0, 1, color="k", lw=0.5, ls="--")
---   ax.set_color_cycle(["r", "m", "g", "b"])
 --   ax.plot(r, F_c(r, r_c), label=r"$h \rightarrow 0$")
 --   for h in h:
 --       ax.plot(r, F_s(r, r_c, h), label=r"$h = {0:.4g}$".format(h))
