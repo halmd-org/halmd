@@ -120,28 +120,30 @@ public:
         using namespace luaponte;
         module(L, "libhalmd")
         [
-                namespace_("mdsim")
+            namespace_("mdsim")
+            [
+                namespace_("gpu")
                 [
-                        namespace_("gpu")
+                    namespace_("potentials")
+                    [
+                        namespace_("pair")
                         [
-                                namespace_("potentials")
-                                [
-                                        namespace_("pair")
-                                        [
+                            class_<smooth_r4, potential_type, std::shared_ptr<smooth_r4> >()
+                                .property("r_cut", (matrix_type const& (smooth_r4::*)() const) &smooth_r4::r_cut)
+                                .property("r_cut_sigma", &smooth_r4::r_cut_sigma)
 
-                                                class_<smooth_r4, potential_type, std::shared_ptr<smooth_r4> >()
-                                                    .property("r_cut", (matrix_type const& (smooth_r4::*)() const) &smooth_r4::r_cut)
-                                                    .property("r_cut_sigma", &smooth_r4::r_cut_sigma)
-                                              , def("smooth_r4", &std::make_shared<smooth_r4
-                                                                                 , matrix_type const&
-                                                                                 , float_type
-                                                                                 , potential_type const&>)
-                                        ]
-                                ]
+                          , def("smooth_r4", &std::make_shared<smooth_r4
+                              , matrix_type const&
+                              , float_type
+                              , potential_type const&>
+                            )
                         ]
+                    ]
                 ]
+            ]
         ];
     }
+
 private:
     /** cutoff length in units of sigma */
     matrix_type r_cut_sigma_;

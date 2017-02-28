@@ -149,9 +149,9 @@ end
 -- .. warning::
 --
 --    During simulation, particle arrays may be reordered in memory according
---    to a space-filling curve. To access particles in initial order, use
---    :meth:`get_reverse_id` to retrieve a map from particle IDs to current
---    particle indices in memory.
+--    to a space-filling curve, see :class:`halmd.mdsim.sorts`. To access
+--    particles in initial order, use :meth:`get_reverse_id` to retrieve a map
+--    from particle IDs to current particle indices in memory.
 --
 -- .. method:: get(name)
 --

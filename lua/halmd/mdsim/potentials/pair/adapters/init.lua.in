@@ -1,6 +1,5 @@
 --
--- Copyright © 2014 Felix Höfling
--- Copyright © 2012 Peter Colberg
+-- Copyright © 2017 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -22,16 +21,18 @@
 local module = require("halmd.utility.module")
 
 ---
--- .. _pair_potentials:
+-- .. _pair_potential_adapters:
 --
--- Pair potentials
--- ~~~~~~~~~~~~~~~
+-- Adapters for pair potentials
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--
+-- Every potential defines ``truncate`` and ``modify`` methods to create
+-- modifications of a potential. The returned object is again a pair potential.
 --
 -- .. toctree::
---    :maxdepth: 2
+--    :maxdepth: 1
 --    :glob:
 --
 --    *
---    adapters/index
 --
-return module.loader("halmd.mdsim.potentials.pair")
+return module.loader("halmd.mdsim.potentials.pair.adapters")

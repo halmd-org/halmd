@@ -87,6 +87,7 @@ public:
     {
         return potential_type::operator()(rr, a, b);
     }
+
     /**
      * Bind class to Lua.
      */
@@ -95,26 +96,29 @@ public:
         using namespace luaponte;
         module(L, "libhalmd")
         [
-                namespace_("mdsim")
+            namespace_("mdsim")
+            [
+                namespace_("host")
                 [
-                        namespace_("host")
+                    namespace_("potentials")
+                    [
+                        namespace_("pair")
                         [
-                                namespace_("potentials")
-                                [
-                                        namespace_("pair")
-                                        [
-                                                class_<sharp, potential_type, std::shared_ptr<sharp> >()
-                                                    .property("r_cut", (matrix_type const& (sharp::*)() const) &sharp::r_cut)
-                                                    .property("r_cut_sigma", &sharp::r_cut_sigma)
-                                              , def("sharp", &std::make_shared<sharp
-                                                                 , matrix_type const&
-                                                                 , potential_type const&>)
-                                        ]
-                                ]
+                            class_<sharp, potential_type, std::shared_ptr<sharp> >()
+                                .property("r_cut", (matrix_type const& (sharp::*)() const) &sharp::r_cut)
+                                .property("r_cut_sigma", &sharp::r_cut_sigma)
+
+                          , def("sharp", &std::make_shared<sharp
+                              , matrix_type const&
+                              , potential_type const&>
+                            )
                         ]
+                    ]
                 ]
+            ]
         ];
     }
+
 private:
     /** cutoff length in units of sigma */
     matrix_type r_cut_sigma_;
