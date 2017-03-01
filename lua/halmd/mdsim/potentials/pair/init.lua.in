@@ -28,9 +28,10 @@ local module = require("halmd.utility.module")
 -- ~~~~~~~~~~~~~~~
 --
 -- .. toctree::
---    :maxdepth: 1
+--    :maxdepth: 2
 --    :glob:
 --
 --    *
+--    adapters/index
 --
 return module.loader("halmd.mdsim.potentials.pair")

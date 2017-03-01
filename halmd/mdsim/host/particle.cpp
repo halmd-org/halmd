@@ -46,7 +46,7 @@ namespace host {
 template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
   : nparticle_(nparticle)
-  , capacity_((nparticle+128-1)&~(128-1))
+  , capacity_((nparticle + 128 - 1) & ~(128 - 1)) // round upwards to multiple of 128
   , nspecies_(std::max(nspecies, 1u))
   // enable auxiliary variables by default to allow sampling of initial state
   , force_zero_(true)
@@ -63,12 +63,9 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     auto species = make_cache_mutable(register_data<species_type>("species")->mutable_data());
     auto mass = make_cache_mutable(register_data<mass_type>("mass")->mutable_data());
     auto force = make_cache_mutable(register_data<force_type>("force", [this]() { this->update_force_(); })->mutable_data());
-    auto en_pot = make_cache_mutable(register_data<en_pot_type>("en_pot", [this]() { this->update_force_(true); })->mutable_data());
+    auto en_pot = make_cache_mutable(register_data<en_pot_type>("potential_energy", [this]() { this->update_force_(true); })->mutable_data());
     auto stress_pot = make_cache_mutable(
-            register_data<stress_pot_type>("stress_pot", [this]() { this->update_force_(true); })->mutable_data());
-
-    // potential energy alias
-    data_["potential_energy"] = data_["en_pot"];
+            register_data<stress_pot_type>("potential_stress_tensor", [this]() { this->update_force_(true); })->mutable_data());
 
     // initialize particle arrays
     std::fill(position->begin(), position->end(), 0);
@@ -86,8 +83,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     std::fill(stress_pot->begin(), stress_pot->end(), 0);
 
     LOG("number of particles: " << nparticle_);
-    LOG("capacity: " << capacity_);
     LOG("number of particle species: " << nspecies_);
+    LOG_DEBUG("capacity of data arrays: " << capacity_);
 }
 
 template <int dimension, typename float_type>

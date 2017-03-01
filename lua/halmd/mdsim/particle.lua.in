@@ -1,4 +1,6 @@
 --
+-- Copyright © 2017      Felix Höfling
+-- Copyright © 2016-2017 Daniel Kirchner
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -33,21 +35,23 @@ local utility           = require("halmd.utility")
 -- grab C++ wrappers
 local particle = {}
 particle.host = {
-    ["double"] = {
-        [2] = assert(libhalmd.mdsim.host.particle_2)
-      , [3] = assert(libhalmd.mdsim.host.particle_3)
+    [2] = {
+        ["double"] = assert(libhalmd.mdsim.host.particle_2)
+    }
+  , [3] = {
+        ["double"] = assert(libhalmd.mdsim.host.particle_3)
     }
 }
 
 if device.gpu then
     particle.gpu = {
-        ["single"] = {
-            [2] = assert(libhalmd.mdsim.gpu.particle_float_2)
-          , [3] = assert(libhalmd.mdsim.gpu.particle_float_3)
-        },
-        ["double-single"] = {
-            [2] = assert(libhalmd.mdsim.gpu.particle_dsfloat_2)
-          , [3] = assert(libhalmd.mdsim.gpu.particle_dsfloat_3)
+        [2] = {
+            ["single"] = assert(libhalmd.mdsim.gpu.particle_2_float)
+          , ["double-single"] = assert(libhalmd.mdsim.gpu.particle_2_dsfloat)
+        }
+      , [3] = {
+            ["single"] = assert(libhalmd.mdsim.gpu.particle_3_float)
+          , ["double-single"] = assert(libhalmd.mdsim.gpu.particle_3_dsfloat)
         }
     }
 end
@@ -59,15 +63,16 @@ end
 -- :param number args.dimension: dimension of space
 -- :param number args.particles: number of particles
 -- :param number args.species: number of species (*default:* 1)
--- :param string args.precision: floating point precision *(optional)*
 -- :param string args.memory: device where the particle information is stored *(optional)*
+-- :param string args.precision: floating point precision *(optional)*
 -- :param string args.label: instance label (*default:* ``all``)
 --
--- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
--- not specified, the memory location is selected according to the compute
+-- The supported values for ``memory`` are ``host`` and ``gpu``. If ``memory``
+-- is not specified, the memory location is selected according to the compute
 -- device.
+--
 -- The supported values for ``precision`` are ``single`` and ``double-single``
--- for a gpu particle instance and ``double`` for a host particle instance.
+-- if ``memory`` equals ``gpu``, and ``double`` for host memory.
 --
 -- .. attribute:: nparticle
 --
@@ -77,13 +82,17 @@ end
 --
 --    Number of particle species.
 --
--- .. attribute:: label
---
---    Instance label.
---
 -- .. attribute:: memory
 --
 --    Device where the particle memory resides.
+--
+-- .. attribute:: precision
+--
+--    Floating-point precision of the data stored.
+--
+-- .. attribute:: label
+--
+--    Instance label.
 --
 -- .. attribute:: data
 --
@@ -92,22 +101,57 @@ end
 --        table = particle.data["position"]
 --        particle.data["position"] = table
 --
---    Per default a particle instance contains the following named data arrays:
---    "position", "image", "velocity", "id", "reverse_id", "species", "mass",
---    "force", "en_pot", "stress_pot"
+--    or using the equivalent syntax::
+--
+--        table = particle.data.position
+--        particle.data.position = table
+--
+--    The following named arrays holding per-particle data are predefined:
+--
+--        - scalar integer data:
+--
+--          - ``id``: particle ID, unique within instance of :class:`halmd.mdsim.particle`
+--          - ``reverse_id``: maps a particle ID to its current array index in memory
+--
+--        - scalar floating-point data:
+--
+--          - ``mass``: inertial mass (e.g., for
+--            :class:`halmd.mdsim.integrators`)
+--          - ``potential_energy``: potential energy felt by each particle, see
+--            also :class:`halmd.observables.thermodynamics`
+--          - ``species``: atomic, chemical, or coarse-grained species (e.g.,
+--            for :class:`halmd.mdsim.potentials`)
+--
+--        - vector integer data:
+--
+--          - ``image``: periodic image of the simulation box that contains
+--            the given particle
+--
+--        - vector floating-point data:
+--
+--          - ``force``: force acting on each particle
+--          - ``position``: position reduced to the original periodic simulation box
+--          - ``velocity``: velocity of each particle
+--
+--        - other floating-point fields:
+--
+--          - ``potential_stress_tensor``: contribution to the potential part
+--            of the stress tensor. In :math:`d` dimensions, :math:`d` diagonal
+--            entries of this symmetric tensor are followed by :math:`d(d-1)/2`
+--            off-diagonal entries.
 --
 -- .. warning::
 --
---    Accessing particle data using this table is equivalent
---    to calling :meth:`get` resp. :meth:`set` and involves
---    a full copy of the data to a lua table.
+--    Accessing particle data using this table is equivalent to calling
+--    :meth:`get` and :meth:`set`, respectively, and involves a full copy of
+--    the data to a lua table.
 --
 -- .. warning::
 --
---    During simulation, particle arrays are reordered in memory according
---    to a space-filling curve. To access particles in initial order, use
---    :meth:`get_reverse_id` to retrieve a map from particle IDs to current
---    particle indices in memory.
+--    During simulation, particle arrays may be reordered in memory according
+--    to a space-filling curve, see :class:`halmd.mdsim.sorts`. To access
+--    particles in initial order, use :meth:`get_reverse_id` to retrieve a map
+--    from particle IDs to current particle indices in memory.
 --
 -- .. method:: get(name)
 --
@@ -187,17 +231,23 @@ local M = module(function(args)
     local nspecies = utility.assert_type(args.species or 1, "number")
     local label = utility.assert_type(args.label or "all", "string")
 
+    -- select particle class according to memory, dimension, precision
     local memory = args and args.memory or (device.gpu and "gpu" or "host")
     if not particle[memory] then
-        error(("unsupported particle memory type '%s'"):format(memory), 2)
+        error(("unsupported particle memory type: '%s'"):format(memory), 2)
     end
-    local precision = args and args.precision or (device.gpu and "double-single" or "double")
-    if not particle[memory][precision] then
-        error(("unsupported particle float type '%s'"):format(float_type), 2)
-    end
+    local particle = particle[memory]
 
-    -- select particle class
-    local particle = assert(particle[memory][precision][dimension])
+    if not particle[dimension] then
+        error(("unsupported space dimension: '%d'"):format(dimension), 2)
+    end
+    particle = particle[dimension]
+
+    local precision = args and args.precision or (device.gpu and "double-single" or "double")
+    if not particle[precision] then
+        error(("unsupported floating-point precision: '%s'"):format(float_type), 2)
+    end
+    particle = particle[precision]
 
     -- construct particle instance
     local self = particle(nparticle, nspecies)

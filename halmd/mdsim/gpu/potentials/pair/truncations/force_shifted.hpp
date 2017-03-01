@@ -121,27 +121,29 @@ public:
         using namespace luaponte;
         module(L, "libhalmd")
         [
-                namespace_("mdsim")
+            namespace_("mdsim")
+            [
+                namespace_("gpu")
                 [
-                        namespace_("gpu")
+                    namespace_("potentials")
+                    [
+                        namespace_("pair")
                         [
-                                namespace_("potentials")
-                                [
-                                        namespace_("pair")
-                                        [
+                            class_<force_shifted, potential_type, std::shared_ptr<force_shifted> >()
+                                .property("r_cut", (matrix_type const& (force_shifted::*)() const) &force_shifted::r_cut)
+                                .property("r_cut_sigma", &force_shifted::r_cut_sigma)
 
-                                                class_<force_shifted, potential_type, std::shared_ptr<force_shifted> >()
-                                                    .property("r_cut", (matrix_type const& (force_shifted::*)() const) &force_shifted::r_cut)
-                                                    .property("r_cut_sigma", &force_shifted::r_cut_sigma)
-                                              , def("force_shifted", &std::make_shared<force_shifted
-                                                                                     , matrix_type const&
-                                                                                     , potential_type const&>)
-                                        ]
-                                ]
+                          , def("force_shifted", &std::make_shared<force_shifted
+                              , matrix_type const&
+                              , potential_type const&>
+                            )
                         ]
+                    ]
                 ]
+            ]
         ];
     }
+
 private:
     /** cutoff length in units of sigma */
     matrix_type r_cut_sigma_;

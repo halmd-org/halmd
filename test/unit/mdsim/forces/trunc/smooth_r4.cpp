@@ -293,8 +293,11 @@ test_smooth_r4<float_type>::test_smooth_r4()
     particle->on_force([=](){force->apply();});
 }
 
-BOOST_FIXTURE_TEST_CASE( smooth_r4, set_cuda_device ) {
+BOOST_FIXTURE_TEST_CASE( smooth_r4_float, set_cuda_device ) {
     test_smooth_r4<float>().test();
+}
+
+BOOST_FIXTURE_TEST_CASE( smooth_r4_dsfloat, set_cuda_device ) {
     test_smooth_r4<halmd::dsfloat>().test();
 }
 

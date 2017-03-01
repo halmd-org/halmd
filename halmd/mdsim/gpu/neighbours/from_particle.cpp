@@ -196,7 +196,7 @@ template <int dimension, typename float_type>
 void from_particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    std::string const defaults_name("defaults_" + std::string(variant_name<float_type>::name) + "_" + std::to_string(dimension));
+    std::string const defaults_name("defaults_" + std::to_string(dimension) + "_" + std::string(variant_name<float_type>::name));
     module(L, "libhalmd")
     [
         namespace_("mdsim")

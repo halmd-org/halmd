@@ -55,10 +55,10 @@ template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
   : // allocate global device memory
     nparticle_(nparticle)
-  , array_size_((nparticle + 128 - 1) & ~(128-1))
+  , array_size_((nparticle + 128 - 1) & ~(128 - 1)) // round upwards to multiple of 128
   , nspecies_(std::max(nspecies, 1u))
   // FIXME default CUDA kernel execution dimensions
-  , dim_(device::validate(cuda::config(array_size_/128, 128)))
+  , dim_(device::validate(cuda::config(array_size_ / 128, 128)))
   , id_(array_size_)
   , reverse_id_(array_size_)
   // enable auxiliary variables by default to allow sampling of initial state
@@ -91,10 +91,10 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
             (dim_, nparticle_, array_size_, velocity_init_value, velocity_init_value);
     auto gpu_force_array = gpu_data_["force"] = std::make_shared<particle_array_gpu<gpu_force_type>>
             (dim_, nparticle_, array_size_, [this]() { this->update_force_(); });
-    auto gpu_en_pot_array = gpu_data_["en_pot"] = std::make_shared<particle_array_gpu<gpu_en_pot_type>>
+    auto gpu_en_pot_array = gpu_data_["potential_energy"] = std::make_shared<particle_array_gpu<gpu_en_pot_type>>
             (dim_, nparticle_, array_size_, [this]() { this->update_force_(); });
     // TODO: automatically handle the larger array size for example with an explicit specialization for a stress_tensor_wrapper type
-    auto gpu_stress_pot_array = gpu_data_["stress_pot"] = std::make_shared<particle_array_gpu<gpu_stress_pot_type>>
+    auto gpu_stress_pot_array = gpu_data_["potential_stress_tensor"] = std::make_shared<particle_array_gpu<gpu_stress_pot_type>>
             (dim_, nparticle_, array_size_ * stress_pot_type::static_size, [this]() { this->update_force_(); });
 
     // register host data wrappers for packed data
@@ -106,11 +106,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     // register host wrappers for other data
     host_data_["force"] = std::make_shared<particle_array_host<force_type>>(gpu_force_array, 0, sizeof(gpu_force_type));
     host_data_["image"] = std::make_shared<particle_array_host<image_type>>(gpu_image_array, 0, sizeof(gpu_image_type));
-    host_data_["en_pot"] = std::make_shared<particle_array_host<en_pot_type>>(gpu_en_pot_array, 0, sizeof(gpu_en_pot_type));
-    host_data_["stress_pot"] = std::make_shared<particle_array_host<stress_pot_type>>(gpu_stress_pot_array, 0, sizeof(gpu_stress_pot_type));
-
-    // create alias for potential energy
-    host_data_["potential_energy"] = host_data_["en_pot"];
+    host_data_["potential_energy"] = std::make_shared<particle_array_host<en_pot_type>>(gpu_en_pot_array, 0, sizeof(gpu_en_pot_type));
+    host_data_["potential_stress_tensor"] = std::make_shared<particle_array_host<stress_pot_type>>(gpu_stress_pot_array, 0, sizeof(gpu_stress_pot_type));
 
     {
         auto id = make_cache_mutable(id_);
@@ -136,8 +133,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     }
 
     LOG("number of particles: " << nparticle_);
-    LOG("number of particle placeholders: " << array_size_);
     LOG("number of particle species: " << nspecies_);
+    LOG_DEBUG("capacity of data arrays: " << array_size_);
 }
 
 template <int dimension, typename float_type>
@@ -258,7 +255,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static std::string class_name = "particle_" + std::string(variant_name<float_type>::name) + "_" + std::to_string(dimension);
+    static std::string class_name = "particle_" + std::to_string(dimension) + "_" + std::string(variant_name<float_type>::name);
     module(L, "libhalmd")
     [
         namespace_("mdsim")

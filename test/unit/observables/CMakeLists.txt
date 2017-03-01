@@ -71,16 +71,28 @@ add_test(unit/observables/phase_space/host/3d
   test_unit_observables_phase_space --run_test=phase_space_host_3d --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  halmd_add_gpu_test(unit/observables/phase_space/gpu/host/2d
-    test_unit_observables_phase_space --run_test=phase_space_gpu_host_2d --log_level=test_suite
+  halmd_add_gpu_test(unit/observables/phase_space/gpu/host/float/2d
+    test_unit_observables_phase_space --run_test=phase_space_gpu_host_float_2d --log_level=test_suite
   )
-  halmd_add_gpu_test(unit/observables/phase_space/gpu/host/3d
-    test_unit_observables_phase_space --run_test=phase_space_gpu_host_3d --log_level=test_suite
+  halmd_add_gpu_test(unit/observables/phase_space/gpu/host/dsfloat/2d
+    test_unit_observables_phase_space --run_test=phase_space_gpu_host_dsfloat_2d --log_level=test_suite
   )
-  halmd_add_gpu_test(unit/observables/phase_space/gpu/gpu/2d
-    test_unit_observables_phase_space --run_test=phase_space_gpu_gpu_2d --log_level=test_suite
+  halmd_add_gpu_test(unit/observables/phase_space/gpu/host/float/3d
+    test_unit_observables_phase_space --run_test=phase_space_gpu_host_float_3d --log_level=test_suite
   )
-  halmd_add_gpu_test(unit/observables/phase_space/gpu/gpu/3d
-    test_unit_observables_phase_space --run_test=phase_space_gpu_gpu_3d --log_level=test_suite
+  halmd_add_gpu_test(unit/observables/phase_space/gpu/host/dsfloat/3d
+    test_unit_observables_phase_space --run_test=phase_space_gpu_host_dsfloat_3d --log_level=test_suite
+  )
+  halmd_add_gpu_test(unit/observables/phase_space/gpu/gpu/float/2d
+    test_unit_observables_phase_space --run_test=phase_space_gpu_gpu_float_2d --log_level=test_suite
+  )
+  halmd_add_gpu_test(unit/observables/phase_space/gpu/gpu/dsfloat/2d
+    test_unit_observables_phase_space --run_test=phase_space_gpu_gpu_dsfloat_2d --log_level=test_suite
+  )
+  halmd_add_gpu_test(unit/observables/phase_space/gpu/gpu/float/3d
+    test_unit_observables_phase_space --run_test=phase_space_gpu_gpu_float_3d --log_level=test_suite
+  )
+  halmd_add_gpu_test(unit/observables/phase_space/gpu/gpu/dsfloat/3d
+    test_unit_observables_phase_space --run_test=phase_space_gpu_gpu_dsfloat_3d --log_level=test_suite
   )
 endif()
