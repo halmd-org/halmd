@@ -85,6 +85,15 @@ public:
     //! get cell lists
     cache<array_type> const& cell();
 
+    //! compute cell index of position
+    cell_size_type index(vector_type const& r) const
+    {
+        return element_mod(
+            static_cast<cell_size_type>(element_div(r, cell_length_) + static_cast<vector_type>(ncell_))
+          , ncell_
+        );
+    }
+
 private:
     typedef typename particle_type::size_type size_type;
     typedef typename particle_type::position_array_type position_array_type;

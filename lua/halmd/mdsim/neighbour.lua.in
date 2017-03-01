@@ -201,9 +201,11 @@ local M = module(function(args)
         -- module.
         if not neighbours.is_binning_compatible(binning[1], binning[2]) then
             binning = nil
-            log.info("binning parameters incompatible with neighbour list algorithm")
-            log.info("fall back to 'neighbours.from_particle'")
+            logger:info("binning parameters incompatible with neighbour list algorithm")
+            logger:info("fall back to 'neighbours.from_particle'")
         end
+    else
+        logger:info("skip binning of particles into cell lists")
     end
 
     local displacement = args.displacement

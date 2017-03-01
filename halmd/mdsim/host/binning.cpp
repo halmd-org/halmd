@@ -109,9 +109,8 @@ void binning<dimension, float_type>::update()
     );
     // add particles to cells
     for (size_type i = 0; i < nparticle; ++i) {
-        vector_type const& r = position[i];
-        cell_size_type index = element_mod(static_cast<cell_size_type>(element_div(r, cell_length_) + static_cast<vector_type>(ncell_)), ncell_);
-        (*cell)(index).push_back(i);
+        cell_size_type idx = index(position[i]);
+        (*cell)(idx).push_back(i);
     }
 }
 
