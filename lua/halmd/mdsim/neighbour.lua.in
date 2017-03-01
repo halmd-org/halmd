@@ -44,12 +44,12 @@ local algorithm
 if device.gpu then
     defaults = {
         [2] = {
-            ["single"] = assert(libhalmd.mdsim.defaults_2_float)
-          , ["double-single"] = assert(libhalmd.mdsim.defaults_2_dsfloat)
+            ["single"] = libhalmd.mdsim.defaults_2_float
+          , ["double-single"] = libhalmd.mdsim.defaults_2_dsfloat
         }
       , [3] = {
-            ["single"] = assert(libhalmd.mdsim.defaults_3_float)
-          , ["double-single"] = assert(libhalmd.mdsim.defaults_3_dsfloat)
+            ["single"] = libhalmd.mdsim.defaults_3_float
+          , ["double-single"] = libhalmd.mdsim.defaults_3_dsfloat
         }
     }
     algorithm = {

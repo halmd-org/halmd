@@ -272,20 +272,28 @@ HALMD_TEST_INIT( binning )
     test_suite* ts_gpu_two = BOOST_TEST_SUITE( "two" );
     ts_gpu->add(ts_gpu_two);
 
+# ifdef USE_GPU_SINGLE_PRECISION
     test_suite* ts_gpu_two_float = BOOST_TEST_SUITE( "float" );
     ts_gpu_two->add(ts_gpu_two_float);
+# endif
 
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     test_suite* ts_gpu_two_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
     ts_gpu_two->add(ts_gpu_two_dsfloat);
+# endif
 
     test_suite* ts_gpu_three = BOOST_TEST_SUITE( "three" );
     ts_gpu->add(ts_gpu_three);
 
+# ifdef USE_GPU_SINGLE_PRECISION
     test_suite* ts_gpu_three_float = BOOST_TEST_SUITE( "float" );
     ts_gpu_three->add(ts_gpu_three_float);
+# endif
 
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     test_suite* ts_gpu_three_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
     ts_gpu_three->add(ts_gpu_three_dsfloat);
+# endif
 #endif
 
     // lower bound on edge length of cells
@@ -324,6 +332,7 @@ HALMD_TEST_INIT( binning )
                 ts_host_three->add(BOOST_TEST_CASE( non_uniform_density ));
             }
 #ifdef HALMD_WITH_GPU
+# ifdef USE_GPU_SINGLE_PRECISION
             {
                 typedef halmd::mdsim::gpu::binning<2, float> binning_type;
                 auto non_uniform_density = [=]() {
@@ -348,6 +357,8 @@ HALMD_TEST_INIT( binning )
                 };
                 ts_gpu_three_float->add(BOOST_TEST_CASE( non_uniform_density ));
             }
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
             {
                 typedef halmd::mdsim::gpu::binning<2, halmd::dsfloat> binning_type;
                 auto non_uniform_density = [=]() {
@@ -372,6 +383,7 @@ HALMD_TEST_INIT( binning )
                 };
                 ts_gpu_three_dsfloat->add(BOOST_TEST_CASE( non_uniform_density ));
             }
+# endif
 #endif
         }
     }

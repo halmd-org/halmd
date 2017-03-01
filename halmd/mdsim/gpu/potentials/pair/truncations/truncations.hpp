@@ -36,12 +36,25 @@ namespace potentials {
 namespace pair {
 namespace truncations {
 
-#define _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_LUAOPEN(r, data, truncation) \
-    truncation<potential_type>::luaopen(L);\
+#ifdef USE_GPU_SINGLE_PRECISION
+# define _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_LUAOPEN_SINGLE(r, data, truncation) \
     forces::pair_trunc<3, float, truncation<potential_type> >::luaopen(L);\
-    forces::pair_trunc<2, float, truncation<potential_type> >::luaopen(L);\
+    forces::pair_trunc<2, float, truncation<potential_type> >::luaopen(L);
+#else
+# define _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_LUAOPEN_SINGLE(r, data, truncation)
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+# define _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_LUAOPEN_DOUBLE_SINGLE(r, data, truncation) \
     forces::pair_trunc<3, dsfloat, truncation<potential_type> >::luaopen(L);\
     forces::pair_trunc<2, dsfloat, truncation<potential_type> >::luaopen(L);
+#else
+# define _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_LUAOPEN_DOUBLE_SINGLE(r, data, truncation)
+#endif
+
+#define _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_LUAOPEN(r, data, truncation) \
+    truncation<potential_type>::luaopen(L);\
+    _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_LUAOPEN_SINGLE(r, data, truncation)\
+    _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_LUAOPEN_DOUBLE_SINGLE(r, data, truncation)
 
 #define _HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(r, potential_type, truncation) \
     template class truncations::truncation<potential_type>;

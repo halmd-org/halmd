@@ -314,18 +314,26 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet_nvt_hoover(lua_State* L)
 {
-    verlet_nvt_hoover<3, double>::luaopen(L);
-    verlet_nvt_hoover<2, double>::luaopen(L);
+#ifdef USE_GPU_SINGLE_PRECISION
     verlet_nvt_hoover<3, float>::luaopen(L);
     verlet_nvt_hoover<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    verlet_nvt_hoover<3, double>::luaopen(L);
+    verlet_nvt_hoover<2, double>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
-template class verlet_nvt_hoover<3, double>;
-template class verlet_nvt_hoover<2, double>;
+#ifdef USE_GPU_SINGLE_PRECISION
 template class verlet_nvt_hoover<3, float>;
 template class verlet_nvt_hoover<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class verlet_nvt_hoover<3, double>;
+template class verlet_nvt_hoover<2, double>;
+#endif
 
 } // namespace integrators
 } // namespace gpu

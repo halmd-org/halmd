@@ -149,6 +149,7 @@ struct particle_array_gpu_helper
     }
 };
 
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template<size_t dimension>
 struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
 {
@@ -217,6 +218,7 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
 
 template<>
 struct particle_array_gpu_helper<dsfloat> : particle_array_gpu_helper<fixed_vector<dsfloat, 1>> {};
+#endif // USE_GPU_DOUBLE_SINGLE_PRECISION
 
 template<typename T>
 cuda::host::vector<uint8_t> particle_array_gpu<T>::get_host_memory() const
@@ -256,9 +258,11 @@ void particle_array_gpu<T>::initialize()
 template class particle_array_gpu<float>;
 template class particle_array_gpu<float2>;
 template class particle_array_gpu<float4>;
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class particle_array_gpu<dsfloat>;
 template class particle_array_gpu<fixed_vector<dsfloat, 2>>;
 template class particle_array_gpu<fixed_vector<dsfloat, 4>>;
+#endif
 template class particle_array_gpu<unsigned int>;
 template class particle_array_gpu<uint2>;
 template class particle_array_gpu<uint4>;

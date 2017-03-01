@@ -49,6 +49,7 @@
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
 #endif
 #include <test/tools/ctest.hpp>
+#include <test/tools/dsfloat.hpp>
 
 using namespace boost;
 using namespace halmd;
@@ -255,7 +256,7 @@ struct make_potential<mdsim::gpu::potentials::pair::truncations::smooth_r4<base_
 template<typename float_type, typename potential_type>
 struct gpu_tolerance
 {
-    static constexpr float_type value = 10 * numeric_limits<float_type>::epsilon();
+    static constexpr double value = 10 * numeric_limits<float>::epsilon();
 };
 
 template<typename float_type, typename base_potential_type>
@@ -263,7 +264,7 @@ struct gpu_tolerance<float_type, mdsim::gpu::potentials::pair::truncations::forc
 {
     // FIXME find better estimate for floating point error, a global estimate
     // seems unsuitable due to the subtractions in the potential computation
-    static constexpr float_type value = 5e2 * 10 * numeric_limits<float_type>::epsilon();
+    static constexpr double value = 5e2 * 10 * numeric_limits<float>::epsilon();
 };
 
 BOOST_AUTO_TEST_CASE( lennard_jones_host )
@@ -358,7 +359,7 @@ struct lennard_jones
 
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::gpu::potentials::pair::lennard_jones<float_type> base_potential_type;
+    typedef mdsim::gpu::potentials::pair::lennard_jones<float> base_potential_type;
     typedef mdsim::gpu::potentials::pair::truncations::TRUNCATION_TYPE<base_potential_type> potential_type;
 #ifndef USE_HOST_SINGLE_PRECISION
     typedef mdsim::host::potentials::pair::lennard_jones<double> base_host_potential_type;
@@ -422,7 +423,7 @@ void lennard_jones<float_type>::test()
         // the GPU force module stores only a fraction of these values
         en_pot_ /= 2;
 
-        BOOST_CHECK_SMALL(norm_inf(fval * r - f), norm_inf(f) * tolerance);
+        BOOST_CHECK_SMALL(float_type(norm_inf(fval * r - f)), float_type(norm_inf(f)) * tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 4 * tolerance);
     }
 }
@@ -468,7 +469,14 @@ lennard_jones<float_type>::lennard_jones()
     particle->on_force([=](){force->apply();});
 }
 
-BOOST_FIXTURE_TEST_CASE( lennard_jones_gpu, device ) {
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( lennard_jones_gpu_dsfloat, device ) {
+    lennard_jones<dsfloat>().test();
+}
+# endif
+# ifdef USE_GPU_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( lennard_jones_gpu_float, device ) {
     lennard_jones<float>().test();
 }
+# endif
 #endif // HALMD_WITH_GPU

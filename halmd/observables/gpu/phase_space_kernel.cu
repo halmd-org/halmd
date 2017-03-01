@@ -176,9 +176,11 @@ template class phase_space_sample_wrapper<float>;
 template class phase_space_sample_wrapper<float2>;
 template class phase_space_sample_wrapper<float4>;
 
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class phase_space_sample_wrapper<dsfloat, float>;
 template class phase_space_sample_wrapper<fixed_vector<dsfloat, 2>, float2>;
 template class phase_space_sample_wrapper<fixed_vector<dsfloat, 4>, float4>;
+#endif
 
 template class phase_space_sample_wrapper<int>;
 template class phase_space_sample_wrapper<int2>;

@@ -72,10 +72,14 @@ lattice_wrapper<float_type, lattice_type> const lattice_wrapper<float_type, latt
     lattice_kernel::lattice<ptr_type, fixed_vector<float_type, dimension>, lattice_type>
 };
 
+#ifdef USE_GPU_SINGLE_PRECISION
 template class lattice_wrapper<float, close_packed_lattice<fixed_vector<float, 3>, fixed_vector<unsigned int, 3> > >;
 template class lattice_wrapper<float, close_packed_lattice<fixed_vector<float, 2>, fixed_vector<unsigned int, 2> > >;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class lattice_wrapper<dsfloat, close_packed_lattice<fixed_vector<float, 3>, fixed_vector<unsigned int, 3> > >;
 template class lattice_wrapper<dsfloat, close_packed_lattice<fixed_vector<float, 2>, fixed_vector<unsigned int, 2> > >;
+#endif
 
 } // namespace mdsim
 } // namespace gpu

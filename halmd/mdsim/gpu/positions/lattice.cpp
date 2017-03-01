@@ -208,18 +208,26 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_positions_lattice(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     lattice<3, float>::luaopen(L);
     lattice<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     lattice<3, dsfloat>::luaopen(L);
     lattice<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class lattice<3, float>;
 template class lattice<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class lattice<3, dsfloat>;
 template class lattice<2, dsfloat>;
+#endif
 
 } // namespace mdsim
 } // namespace gpu

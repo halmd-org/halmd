@@ -39,30 +39,34 @@ add_test(unit/mdsim/integrators/euler/host/3d/overdamped
   test_unit_mdsim_integrators_euler --run_test=euler_host_3d_overdamped --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/float/2d/linear
-    test_unit_mdsim_integrators_euler --run_test=euler_gpu_float_2d_linear --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/dsfloat/2d/linear
-    test_unit_mdsim_integrators_euler --run_test=euler_gpu_dsfloat_2d_linear --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/float/2d/overdamped
-    test_unit_mdsim_integrators_euler --run_test=euler_gpu_float_2d_overdamped --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/dsfloat/2d/overdamped
-          test_unit_mdsim_integrators_euler --run_test=euler_gpu_dsfloat_2d_overdamped --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/float/3d/linear
-    test_unit_mdsim_integrators_euler --run_test=euler_gpu_float_3d_linear --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/dsfloat/3d/linear
-    test_unit_mdsim_integrators_euler --run_test=euler_gpu_dsfloat_3d_linear --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/float/3d/overdamped
-    test_unit_mdsim_integrators_euler --run_test=euler_gpu_float_3d_overdamped --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/dsfloat/3d/overdamped
-    test_unit_mdsim_integrators_euler --run_test=euler_gpu_dsfloat_3d_overdamped --log_level=test_suite
-  )
+  if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/float/2d/linear
+      test_unit_mdsim_integrators_euler --run_test=euler_gpu_float_2d_linear --log_level=test_suite
+    )
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/float/2d/overdamped
+      test_unit_mdsim_integrators_euler --run_test=euler_gpu_float_2d_overdamped --log_level=test_suite
+    )
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/float/3d/linear
+      test_unit_mdsim_integrators_euler --run_test=euler_gpu_float_3d_linear --log_level=test_suite
+    )
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/float/3d/overdamped
+      test_unit_mdsim_integrators_euler --run_test=euler_gpu_float_3d_overdamped --log_level=test_suite
+    )
+  endif()
+  if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/dsfloat/2d/linear
+      test_unit_mdsim_integrators_euler --run_test=euler_gpu_dsfloat_2d_linear --log_level=test_suite
+    )
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/dsfloat/2d/overdamped
+      test_unit_mdsim_integrators_euler --run_test=euler_gpu_dsfloat_2d_overdamped --log_level=test_suite
+    )
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/dsfloat/3d/linear
+      test_unit_mdsim_integrators_euler --run_test=euler_gpu_dsfloat_3d_linear --log_level=test_suite
+    )
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/euler/gpu/dsfloat/3d/overdamped
+      test_unit_mdsim_integrators_euler --run_test=euler_gpu_dsfloat_3d_overdamped --log_level=test_suite
+    )
+  endif()
 endif()
 
 # module verlet
@@ -100,18 +104,22 @@ add_test(unit/mdsim/integrators/verlet/host/3d
   test_unit_mdsim_integrators_verlet --run_test=ideal_gas_host_3d --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet/gpu/float/2d
-    test_unit_mdsim_integrators_verlet --run_test=ideal_gas_gpu_float_2d --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet/gpu/dsfloat/2d
-    test_unit_mdsim_integrators_verlet --run_test=ideal_gas_gpu_dsfloat_2d --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet/gpu/float/3d
-    test_unit_mdsim_integrators_verlet --run_test=ideal_gas_gpu_float_3d --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet/gpu/dsfloat/3d
-    test_unit_mdsim_integrators_verlet --run_test=ideal_gas_gpu_dsfloat_3d --log_level=test_suite
-  )
+  if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet/gpu/float/2d
+      test_unit_mdsim_integrators_verlet --run_test=ideal_gas_gpu_float_2d --log_level=test_suite
+    )
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet/gpu/float/3d
+      test_unit_mdsim_integrators_verlet --run_test=ideal_gas_gpu_float_3d --log_level=test_suite
+    )
+  endif()
+  if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet/gpu/dsfloat/2d
+      test_unit_mdsim_integrators_verlet --run_test=ideal_gas_gpu_dsfloat_2d --log_level=test_suite
+    )
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet/gpu/dsfloat/3d
+      test_unit_mdsim_integrators_verlet --run_test=ideal_gas_gpu_dsfloat_3d --log_level=test_suite
+    )
+  endif()
 endif()
 
 # module verlet_nvt_andersen
@@ -149,18 +157,22 @@ add_test(unit/mdsim/integrators/verlet_nvt_andersen/host/3d
   test_unit_mdsim_integrators_verlet_nvt_andersen --run_test=verlet_nvt_andersen_host_3d --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_andersen/gpu/float/2d
-    test_unit_mdsim_integrators_verlet_nvt_andersen --run_test=verlet_nvt_andersen_gpu_float_2d --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_andersen/gpu/dsfloat/2d
-    test_unit_mdsim_integrators_verlet_nvt_andersen --run_test=verlet_nvt_andersen_gpu_dsfloat_2d --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_andersen/gpu/float/3d
-    test_unit_mdsim_integrators_verlet_nvt_andersen --run_test=verlet_nvt_andersen_gpu_float_3d --log_level=test_suite
-  )
-  halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_andersen/gpu/dsfloat/3d
-    test_unit_mdsim_integrators_verlet_nvt_andersen --run_test=verlet_nvt_andersen_gpu_dsfloat_3d --log_level=test_suite
-  )
+  if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_andersen/gpu/float/2d
+      test_unit_mdsim_integrators_verlet_nvt_andersen --run_test=verlet_nvt_andersen_gpu_float_2d --log_level=test_suite
+    )
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_andersen/gpu/float/3d
+      test_unit_mdsim_integrators_verlet_nvt_andersen --run_test=verlet_nvt_andersen_gpu_float_3d --log_level=test_suite
+    )
+  endif()
+  if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_andersen/gpu/dsfloat/2d
+      test_unit_mdsim_integrators_verlet_nvt_andersen --run_test=verlet_nvt_andersen_gpu_dsfloat_2d --log_level=test_suite
+    )
+    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_andersen/gpu/dsfloat/3d
+      test_unit_mdsim_integrators_verlet_nvt_andersen --run_test=verlet_nvt_andersen_gpu_dsfloat_3d --log_level=test_suite
+    )
+  endif()
 endif()
 
 # module verlet_nvt_hoover
@@ -203,18 +215,22 @@ if(HALMD_WITH_pair_lennard_jones)
     test_unit_mdsim_integrators_verlet_nvt_hoover --run_test=verlet_nvt_hoover_host_3d --log_level=test_suite
   )
   if(HALMD_WITH_GPU)
-    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_hoover/gpu/float/2d
-      test_unit_mdsim_integrators_verlet_nvt_hoover --run_test=verlet_nvt_hoover_gpu_float_2d --log_level=test_suite
-    )
-    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_hoover/gpu/dsfloat/2d
-      test_unit_mdsim_integrators_verlet_nvt_hoover --run_test=verlet_nvt_hoover_gpu_dsfloat_2d --log_level=test_suite
-    )
-    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_hoover/gpu/float/3d
-      test_unit_mdsim_integrators_verlet_nvt_hoover --run_test=verlet_nvt_hoover_gpu_float_3d --log_level=test_suite
-    )
-    halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_hoover/gpu/dsfloat/3d
-      test_unit_mdsim_integrators_verlet_nvt_hoover --run_test=verlet_nvt_hoover_gpu_dsfloat_3d --log_level=test_suite
-    )
+    if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+      halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_hoover/gpu/float/2d
+        test_unit_mdsim_integrators_verlet_nvt_hoover --run_test=verlet_nvt_hoover_gpu_float_2d --log_level=test_suite
+      )
+      halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_hoover/gpu/float/3d
+        test_unit_mdsim_integrators_verlet_nvt_hoover --run_test=verlet_nvt_hoover_gpu_float_3d --log_level=test_suite
+      )
+    endif()
+    if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+      halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_hoover/gpu/dsfloat/2d
+        test_unit_mdsim_integrators_verlet_nvt_hoover --run_test=verlet_nvt_hoover_gpu_dsfloat_2d --log_level=test_suite
+      )
+      halmd_add_gpu_test(NO_MEMCHECK unit/mdsim/integrators/verlet_nvt_hoover/gpu/dsfloat/3d
+        test_unit_mdsim_integrators_verlet_nvt_hoover --run_test=verlet_nvt_hoover_gpu_dsfloat_3d --log_level=test_suite
+      )
+    endif()
   endif()
 endif()
 

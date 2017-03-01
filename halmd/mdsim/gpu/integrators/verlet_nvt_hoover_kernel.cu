@@ -131,10 +131,14 @@ verlet_nvt_hoover_wrapper<dimension, float_type>::kernel = {
   , verlet_nvt_hoover_kernel::rescale<dimension, float_type, ptr_type>
 };
 
-template class verlet_nvt_hoover_wrapper<3, dsfloat>;
-template class verlet_nvt_hoover_wrapper<2, dsfloat>;
+#ifdef USE_GPU_SINGLE_PRECISION
 template class verlet_nvt_hoover_wrapper<3, float>;
 template class verlet_nvt_hoover_wrapper<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class verlet_nvt_hoover_wrapper<3, dsfloat>;
+template class verlet_nvt_hoover_wrapper<2, dsfloat>;
+#endif
 
 } // namespace integrators
 } // namespace gpu

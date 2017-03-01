@@ -100,8 +100,10 @@ particle_wrapper<dimension, float_type> const particle_wrapper<dimension, float_
 
 template class particle_wrapper<3, float>;
 template class particle_wrapper<2, float>;
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class particle_wrapper<3, dsfloat>;
 template class particle_wrapper<2, dsfloat>;
+#endif
 
 template<typename T>
 static __global__ void particle_initialize_kernel (
@@ -119,6 +121,7 @@ particle_initialize_wrapper<T> const particle_initialize_wrapper<T>::kernel = {
   particle_initialize_kernel<T>
 };
 
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template<typename ptr_type, typename type>
 static __global__ void dsfloat_particle_initialize_kernel (
   ptr_type g_v
@@ -130,11 +133,11 @@ static __global__ void dsfloat_particle_initialize_kernel (
     g_v[GTID] = make_tuple((GTID < nparticle) ? value : ghost_value, type());
 }
 
-
 template<size_t N>
 dsfloat_particle_initialize_wrapper<N> const dsfloat_particle_initialize_wrapper<N>::kernel = {
   dsfloat_particle_initialize_kernel<ptr_type, type>
 };
+#endif // USE_GPU_DOUBLE_SINGLE_PRECISION
 
 template class particle_initialize_wrapper<unsigned int>;
 template class particle_initialize_wrapper<uint2>;
@@ -145,9 +148,11 @@ template class particle_initialize_wrapper<int4>;
 template class particle_initialize_wrapper<float>;
 template class particle_initialize_wrapper<float2>;
 template class particle_initialize_wrapper<float4>;
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class dsfloat_particle_initialize_wrapper<1>;
 template class dsfloat_particle_initialize_wrapper<2>;
 template class dsfloat_particle_initialize_wrapper<4>;
+#endif
 
 } // namespace gpu
 } // namespace mdsim

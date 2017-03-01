@@ -31,6 +31,10 @@
 #include <halmd/utility/tuple.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
+#ifndef __CUDACC__
+# include <ostream>
+#endif
+
 namespace halmd {
 namespace detail {
 namespace numeric {
@@ -121,6 +125,21 @@ struct dsfloat
     HALMD_GPU_ENABLED operator double() const
     {
         return static_cast<double>(hi) + lo;
+    }
+
+    HALMD_GPU_ENABLED bool operator<(dsfloat const& rhs) const {
+        if (hi < rhs.hi) return true;
+        if (rhs.hi < hi) return false;
+        return lo < rhs.lo;
+    }
+    HALMD_GPU_ENABLED bool operator>(dsfloat const& rhs) const {
+        return rhs.operator<(*this);
+    }
+    HALMD_GPU_ENABLED bool operator<=(dsfloat const& rhs) const {
+        return !rhs.operator<(*this);
+    }
+    HALMD_GPU_ENABLED bool operator>=(dsfloat const& rhs) const {
+        return !operator<(rhs);
     }
 };
 
@@ -333,6 +352,13 @@ struct dsfloat_const_ptr
         return hi;
     }
 };
+
+#ifndef __CUDACC__
+inline std::ostream& operator<<(std::ostream& p, halmd::dsfloat const& val) {
+    p << double(val);
+    return p;
+}
+#endif
 
 } // namespace mp
 } // namespace numeric

@@ -335,10 +335,14 @@ HALMD_TEST_INIT( from_range )
             }
 #ifdef HALMD_WITH_GPU
             {
+# ifdef USE_GPU_SINGLE_PRECISION
                 test_suite_gpu<2, float>::add_test(ts_gpu_two, nparticle, nspecies, range, repeat);
                 test_suite_gpu<3, float>::add_test(ts_gpu_three, nparticle, nspecies, range, repeat);
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
                 test_suite_gpu<2, halmd::dsfloat>::add_test(ts_gpu_two, nparticle, nspecies, range, repeat);
                 test_suite_gpu<3, halmd::dsfloat>::add_test(ts_gpu_three, nparticle, nspecies, range, repeat);
+# endif
             }
 #endif
         }

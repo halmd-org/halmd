@@ -65,6 +65,7 @@ struct particle_initialize_wrapper
     static particle_initialize_wrapper const kernel;
 };
 
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template<size_t dimension>
 struct dsfloat_particle_initialize_wrapper
 {
@@ -73,6 +74,7 @@ struct dsfloat_particle_initialize_wrapper
     cuda::function<void (ptr_type, type, type, unsigned int)> initialize;
     static dsfloat_particle_initialize_wrapper const kernel;
 };
+#endif
 
 } // namespace mdsim
 } // namespace gpu

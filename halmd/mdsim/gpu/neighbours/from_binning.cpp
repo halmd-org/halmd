@@ -274,11 +274,13 @@ struct variant_name<float>
     static constexpr const char *name = "float";
 };
 
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template<>
 struct variant_name<dsfloat>
 {
     static constexpr const char *name = "dsfloat";
 };
+#endif
 
 template <int dimension, typename float_type>
 void from_binning<dimension, float_type>::luaopen(lua_State* L)
@@ -329,18 +331,26 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_neighbours_from_binning(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     from_binning<3, float>::luaopen(L);
     from_binning<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     from_binning<3, dsfloat>::luaopen(L);
     from_binning<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class from_binning<3, float>;
 template class from_binning<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class from_binning<3, dsfloat>;
 template class from_binning<2, dsfloat>;
+#endif
 
 } // namespace neighbours
 } // namespace gpu

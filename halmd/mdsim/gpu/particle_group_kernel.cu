@@ -88,8 +88,10 @@ particle_group_wrapper<dimension, float_type>::kernel = {
 
 template class particle_group_wrapper<3, float>;
 template class particle_group_wrapper<2, float>;
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class particle_group_wrapper<3, dsfloat>;
 template class particle_group_wrapper<2, dsfloat>;
+#endif
 
 } // namespace gpu
 } // namespace mdsim

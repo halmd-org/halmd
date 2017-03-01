@@ -184,18 +184,26 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::luaopen(
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet_nvt_andersen(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     verlet_nvt_andersen<3, float, random::gpu::rand48>::luaopen(L);
     verlet_nvt_andersen<2, float, random::gpu::rand48>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     verlet_nvt_andersen<3, dsfloat, random::gpu::rand48>::luaopen(L);
     verlet_nvt_andersen<2, dsfloat, random::gpu::rand48>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class verlet_nvt_andersen<3, float, random::gpu::rand48>;
 template class verlet_nvt_andersen<2, float, random::gpu::rand48>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class verlet_nvt_andersen<3, dsfloat, random::gpu::rand48>;
 template class verlet_nvt_andersen<2, dsfloat, random::gpu::rand48>;
+#endif
 
 } // namespace integrators
 } // namespace gpu

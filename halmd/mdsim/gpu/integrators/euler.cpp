@@ -142,18 +142,26 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_euler(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     euler<3, float>::luaopen(L);
     euler<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     euler<3, dsfloat>::luaopen(L);
     euler<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class euler<3, float>;
 template class euler<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class euler<3, dsfloat>;
 template class euler<2, dsfloat>;
+#endif
 
 } // namespace integrators
 } // namespace gpu

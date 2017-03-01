@@ -103,6 +103,7 @@ struct particle_array_gpu_traits
     typedef cuda::vector<T> gpu_vector_type;
 };
 
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template<size_t dimension>
 struct particle_array_gpu_traits<fixed_vector<dsfloat, dimension> >
 {
@@ -112,6 +113,8 @@ struct particle_array_gpu_traits<fixed_vector<dsfloat, dimension> >
 
 template<>
 struct particle_array_gpu_traits<dsfloat> : particle_array_gpu_traits<fixed_vector<dsfloat, 1>> {};
+#endif // USE_GPU_DOUBLE_SINGLE_PRECISION
+
 
 template<typename T>
 class particle_array_gpu : public particle_array_gpu_base

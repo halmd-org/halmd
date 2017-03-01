@@ -167,18 +167,26 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_observables_gpu_density_mode(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     density_mode<3, float>::luaopen(L);
     density_mode<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     density_mode<3, dsfloat>::luaopen(L);
     density_mode<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class density_mode<3, float>;
 template class density_mode<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class density_mode<3, dsfloat>;
 template class density_mode<2, dsfloat>;
+#endif
 
 }  // namespace gpu
 }  // namespace observables

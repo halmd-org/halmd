@@ -608,11 +608,11 @@ static const std::unordered_map<
         { halmd::mdsim::gpu::ValueType::FLOAT, phase_space_sampler_gpu_typed<1, float>::create }
       , { halmd::mdsim::gpu::ValueType::FLOAT2, phase_space_sampler_gpu_typed<2, float2>::create }
       , { halmd::mdsim::gpu::ValueType::FLOAT4, phase_space_sampler_gpu_typed<2, float4>::create }
-
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
       , { halmd::mdsim::gpu::ValueType::DSFLOAT, phase_space_sampler_gpu_typed<1, dsfloat, float>::create }
       , { halmd::mdsim::gpu::ValueType::DSFLOAT2, phase_space_sampler_gpu_typed<2, fixed_vector<dsfloat, 2>, float2>::create }
       , { halmd::mdsim::gpu::ValueType::DSFLOAT4, phase_space_sampler_gpu_typed<2, fixed_vector<dsfloat, 4>, float4>::create }
-
+#endif
       , { halmd::mdsim::gpu::ValueType::INT, phase_space_sampler_gpu_typed<1, int>::create }
       , { halmd::mdsim::gpu::ValueType::INT2, phase_space_sampler_gpu_typed<2, int2>::create }
       , { halmd::mdsim::gpu::ValueType::INT4, phase_space_sampler_gpu_typed<2, int4>::create }
@@ -626,9 +626,11 @@ static const std::unordered_map<
       , { halmd::mdsim::gpu::ValueType::FLOAT2, phase_space_sampler_gpu_typed<2, float2>::create }
       , { halmd::mdsim::gpu::ValueType::FLOAT4, phase_space_sampler_gpu_typed<3, float4>::create }
 
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
       , { halmd::mdsim::gpu::ValueType::DSFLOAT, phase_space_sampler_gpu_typed<1, dsfloat, float>::create }
       , { halmd::mdsim::gpu::ValueType::DSFLOAT2, phase_space_sampler_gpu_typed<2, fixed_vector<dsfloat, 2>, float2>::create }
       , { halmd::mdsim::gpu::ValueType::DSFLOAT4, phase_space_sampler_gpu_typed<3, fixed_vector<dsfloat, 4>, float4>::create }
+#endif
 
       , { halmd::mdsim::gpu::ValueType::INT, phase_space_sampler_gpu_typed<1, int>::create }
       , { halmd::mdsim::gpu::ValueType::INT2, phase_space_sampler_gpu_typed<2, int2>::create }
@@ -912,18 +914,26 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_observables_gpu_phase_space(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     phase_space<3, float>::luaopen(L);
     phase_space<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     phase_space<3, dsfloat>::luaopen(L);
     phase_space<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class phase_space<3, float>;
 template class phase_space<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class phase_space<3, dsfloat>;
 template class phase_space<2, dsfloat>;
+#endif
 
 } // namespace gpu
 } // namespace observables
