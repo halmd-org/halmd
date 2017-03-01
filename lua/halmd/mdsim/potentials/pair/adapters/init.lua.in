@@ -24,9 +24,9 @@ local module = require("halmd.utility.module")
 -- .. _pair_potential_adapters:
 --
 -- Adapters for pair potentials
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- ============================
 --
--- Every potential defines ``truncate`` and ``modify`` methods to create
+-- Every potential defines ``modify`` and ``truncate`` methods to create
 -- modifications of a potential. The returned object is again a pair potential.
 --
 -- .. toctree::

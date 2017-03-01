@@ -19,22 +19,14 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local device    = require("halmd.utility.device")
-local numeric   = require("halmd.numeric")
-local utility   = require("halmd.utility")
+local device  = require("halmd.utility.device")
+local numeric = require("halmd.numeric")
+local utility = require("halmd.utility")
 
-local force_shifted = { host = libhalmd.mdsim.host.potentials.pair.force_shifted }
 local hard_core = { host = libhalmd.mdsim.host.potentials.pair.hard_core }
-local smooth_r4 = { host = libhalmd.mdsim.host.potentials.pair.smooth_r4 }
-local sharp = { host = libhalmd.mdsim.host.potentials.pair.sharp }
-local shifted = { host = libhalmd.mdsim.host.potentials.pair.shifted }
 
 if device.gpu then
-    force_shifted.gpu = force_shifted.host and assert(libhalmd.mdsim.gpu.potentials.pair.force_shifted)
     hard_core.gpu = hard_core.host and assert(libhalmd.mdsim.gpu.potentials.pair.hard_core)
-    sharp.gpu = sharp.host and assert(libhalmd.mdsim.gpu.potentials.pair.sharp)
-    smooth_r4.gpu = smooth_r4.host and assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
-    shifted.gpu = shifted.host and assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
 end
 
 ---
@@ -58,26 +50,27 @@ end
 --     potential = potential:modify({"hard_core", radius = 0.5})
 --
 
-local self = {}
+-- set up metatable that does the actual transformation
+local modify_table = {}
 
-local modify_table = setmetatable({
-    hard_core = function(potential, core, args)
-        local radius = utility.assert_kwarg(args, "radius")
-        if type(radius) ~= "table" and type(radius) ~= "number" then
-            error("bad argument 'radius'", 2)
-        end
-        if type(radius) == "number" then
-            radius = numeric.scalar_matrix(potential.species, potential.species, radius)
-        end
-        return hard_core[potential.memory](radius, potential)
-    end,
-}, {
+modify_table.hard_core = function(potential, core, args)
+    local radius = utility.assert_kwarg(args, "radius")
+    if type(radius) ~= "table" and type(radius) ~= "number" then
+        error("bad argument 'radius'", 2)
+    end
+    if type(radius) == "number" then
+        radius = numeric.scalar_matrix(potential.species, potential.species, radius)
+    end
+    return hard_core[potential.memory](radius, potential)
+end
+
+modify_table = setmetatable(modify_table, {
     __index = function(tbl, key)
         error("invalid modification type '" .. key .. "'", 2)
     end
 })
 
-self.modify = function(potential, args)
+local M = function(potential, args)
     local newpot = modify_table[args[1]](potential, args)
     newpot.description = args[1] .. " " .. potential.description
     newpot.species = potential.species
@@ -88,4 +81,4 @@ self.modify = function(potential, args)
     return newpot
 end
 
-return self
+return M

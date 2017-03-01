@@ -21,9 +21,9 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local device    = require("halmd.utility.device")
-local numeric   = require("halmd.numeric")
-local utility   = require("halmd.utility")
+local device  = require("halmd.utility.device")
+local numeric = require("halmd.numeric")
+local utility = require("halmd.utility")
 
 local force_shifted = { host = libhalmd.mdsim.host.potentials.pair.force_shifted }
 local smooth_r4 = { host = libhalmd.mdsim.host.potentials.pair.smooth_r4 }
@@ -253,8 +253,7 @@ end
 --   plot.show()
 --
 
-local self = {}
-
+-- set up metatable that does the actual transformation
 local truncate_table = {}
 
 if force_shifted.host then
@@ -274,10 +273,7 @@ if shifted.host then
 end
 if smooth_r4.host then
     truncate_table.smooth_r4 = function(potential, cutoff, args)
-        local h = args.h
-        if type(h) ~= "number" then
-            error("bad argument 'h'", 2)
-        end
+        local h = utility.assert_type(utility.assert_kwarg(args, "h"), "number")
         return smooth_r4[potential.memory](cutoff, h, potential)
     end
 end
@@ -288,7 +284,7 @@ truncate_table = setmetatable(truncate_table, {
     end
 })
 
-self.truncate = function(potential, args)
+local M = function(potential, args)
     local cutoff = utility.assert_kwarg(args, "cutoff")
     local trunctype = args[1] or "shifted"
     if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
@@ -308,4 +304,4 @@ self.truncate = function(potential, args)
     return newpot
 end
 
-return self
+return M
