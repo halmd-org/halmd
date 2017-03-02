@@ -46,12 +46,12 @@ static void test_dsfloat_performance() {
 
     auto dim = cuda::config(memsize / 128, 128);
 
-    int iterations = 256;
+    unsigned int iterations = 256;
 
     {
         halmd::accumulator<double> elapsed;
 
-        for (auto i = 0; i < iterations; i++) {
+        for (unsigned int i = 0; i < iterations; i++) {
             cuda::configure(dim.grid, dim.block);
             {
                 halmd::scoped_timer<halmd::timer> t(elapsed);
@@ -65,7 +65,7 @@ static void test_dsfloat_performance() {
         halmd::accumulator<double> elapsed;
         halmd::dsfloat_vector<float4> data(memsize);
 
-        for (auto i = 0; i < iterations; i++) {
+        for (unsigned int i = 0; i < iterations; i++) {
             cuda::configure(dim.grid, dim.block);
             {
                 halmd::scoped_timer<halmd::timer> t(elapsed);
@@ -103,7 +103,7 @@ static void test_dsfloat_overload()
             cuda::host::vector<float4> tmp(memsize);
             cuda::copy(data.begin(), data.end(), tmp.begin());
             int ignored;
-            for (auto i = 0; i < tmp.size(); i++) {
+            for (size_t i = 0; i < tmp.size(); i++) {
                 halmd::tie(result1[i], ignored) <<= tmp[i];
             }
         }
@@ -123,7 +123,7 @@ static void test_dsfloat_overload()
             cuda::host::vector<float4> tmp(memsize);
             cuda::copy(dsdata_float4.begin(), dsdata_float4.end(), tmp.begin());
             int ignored;
-            for (auto i = 0; i < tmp.size(); i++) {
+            for (size_t i = 0; i < tmp.size(); i++) {
                 halmd::tie(result2[i], ignored) <<= tmp[i];
             }
         }
