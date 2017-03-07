@@ -591,58 +591,6 @@ protected:
 };
 
 /**
- * associative maps from typeid's to typed phase space sampler create functions for dimension 2 and 3
- *
- * used to create the correct phase space sampler based on the typeid of a particle array and the dimension of
- * the particle instance
- */
-static const std::unordered_map<
-    halmd::mdsim::gpu::ValueType
-  , std::function<std::shared_ptr<phase_space_sampler_gpu>(
-        std::shared_ptr<mdsim::gpu::particle_group>
-      , std::shared_ptr<mdsim::gpu::particle_array_gpu_base>
-      , cuda::config const&
-    )>
-> phase_space_sampler_gpu_typed_create_map[] = {
-    { // dimension 2
-        { halmd::mdsim::gpu::ValueType::FLOAT, phase_space_sampler_gpu_typed<1, float>::create }
-      , { halmd::mdsim::gpu::ValueType::FLOAT2, phase_space_sampler_gpu_typed<2, float2>::create }
-      , { halmd::mdsim::gpu::ValueType::FLOAT4, phase_space_sampler_gpu_typed<2, float4>::create }
-#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-      , { halmd::mdsim::gpu::ValueType::DSFLOAT, phase_space_sampler_gpu_typed<1, dsfloat, float>::create }
-      , { halmd::mdsim::gpu::ValueType::DSFLOAT2, phase_space_sampler_gpu_typed<2, fixed_vector<dsfloat, 2>, float2>::create }
-      , { halmd::mdsim::gpu::ValueType::DSFLOAT4, phase_space_sampler_gpu_typed<2, fixed_vector<dsfloat, 4>, float4>::create }
-#endif
-      , { halmd::mdsim::gpu::ValueType::INT, phase_space_sampler_gpu_typed<1, int>::create }
-      , { halmd::mdsim::gpu::ValueType::INT2, phase_space_sampler_gpu_typed<2, int2>::create }
-      , { halmd::mdsim::gpu::ValueType::INT4, phase_space_sampler_gpu_typed<2, int4>::create }
-
-      , { halmd::mdsim::gpu::ValueType::UINT, phase_space_sampler_gpu_typed<1, unsigned int>::create }
-      , { halmd::mdsim::gpu::ValueType::UINT2, phase_space_sampler_gpu_typed<2, uint2>::create }
-      , { halmd::mdsim::gpu::ValueType::UINT4, phase_space_sampler_gpu_typed<2, uint4>::create }
-    }
-  , { // dimension 3
-        { halmd::mdsim::gpu::ValueType::FLOAT, phase_space_sampler_gpu_typed<1, float>::create }
-      , { halmd::mdsim::gpu::ValueType::FLOAT2, phase_space_sampler_gpu_typed<2, float2>::create }
-      , { halmd::mdsim::gpu::ValueType::FLOAT4, phase_space_sampler_gpu_typed<3, float4>::create }
-
-#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-      , { halmd::mdsim::gpu::ValueType::DSFLOAT, phase_space_sampler_gpu_typed<1, dsfloat, float>::create }
-      , { halmd::mdsim::gpu::ValueType::DSFLOAT2, phase_space_sampler_gpu_typed<2, fixed_vector<dsfloat, 2>, float2>::create }
-      , { halmd::mdsim::gpu::ValueType::DSFLOAT4, phase_space_sampler_gpu_typed<3, fixed_vector<dsfloat, 4>, float4>::create }
-#endif
-
-      , { halmd::mdsim::gpu::ValueType::INT, phase_space_sampler_gpu_typed<1, int>::create }
-      , { halmd::mdsim::gpu::ValueType::INT2, phase_space_sampler_gpu_typed<2, int2>::create }
-      , { halmd::mdsim::gpu::ValueType::INT4, phase_space_sampler_gpu_typed<3, int4>::create }
-
-      , { halmd::mdsim::gpu::ValueType::UINT, phase_space_sampler_gpu_typed<1, unsigned int>::create }
-      , { halmd::mdsim::gpu::ValueType::UINT2, phase_space_sampler_gpu_typed<2, uint2>::create }
-      , { halmd::mdsim::gpu::ValueType::UINT4, phase_space_sampler_gpu_typed<3, uint4>::create }
-    }
-};
-
-/**
  * specialized phase_space sampler for gpu position data
  *
  * does the same as the generic GPU sampler, but additionally reduces/extends periodic positions
@@ -811,11 +759,51 @@ phase_space<dimension, float_type>::get_sampler_gpu(std::string const& name)
             return (gpu_samplers_[name] = phase_space_sampler_gpu_position<dimension, typename mdsim::gpu::particle<dimension, float_type>::gpu_hp_vector_type>::create
                     (particle_group_, box_, array, particle_->get_gpu_array("image"), particle_->dim()));
         } else {
-            auto it = phase_space_sampler_gpu_typed_create_map[dimension-2].find(array->value_type());
-            if(it == phase_space_sampler_gpu_typed_create_map[dimension-2].end()) {
-                throw std::runtime_error("invalid sample type");
+            std::shared_ptr<phase_space_sampler_gpu> sampler;
+            switch(array->value_type()) {
+                case halmd::mdsim::gpu::ValueType::FLOAT:
+                    sampler = phase_space_sampler_gpu_typed<1, float>::create(particle_group_, array, particle_->dim());
+                    break;
+                case halmd::mdsim::gpu::ValueType::FLOAT2:
+                    sampler = phase_space_sampler_gpu_typed<2, float2>::create(particle_group_, array, particle_->dim());
+                    break;
+                case halmd::mdsim::gpu::ValueType::FLOAT4:
+                    sampler = phase_space_sampler_gpu_typed<dimension, float4>::create(particle_group_, array, particle_->dim());
+                    break;
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+                case halmd::mdsim::gpu::ValueType::DSFLOAT:
+                    sampler = phase_space_sampler_gpu_typed<1, dsfloat, float>::create(particle_group_, array, particle_->dim());
+                    break;
+                case halmd::mdsim::gpu::ValueType::DSFLOAT2:
+                    sampler = phase_space_sampler_gpu_typed<2, fixed_vector<dsfloat, 2>, float2>::create(particle_group_, array, particle_->dim());
+                    break;
+                case halmd::mdsim::gpu::ValueType::DSFLOAT4:
+                    sampler = phase_space_sampler_gpu_typed<dimension, fixed_vector<dsfloat, 4>, float4>::create(particle_group_, array, particle_->dim());
+                    break;
+#endif
+                case halmd::mdsim::gpu::ValueType::INT:
+                    sampler = phase_space_sampler_gpu_typed<1, int>::create(particle_group_, array, particle_->dim());
+                    break;
+                case halmd::mdsim::gpu::ValueType::INT2:
+                    sampler = phase_space_sampler_gpu_typed<2, int2>::create(particle_group_, array, particle_->dim());
+                    break;
+                case halmd::mdsim::gpu::ValueType::INT4:
+                    sampler = phase_space_sampler_gpu_typed<dimension, int4>::create(particle_group_, array, particle_->dim());
+                    break;
+
+                case halmd::mdsim::gpu::ValueType::UINT:
+                    sampler = phase_space_sampler_gpu_typed<1, unsigned int>::create(particle_group_, array, particle_->dim());
+                    break;
+                case halmd::mdsim::gpu::ValueType::UINT2:
+                    sampler = phase_space_sampler_gpu_typed<2, uint2>::create(particle_group_, array, particle_->dim());
+                    break;
+                case halmd::mdsim::gpu::ValueType::UINT4:
+                    sampler = phase_space_sampler_gpu_typed<dimension, uint4>::create(particle_group_, array, particle_->dim());
+                    break;
+                default:
+                    throw std::runtime_error("invalid sample type");
             }
-            return (gpu_samplers_[name] = it->second(particle_group_, array, particle_->dim()));
+            return (gpu_samplers_[name] = sampler);
         }
     }
 }
