@@ -141,6 +141,9 @@ struct dsfloat
     HALMD_GPU_ENABLED bool operator>=(dsfloat const& rhs) const {
         return !operator<(rhs);
     }
+    HALMD_GPU_ENABLED bool operator==(dsfloat const& rhs) const {
+        return (hi == rhs.hi) && (lo == rhs.lo);
+    }
 };
 
 /**

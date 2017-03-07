@@ -424,7 +424,7 @@ void lennard_jones<float_type>::test()
         en_pot_ /= 2;
 
         BOOST_CHECK_SMALL(float_type(norm_inf(fval * r - f)), float_type(norm_inf(f)) * tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 4 * tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(en_pot_, float_type(en_pot[i]), 4 * tolerance);
     }
 }
 
