@@ -37,6 +37,9 @@ namespace mdsim {
 namespace gpu {
 namespace positions {
 
+/**
+ * Sample random particle positions uniformly within slab centred around origin.
+ */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 class random
   : public position
@@ -58,7 +61,7 @@ public:
     );
 
     /**
-     * Sample random particle positions uniformly within slab centred around origin.
+     * sample particle positions from uniform distribution
      */
     void set();
 

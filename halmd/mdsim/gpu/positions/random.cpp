@@ -24,6 +24,7 @@
 #include <functional>
 
 #include <halmd/mdsim/gpu/positions/random.hpp>
+#include <halmd/mdsim/gpu/positions/random_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace std;
@@ -63,7 +64,9 @@ random<dimension, float_type, RandomNumberGenerator>::random(
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void random<dimension, float_type, RandomNumberGenerator>::set()
 {
-/*    auto position = make_cache_mutable(particle_->position());
+    typedef random_wrapper<dimension, typename rng_type::rng_type> wrapper_type;
+
+    auto position = make_cache_mutable(particle_->position());
     auto image = make_cache_mutable(particle_->image());
 
     LOG_TRACE("randomly distributing positions of " << position->size() << " particles");
@@ -71,21 +74,26 @@ void random<dimension, float_type, RandomNumberGenerator>::set()
     scoped_timer_type timer(runtime_.set);
 
     // edge lengths of cuboid slab centred around the origin
-    vector_type length = element_prod(box_->length(), slab_);
+    vector_type slab_length = element_prod(static_cast<vector_type>(box_->length()), slab_);
 
-    // iterate over all particles
-    for (auto &r : *position) {
-        // assign to each component uniform random values from [-1/2, 1/2)
-        for (unsigned int i = 0; i < dimension; ++i) {
-            r[i] = rng_->uniform<float_type>() - float_type(.5);
-        }
-        // scale each component by slab size
-        r = element_prod(r, length);
+    try {
+        cuda::configure(rng_->rng().dim.grid, rng_->rng().dim.block);
+        wrapper_type::kernel.uniform(
+            &*position->begin()
+          , particle_->nparticle()
+          , particle_->dim.threads()
+          , slab_length
+          , rng_->rng().rng()
+        );
+        cuda::thread::synchronize();
+    }
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to generate particle lattice on GPU");
+        throw;
     }
 
     // reset particle image vectors
-    fill(image->begin(), image->end(), 0);
-*/
+    cuda::memset(image->begin(), image->begin() + image->capacity(), 0);
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
