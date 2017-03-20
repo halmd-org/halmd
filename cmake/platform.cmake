@@ -15,7 +15,16 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
-    set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+    # Clang versions >= 3.9.1 issue warnings if a template specialization is
+    # declared, but not defined in a compilation unit.
+    # HALMD regularly uses explicit template specializations in specific compilation
+    # units. This paradigm conforms to the C++ standards and is intended,
+    # therefore the warnings are disabled.
+    if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "3.9.1")
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic -Wno-undefined-var-template")
+    else()
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+    endif()
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
     # clang doesn't print colored diagnostics when invoked from Ninja
     if (UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
