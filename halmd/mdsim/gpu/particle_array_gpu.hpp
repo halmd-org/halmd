@@ -130,12 +130,17 @@ public:
       , unsigned int size
       , init_type const& init_value
       , ghost_init_type const& ghost_init_value
-      , std::function<void()> update_function = [](){}
+      , std::function<void()> update_function = std::function<void()>()
     ) : data_(size)
       , update_function_(update_function)
       , init_type_(InitType::VALUE)
       , nparticle_(nparticle)
     {
+        // due to a bug in clang moving this to the default argument initialization
+        // above results in a compiler crash
+        if (!update_function_) {
+            update_function_ = []{};
+        }
         static_assert(sizeof(init_type) == sizeof(base_value_type), "invalid size of initialization value");
         static_assert(sizeof(ghost_init_type) == sizeof(base_value_type), "invalid size of ghost initialization value");
         memcpy(&init_value_, &init_value, sizeof(base_value_type));
@@ -147,12 +152,17 @@ public:
         cuda::config const& dim
       , unsigned int nparticle
       , unsigned int size
-      , std::function<void()> update_function = [](){}
+      , std::function<void()> update_function = std::function<void()>()
     ) : data_(size)
       , update_function_(update_function)
       , init_type_(InitType::ZERO)
       , nparticle_(nparticle)
     {
+        // due to a bug in clang moving this to the default argument initialization
+        // above results in a compiler crash
+        if (!update_function_) {
+            update_function_ = []{};
+        }
         initialize();
     }
 
