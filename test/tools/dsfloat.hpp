@@ -66,7 +66,7 @@ struct dsfloat_aware_numeric_limits : public std::numeric_limits<T> {
 };
 template<>
 struct dsfloat_aware_numeric_limits<halmd::dsfloat> {
-    static constexpr double epsilon() { return std::pow(double(2), -44); }
+    static constexpr double epsilon() { return 5.6843418860808015e-14;  } // std::pow(double(2), -44);
     static constexpr float min() { return std::numeric_limits<float>::min(); }
 };
 
