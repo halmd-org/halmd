@@ -227,18 +227,26 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_observables_gpu_thermodynamics(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     thermodynamics<3, float>::luaopen(L);
     thermodynamics<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     thermodynamics<3, dsfloat>::luaopen(L);
     thermodynamics<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class thermodynamics<3, float>;
 template class thermodynamics<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class thermodynamics<3, dsfloat>;
 template class thermodynamics<2, dsfloat>;
+#endif
 
 } // namespace gpu
 } // namespace observables

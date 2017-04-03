@@ -105,10 +105,14 @@ verlet_wrapper<dimension, float_type> const verlet_wrapper<dimension, float_type
   , verlet_kernel::finalize<dimension, float_type, ptr_type>
 };
 
+#ifdef USE_GPU_SINGLE_PRECISION
 template class verlet_wrapper<3, float>;
 template class verlet_wrapper<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class verlet_wrapper<3, dsfloat>;
 template class verlet_wrapper<2, dsfloat>;
+#endif
 
 } // namespace mdsim
 } // namespace gpu

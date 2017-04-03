@@ -293,13 +293,17 @@ test_smooth_r4<float_type>::test_smooth_r4()
     particle->on_force([=](){force->apply();});
 }
 
+#ifdef USE_GPU_SINGLE_PRECISION
 BOOST_FIXTURE_TEST_CASE( smooth_r4_float, set_cuda_device ) {
     test_smooth_r4<float>().test();
 }
+#endif
 
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 BOOST_FIXTURE_TEST_CASE( smooth_r4_dsfloat, set_cuda_device ) {
     test_smooth_r4<halmd::dsfloat>().test();
 }
+#endif
 
 BOOST_AUTO_TEST_SUITE_END() // gpu
 

@@ -19,11 +19,15 @@ if(HALMD_WITH_pair_lennard_jones)
     test_unit_mdsim_forces_trunc_smooth_r4 --run_test=host/smooth_r4 --log_level=test_suite
   )
   if(HALMD_WITH_GPU)
-    halmd_add_gpu_test(unit/mdsim/forces/trunc/smooth_r4/gpu/float
-      test_unit_mdsim_forces_trunc_smooth_r4 --run_test=gpu/smooth_r4_float --log_level=test_suite
-    )
-    halmd_add_gpu_test(unit/mdsim/forces/trunc/smooth_r4/gpu/dsfloat
-      test_unit_mdsim_forces_trunc_smooth_r4 --run_test=gpu/smooth_r4_dsfloat --log_level=test_suite
-    )
+    if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+      halmd_add_gpu_test(unit/mdsim/forces/trunc/smooth_r4/gpu/float
+        test_unit_mdsim_forces_trunc_smooth_r4 --run_test=gpu/smooth_r4_float --log_level=test_suite
+      )
+    endif()
+    if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+      halmd_add_gpu_test(unit/mdsim/forces/trunc/smooth_r4/gpu/dsfloat
+        test_unit_mdsim_forces_trunc_smooth_r4 --run_test=gpu/smooth_r4_dsfloat --log_level=test_suite
+      )
+    endif()
   endif()
 endif()

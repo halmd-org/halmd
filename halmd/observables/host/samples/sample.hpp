@@ -38,7 +38,13 @@ class sample
 {
 public:
     static constexpr int dimension = dimension_;
-    static constexpr bool gpu = false;
+#ifdef HALMD_WITH_GPU
+    static constexpr bool gpu_sample = false;
+
+    virtual bool gpu() const {
+        return false;
+    }
+#endif
 
     typedef typename std::conditional<dimension == 1, scalar_type, fixed_vector<scalar_type, dimension>>::type data_type;
     typedef raw_array<data_type> array_type;

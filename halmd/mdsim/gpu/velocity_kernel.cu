@@ -171,8 +171,10 @@ velocity_wrapper<dimension, float_type> const velocity_wrapper<dimension, float_
 
 template class velocity_wrapper<3, float>;
 template class velocity_wrapper<2, float>;
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class velocity_wrapper<3, dsfloat>;
 template class velocity_wrapper<2, dsfloat>;
+#endif
 
 } // namespace mdsim
 } // namespace gpu

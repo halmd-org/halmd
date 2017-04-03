@@ -156,18 +156,26 @@ void max_displacement<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_max_displacement(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     max_displacement<3, float>::luaopen(L);
     max_displacement<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     max_displacement<3, dsfloat>::luaopen(L);
     max_displacement<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class max_displacement<3, float>;
 template class max_displacement<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class max_displacement<3, dsfloat>;
 template class max_displacement<2, dsfloat>;
+#endif
 
 } // namespace mdsim
 } // namespace gpu

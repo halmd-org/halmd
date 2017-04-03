@@ -85,18 +85,26 @@ void all<particle_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle_groups_all(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     all<particle<3, float>>::luaopen(L);
     all<particle<2, float>>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     all<particle<3, dsfloat>>::luaopen(L);
     all<particle<2, dsfloat>>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class all<particle<3, float>>;
 template class all<particle<2, float>>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class all<particle<3, dsfloat>>;
 template class all<particle<2, dsfloat>>;
+#endif
 
 } // namespace particle_groups
 } // namespace gpu

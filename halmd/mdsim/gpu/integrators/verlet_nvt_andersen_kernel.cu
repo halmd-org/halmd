@@ -181,10 +181,14 @@ verlet_nvt_andersen_wrapper<dimension, float_type, rng_type>::kernel = {
   , verlet_nvt_andersen_kernel::finalize<dimension, float_type, ptr_type>
 };
 
+#ifdef USE_GPU_SINGLE_PRECISION
 template class verlet_nvt_andersen_wrapper<3, float, random::gpu::rand48_rng>;
 template class verlet_nvt_andersen_wrapper<2, float, random::gpu::rand48_rng>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class verlet_nvt_andersen_wrapper<3, dsfloat, random::gpu::rand48_rng>;
 template class verlet_nvt_andersen_wrapper<2, dsfloat, random::gpu::rand48_rng>;
+#endif
 
 } // namespace mdsim
 } // namespace gpu

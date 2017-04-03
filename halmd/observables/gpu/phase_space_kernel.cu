@@ -146,6 +146,9 @@ struct converter<fixed_vector<dsfloat, dimension>, U>
     }
 };
 
+template<typename U>
+struct converter<dsfloat, U> : converter<fixed_vector<dsfloat, 1>, U> {};
+
 template <typename ptr_type, typename vector_type, typename T>
 __global__ void sample(
         unsigned int const* g_reverse_id
@@ -173,8 +176,11 @@ template class phase_space_sample_wrapper<float>;
 template class phase_space_sample_wrapper<float2>;
 template class phase_space_sample_wrapper<float4>;
 
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class phase_space_sample_wrapper<dsfloat, float>;
 template class phase_space_sample_wrapper<fixed_vector<dsfloat, 2>, float2>;
 template class phase_space_sample_wrapper<fixed_vector<dsfloat, 4>, float4>;
+#endif
 
 template class phase_space_sample_wrapper<int>;
 template class phase_space_sample_wrapper<int2>;

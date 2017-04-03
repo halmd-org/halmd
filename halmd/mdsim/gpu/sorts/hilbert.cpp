@@ -156,18 +156,26 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_sorts_hilbert(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     hilbert<3, float>::luaopen(L);
     hilbert<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     hilbert<3, dsfloat>::luaopen(L);
     hilbert<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class hilbert<3, float>;
 template class hilbert<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class hilbert<3, dsfloat>;
 template class hilbert<2, dsfloat>;
+#endif
 
 } // namespace sorts
 } // namespace gpu

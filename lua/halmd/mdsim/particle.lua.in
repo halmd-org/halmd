@@ -36,22 +36,22 @@ local utility           = require("halmd.utility")
 local particle = {}
 particle.host = {
     [2] = {
-        ["double"] = assert(libhalmd.mdsim.host.particle_2)
+        ["@HALMD_HOST_PRECISION@"] = assert(libhalmd.mdsim.host.particle_2)
     }
   , [3] = {
-        ["double"] = assert(libhalmd.mdsim.host.particle_3)
+        ["@HALMD_HOST_PRECISION@"] = assert(libhalmd.mdsim.host.particle_3)
     }
 }
 
 if device.gpu then
     particle.gpu = {
         [2] = {
-            ["single"] = assert(libhalmd.mdsim.gpu.particle_2_float)
-          , ["double-single"] = assert(libhalmd.mdsim.gpu.particle_2_dsfloat)
+            ["single"] = libhalmd.mdsim.gpu.particle_2_float
+          , ["double-single"] = libhalmd.mdsim.gpu.particle_2_dsfloat
         }
       , [3] = {
-            ["single"] = assert(libhalmd.mdsim.gpu.particle_3_float)
-          , ["double-single"] = assert(libhalmd.mdsim.gpu.particle_3_dsfloat)
+            ["single"] = libhalmd.mdsim.gpu.particle_3_float
+          , ["double-single"] = libhalmd.mdsim.gpu.particle_3_dsfloat
         }
     }
 end
@@ -243,7 +243,7 @@ local M = module(function(args)
     end
     particle = particle[dimension]
 
-    local precision = args and args.precision or (device.gpu and "double-single" or "double")
+    local precision = args and args.precision or (device.gpu and "@HALMD_DEFAULT_GPU_PRECISION@" or "@HALMD_HOST_PRECISION@")
     if not particle[precision] then
         error(("unsupported floating-point precision: '%s'"):format(float_type), 2)
     end

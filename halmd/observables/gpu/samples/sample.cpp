@@ -54,6 +54,11 @@ wrap_get(std::shared_ptr<sample_type> self)
     };
 }
 
+static bool wrap_gpu()
+{
+    return true;
+}
+
 template <int dimension, typename data_type>
 void sample<dimension, data_type>::luaopen(lua_State* L)
 {
@@ -69,6 +74,7 @@ void sample<dimension, data_type>::luaopen(lua_State* L)
                 [
                     class_<sample, std::shared_ptr<sample> >()
                         .def(constructor<std::size_t>())
+                        .property("gpu", &wrap_gpu)
                         .property("nparticle", &wrap_nparticle<sample>)
                         .property("dimension", &wrap_dimension<sample>)
                         .def("get", &wrap_get<sample>)

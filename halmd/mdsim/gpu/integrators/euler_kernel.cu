@@ -82,11 +82,14 @@ euler_wrapper<dimension, float_type> const euler_wrapper<dimension, float_type>:
 };
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class euler_wrapper<3, float>;
 template class euler_wrapper<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class euler_wrapper<3, dsfloat>;
 template class euler_wrapper<2, dsfloat>;
-
+#endif
 } // namespace integrators
 } // namespace gpu
 } // namespace mdsim

@@ -157,18 +157,26 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     verlet<3, float>::luaopen(L);
     verlet<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     verlet<3, dsfloat>::luaopen(L);
     verlet<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class verlet<3, float>;
 template class verlet<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class verlet<3, dsfloat>;
 template class verlet<2, dsfloat>;
+#endif
 
 } // namespace mdsim
 } // namespace gpu

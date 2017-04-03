@@ -175,19 +175,31 @@ local M = module(function(args)
     -- construct unified Lua object for host and gpu sampler
     local self = {group = group}
 
-    self.acquire = function(self, name)
-        return phase_space:acquire(name)
-    end
-
     if particle.memory == "gpu" then
+        self.acquire = function(self, name, gpu)
+            return phase_space:acquire(name, gpu or false)
+        end
+
         self.acquire_position = function(self)
-            return phase_space:acquire("g_position")
+            return phase_space:acquire("position", true)
         end
 
         self.acquire_velocity = function(self)
-            return phase_space:acquire("g_velocity")
+            return phase_space:acquire("velocity", true)
+        end
+
+        self.acquire_species = function(self)
+            return phase_space:acquire("species", false)
+        end
+
+        self.acquire_mass = function(self)
+            return phase_space:acquire("mass", false)
         end
     else
+        self.acquire = function(self, name)
+            return phase_space:acquire(name)
+        end
+
         self.acquire_position = function(self)
             return phase_space:acquire("position")
         end
@@ -195,14 +207,14 @@ local M = module(function(args)
         self.acquire_velocity = function(self)
             return phase_space:acquire("velocity")
         end
-    end
 
-    self.acquire_species = function(self)
-        return phase_space:acquire("species")
-    end
+        self.acquire_species = function(self)
+            return phase_space:acquire("species")
+        end
 
-    self.acquire_mass = function(self)
-        return phase_space:acquire("mass")
+        self.acquire_mass = function(self)
+            return phase_space:acquire("mass")
+        end
     end
 
     self.position = function(self)
@@ -258,10 +270,19 @@ local M = module(function(args)
         return writer
     end
 
-    self.set = function(self, samples)
-        logger:info(("setting particles from phase space sample"):format(label))
-        for name,sample in pairs(samples) do
-            phase_space:set(name, sample)
+    if particle.memory == "gpu" then
+        self.set = function(self, samples)
+            logger:info(("setting particles from phase space sample"):format(label))
+            for name,sample in pairs(samples) do
+                phase_space:set(name, sample, sample.gpu and sample:gpu() or false)
+            end
+        end
+    else
+        self.set = function(self, samples)
+            logger:info(("setting particles from phase space sample"):format(label))
+            for name,sample in pairs(samples) do
+                phase_space:set(name, sample)
+            end
         end
     end
 

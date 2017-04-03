@@ -28,18 +28,22 @@ add_test(unit/mdsim/binning/host/3d
   test_unit_mdsim_binning --run_test=host/three --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  halmd_add_gpu_test(unit/mdsim/binning/gpu/float/2d
-    test_unit_mdsim_binning --run_test=gpu/two/float --log_level=test_suite
-  )
-  halmd_add_gpu_test(unit/mdsim/binning/gpu/dsfloat/2d
-    test_unit_mdsim_binning --run_test=gpu/two/dsfloat --log_level=test_suite
-  )
-  halmd_add_gpu_test(unit/mdsim/binning/gpu/float/3d
-    test_unit_mdsim_binning --run_test=gpu/three/float --log_level=test_suite
-  )
-  halmd_add_gpu_test(unit/mdsim/binning/gpu/dsfloat/3d
-    test_unit_mdsim_binning --run_test=gpu/three/dsfloat --log_level=test_suite
-  )
+  if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+    halmd_add_gpu_test(unit/mdsim/binning/gpu/float/2d
+      test_unit_mdsim_binning --run_test=gpu/two/float --log_level=test_suite
+    )
+    halmd_add_gpu_test(unit/mdsim/binning/gpu/float/3d
+      test_unit_mdsim_binning --run_test=gpu/three/float --log_level=test_suite
+    )
+  endif()
+  if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+    halmd_add_gpu_test(unit/mdsim/binning/gpu/dsfloat/2d
+      test_unit_mdsim_binning --run_test=gpu/two/dsfloat --log_level=test_suite
+    )
+    halmd_add_gpu_test(unit/mdsim/binning/gpu/dsfloat/3d
+      test_unit_mdsim_binning --run_test=gpu/three/dsfloat --log_level=test_suite
+    )
+  endif()
 endif()
 
 # module box
@@ -116,16 +120,20 @@ add_test(unit/mdsim/particle/host/3d
   test_unit_mdsim_particle --run_test=host/three --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  halmd_add_gpu_test(unit/mdsim/particle/gpu/float/2d
-    test_unit_mdsim_particle --run_test=gpu/two/float --log_level=test_suite
-  )
-  halmd_add_gpu_test(unit/mdsim/particle/gpu/dsfloat/2d
-    test_unit_mdsim_particle --run_test=gpu/two/dsfloat --log_level=test_suite
-  )
-  halmd_add_gpu_test(unit/mdsim/particle/gpu/float/3d
-    test_unit_mdsim_particle --run_test=gpu/three/float --log_level=test_suite
-  )
-  halmd_add_gpu_test(unit/mdsim/particle/gpu/dsfloat/3d
-    test_unit_mdsim_particle --run_test=gpu/three/dsfloat --log_level=test_suite
-  )
+  if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+    halmd_add_gpu_test(unit/mdsim/particle/gpu/float/2d
+      test_unit_mdsim_particle --run_test=gpu/two/float --log_level=test_suite
+    )
+    halmd_add_gpu_test(unit/mdsim/particle/gpu/float/3d
+      test_unit_mdsim_particle --run_test=gpu/three/float --log_level=test_suite
+    )
+  endif()
+  if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+    halmd_add_gpu_test(unit/mdsim/particle/gpu/dsfloat/2d
+      test_unit_mdsim_particle --run_test=gpu/two/dsfloat --log_level=test_suite
+    )
+    halmd_add_gpu_test(unit/mdsim/particle/gpu/dsfloat/3d
+      test_unit_mdsim_particle --run_test=gpu/three/dsfloat --log_level=test_suite
+    )
+  endif()
 endif()
