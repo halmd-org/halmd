@@ -183,9 +183,8 @@ local function format_help(self)
     local msg = {}
     local args = format_cmdline()
     table.insert(msg, ("Usage: %s [args]\n"):format(args))
-    local fmt = ("  %%-%ds  %%s"):format(padding)
     for i = 1, #left do
-        table.insert(msg, fmt:format(left[i], right[i]))
+        table.insert(msg, "  "..left[i]..string.rep(" ", 2 + padding - #left[i])..right[i])
     end
     return table.concat(msg, "\n")
 end
