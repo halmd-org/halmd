@@ -6,7 +6,7 @@ if(HALMD_WITH_GPU)
     target_link_libraries(test_unit_dsfloat_dsfloat
             ${HALMD_TEST_LIBRARIES}
             )
-    halmd_add_gpu_test(unit/dsfloat/dsfloat
+    halmd_add_gpu_test(unit/numeric/dsfloat
             test_unit_dsfloat_dsfloat --log_level=test_suite
             )
 endif()

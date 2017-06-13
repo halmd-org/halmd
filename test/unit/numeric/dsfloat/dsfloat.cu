@@ -18,7 +18,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <test/unit/dsfloat/dsfloat.hpp>
+#include <test/unit/numeric/dsfloat/dsfloat.hpp>
 
 using namespace halmd;
 
@@ -28,7 +28,7 @@ __global__ void dsfloat_kernel_test_1 (float4 *g, fixed_vector<dsfloat, 3> incre
 
     tie (position, species) <<= tie(g[GTID], g[GTID + GTDIM]);
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 100; i++) {
         position += increment;
     }
 
@@ -41,7 +41,7 @@ __global__ void dsfloat_kernel_test_2 (dsfloat_ptr<float4> g, fixed_vector<dsflo
 
     tie (position, species) <<= g[GTID];
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 100; i++) {
         position += increment;
     }
 

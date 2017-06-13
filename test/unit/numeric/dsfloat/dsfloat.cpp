@@ -28,14 +28,14 @@
 #include <test/tools/ctest.hpp>
 #include <test/tools/cuda.hpp>
 #include <test/tools/init.hpp>
-#include <test/unit/dsfloat/dsfloat.hpp>
+#include <test/unit/numeric/dsfloat/dsfloat.hpp>
 
 /**
  * Test dsfloat
  */
 static void test_dsfloat_performance() {
     BOOST_TEST_MESSAGE("dsfloat performance test");
-    unsigned int memsize = 4096 * 1024;
+    unsigned int memsize = 1024 * 1024;
 
     cuda::vector<float4> data(memsize);
     data.reserve(memsize * 2);
@@ -46,8 +46,10 @@ static void test_dsfloat_performance() {
 
     auto dim = cuda::config(memsize / 128, 128);
 
-    unsigned int iterations = 256;
+    unsigned int iterations = 100;
 
+    double mean_runtime_float4_ptr;
+    double mean_runtime_dsfloat_ptr;
     {
         halmd::accumulator<double> elapsed;
 
@@ -59,7 +61,8 @@ static void test_dsfloat_performance() {
                 cuda::thread::synchronize();
             }
         }
-        BOOST_TEST_MESSAGE("  " << mean(elapsed) * 1e3 << " ± " << error_of_mean(elapsed) * 1e3 << " ms per iteration");
+        mean_runtime_float4_ptr = mean(elapsed);
+        BOOST_TEST_MESSAGE("  " << mean_runtime_float4_ptr * 1e3 << " ± " << error_of_mean(elapsed) * 1e3 << " ms per iteration");
     }
     {
         halmd::accumulator<double> elapsed;
@@ -73,8 +76,10 @@ static void test_dsfloat_performance() {
                 cuda::thread::synchronize();
             }
         }
-        BOOST_TEST_MESSAGE("  " << mean(elapsed) * 1e3 << " ± " << error_of_mean(elapsed) * 1e3 << " ms per iteration");
+        mean_runtime_dsfloat_ptr = mean(elapsed);
+        BOOST_TEST_MESSAGE("  " << mean_runtime_dsfloat_ptr * 1e3 << " ± " << error_of_mean(elapsed) * 1e3 << " ms per iteration");
     }
+    BOOST_CHECK_LE(mean_runtime_dsfloat_ptr, mean_runtime_float4_ptr);
 }
 
 static void test_dsfloat_overload()
