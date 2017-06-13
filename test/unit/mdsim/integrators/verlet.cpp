@@ -290,7 +290,7 @@ struct gpu_tolerance<dsfloat> {
 };
 template<>
 struct gpu_tolerance<float> {
-    static constexpr double value = 0.2 * numeric_limits<float>::epsilon();
+    static constexpr double value = 0.3 * numeric_limits<float>::epsilon();
 };
 
 template <int dimension, typename float_type>
