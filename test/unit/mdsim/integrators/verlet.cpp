@@ -56,10 +56,11 @@ using namespace std;
 
 #ifndef USE_HOST_SINGLE_PRECISION
 const double eps = numeric_limits<double>::epsilon();
+const float eps_float = 1.5f * numeric_limits<float>::epsilon();
 #else
 const double eps = numeric_limits<float>::epsilon();
-#endif
 const float eps_float = numeric_limits<float>::epsilon();
+#endif
 
 /** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */
 
@@ -290,7 +291,7 @@ struct gpu_tolerance<dsfloat> {
 };
 template<>
 struct gpu_tolerance<float> {
-    static constexpr double value = 0.2 * numeric_limits<float>::epsilon();
+    static constexpr double value = 0.3 * numeric_limits<float>::epsilon();
 };
 
 template <int dimension, typename float_type>

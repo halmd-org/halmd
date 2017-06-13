@@ -313,8 +313,14 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
 template<typename float_type>
 struct host_tolerance
 {
-    static constexpr double value = 20 * numeric_limits<float_type>::epsilon();
+    static double const value;
 };
+
+template<>
+double const host_tolerance<float>::value = 25 * numeric_limits<float>::epsilon();
+
+template<>
+double const host_tolerance<double>::value = 20 * numeric_limits<double>::epsilon();
 
 template<typename float_type>
 struct host_en_tolerance
@@ -378,7 +384,7 @@ double const gpu_tolerance<dsfloat>::value = 0.1 * numeric_limits<float>::epsilo
 
 // TODO: Is the high tolerance reasonable?
 template<>
-double const gpu_tolerance<float>::value = 8 * numeric_limits<float>::epsilon();
+double const gpu_tolerance<float>::value = 16 * numeric_limits<float>::epsilon();
 
 template<typename float_type>
 struct gpu_en_tolerance
