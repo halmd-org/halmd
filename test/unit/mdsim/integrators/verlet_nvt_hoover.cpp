@@ -393,7 +393,7 @@ struct gpu_en_tolerance
 };
 
 template<>
-double const gpu_en_tolerance<float>::value = 7e-5;
+double const gpu_en_tolerance<float>::value = 1e-4;
 
 template<>
 double const gpu_en_tolerance<dsfloat>::value = 5e-5;

@@ -56,11 +56,10 @@ using namespace std;
 
 #ifndef USE_HOST_SINGLE_PRECISION
 const double eps = numeric_limits<double>::epsilon();
-const float eps_float = 1.5f * numeric_limits<float>::epsilon();
 #else
 const double eps = numeric_limits<float>::epsilon();
-const float eps_float = numeric_limits<float>::epsilon();
 #endif
+const float eps_float = 1.5f * numeric_limits<float>::epsilon();
 
 /** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */
 
@@ -134,8 +133,9 @@ void ideal_gas<modules_type>::test()
     // TODO: Is it reasonable to test these quantities at all in this test scenario?
     //       Since the rescale in velocities/boltzmann was removed very large
     //       tolerances are necessary.
-    BOOST_CHECK_CLOSE_FRACTION(temp, (float)thermodynamics->temp(), 0.1f);
-    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->pressure() / temp / density, 1., 0.1f);
+    const double tol = 5 / std::sqrt(npart); // standard error scales as N^{-1/2}, prefactor is approx. 1
+    BOOST_CHECK_CLOSE_FRACTION(temp, (float)thermodynamics->temp(), tol);
+    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->pressure() / temp / density, 1., tol);
 }
 
 template <typename modules_type>
@@ -290,7 +290,7 @@ template<typename T>
 struct gpu_tolerance;
 template<>
 struct gpu_tolerance<dsfloat> {
-    static constexpr double value = 0.15 * numeric_limits<float>::epsilon();
+    static constexpr double value = 0.2 * numeric_limits<float>::epsilon();
 };
 template<>
 struct gpu_tolerance<float> {
