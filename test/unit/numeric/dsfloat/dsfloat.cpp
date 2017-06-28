@@ -79,7 +79,7 @@ static void test_dsfloat_performance() {
         mean_runtime_dsfloat_ptr = mean(elapsed);
         BOOST_TEST_MESSAGE("  " << mean_runtime_dsfloat_ptr * 1e3 << " ± " << error_of_mean(elapsed) * 1e3 << " ms per iteration");
     }
-    BOOST_CHECK_LE(mean_runtime_dsfloat_ptr, mean_runtime_float4_ptr);
+    BOOST_CHECK_LE(mean_runtime_dsfloat_ptr, mean_runtime_float4_ptr * 1.05);
 }
 
 static void test_dsfloat_overload()
