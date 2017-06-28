@@ -74,20 +74,23 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
       if(CUDA_VERSION VERSION_LESS 6.5)
         set(HALMD_GPU_ARCH "120") # sane default value
-        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12,compute_20" CACHE STRING "Flags used by the compiler during all build types")
+        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12" CACHE STRING "Flags used by the compiler during all build types")
       else()
         set(HALMD_GPU_ARCH "210") # sane default value
         set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch=compute_20 -code=compute_20 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true" CACHE STRING "Flags used by the compiler during all build types")
       endif()
 
       string(REPLACE " " ";" __NVCC_ARGS "${CMAKE_CUDA_FLAGS}")
+      if(NOT "${CUDA_HOST_COMPILER}" STREQUAL "")
+		list(APPEND __NVCC_ARGS -ccbin "${CUDA_HOST_COMPILER}")
+      endif()
       execute_process(COMMAND "${CUDA_NVCC_EXECUTABLE}" ${__NVCC_ARGS} "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu"
               WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/CMakeFiles/"
               ERROR_VARIABLE result OUTPUT_QUIET)
       if(result MATCHES "__CUDA_ARCH__([0-9]+)__")
         set(HALMD_GPU_ARCH "${CMAKE_MATCH_1}")
       else()
-        message(SEND_ERROR "${result}")
+        message(WARNING "${result}")
       endif()
 
 

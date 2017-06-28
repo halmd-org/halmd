@@ -56,10 +56,11 @@ using namespace std;
 
 #ifndef USE_HOST_SINGLE_PRECISION
 const double eps = numeric_limits<double>::epsilon();
+const float eps_float = 1.5f * numeric_limits<float>::epsilon();
 #else
 const double eps = numeric_limits<float>::epsilon();
-#endif
 const float eps_float = numeric_limits<float>::epsilon();
+#endif
 
 /** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */
 
