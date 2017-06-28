@@ -9,6 +9,9 @@ endif()
 if(POLICY CMP0026)
   cmake_policy(SET CMP0026 NEW)
 endif()
+if(POLICY CMP0058)
+  cmake_policy(SET CMP0058 NEW)
+endif()
 
 # If the subdirectory cmake/ contains a version.cmake.in file, we are in a git
 # repository, then extract the git commit from the repository to generate
