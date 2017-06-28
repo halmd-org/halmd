@@ -121,7 +121,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
       , particle_->dim().block
       , g_mv2_.size() * (2 + dimension) * sizeof(dsfloat)
     );
-    wrapper_type::kernel.shift_rescale(
+    wrapper_type::kernel.shift(
         velocity->data()
       , particle_->nparticle()
       , particle_->dim().threads()
