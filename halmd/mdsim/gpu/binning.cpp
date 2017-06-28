@@ -102,9 +102,9 @@ binning<dimension, float_type>::binning(
     // number of placeholders
     try {
         g_cell_offset_.resize(dim_cell_.blocks_per_grid());
-        g_cell_index_.reserve(particle_->dim().threads());
+        g_cell_index_.reserve(particle_->array_size());
         g_cell_index_.resize(particle_->nparticle());
-        g_cell_permutation_.reserve(particle_->dim().threads());
+        g_cell_permutation_.reserve(particle_->array_size());
         g_cell_permutation_.resize(particle_->nparticle());
     }
     catch (cuda::error const&) {
@@ -176,7 +176,9 @@ void binning<dimension, float_type>::update()
         unsigned int nparticle = particle_->nparticle();
 
         // compute cell indices for particle positions
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        int blockSize = kernel->compute_cell.max_block_size();
+        if (!blockSize) blockSize = particle_->dim().block.x;
+        cuda::configure(particle_->array_size() / blockSize, blockSize);
         kernel->compute_cell(
             position.data()
           , g_cell_index_
@@ -185,13 +187,17 @@ void binning<dimension, float_type>::update()
         );
 
         // generate permutation
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        blockSize = kernel->gen_index.max_block_size();
+        if (!blockSize) blockSize = particle_->dim().block.x;
+        cuda::configure(particle_->array_size() / blockSize, blockSize);
         kernel->gen_index(g_cell_permutation_, nparticle);
         radix_sort(g_cell_index_.begin(), g_cell_index_.end(), g_cell_permutation_.begin());
 
         // compute global cell offsets in sorted particle list
         cuda::memset(g_cell_offset_, 0xFF);
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        blockSize = kernel->find_cell_offset.max_block_size();
+        if (!blockSize) blockSize = particle_->dim().block.x;
+        cuda::configure(particle_->array_size() / blockSize, blockSize);
         kernel->find_cell_offset(g_cell_index_, g_cell_offset_, nparticle);
 
         // assign particles to cells

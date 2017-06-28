@@ -74,7 +74,9 @@ void verlet<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     try {
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        int blockSize = wrapper_->integrate.max_block_size();
+        if (!blockSize) blockSize = particle_->dim().block.x;
+        cuda::configure(particle_->array_size() / blockSize, blockSize);
         wrapper_->integrate(
             position->data()
           , image->data()
@@ -107,7 +109,9 @@ void verlet<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     try {
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        int blockSize = wrapper_->finalize.max_block_size();
+        if (!blockSize) blockSize = particle_->dim().block.x;
+        cuda::configure(particle_->array_size() / blockSize, blockSize);
         wrapper_->finalize(
             velocity->data()
           , force.data()

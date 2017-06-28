@@ -122,7 +122,9 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
     float_type scale = propagate_chain();
 
     try {
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        int blockSize = wrapper_type::kernel.integrate.max_block_size();
+        if (!blockSize) blockSize = particle_->dim().block.x;
+        cuda::configure(particle_->array_size() / blockSize, blockSize);
         wrapper_type::kernel.integrate(
             position->data()
           , image->data()
@@ -156,7 +158,9 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     try {
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        int blockSize = wrapper_type::kernel.finalize.max_block_size();
+        if (!blockSize) blockSize = particle_->dim().block.x;
+        cuda::configure(particle_->array_size() / blockSize, blockSize);
         wrapper_type::kernel.finalize(velocity->data(), force.data(), timestep_);
         cuda::thread::synchronize();
 
@@ -164,7 +168,9 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 
         // rescale velocities
         scoped_timer_type timer2(runtime_.rescale);
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        blockSize = wrapper_type::kernel.rescale.max_block_size();
+        if (!blockSize) blockSize = particle_->dim().block.x;
+        cuda::configure(particle_->array_size() / blockSize, blockSize);
         wrapper_type::kernel.rescale(velocity->data(), scale);
         cuda::thread::synchronize();
     }

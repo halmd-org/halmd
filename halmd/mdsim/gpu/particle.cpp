@@ -172,7 +172,9 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     velocity_array_type velocity(array_size_);
     id_array_type id(array_size_);
 
-    cuda::configure(dim_.grid, dim_.block);
+    int blockSize = get_particle_kernel<dimension, float_type>().rearrange.max_block_size();
+    if (!blockSize) blockSize = dim_.block.x;
+    cuda::configure(array_size_ / blockSize, blockSize);
     get_particle_kernel<dimension, float_type>().r.bind(*g_position);
     get_particle_kernel<dimension, float_type>().image.bind(*g_image);
     get_particle_kernel<dimension, float_type>().v.bind(*g_velocity);

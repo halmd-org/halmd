@@ -96,7 +96,9 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 
     scoped_timer_type timer(runtime_.map);
 
-    cuda::configure(particle_->dim().grid, particle_->dim().block);
+    int blockSize = wrapper_type::kernel.map.max_block_size();
+    if (!blockSize) blockSize = particle_->dim().block.x;
+    cuda::configure(particle_->array_size() / blockSize, blockSize);
     wrapper_type::kernel.map(
         position.data()
       , g_map
@@ -110,7 +112,9 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index)
 {
-    cuda::configure(particle_->dim().grid, particle_->dim().block);
+    int blockSize = wrapper_type::kernel.gen_index.max_block_size();
+    if (!blockSize) blockSize = particle_->dim().block.x;
+    cuda::configure(particle_->array_size() / blockSize, blockSize);
     wrapper_type::kernel.gen_index(g_index);
     radix_sort(g_map.begin(), g_map.end(), g_index.begin());
 }

@@ -279,6 +279,9 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
       , particle_dst.dim().block
     );
 
+    int blockSize = particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle.max_block_size();
+    cuda::configure((ordered.size() + blockSize - 1) / blockSize, blockSize);
+
     particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle(
         &*ordered.begin()
       , position->data()

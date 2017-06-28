@@ -74,7 +74,7 @@ std::shared_ptr<particle_array_gpu<T>> particle_array_gpu<T>::cast(std::shared_p
     return std::static_pointer_cast<particle_array_gpu<T>>(base);
 }
 
-cuda::config get_cuda_config(size_t n) {
+int get_block_size(size_t n) {
     cuda::device::properties prop(cuda::device::get());
     size_t blockSize = 128;
     size_t gridSize = n / blockSize;
@@ -83,7 +83,7 @@ cuda::config get_cuda_config(size_t n) {
         gridSize = (gridSize + 1) >> 1;
     }
     assert(gridSize * blockSize == n);
-    return device::validate(cuda::config(gridSize, blockSize));
+    return blockSize;
 }
 
 template<typename T>
@@ -126,8 +126,9 @@ struct particle_array_gpu_helper
     )
     {
         auto output = make_cache_mutable(data);
-        auto const& config = get_cuda_config(output->size());
-        cuda::configure(config.grid, config.block);
+        int blockSize = particle_initialize_wrapper<T>::kernel.initialize.max_block_size();
+        if (!blockSize) blockSize = get_block_size(output->size());
+        cuda::configure((output->size() + blockSize - 1) / blockSize, blockSize);
         particle_initialize_wrapper<T>::kernel.initialize (output->data(), init_value, ghost_init_value, nparticle);
     }
 
@@ -206,8 +207,9 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     )
     {
         auto output = make_cache_mutable(data);
-        auto const& config = get_cuda_config(output->size());
-        cuda::configure(config.grid, config.block);
+        int blockSize = dsfloat_particle_initialize_wrapper<dimension>::kernel.initialize.max_block_size();
+        if (!blockSize) blockSize = get_block_size(output->size());
+        cuda::configure((output->size() + blockSize - 1) / blockSize, blockSize);
         dsfloat_particle_initialize_wrapper<dimension>::kernel.initialize (output->data(), init_value, ghost_init_value, nparticle);
     }
 
