@@ -20,6 +20,7 @@
 
 #include <halmd/algorithm/gpu/iota.hpp>
 #include <halmd/mdsim/gpu/particle_array_gpu.hpp>
+#include <halmd/utility/gpu/device.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -73,6 +74,18 @@ std::shared_ptr<particle_array_gpu<T>> particle_array_gpu<T>::cast(std::shared_p
     return std::static_pointer_cast<particle_array_gpu<T>>(base);
 }
 
+cuda::config get_cuda_config(size_t n) {
+    cuda::device::properties prop(cuda::device::get());
+    size_t blockSize = 128;
+    size_t gridSize = n / blockSize;
+    while (gridSize > prop.max_grid_size().x && blockSize <= prop.max_threads_per_block()/2) {
+        blockSize <<= 1;
+        gridSize = (gridSize + 1) >> 1;
+    }
+    assert(gridSize * blockSize == n);
+    return device::validate(cuda::config(gridSize, blockSize));
+}
+
 template<typename T>
 struct particle_array_gpu_helper
 {
@@ -113,8 +126,8 @@ struct particle_array_gpu_helper
     )
     {
         auto output = make_cache_mutable(data);
-        cuda::config dim((output->size() + 127) / 128, 128);
-        cuda::configure(dim.grid, dim.block);
+        auto const& config = get_cuda_config(output->size());
+        cuda::configure(config.grid, config.block);
         particle_initialize_wrapper<T>::kernel.initialize (output->data(), init_value, ghost_init_value, nparticle);
     }
 
@@ -193,8 +206,8 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     )
     {
         auto output = make_cache_mutable(data);
-        cuda::config dim((output->size() + 127) / 128, 128);
-        cuda::configure(dim.grid, dim.block);
+        auto const& config = get_cuda_config(output->size());
+        cuda::configure(config.grid, config.block);
         dsfloat_particle_initialize_wrapper<dimension>::kernel.initialize (output->data(), init_value, ghost_init_value, nparticle);
     }
 

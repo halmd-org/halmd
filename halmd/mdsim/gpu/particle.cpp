@@ -55,18 +55,29 @@ template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
   : // allocate global device memory
     nparticle_(nparticle)
-  , array_size_((nparticle + 128 - 1) & ~(128 - 1)) // round upwards to multiple of 128
   , nspecies_(std::max(nspecies, 1u))
-  // FIXME default CUDA kernel execution dimensions
-  , dim_(device::validate(cuda::config(array_size_ / 128, 128)))
-  , id_(array_size_)
-  , reverse_id_(array_size_)
   // enable auxiliary variables by default to allow sampling of initial state
   , force_zero_(true)
   , force_dirty_(true)
   , aux_dirty_(true)
   , aux_enabled_(true)
 {
+    {
+        // FIXME default CUDA kernel execution dimensions
+        cuda::device::properties prop(cuda::device::get());
+        array_size_ = (nparticle_ + prop.max_threads_per_block() - 1) / prop.max_threads_per_block();
+        array_size_ *= prop.max_threads_per_block();
+        size_t blockSize = 128;
+        size_t gridSize = array_size_ / blockSize;
+        while (gridSize > prop.max_grid_size().x && blockSize <= prop.max_threads_per_block()/2) {
+            blockSize <<= 1;
+            gridSize = (gridSize + 1) >> 1;
+        }
+        assert(gridSize * blockSize == array_size_);
+        dim_ = device::validate(cuda::config(gridSize, blockSize));
+        id_ = id_array_type(array_size_);
+        reverse_id_ = reverse_id_array_type(array_size_);
+    }
     // prepare initialization values
     struct {
         fixed_vector<float, 3> position;

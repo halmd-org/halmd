@@ -99,6 +99,11 @@ cuda::config const& device::validate(cuda::config const& dim)
     if (threads & (threads - 1)) {
         LOG_WARNING("number of GPU threads not a power of 2: " << threads);
     }
+    dim3 const& max_grid_size = prop.max_grid_size();
+    if (dim.grid.x > max_grid_size.x || dim.grid.y > max_grid_size.y || dim.grid.z > max_grid_size.z) {
+        throw runtime_error("GPU grid size exceeds maximum: (" + lexical_cast<string>(dim.grid.x) + ","
+          + lexical_cast<string>(dim.grid.y) + "," + lexical_cast<string>(dim.grid.z) + ")");
+    }
     return dim;
 }
 
