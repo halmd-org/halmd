@@ -22,6 +22,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/euler.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -74,9 +75,7 @@ void euler<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     try {
-        int blockSize = wrapper_type::kernel.integrate.max_block_size();
-        if (!blockSize) blockSize = particle_->dim().block.x;
-        cuda::configure(particle_->array_size() / blockSize, blockSize);
+        configure_kernel(wrapper_type::kernel.integrate, particle_->dim());
         wrapper_type::kernel.integrate(
             position->data()
           , image->data()

@@ -27,6 +27,7 @@
 #include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -176,9 +177,7 @@ void binning<dimension, float_type>::update()
         unsigned int nparticle = particle_->nparticle();
 
         // compute cell indices for particle positions
-        int blockSize = kernel->compute_cell.max_block_size();
-        if (!blockSize) blockSize = particle_->dim().block.x;
-        cuda::configure(particle_->array_size() / blockSize, blockSize);
+        configure_kernel(kernel->compute_cell, particle_->dim());
         kernel->compute_cell(
             position.data()
           , g_cell_index_
@@ -187,17 +186,13 @@ void binning<dimension, float_type>::update()
         );
 
         // generate permutation
-        blockSize = kernel->gen_index.max_block_size();
-        if (!blockSize) blockSize = particle_->dim().block.x;
-        cuda::configure(particle_->array_size() / blockSize, blockSize);
+        configure_kernel(kernel->gen_index, particle_->dim());
         kernel->gen_index(g_cell_permutation_, nparticle);
         radix_sort(g_cell_index_.begin(), g_cell_index_.end(), g_cell_permutation_.begin());
 
         // compute global cell offsets in sorted particle list
         cuda::memset(g_cell_offset_, 0xFF);
-        blockSize = kernel->find_cell_offset.max_block_size();
-        if (!blockSize) blockSize = particle_->dim().block.x;
-        cuda::configure(particle_->array_size() / blockSize, blockSize);
+        configure_kernel(kernel->find_cell_offset, particle_->dim());
         kernel->find_cell_offset(g_cell_index_, g_cell_offset_, nparticle);
 
         // assign particles to cells

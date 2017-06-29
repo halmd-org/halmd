@@ -22,6 +22,7 @@
 
 #include <halmd/mdsim/gpu/neighbours/from_particle.hpp>
 #include <halmd/mdsim/gpu/neighbours/from_particle_kernel.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 
@@ -144,10 +145,11 @@ void from_particle<dimension, float_type>::update()
         cuda::host::vector<int> h_overflow(1);
         cuda::memset(g_overflow, 0);
         get_from_particle_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
-        int blockSize = get_from_particle_kernel<dimension>().update.max_block_size();
-        if (!blockSize) blockSize = particle1_->dim().block.x;
-        cuda::configure(particle1_->array_size() / blockSize, blockSize,
-            blockSize * (sizeof(unsigned int) + sizeof(vector_type)));
+        configure_kernel(
+          get_from_particle_kernel<dimension>().update
+        , particle1_->dim()
+        , sizeof(unsigned int) + sizeof(vector_type)
+        );
         get_from_particle_kernel<dimension>().update(
           position1.data()
         , particle1_->nparticle()

@@ -21,6 +21,7 @@
 #include <halmd/algorithm/gpu/iota.hpp>
 #include <halmd/mdsim/gpu/particle_array_gpu.hpp>
 #include <halmd/utility/gpu/device.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -74,7 +75,7 @@ std::shared_ptr<particle_array_gpu<T>> particle_array_gpu<T>::cast(std::shared_p
     return std::static_pointer_cast<particle_array_gpu<T>>(base);
 }
 
-int get_block_size(size_t n) {
+cuda::config get_default_config(size_t n) {
     cuda::device::properties prop(cuda::device::get());
     size_t blockSize = 128;
     size_t gridSize = n / blockSize;
@@ -82,8 +83,10 @@ int get_block_size(size_t n) {
         blockSize <<= 1;
         gridSize = (gridSize + 1) >> 1;
     }
-    assert(gridSize * blockSize == n);
-    return blockSize;
+    if(gridSize * blockSize != n) {
+        throw std::runtime_error("misaligned particle array");
+    }
+    return device::validate(cuda::config(gridSize, blockSize));
 }
 
 template<typename T>
@@ -126,9 +129,7 @@ struct particle_array_gpu_helper
     )
     {
         auto output = make_cache_mutable(data);
-        int blockSize = particle_initialize_wrapper<T>::kernel.initialize.max_block_size();
-        if (!blockSize) blockSize = get_block_size(output->size());
-        cuda::configure((output->size() + blockSize - 1) / blockSize, blockSize);
+        configure_kernel(particle_initialize_wrapper<T>::kernel.initialize, get_default_config(output->size()));
         particle_initialize_wrapper<T>::kernel.initialize (output->data(), init_value, ghost_init_value, nparticle);
     }
 
@@ -207,9 +208,7 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     )
     {
         auto output = make_cache_mutable(data);
-        int blockSize = dsfloat_particle_initialize_wrapper<dimension>::kernel.initialize.max_block_size();
-        if (!blockSize) blockSize = get_block_size(output->size());
-        cuda::configure((output->size() + blockSize - 1) / blockSize, blockSize);
+        configure_kernel(dsfloat_particle_initialize_wrapper<dimension>::kernel.initialize, get_default_config(output->size()));
         dsfloat_particle_initialize_wrapper<dimension>::kernel.initialize (output->data(), init_value, ghost_init_value, nparticle);
     }
 

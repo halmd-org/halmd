@@ -22,6 +22,7 @@
 
 #include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
 #include <halmd/mdsim/gpu/neighbours/from_binning_kernel.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 
@@ -230,9 +231,7 @@ void from_binning<dimension, float_type>::update()
             );
         }
         else {
-            int blockSize = kernel->update_neighbours_naive.max_block_size();
-            if (!blockSize) blockSize = particle1_->dim().block.x;
-            cuda::configure(particle1_->array_size() / blockSize, blockSize);
+            configure_kernel(kernel->update_neighbours_naive, particle1_->dim());
             kernel->rr_cut_skin.bind(g_rr_cut_skin_);
             kernel->r2.bind(position2);
             kernel->update_neighbours_naive(

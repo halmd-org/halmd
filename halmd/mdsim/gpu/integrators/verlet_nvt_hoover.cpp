@@ -27,6 +27,7 @@
 
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
 #include <halmd/utility/demangle.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace std;
@@ -158,9 +159,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     try {
-        int blockSize = wrapper_type::kernel.finalize.max_block_size();
-        if (!blockSize) blockSize = particle_->dim().block.x;
-        cuda::configure(particle_->array_size() / blockSize, blockSize);
+        configure_kernel(wrapper_type::kernel.finalize, particle_->dim());
         wrapper_type::kernel.finalize(velocity->data(), force.data(), timestep_);
         cuda::thread::synchronize();
 
@@ -168,9 +167,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 
         // rescale velocities
         scoped_timer_type timer2(runtime_.rescale);
-        blockSize = wrapper_type::kernel.rescale.max_block_size();
-        if (!blockSize) blockSize = particle_->dim().block.x;
-        cuda::configure(particle_->array_size() / blockSize, blockSize);
+        configure_kernel(wrapper_type::kernel.rescale, particle_->dim());
         wrapper_type::kernel.rescale(velocity->data(), scale);
         cuda::thread::synchronize();
     }

@@ -29,6 +29,7 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
 #include <halmd/mdsim/gpu/velocity.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
@@ -65,8 +66,17 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     {
         // FIXME default CUDA kernel execution dimensions
         cuda::device::properties prop(cuda::device::get());
-        array_size_ = (nparticle_ + prop.max_threads_per_block() - 1) / prop.max_threads_per_block();
-        array_size_ *= prop.max_threads_per_block();
+        int max_block_size = prop.max_threads_per_block();
+        // round up to next power of two
+        --max_block_size;
+        max_block_size |= max_block_size >> 1;
+        max_block_size |= max_block_size >> 2;
+        max_block_size |= max_block_size >> 4;
+        max_block_size |= max_block_size >> 8;
+        max_block_size |= max_block_size >> 16;
+        max_block_size++;
+        array_size_ = (nparticle_ + max_block_size - 1) / max_block_size;
+        array_size_ *= max_block_size;
         size_t blockSize = 128;
         size_t gridSize = array_size_ / blockSize;
         while (gridSize > prop.max_grid_size().x && blockSize <= prop.max_threads_per_block()/2) {
@@ -172,9 +182,7 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     velocity_array_type velocity(array_size_);
     id_array_type id(array_size_);
 
-    int blockSize = get_particle_kernel<dimension, float_type>().rearrange.max_block_size();
-    if (!blockSize) blockSize = dim_.block.x;
-    cuda::configure(array_size_ / blockSize, blockSize);
+    configure_kernel(get_particle_kernel<dimension, float_type>().rearrange, dim_);
     get_particle_kernel<dimension, float_type>().r.bind(*g_position);
     get_particle_kernel<dimension, float_type>().image.bind(*g_image);
     get_particle_kernel<dimension, float_type>().v.bind(*g_velocity);

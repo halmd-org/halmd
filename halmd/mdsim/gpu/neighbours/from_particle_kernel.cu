@@ -108,12 +108,20 @@ __global__ void update(
     }
 }
 
+template<typename vector_type>
+int block_size_to_smem_size(int blockSize) {
+    return blockSize * (sizeof(unsigned int) + sizeof(vector_type));
+}
+
 } // namespace from_particle_kernel
 
 template <int dimension>
 from_particle_wrapper<dimension> from_particle_wrapper<dimension>::kernel = {
     from_particle_kernel::rr_cut_skin_
-  , from_particle_kernel::update<fixed_vector<float, dimension> >
+  , update_function_type(
+      from_particle_kernel::update<fixed_vector<float, dimension> >
+    , from_particle_kernel::block_size_to_smem_size<fixed_vector<float, dimension> >
+    )
 };
 
 template class from_particle_wrapper<3>;

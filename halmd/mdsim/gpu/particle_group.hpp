@@ -30,6 +30,7 @@
 #include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_group_kernel.hpp>
 #include <halmd/utility/cache.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
@@ -274,14 +275,11 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
     particle_group_wrapper<dimension, float_type>::kernel.image.bind(read_cache(particle_src.image()));
     particle_group_wrapper<dimension, float_type>::kernel.v.bind(read_cache(particle_src.velocity()));
 
-    cuda::configure(
+    auto default_config = cuda::config(
         (ordered.size() + particle_dst.dim().threads_per_block() - 1) / particle_dst.dim().threads_per_block()
       , particle_dst.dim().block
     );
-
-    int blockSize = particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle.max_block_size();
-    cuda::configure((ordered.size() + blockSize - 1) / blockSize, blockSize);
-
+    configure_kernel(particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle, default_config);
     particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle(
         &*ordered.begin()
       , position->data()

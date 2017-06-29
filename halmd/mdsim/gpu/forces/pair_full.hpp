@@ -27,6 +27,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
@@ -191,9 +192,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
 
     potential_->bind_textures();
 
-    int blockSize = gpu_wrapper::kernel.compute.max_block_size();
-    if (!blockSize) blockSize = particle1_->dim().block.x;
-    cuda::configure(particle1_->array_size() / blockSize, blockSize);
+    configure_kernel(gpu_wrapper::kernel.compute, particle1_->dim());
     gpu_wrapper::kernel.compute(
         position1.data()
       , position2.data()
@@ -230,9 +229,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
         weight /= 2;
     }
 
-    int blockSize = gpu_wrapper::kernel.compute.max_block_size();
-    if (!blockSize) blockSize = particle1_->dim().block.x;
-    cuda::configure(particle1_->array_size() / blockSize, blockSize);
+    configure_kernel(gpu_wrapper::kernel.compute_aux, particle1_->dim());
     gpu_wrapper::kernel.compute_aux(
         position1.data()
       , position2.data()

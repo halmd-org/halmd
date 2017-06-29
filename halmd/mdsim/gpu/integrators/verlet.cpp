@@ -23,6 +23,7 @@
 #include <memory>
 
 #include <halmd/mdsim/gpu/integrators/verlet.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -74,9 +75,7 @@ void verlet<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     try {
-        int blockSize = wrapper_->integrate.max_block_size();
-        if (!blockSize) blockSize = particle_->dim().block.x;
-        cuda::configure(particle_->array_size() / blockSize, blockSize);
+        configure_kernel(wrapper_->integrate, particle_->dim());
         wrapper_->integrate(
             position->data()
           , image->data()
@@ -109,9 +108,7 @@ void verlet<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     try {
-        int blockSize = wrapper_->finalize.max_block_size();
-        if (!blockSize) blockSize = particle_->dim().block.x;
-        cuda::configure(particle_->array_size() / blockSize, blockSize);
+        configure_kernel(wrapper_->finalize, particle_->dim());
         wrapper_->finalize(
             velocity->data()
           , force.data()
