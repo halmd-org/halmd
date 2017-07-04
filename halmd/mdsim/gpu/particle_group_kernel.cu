@@ -55,9 +55,9 @@ template<int dimension> image<dimension>::type image<dimension>::tex_;
 template <typename float_type, typename vector_type, typename ptr_type, typename aligned_vector_type>
 __global__ void particle_group_to_particle(
     unsigned int const* g_index
-  , ptr_type g_v
-  , aligned_vector_type* g_image
   , ptr_type g_r
+  , aligned_vector_type* g_image
+  , ptr_type g_v
   , unsigned int npart
 )
 {

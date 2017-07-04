@@ -66,7 +66,7 @@ luaponte::object particle_array_host<T>::get_lua(lua_State *L) const
     // TODO: handle ghost particles
     for(std::size_t j = 1; j <= parent_->nparticle(); j++) {
         auto&& value = helper::get(data, offset);
-        table[j++] = boost::cref(value);
+        table[j] = boost::cref(value);
         offset += stride_;
     }
     return table;
