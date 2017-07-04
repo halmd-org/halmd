@@ -130,9 +130,12 @@ void ideal_gas<modules_type>::test()
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_tolerance);
     BOOST_CHECK_CLOSE_FRACTION(en_kin, thermodynamics->en_kin(), 10 * eps);
 
-    BOOST_CHECK_CLOSE_FRACTION(temp, (float)thermodynamics->temp(), eps_float);
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
-    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->pressure() / temp / density, 1., eps_float);
+    // TODO: Is it reasonable to test these quantities at all in this test scenario?
+    //       Since the rescale in velocities/boltzmann was removed very large
+    //       tolerances are necessary.
+    BOOST_CHECK_CLOSE_FRACTION(temp, (float)thermodynamics->temp(), 0.1f);
+    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->pressure() / temp / density, 1., 0.1f);
 }
 
 template <typename modules_type>
