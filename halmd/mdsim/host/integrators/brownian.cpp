@@ -42,7 +42,7 @@ brownian<dimension, float_type>::brownian(
   , std::shared_ptr<random_type> random
   , std::shared_ptr<box_type const> box
   , double timestep
-  , host_vector_type const& D
+  , matrix_type const& D
   , std::shared_ptr<logger> logger
 )
   // dependency injection (initialize public variables)
@@ -160,7 +160,7 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
                   , std::shared_ptr<random_type>
                   , std::shared_ptr<box_type const>
                   , double
-                  , host_vector_type const&
+                  , matrix_type const&
                   , std::shared_ptr<logger>
                 >)
             ]

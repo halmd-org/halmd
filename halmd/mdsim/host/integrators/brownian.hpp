@@ -43,7 +43,8 @@ class brownian
 public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef boost::numeric::ublas::vector<float_type> host_vector_type;
+//    typedef boost::numeric::ublas::vector<float_type> host_vector_type;
+    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef random::host::random random_type;
 
@@ -54,7 +55,8 @@ public:
       , std::shared_ptr<random_type> random
       , std::shared_ptr<box_type const> box
       , double timestep
-      , host_vector_type const& D
+//      , host_vector_type const& D
+      , matrix_type const& D
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -97,7 +99,8 @@ private:
     /** profiling runtime accumulators */
     runtime runtime_;
     /** diffusion constant */
-    host_vector_type const& D_;
+    //host_vector_type D_;
+    matrix_type D_;
     /** module logger */
     std::shared_ptr<logger> logger_;
     /**random displacement */ 

@@ -152,7 +152,7 @@ __global__ void integrate(
         omega /= alpha;
         // Ω = eta1 * e1 + eta2 * e2
         // => Ω × u = (eta1 * e1 × u + eta2  * e2 × u) = eta2 * e1 - eta1 * e2
-        assert( float(inner_prod(u, u)) < 2 * epsilon);
+        // ??? assert( float(inner_prod(u, u)) < 2 * epsilon);
         u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
         //ensure normalization
         u /= norm_2(u);
