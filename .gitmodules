@@ -3,7 +3,7 @@
 	url = ../h5xx
 [submodule "libs/cuda-wrapper"]
 	path = libs/cuda-wrapper
-	url = git@github.com:/halmd-org/cuda-wrapper
+	url = ../cuda-wrapper
 [submodule "libs/luaponte"]
 	path = libs/luaponte
 	url = ../luaponte
