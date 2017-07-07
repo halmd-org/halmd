@@ -188,7 +188,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_brownian(lua_State* L)
 {
     brownian<3, float, halmd::random::gpu::rand48>::luaopen(L);
     brownian<3, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
-    //brownian<2, float, halmd::random::gpu::rand48>::luaopen(L);
+    brownian<2, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
     return 0;
 }
 
@@ -196,7 +196,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_brownian(lua_State* L)
 template class brownian<3, float, halmd::random::gpu::rand48>;
 template class brownian<3, float, halmd::random::gpu::mrg32k3a>;
 //let's stay 3d for now
-//template class brownian<2, float, halmd::random::gpu::rand48>;
+template class brownian<2, float, halmd::random::gpu::mrg32k3a>;
 
 } // namespace integrators
 } // namespace gpu

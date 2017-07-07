@@ -193,7 +193,7 @@ brownian_wrapper<dimension, rng_type> const brownian_wrapper<dimension, rng_type
 template class brownian_wrapper<3, random::gpu::rand48_rng>;
 template class brownian_wrapper<3, random::gpu::mrg32k3a_rng>;
 // let's stay 3 dimensional for now
-//template class brownian_wrapper<2, random::gpu::rand48_rng>;
+template class brownian_wrapper<2, random::gpu::mrg32k3a_rng>;
 
 } // namespace integrators
 } // namespace gpu

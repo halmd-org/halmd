@@ -271,7 +271,9 @@ void host_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_
       , negate<typename particle_type::vector_type>()
     );
 }
+
 #ifdef HALMD_WITH_GPU
+
 /**
  * Specify concretely which modules to use: Gpu modules.
  */
@@ -339,12 +341,31 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
     }
 }
 
-BOOST_FIXTURE_TEST_CASE( brownian_gpu_3d_overdamped, device ) {
-    test_brownian<gpu_modules<3, float> >().free_brownian_motion();
-}
 #endif // HALMD_WITH_GPU
 /*
+BOOST_AUTO_TEST_CASE( brownian_host_2d_overdamped ) {
+    test_brownian<host_modules<2, double> >().free_brownian_motion();
+}
+*/
+
+///*
+// Try this one first
 BOOST_AUTO_TEST_CASE( brownian_host_3d_overdamped ) {
     test_brownian<host_modules<3, double> >().free_brownian_motion();
 }
-*/
+//*/
+
+#ifdef HALMD_WITH_GPU
+///*
+BOOST_FIXTURE_TEST_CASE( brownian_gpu_2d_overdamped, device ) {
+    test_brownian<gpu_modules<2, float> >().free_brownian_motion();
+}
+//*/
+
+///*
+BOOST_FIXTURE_TEST_CASE( brownian_gpu_3d_overdamped, device ) {
+    test_brownian<gpu_modules<3, float> >().free_brownian_motion();
+}
+//*/
+
+#endif // HALMD_WITH_GPU

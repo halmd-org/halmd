@@ -30,22 +30,22 @@ target_link_libraries(test_unit_mdsim_integrators_brownian
   halmd_random_host
   ${HALMD_TEST_LIBRARIES}
   )
-  #add_test(unit/mdsim/integrators/brownian/host/3d/overdamped
-  #test_unit_mdsim_integrators_brownian --run_test=brownian_host_3d_overdamped --log_level=test_suite
-  #)
+  add_test(unit/mdsim/integrators/brownian/host/2d/overdamped
+    test_unit_mdsim_integrators_brownian --run_test=brownian_host_2d_overdamped --log_level=test_suite
+  )
+  add_test(unit/mdsim/integrators/brownian/host/3d/overdamped
+  test_unit_mdsim_integrators_brownian --run_test=brownian_host_3d_overdamped --log_level=test_suite
+  )
 if(HALMD_WITH_GPU)
-  # add_test(unit/mdsim/integrators/brownian/gpu/2d/linear
-  # test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_2d_linear --log_level=test_suite
-  #)
-  #add_test(unit/mdsim/integrators/brownian/gpu/2d/overdamped
-  # test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_2d_overdamped --log_level=test_suite
-  #)
+    #add_test(unit/mdsim/integrators/brownian/gpu/2d/linear
+    #test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_2d_linear --log_level=test_suite
+    #)
+  add_test(unit/mdsim/integrators/brownian/gpu/2d/overdamped
+   test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_2d_overdamped --log_level=test_suite
+  )
   add_test(unit/mdsim/integrators/brownian/gpu/3d/overdamped
     test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_3d_overdamped --log_level=test_suite
   )
-  #add_test(unit/mdsim/integrators/brownian/gpu/3d/overdamped
-  #  test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_3d_overdamped --log_level=test_suite
-  #)
 endif()
 
 # module euler
