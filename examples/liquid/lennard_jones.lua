@@ -83,7 +83,7 @@ function main(args)
     local steps = math.ceil(args.time / args.timestep)
 
     -- H5MD file writer
-    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
@@ -210,6 +210,7 @@ end
 function define_args(parser)
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
         default = "lennard_jones_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("input", {type = "string", required = true, action = function(args, key, value)
         readers.h5md.check(value)

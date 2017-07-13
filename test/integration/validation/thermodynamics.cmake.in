@@ -71,8 +71,8 @@ execute_halmd(
   "${BACKEND_OPTION}"
   "@CMAKE_SOURCE_DIR@/examples/liquid/lennard_jones_equilibration.lua"
   --verbose
-  --output "${OUTPUT_PREFIX}_thermalisation"
   --overwrite
+  --output "${OUTPUT_PREFIX}_thermalisation"
   --particles ${PARTICLES}
   --ratios ${ASPECT_RATIOS}
   --cutoff 4
@@ -99,6 +99,7 @@ execute_halmd(
   "${BACKEND_OPTION}"
   "@CMAKE_SOURCE_DIR@/examples/liquid/lennard_jones.lua"
   --verbose
+  --overwrite
   --output "${OUTPUT_PREFIX}_equilibration"
   --input "${OUTPUT_PREFIX}_thermalisation.h5"
   --cutoff 4
@@ -116,6 +117,7 @@ execute_halmd(
   "${BACKEND_OPTION}"
   "@CMAKE_SOURCE_DIR@/examples/liquid/lennard_jones.lua"
   --verbose
+  --overwrite
   --output "${OUTPUT_PREFIX}"
   --input "${OUTPUT_PREFIX}_equilibration.h5"
   --cutoff 4

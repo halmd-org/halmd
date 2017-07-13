@@ -142,10 +142,9 @@ local M = module(function(args)
             -- assume that the box is fixed in time and construct suitable writer
             local file = utility.assert_kwarg(args, "file")
             local location = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
-            local overwrite = args.overwrite or false
 
             -- TODO hard-link static box groups at different locations
-            writer = file:writer({location = location, mode = "truncate", overwrite = overwrite})
+            writer = file:writer({location = location, mode = "truncate"})
             write_once = true;
         end
 

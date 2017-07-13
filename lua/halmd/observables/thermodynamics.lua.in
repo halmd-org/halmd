@@ -186,7 +186,6 @@ local M = module(function(args)
         local fields = utility.assert_type(
             args.fields or {"potential_energy", "pressure", "temperature", "center_of_mass_velocity"}
           , "table")
-        local overwrite = args.overwrite or false
 
         -- declare H5MD module "thermodynamics",
         -- non-existing subgroups are created as needed
@@ -196,7 +195,7 @@ local M = module(function(args)
         -- store particle number and density in 'truncate' mode
         -- assuming unchanging values
         -- FIXME should be queried from box and particle_group
-        local writer = file:writer{location = location, mode = "truncate", overwrite = overwrite}
+        local writer = file:writer{location = location, mode = "truncate"}
         writer.group:write_attribute("dimension", h5.int(), self.dimension)
 
         writer:on_write(self.particle_number, {"particle_number"})

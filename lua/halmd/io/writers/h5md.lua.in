@@ -42,6 +42,7 @@ local h5md = libhalmd.io.writers.h5md
 -- :param table args: keyword arguments
 -- :param string args.path: pathname of output file
 -- :param string args.email: email address of file author *(optional)*
+-- :param boolean args.overwrite: if true, overwrite existing file *(default: false)*
 -- :returns: instance of file writer
 --
 -- Create the output file and writes the H5MD metadata.

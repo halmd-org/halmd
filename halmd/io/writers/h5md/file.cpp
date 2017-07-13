@@ -38,18 +38,17 @@ namespace io {
 namespace writers {
 namespace h5md {
 
-/**
- * This overwrites any existing file at the given path.
- */
 file::file(string const& path, string const& author_name, string const& author_email, bool overwrite)
 {
     if (boost::filesystem::exists(path)) {
         if (overwrite) {
-            LOG("a file named \"" << path << "\" already exists and will be overwritten");
+            LOG_WARNING("overwrite existing file \"" << path << "\"");
         } else {
-            throw std::runtime_error("A file named \"" + path + "\" already exists.");
+            throw std::runtime_error("Output file \"" + path + "\" exists and won't be overwritten");
         }
     }
+
+    // open file with write access, truncate file if it exists
     file_ = H5::H5File(path, H5F_ACC_TRUNC);
 
     H5::Group h5md = file_.createGroup("h5md");

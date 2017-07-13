@@ -143,10 +143,9 @@ local M = module(function(args)
         local location = utility.assert_type(
             args.location or {"dynamics", label, "intermediate_scattering_function"}
           , "table")
-        local overwrite = args.overwrite or false
 
         -- write wavenumbers
-        local writer = file:writer({location = location, mode = "truncate", overwrite = overwrite})
+        local writer = file:writer({location = location, mode = "truncate"})
         local conn = writer:on_write(wavevector.wavenumber, {"wavenumber"})
         writer:write() -- FIXME pass arguments directly to write(), avoiding on_write
         conn:disconnect()
