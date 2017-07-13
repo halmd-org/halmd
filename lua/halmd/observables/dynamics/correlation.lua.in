@@ -161,8 +161,9 @@ local M = module(function(args)
     self.writer = property(function(self) return function(self, args)
         local file = utility.assert_kwarg(args, "file")
         local location = utility.assert_type(args.location or location, "table")
+        local overwrite = args.overwrite or false
 
-        local writer = file:writer({location = location, mode = "truncate"})
+        local writer = file:writer({location = location, mode = "truncate", overwrite = overwrite})
         return writer
     end end)
 

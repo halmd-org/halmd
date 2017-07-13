@@ -95,8 +95,9 @@ local M = module(function(args)
         local location = utility.assert_type(
             args.location or {"dynamics", label, "velocity_autocorrelation"}
           , "table")
+        local overwrite = args.overwrite or false
 
-        local writer = file:writer({location = location, mode = "truncate"})
+        local writer = file:writer({location = location, mode = "truncate", overwrite = overwrite})
         return writer
     end end)
 

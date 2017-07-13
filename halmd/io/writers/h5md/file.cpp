@@ -41,8 +41,15 @@ namespace h5md {
 /**
  * This overwrites any existing file at the given path.
  */
-file::file(string const& path, string const& author_name, string const& author_email)
+file::file(string const& path, string const& author_name, string const& author_email, bool overwrite)
 {
+    if (boost::filesystem::exists(path)) {
+        if (overwrite) {
+            LOG("a file named \"" << path << "\" already exists and will be overwritten");
+        } else {
+            throw std::runtime_error("A file named \"" + path + "\" already exists.");
+        }
+    }
     file_ = H5::H5File(path, H5F_ACC_TRUNC);
 
     H5::Group h5md = file_.createGroup("h5md");
@@ -100,7 +107,7 @@ void file::luaopen(lua_State* L)
                 namespace_("h5md")
                 [
                     class_<file, std::shared_ptr<file> >("file")
-                        .def(constructor<string const&, string const&, string const&>())
+                        .def(constructor<string const&, string const&, string const&, bool>())
                         .def("flush", &file::flush)
                         .def("close", &file::close)
                         .property("root", &file::root)

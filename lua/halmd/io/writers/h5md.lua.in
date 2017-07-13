@@ -105,7 +105,8 @@ local h5md = libhalmd.io.writers.h5md
 local M = module(function(args)
     local path = utility.assert_kwarg(args, "path")
     local email = args.email or ""
-    local file = h5md.file(path, "", email) -- retrieve author name automatically if field is empty
+    local overwrite = args.overwrite or false
+    local file = h5md.file(path, "", email, overwrite) -- retrieve author name automatically if field is empty
 
     file.writer = function(self, args)
         local mode = utility.assert_kwarg(args, "mode")

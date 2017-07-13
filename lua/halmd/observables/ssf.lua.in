@@ -139,9 +139,10 @@ local M = module(function(args)
             args.location or {"structure", label, "static_structure_factor"}
           , "table")
         local every = utility.assert_kwarg(args, "every")
+        local overwrite = args.overwrite or false
 
         -- write wavenumbers
-        local writer = file:writer{location = location, mode = "truncate"}
+        local writer = file:writer{location = location, mode = "truncate", overwrite = overwrite}
         writer:on_write(wavevector.wavenumber, {"wavenumber"})
         writer:write() -- FIXME pass arguments directly to write(), avoiding on_write
 

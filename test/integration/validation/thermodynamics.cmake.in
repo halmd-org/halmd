@@ -72,6 +72,7 @@ execute_halmd(
   "@CMAKE_SOURCE_DIR@/examples/liquid/lennard_jones_equilibration.lua"
   --verbose
   --output "${OUTPUT_PREFIX}_thermalisation"
+  --overwrite
   --particles ${PARTICLES}
   --ratios ${ASPECT_RATIOS}
   --cutoff 4

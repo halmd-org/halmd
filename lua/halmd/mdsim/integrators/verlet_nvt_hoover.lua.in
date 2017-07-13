@@ -193,10 +193,11 @@ local M = module(function(args)
         local fields = utility.assert_type(
             args.fields or {"position", "velocity", "internal_energy"}
           , "table")
+        local overwrite = args.overwrite or false
 
         -- store degrees of freedom of thermostatted system in 'truncate' mode
         -- FIXME shouldn't we store the size of the 1-dimensional thermostat chain here?
-        local writer = file:writer{location = location, mode = "truncate"}
+        local writer = file:writer{location = location, mode = "truncate", overwrite = overwrite}
         writer.group:write_attribute("dimension", h5.int(), box.dimension) -- space dimension
 
         -- FIXME the following signal connection causes a segmentation

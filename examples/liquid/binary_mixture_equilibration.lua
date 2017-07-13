@@ -105,7 +105,7 @@ function main(args)
     local steps = math.ceil(args.time / args.timestep)
 
     -- H5MD file writer
-    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
 
     -- sample macroscopic state variables for all particles.
     if args.sampling.state_vars > 0 then
@@ -186,6 +186,7 @@ end
 function define_args(parser)
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
         default = "binary_mixture_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {4000, 1000}, help = "number of particles"})
     parser:add_argument("density", {type = "number", default = 1.2, help = "particle number density"})

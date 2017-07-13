@@ -203,7 +203,7 @@ void h5md(std::vector<unsigned int> const& ntypes)
     // use time-step not exactly representable as float-point value
     std::shared_ptr<halmd::mdsim::clock> clock = std::make_shared<halmd::mdsim::clock>();
     std::shared_ptr<halmd::io::writers::h5md::file> writer_file =
-        std::make_shared<halmd::io::writers::h5md::file>(filename);
+        std::make_shared<halmd::io::writers::h5md::file>(filename, "", "", true);
     std::shared_ptr<halmd::io::writers::h5md::append> writer =
         std::make_shared<halmd::io::writers::h5md::append>(writer_file->root(), std::vector<std::string>{"trajectory"}, clock);
 
@@ -218,7 +218,7 @@ void h5md(std::vector<unsigned int> const& ntypes)
     writer_file.reset();
 
     filename = std::string ("test_io_h5md_trajectory_" + std::to_string(dimension) + "d_double" + std::to_string (ntypes.size()) + ".trj");
-    writer_file = std::make_shared<halmd::io::writers::h5md::file>(filename);
+    writer_file = std::make_shared<halmd::io::writers::h5md::file>(filename, "", "", true);
     writer = std::make_shared<halmd::io::writers::h5md::append>(writer_file->root(), std::vector<std::string>{"trajectory"}, clock);
 
     on_write_sample(double_position_sample, double_velocity_sample, writer);
