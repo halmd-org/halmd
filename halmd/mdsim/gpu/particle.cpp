@@ -77,14 +77,14 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
         max_block_size++;
         array_size_ = (nparticle_ + max_block_size - 1) / max_block_size;
         array_size_ *= max_block_size;
-        size_t blockSize = 128;
-        size_t gridSize = array_size_ / blockSize;
-        while (gridSize > prop.max_grid_size().x && blockSize <= prop.max_threads_per_block()/2) {
-            blockSize <<= 1;
-            gridSize = (gridSize + 1) >> 1;
+        size_t block_size = 128;
+        size_t grid_size = array_size_ / block_size;
+        while (grid_size > prop.max_grid_size().x && block_size <= prop.max_threads_per_block()/2) {
+            block_size <<= 1;
+            grid_size = (grid_size + 1) >> 1;
         }
-        assert(gridSize * blockSize == array_size_);
-        dim_ = device::validate(cuda::config(gridSize, blockSize));
+        assert(grid_size * block_size == array_size_);
+        dim_ = device::validate(cuda::config(grid_size, block_size));
         id_ = id_array_type(array_size_);
         reverse_id_ = reverse_id_array_type(array_size_);
     }

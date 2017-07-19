@@ -109,8 +109,8 @@ __global__ void update(
 }
 
 template<typename vector_type>
-int block_size_to_smem_size(int blockSize) {
-    return blockSize * (sizeof(unsigned int) + sizeof(vector_type));
+int block_size_to_smem_size(int block_size) {
+    return block_size * (sizeof(unsigned int) + sizeof(vector_type));
 }
 
 } // namespace from_particle_kernel

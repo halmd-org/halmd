@@ -38,9 +38,9 @@ inline void rescale_velocity(particle_type& particle, double factor)
     auto velocity = make_cache_mutable(particle.velocity());
 
     auto const &kernel = get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().rescale;
-    int blockSize = kernel.max_block_size();
-    if (!blockSize) blockSize = particle.dim().block.x;
-    cuda::configure(particle.array_size() / blockSize, blockSize);
+    int block_size = kernel.max_block_size();
+    if (!block_size) block_size = particle.dim().block.x;
+    cuda::configure(particle.array_size() / block_size, block_size);
     kernel(
         velocity->data()
       , particle.nparticle()
@@ -59,9 +59,9 @@ inline void rescale_velocity_group(particle_type& particle, particle_group& grou
     auto velocity = make_cache_mutable(particle.velocity());
 
     auto const &kernel = get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().rescale_group;
-    int blockSize = kernel.max_block_size();
-    if (!blockSize) blockSize = particle.dim().block.x;
-    cuda::configure((unordered.size() + blockSize - 1) / blockSize, blockSize);
+    int block_size = kernel.max_block_size();
+    if (!block_size) block_size = particle.dim().block.x;
+    cuda::configure((unordered.size() + block_size - 1) / block_size, block_size);
     kernel(
         velocity->data()
       , unordered.data()
@@ -80,9 +80,9 @@ inline void shift_velocity(particle_type& particle, fixed_vector<double, particl
     auto velocity = make_cache_mutable(particle.velocity());
 
     auto const& kernel = get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift;
-    int blockSize = kernel.max_block_size();
-    if (!blockSize) blockSize = particle.dim().block.x;
-    cuda::configure(particle.array_size() / blockSize, blockSize);
+    int block_size = kernel.max_block_size();
+    if (!block_size) block_size = particle.dim().block.x;
+    cuda::configure(particle.array_size() / block_size, block_size);
     get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift(
         velocity->data()
       , particle.nparticle()
@@ -101,11 +101,11 @@ inline void shift_velocity_group(particle_type& particle, particle_group& group,
     auto velocity = make_cache_mutable(particle.velocity());
 
     auto const& kernel = get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_group;
-    int blockSize = kernel.max_block_size();
-    if (!blockSize) blockSize = particle.dim().block.x;
+    int block_size = kernel.max_block_size();
+    if (!block_size) block_size = particle.dim().block.x;
     cuda::configure(
-        (unordered.size() + blockSize - 1) / blockSize
-      , blockSize
+        (unordered.size() + block_size - 1) / block_size
+      , block_size
     );
     kernel(
         velocity->data()
@@ -125,9 +125,9 @@ inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double,
     auto velocity = make_cache_mutable(particle.velocity());
 
     auto const& kernel = get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_rescale;
-    int blockSize = kernel.max_block_size();
-    if (!blockSize) blockSize = particle.dim().block.x;
-    cuda::configure(particle.array_size() / blockSize, blockSize);
+    int block_size = kernel.max_block_size();
+    if (!block_size) block_size = particle.dim().block.x;
+    cuda::configure(particle.array_size() / block_size, block_size);
     kernel(
         velocity->data()
       , particle.nparticle()
@@ -147,11 +147,11 @@ inline void shift_rescale_velocity_group(particle_type& particle, particle_group
     auto velocity = make_cache_mutable(particle.velocity());
 
     auto const& kernel = get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_rescale_group;
-    int blockSize = kernel.max_block_size();
-    if (!blockSize) blockSize = particle.dim().block.x;
+    int block_size = kernel.max_block_size();
+    if (!block_size) block_size = particle.dim().block.x;
     cuda::configure(
-        (unordered.size() + blockSize - 1) / blockSize
-      , blockSize
+        (unordered.size() + block_size - 1) / block_size
+      , block_size
     );
     kernel(
         velocity->data()

@@ -123,9 +123,9 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
     float_type scale = propagate_chain();
 
     try {
-        int blockSize = wrapper_type::kernel.integrate.max_block_size();
-        if (!blockSize) blockSize = particle_->dim().block.x;
-        cuda::configure(particle_->array_size() / blockSize, blockSize);
+        int block_size = wrapper_type::kernel.integrate.max_block_size();
+        if (!block_size) block_size = particle_->dim().block.x;
+        cuda::configure(particle_->array_size() / block_size, block_size);
         wrapper_type::kernel.integrate(
             position->data()
           , image->data()

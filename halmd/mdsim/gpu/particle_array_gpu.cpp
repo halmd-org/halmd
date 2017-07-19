@@ -77,16 +77,16 @@ std::shared_ptr<particle_array_gpu<T>> particle_array_gpu<T>::cast(std::shared_p
 
 cuda::config get_default_config(size_t n) {
     cuda::device::properties prop(cuda::device::get());
-    size_t blockSize = 128;
-    size_t gridSize = n / blockSize;
-    while (gridSize > prop.max_grid_size().x && blockSize <= prop.max_threads_per_block()/2) {
-        blockSize <<= 1;
-        gridSize = (gridSize + 1) >> 1;
+    size_t block_size = 128;
+    size_t grid_size = n / block_size;
+    while (grid_size > prop.max_grid_size().x && block_size <= prop.max_threads_per_block()/2) {
+        block_size <<= 1;
+        grid_size = (grid_size + 1) >> 1;
     }
-    if(gridSize * blockSize != n) {
+    if(grid_size * block_size != n) {
         throw std::runtime_error("misaligned particle array");
     }
-    return device::validate(cuda::config(gridSize, blockSize));
+    return device::validate(cuda::config(grid_size, block_size));
 }
 
 template<typename T>

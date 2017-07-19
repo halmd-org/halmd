@@ -27,24 +27,24 @@ namespace halmd {
 
 template<typename kernel_type>
 void configure_kernel(kernel_type const& k, cuda::config const& default_dim, size_t smem_factor = 0) {
-    int blockSize = k.max_block_size();
-    if (!blockSize) {
+    int block_size = k.max_block_size();
+    if (!block_size) {
         cuda::configure(default_dim.grid, default_dim.block, smem_factor * default_dim.threads_per_block());
     } else {
-        int gridSize = (default_dim.threads() + blockSize - 1) / blockSize;
-        if (size_t(gridSize) * size_t(blockSize) == default_dim.threads()) {
-            cuda::configure(gridSize, blockSize, smem_factor * blockSize);
+        int grid_size = (default_dim.threads() + block_size - 1) / block_size;
+        if (size_t(grid_size) * size_t(block_size) == default_dim.threads()) {
+            cuda::configure(grid_size, block_size, smem_factor * block_size);
         } else {
             // if exact block size does not match choose previous power of two
-            blockSize |= (blockSize >> 1);
-            blockSize |= (blockSize >> 2);
-            blockSize |= (blockSize >> 4);
-            blockSize |= (blockSize >> 8);
-            blockSize |= (blockSize >> 16);
-            blockSize -= (blockSize >> 1);
-            int gridSize = (default_dim.threads() + blockSize - 1) / blockSize;
-            if (size_t(gridSize) * size_t(blockSize) == default_dim.threads()) {
-                cuda::configure(gridSize, blockSize, smem_factor * blockSize);
+            block_size |= (block_size >> 1);
+            block_size |= (block_size >> 2);
+            block_size |= (block_size >> 4);
+            block_size |= (block_size >> 8);
+            block_size |= (block_size >> 16);
+            block_size -= (block_size >> 1);
+            int grid_size = (default_dim.threads() + block_size - 1) / block_size;
+            if (size_t(grid_size) * size_t(block_size) == default_dim.threads()) {
+                cuda::configure(grid_size, block_size, smem_factor * block_size);
             } else {
                 // if this does not match either choose default dimensions
                 cuda::configure(default_dim.grid, default_dim.block, smem_factor * default_dim.threads_per_block());
