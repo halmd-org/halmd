@@ -22,7 +22,8 @@
 
 using namespace halmd;
 
-__global__ void dsfloat_kernel_test_1 (float4 *g, fixed_vector<dsfloat, 3> increment) {
+__global__ void dsfloat_kernel_test_1 (float4 *g, fixed_vector<dsfloat, 3> increment)
+{
     fixed_vector<dsfloat, 3> position;
     unsigned int species;
 
@@ -35,7 +36,8 @@ __global__ void dsfloat_kernel_test_1 (float4 *g, fixed_vector<dsfloat, 3> incre
     tie(g[GTID], g[GTID + GTDIM]) <<= tie(position, species);
 }
 
-__global__ void dsfloat_kernel_test_2 (dsfloat_ptr<float4> g, fixed_vector<dsfloat, 3> increment) {
+__global__ void dsfloat_kernel_test_2 (dsfloat_ptr<float4> g, fixed_vector<dsfloat, 3> increment)
+{
     fixed_vector<dsfloat, 3> position;
     unsigned int species;
 
@@ -59,13 +61,13 @@ __global__ void dsfloat_kernel_overloaded_test (typename dsfloat_traits<T, 3>::p
 }
 
 dsfloat_kernel_wrapper dsfloat_kernel_wrapper::kernel = {
-        dsfloat_kernel_test_1,
-        dsfloat_kernel_test_2
+    dsfloat_kernel_test_1,
+    dsfloat_kernel_test_2
 };
 
 template<typename float_type>
 dsfloat_kernel_overloaded_wrapper<float_type> dsfloat_kernel_overloaded_wrapper<float_type>::kernel = {
-        dsfloat_kernel_overloaded_test<float_type>
+    dsfloat_kernel_overloaded_test<float_type>
 };
 
 template class dsfloat_kernel_overloaded_wrapper<float>;
