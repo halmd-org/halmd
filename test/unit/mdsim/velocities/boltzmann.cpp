@@ -112,8 +112,8 @@ void boltzmann<modules_type>::test()
 
     // temperature ⇒ variance of velocity distribution
     // we have only one measurement of the variance,
-    // tolerance is 4.5σ, σ = √<ΔT²> where <ΔT²> / T² = 2 / (dimension × N)
-    double rel_temp_tolerance = 4.5 * sqrt(2. / (dimension * npart)) / temp;
+    // tolerance is 5σ, σ = √<ΔT²> where <ΔT²> / T² = 2 / (dimension × N)
+    double rel_temp_tolerance = 5. * sqrt(2. / (dimension * npart)) / temp;
     BOOST_TEST_MESSAGE("Relative tolerance on instantaneous temperature: " << rel_temp_tolerance);
     BOOST_CHECK_CLOSE_FRACTION(2 * get_mean_en_kin(*particle, group) / dimension, temp, rel_temp_tolerance);
 
