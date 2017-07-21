@@ -31,6 +31,7 @@
 #include <halmd/mdsim/gpu/positions/lattice.hpp>
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 using namespace std;
 
@@ -165,10 +166,9 @@ void lattice<dimension, float_type>::fcc(
     }
 
     try {
-        int block_size = get_lattice_kernel<float_type, lattice_type>().lattice.max_block_size();
-        if (!block_size) block_size = particle_->dim().block.x;
-        cuda::configure(particle_->array_size() / block_size, block_size);
-        get_lattice_kernel<float_type, lattice_type>().lattice(first, npart, a, skip, offset, n);
+        auto const& lattice_kernel = get_lattice_kernel<float_type, lattice_type>().lattice;
+        configure_kernel(lattice_kernel, particle_->dim());
+        lattice_kernel(first, npart, a, skip, offset, n);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {

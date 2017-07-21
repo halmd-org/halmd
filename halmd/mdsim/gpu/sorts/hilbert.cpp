@@ -26,6 +26,7 @@
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/gpu/sorts/hilbert.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace halmd::algorithm::gpu;
@@ -96,9 +97,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 
     scoped_timer_type timer(runtime_.map);
 
-    int block_size = wrapper_type::kernel.map.max_block_size();
-    if (!block_size) block_size = particle_->dim().block.x;
-    cuda::configure(particle_->array_size() / block_size, block_size);
+    configure_kernel(wrapper_type::kernel.map, particle_->dim());
     wrapper_type::kernel.map(
         position.data()
       , g_map
@@ -112,9 +111,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index)
 {
-    int block_size = wrapper_type::kernel.gen_index.max_block_size();
-    if (!block_size) block_size = particle_->dim().block.x;
-    cuda::configure(particle_->array_size() / block_size, block_size);
+    configure_kernel(wrapper_type::kernel.gen_index, particle_->dim());
     wrapper_type::kernel.gen_index(g_index);
     radix_sort(g_map.begin(), g_map.end(), g_index.begin());
 }
