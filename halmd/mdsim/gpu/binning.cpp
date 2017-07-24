@@ -177,7 +177,7 @@ void binning<dimension, float_type>::update()
         unsigned int nparticle = particle_->nparticle();
 
         // compute cell indices for particle positions
-        configure_kernel(kernel->compute_cell, particle_->dim());
+        configure_kernel(kernel->compute_cell, particle_->dim(), true);
         kernel->compute_cell(
             position.data()
           , g_cell_index_
@@ -186,13 +186,13 @@ void binning<dimension, float_type>::update()
         );
 
         // generate permutation
-        configure_kernel(kernel->gen_index, particle_->dim());
+        configure_kernel(kernel->gen_index, particle_->dim(), true);
         kernel->gen_index(g_cell_permutation_, nparticle);
         radix_sort(g_cell_index_.begin(), g_cell_index_.end(), g_cell_permutation_.begin());
 
         // compute global cell offsets in sorted particle list
         cuda::memset(g_cell_offset_, 0xFF);
-        configure_kernel(kernel->find_cell_offset, particle_->dim());
+        configure_kernel(kernel->find_cell_offset, particle_->dim(), true);
         kernel->find_cell_offset(g_cell_index_, g_cell_offset_, nparticle);
 
         // assign particles to cells

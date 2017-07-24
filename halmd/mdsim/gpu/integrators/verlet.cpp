@@ -75,7 +75,7 @@ void verlet<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     try {
-        configure_kernel(wrapper_->integrate, particle_->dim());
+        configure_kernel(wrapper_->integrate, particle_->dim(), true);
         wrapper_->integrate(
             position->data()
           , image->data()
@@ -108,7 +108,7 @@ void verlet<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     try {
-        configure_kernel(wrapper_->finalize, particle_->dim());
+        configure_kernel(wrapper_->finalize, particle_->dim(), true);
         wrapper_->finalize(
             velocity->data()
           , force.data()

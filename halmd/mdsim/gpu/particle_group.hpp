@@ -275,11 +275,7 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
     particle_group_wrapper<dimension, float_type>::kernel.image.bind(read_cache(particle_src.image()));
     particle_group_wrapper<dimension, float_type>::kernel.v.bind(read_cache(particle_src.velocity()));
 
-    auto default_config = cuda::config(
-        (ordered.size() + particle_dst.dim().threads_per_block() - 1) / particle_dst.dim().threads_per_block()
-      , particle_dst.dim().block
-    );
-    configure_kernel(particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle, default_config);
+    configure_kernel(particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle, ordered.size());
     particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle(
         &*ordered.begin()
       , position->data()

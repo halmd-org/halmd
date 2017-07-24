@@ -129,7 +129,7 @@ struct particle_array_gpu_helper
     )
     {
         auto output = make_cache_mutable(data);
-        configure_kernel(particle_initialize_wrapper<T>::kernel.initialize, get_default_config(output->size()));
+        configure_kernel(particle_initialize_wrapper<T>::kernel.initialize, get_default_config(output->size()), true);
         particle_initialize_wrapper<T>::kernel.initialize (output->data(), init_value, ghost_init_value, nparticle);
     }
 
@@ -208,7 +208,7 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     )
     {
         auto output = make_cache_mutable(data);
-        configure_kernel(dsfloat_particle_initialize_wrapper<dimension>::kernel.initialize, get_default_config(output->size()));
+        configure_kernel(dsfloat_particle_initialize_wrapper<dimension>::kernel.initialize, get_default_config(output->size()), true);
         dsfloat_particle_initialize_wrapper<dimension>::kernel.initialize (output->data(), init_value, ghost_init_value, nparticle);
     }
 

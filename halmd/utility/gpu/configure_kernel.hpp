@@ -32,31 +32,34 @@ namespace halmd {
  *
  * @returns: configuration parameters
  *
- * FIXME include a minimal grid size (e.g., number of SMPs) to ensure sufficient device occupancy
  */
 template <typename kernel_type>
-cuda::config configure_kernel(kernel_type const& k, cuda::config const& default_dim, size_t smem_per_thread = 0)
+cuda::config configure_kernel(kernel_type const& k, cuda::config const& default_dim, bool fixed_total_threads, size_t smem_per_thread = 0)
 {
     cuda::config dim = default_dim;
     int block_size = k.max_block_size();    // smem size needs to be considered here too
 
     if (block_size > 0) {
         int grid_size = (default_dim.threads() + block_size - 1) / block_size;
-        if (size_t(grid_size) * size_t(block_size) == default_dim.threads()) {
-            dim = cuda::config(grid_size, block_size);
-        } else {
-            // if exact block size does not match choose previous power of two
-            block_size |= (block_size >> 1);
-            block_size |= (block_size >> 2);
-            block_size |= (block_size >> 4);
-            block_size |= (block_size >> 8);
-            block_size |= (block_size >> 16);
-            block_size -= (block_size >> 1);
-
-            int grid_size = (default_dim.threads() + block_size - 1) / block_size;
-            if (size_t(grid_size) * size_t(block_size) == default_dim.threads()) {
+        // if the resulting grid size is too small to achieve a good device occupancy
+        // use the default dimensions (which has a minimal block size)
+        if (grid_size >= k.min_grid_size()) {
+            if (!fixed_total_threads || (size_t(grid_size) * size_t(block_size) == default_dim.threads())) {
                 dim = cuda::config(grid_size, block_size);
-            } // otherwise, choose default dimensions
+            } else {
+                // if exact block size does not match choose previous power of two
+                block_size |= (block_size >> 1);
+                block_size |= (block_size >> 2);
+                block_size |= (block_size >> 4);
+                block_size |= (block_size >> 8);
+                block_size |= (block_size >> 16);
+                block_size -= (block_size >> 1);
+
+                int grid_size = (default_dim.threads() + block_size - 1) / block_size;
+                if (size_t(grid_size) * size_t(block_size) == default_dim.threads()) {
+                    dim = cuda::config(grid_size, block_size);
+                } // otherwise, choose default dimensions
+            }
         }
     }
 
@@ -76,7 +79,7 @@ cuda::config configure_kernel(kernel_type const& k, size_t total_threads, size_t
 {
     unsigned int block_size = 32 << DEVICE_SCALE;    // default value for old CUDA versions: not too large, and not too small
     unsigned int grid_size = (total_threads + block_size - 1) / block_size;
-    return configure_kernel(k, cuda::config(grid_size, block_size), smem_per_thread);
+    return configure_kernel(k, cuda::config(grid_size, block_size), false, smem_per_thread);
 }
 
 } // namespace halmd

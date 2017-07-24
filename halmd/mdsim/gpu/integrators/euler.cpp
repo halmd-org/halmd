@@ -75,7 +75,7 @@ void euler<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     try {
-        configure_kernel(wrapper_type::kernel.integrate, particle_->dim());
+        configure_kernel(wrapper_type::kernel.integrate, particle_->dim(), true);
         wrapper_type::kernel.integrate(
             position->data()
           , image->data()

@@ -41,7 +41,7 @@ inline void rescale_velocity(particle_type& particle, double factor)
     auto const& kernel =
         get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().rescale;
 
-    configure_kernel(kernel, particle.dim());
+    configure_kernel(kernel, particle.dim(), false);
     kernel(
         velocity->data()
       , particle.nparticle()
@@ -83,7 +83,7 @@ inline void shift_velocity(particle_type& particle, fixed_vector<double, particl
     auto const& kernel =
         get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift;
 
-    configure_kernel(kernel, particle.dim());
+    configure_kernel(kernel, particle.dim(), false);
     kernel(
         velocity->data()
       , particle.nparticle()
@@ -125,7 +125,7 @@ inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double,
     auto const& kernel =
         get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_rescale;
 
-    configure_kernel(kernel, particle.dim());
+    configure_kernel(kernel, particle.dim(), false);
     kernel(
         velocity->data()
       , particle.nparticle()

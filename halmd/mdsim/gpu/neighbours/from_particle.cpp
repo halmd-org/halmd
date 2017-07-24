@@ -148,6 +148,7 @@ void from_particle<dimension, float_type>::update()
         configure_kernel(
           get_from_particle_kernel<dimension>().update
         , particle1_->dim()
+        , true
         , sizeof(unsigned int) + sizeof(vector_type)
         );
         get_from_particle_kernel<dimension>().update(

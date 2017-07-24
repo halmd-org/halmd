@@ -97,7 +97,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 
     scoped_timer_type timer(runtime_.map);
 
-    configure_kernel(wrapper_type::kernel.map, particle_->dim());
+    configure_kernel(wrapper_type::kernel.map, particle_->dim(), true);
     wrapper_type::kernel.map(
         position.data()
       , g_map
@@ -111,7 +111,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index)
 {
-    configure_kernel(wrapper_type::kernel.gen_index, particle_->dim());
+    configure_kernel(wrapper_type::kernel.gen_index, particle_->dim(), true);
     wrapper_type::kernel.gen_index(g_index);
     radix_sort(g_map.begin(), g_map.end(), g_index.begin());
 }

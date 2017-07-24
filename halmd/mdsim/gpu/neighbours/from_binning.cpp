@@ -231,7 +231,7 @@ void from_binning<dimension, float_type>::update()
             );
         }
         else {
-            configure_kernel(kernel->update_neighbours_naive, particle1_->dim());
+            configure_kernel(kernel->update_neighbours_naive, particle1_->dim(), false);
             kernel->rr_cut_skin.bind(g_rr_cut_skin_);
             kernel->r2.bind(position2);
             kernel->update_neighbours_naive(
