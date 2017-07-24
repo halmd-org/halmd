@@ -78,9 +78,9 @@ if(DEFINED CMAKE_CUDA_COMPILER_ID)
     # so in that case the default compute version is raised to 2.0 regardless.
 
     if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 6.5)
-      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12,sm_13,sm_20")
+      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12")
     else()
-      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_20 -code=compute_20,sm_20")
+      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_20 -code=compute_20")
     endif()
 
 
