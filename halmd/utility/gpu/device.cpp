@@ -66,6 +66,8 @@ device::device()
     LOG("GPU maximum number of threads per block: " << prop.max_threads_per_block());
     LOG("GPU total constant memory: " << prop.total_const_mem());
     LOG("GPU clock frequency: " << prop.clock_rate() << " kHz");
+    LOG("GPU multiprocessor count: " << prop.multi_processor_count());
+    LOG("GPU maximum resident threads per multiprocessor: " << prop.max_threads_per_multi_processor());
     LOG("CUDA compute capability: " << prop.major() << "." << prop.minor());
     LOG("CUDA compute version: " << device::compute_version());
 }
