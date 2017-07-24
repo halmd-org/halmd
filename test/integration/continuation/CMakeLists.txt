@@ -8,12 +8,6 @@ target_link_libraries(test_integration_continuation_compare_trajectory
   ${HALMD_TEST_LIBRARIES}
 )
 
-if("${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}" VERSION_LESS "1.60")
-  set(BOOST_TEST_ARGS "--log_level=test_suite")
-else()
-  set(BOOST_TEST_ARGS "--log_level=test_suite --")
-endif()
-
 configure_file(
   lennard_jones.cmake.in
   test_integration_continuation_lennard_jones.cmake
