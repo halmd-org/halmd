@@ -83,7 +83,7 @@ struct test_brownian
     typedef typename modules_type::phase_space_type phase_space_type;
     typedef typename modules_type::msd_type msd_type;
     typedef typename modules_type::mqd_type mqd_type;
-    typedef typename modules_type::ocf_type ocf_type;
+    //typedef typename modules_type::ocf_type ocf_type;
 
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
@@ -147,10 +147,10 @@ void test_brownian<modules_type>::free_brownian_motion()
     );
     blocking_scheme.on_correlate(correlation_mqd);
 
-    auto correlation_ocf = make_shared<observables::dynamics::correlation<ocf_type>>(
-        make_shared<ocf_type>(), block_sample, block_sample
-    );
-    blocking_scheme.on_correlate(correlation_ocf);
+    //auto correlation_ocf = make_shared<observables::dynamics::correlation<ocf_type>>(
+        //make_shared<ocf_type>(), block_sample, block_sample
+    //);
+    //blocking_scheme.on_correlate(correlation_ocf);
 
     blocking_scheme.on_sample(block_sample);
     // perform integration
@@ -169,7 +169,7 @@ void test_brownian<modules_type>::free_brownian_motion()
     auto time = blocking_scheme.time()[0];
     auto msd = correlation_msd->result()[0];
     auto mqd = correlation_mqd->result()[0];
-    auto ocf = correlation_ocf->result()[0];
+    //auto ocf = correlation_ocf->result()[0];
     
     BOOST_TEST_MESSAGE("check if msd is close to 6 D t");
     double max_deviation = 0;
@@ -177,7 +177,10 @@ void test_brownian<modules_type>::free_brownian_motion()
       //BOOST_TEST_MESSAGE(abs(mean(msd[i])- 6 * time[i]) - 6 * error_of_mean(msd[i])  );
       //BOOST_CHECK_CLOSE(mean(msd[i]), 6 * time[i], 6 * error_of_mean(msd[i]));
       //max_deviation = std::max(abs(mean(msd[i]) - 6 * time[i]), max_deviation);
-      BOOST_TEST_MESSAGE( time[i] << " " << mean(msd[i]) <<  "  " << mean(msd[i]) / time[i] << "  " << 6 * time[i] << "  " << error_of_mean(msd[i]) << "  " << mean(ocf[i]) << "  " << (3 * mean(mqd[i])   / (5 * mean(msd[i]) * mean(msd[i]))-1) ); // << "  " << (3 * error_of_mean(mqd[i])   / (5 * pow(mean(msd[i]), 2))) + (6 * mean(mqd[i]) * error_of_mean(mqd[i])  / (5 * pow(mean(msd[i]), 3))));
+
+      BOOST_TEST_MESSAGE( time[i] << " " << mean(msd[i]) <<  "  " << mean(msd[i]) / time[i] << "  " << 6 * time[i] << "  " << error_of_mean(msd[i]) << "  " << (3 * mean(mqd[i])   / (5 * mean(msd[i]) * mean(msd[i]))-1) ); // << "  " << (3 * error_of_mean(mqd[i])   / (5 * pow(mean(msd[i]), 2))) + (6 * mean(mqd[i]) * error_of_mean(mqd[i])  / (5 * pow(mean(msd[i]), 3))));
+
+      //BOOST_TEST_MESSAGE( time[i] << " " << mean(msd[i]) <<  "  " << mean(msd[i]) / time[i] << "  " << 6 * time[i] << "  " << error_of_mean(msd[i]) << "  " << mean(ocf[i]) << "  " << (3 * mean(mqd[i])   / (5 * mean(msd[i]) * mean(msd[i]))-1) ); // << "  " << (3 * error_of_mean(mqd[i])   / (5 * pow(mean(msd[i]), 2))) + (6 * mean(mqd[i]) * error_of_mean(mqd[i])  / (5 * pow(mean(msd[i]), 3))));
     }
     BOOST_TEST_MESSAGE("Maximum deviation  " << max_deviation);
 }
@@ -252,7 +255,7 @@ struct host_modules
     typedef observables::host::phase_space<dimension, float_type> phase_space_type;
     typedef observables::host::dynamics::mean_square_displacement<dimension, float_type> msd_type;
     typedef observables::host::dynamics::mean_quartic_displacement<dimension, float_type> mqd_type;
-    typedef observables::host::dynamics::orientational_autocorrelation<dimension, float_type> ocf_type;
+    //typedef observables::host::dynamics::orientational_autocorrelation<dimension, float_type> ocf_type;
 
     typedef typename std::numeric_limits<float_type> numeric_limits;
 
