@@ -27,8 +27,13 @@
 namespace halmd {
 
 /**
- * Find maximum possible block size for a given CUDA kernel for fixed total number of threads
- * and configure that kernel.
+ * Find maximum possible block size for a given CUDA kernel for a fixed or
+ * minimal total number of threads and configure that kernel. 
+ *
+ * @param k: CUDA kernel, instance of cuda::function from cuda_wrapper
+ * @param default_dim: default configuration dimensions, specifies the total number of threads
+ * @param fixed_total_threads: enforce the total number of threads given by default_dim
+ * @param smem_per_thread: shared memory requirements per thread (in bytes)
  *
  * @returns: configuration parameters
  *
