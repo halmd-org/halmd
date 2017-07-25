@@ -81,6 +81,9 @@ struct test_brownian
     typedef mdsim::clock clock_type;
     typedef typename modules_type::sample_type sample_type;
     typedef typename modules_type::phase_space_type phase_space_type;
+    typedef typename modules_type::msd_type msd_type;
+    typedef typename modules_type::mqd_type mqd_type;
+    typedef typename modules_type::ocf_type ocf_type;
 
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
@@ -111,9 +114,6 @@ struct test_brownian
     std::shared_ptr<clock_type> clock;
     std::shared_ptr<phase_space_type> phase_space;
 
-    typedef observables::gpu::dynamics::mean_square_displacement<dimension, float_type> msd_type;
-    typedef observables::gpu::dynamics::mean_quartic_displacement<dimension, float_type> mqd_type;
-    typedef observables::gpu::dynamics::orientational_autocorrelation<dimension, float_type> ocf_type;
 
     test_brownian();
     void free_brownian_motion();
@@ -250,6 +250,9 @@ struct host_modules
     typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
     typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
     typedef observables::host::phase_space<dimension, float_type> phase_space_type;
+    typedef observables::host::dynamics::mean_square_displacement<dimension, float_type> msd_type;
+    typedef observables::host::dynamics::mean_quartic_displacement<dimension, float_type> mqd_type;
+    typedef observables::host::dynamics::orientational_autocorrelation<dimension, float_type> ocf_type;
 
     typedef typename std::numeric_limits<float_type> numeric_limits;
 
@@ -291,6 +294,9 @@ struct gpu_modules
     //typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
     typedef observables::gpu::samples::phase_space<dimension, float_type> sample_type;
     typedef observables::gpu::phase_space<sample_type> phase_space_type;
+    typedef observables::gpu::dynamics::mean_square_displacement<dimension, float_type> msd_type;
+    typedef observables::gpu::dynamics::mean_quartic_displacement<dimension, float_type> mqd_type;
+    typedef observables::gpu::dynamics::orientational_autocorrelation<dimension, float_type> ocf_type;
 
     static bool const gpu = true;
 
