@@ -107,7 +107,7 @@ function test_single_particle_impl(box_length, positions, reference)
     -- construct prerequisites
     local box = mdsim.box({length = box_length})
     local particle = mdsim.particle({particles = #positions, species = 1, dimension = box.dimension})
-    particle:set_position(positions)
+    particle.data["position"] = positions
 
     -- construct chemical potential module
     local chemical_potential = observables.chemical_potential({

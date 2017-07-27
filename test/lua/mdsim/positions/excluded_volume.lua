@@ -63,7 +63,7 @@ for i = 1, 1000 do
 end
 
 local particle = mdsim.particle{dimension = box.dimension, particles = #obstacles}
-particle:set_position(obstacles)
+particle.data["position"] = obstacles
 end
 
 function main()

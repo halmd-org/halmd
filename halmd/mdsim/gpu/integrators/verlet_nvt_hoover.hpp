@@ -43,23 +43,23 @@ template <int dimension, typename float_type>
 class verlet_nvt_hoover
 {
 public:
-    typedef particle<dimension, float> particle_type;
+    typedef typename boost::mpl::if_<
+      boost::is_same<float_type, double>, dsfloat, float_type
+    >::type gpu_float_type;
+    typedef particle<dimension, gpu_float_type> particle_type;
     typedef box<dimension> box_type;
     typedef fixed_vector<float_type, 2> chain_type;
 
     typedef typename particle_type::vector_type vector_type;
-    typedef typename boost::mpl::if_<
-        boost::is_same<float_type, double>, dsfloat, float_type
-    >::type gpu_float_type;
 
     static void luaopen(lua_State* L);
 
     verlet_nvt_hoover(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
-      , float_type timestep
-      , float_type temperature
-      , float_type resonance_frequency
+      , double timestep
+      , double temperature
+      , double resonance_frequency
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 

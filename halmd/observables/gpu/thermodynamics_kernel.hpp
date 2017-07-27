@@ -26,7 +26,6 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/iterator.hpp>
-
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 

@@ -41,10 +41,11 @@ namespace halmd {
 namespace mdsim {
 namespace host {
 
-template <int dimension, typename float_type>
+template <int dimension, typename float_type_>
 class particle
 {
 public:
+    typedef float_type_ float_type;
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 
@@ -54,8 +55,8 @@ public:
     typedef vector_type position_type;
     typedef vector_type image_type;
     typedef vector_type velocity_type;
-    typedef unsigned int tag_type;
-    typedef unsigned int reverse_tag_type;
+    typedef unsigned int id_type;
+    typedef unsigned int reverse_id_type;
     typedef unsigned int species_type;
     typedef float_type mass_type;
     typedef fixed_vector<float_type, dimension> force_type;
@@ -65,8 +66,8 @@ public:
     typedef raw_array<position_type> position_array_type;
     typedef raw_array<image_type> image_array_type;
     typedef raw_array<velocity_type> velocity_array_type;
-    typedef raw_array<tag_type> tag_array_type;
-    typedef raw_array<reverse_tag_type> reverse_tag_array_type;
+    typedef raw_array<id_type> id_array_type;
+    typedef raw_array<reverse_id_type> reverse_id_array_type;
     typedef raw_array<species_type> species_array_type;
     typedef raw_array<mass_type> mass_array_type;
     typedef raw_array<force_type> force_array_type;
@@ -120,7 +121,7 @@ public:
     std::shared_ptr<particle_array_typed<T>>
     register_data(std::string const& name, std::function<void()> update_function = std::function<void()>())
     {
-        auto ptr = particle_array::create<T>(nparticle_, update_function);
+        auto ptr = particle_array::create<T>(nparticle_, capacity_, update_function);
         if (!data_.insert(std::make_pair(name, ptr)).second) {
             throw std::runtime_error("a particle array named \"" + name + "\" already exists");
         }
@@ -234,35 +235,35 @@ public:
     }
 
     /**
-     * Returns const reference to particle tags.
+     * Returns const reference to particle IDs.
      */
-    cache<tag_array_type> const& tag() const
+    cache<id_array_type> const& id() const
     {
-        return data<tag_type>("tag");
+        return data<id_type>("id");
     }
 
     /**
-     * Returns non-const reference to particle tags.
+     * Returns non-const reference to particle IDs.
      */
-    cache<tag_array_type>& tag()
+    cache<id_array_type>& id()
     {
-        return mutable_data<tag_type>("tag");
+        return mutable_data<id_type>("id");
     }
 
     /**
-     * Returns const reference to particle reverse tags.
+     * Returns const reference to particle reverse IDs.
      */
-    cache<reverse_tag_array_type> const& reverse_tag() const
+    cache<reverse_id_array_type> const& reverse_id() const
     {
-        return data<reverse_tag_type>("reverse_tag");
+        return data<reverse_id_type>("reverse_id");
     }
 
     /**
-     * Returns non-const reference to particle reverse tags.
+     * Returns non-const reference to particle reverse IDs.
      */
-    cache<reverse_tag_array_type>& reverse_tag()
+    cache<reverse_id_array_type>& reverse_id()
     {
-        return mutable_data<reverse_tag_type>("reverse_tag");
+        return mutable_data<reverse_id_type>("reverse_id");
     }
 
     /**
@@ -317,7 +318,7 @@ public:
      */
     cache<en_pot_array_type> const& potential_energy()
     {
-        return data<en_pot_type>("en_pot");
+        return data<en_pot_type>("potential_energy");
     }
 
     /**
@@ -325,7 +326,7 @@ public:
      */
     cache<en_pot_array_type>& mutable_potential_energy()
     {
-        return mutable_data<en_pot_type>("en_pot");
+        return mutable_data<en_pot_type>("potential_energy");
     }
 
     /**
@@ -333,7 +334,7 @@ public:
      */
     cache<stress_pot_array_type> const& stress_pot()
     {
-        return data<stress_pot_type>("stress_pot");
+        return data<stress_pot_type>("potential_stress_tensor");
     }
 
     /**
@@ -341,7 +342,7 @@ public:
      */
     cache<stress_pot_array_type>& mutable_stress_pot()
     {
-        return mutable_data<stress_pot_type>("stress_pot");
+        return mutable_data<stress_pot_type>("potential_stress_tensor");
     }
 
     /**
@@ -431,6 +432,8 @@ public:
 private:
     /** number of particles */
     unsigned int nparticle_;
+    /** array size */
+    unsigned int capacity_;
     /** number of particle species */
     unsigned int nspecies_;
 
@@ -536,43 +539,43 @@ set_velocity(particle_type& particle, iterator_type const& first)
 }
 
 /**
- * Copy particle tags to given array.
+ * Copy particle IDs to given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-get_tag(particle_type const& particle, iterator_type const& first)
+get_id(particle_type const& particle, iterator_type const& first)
 {
-    return particle.template get_data<typename particle_type::tag_type>("tag", first);
+    return particle.template get_data<typename particle_type::id_type>("id", first);
 }
 
 /**
- * Copy particle tags from given array.
+ * Copy particle IDs from given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-set_tag(particle_type& particle, iterator_type const& first)
+set_id(particle_type& particle, iterator_type const& first)
 {
-    return particle.template set_data<typename particle_type::tag_type>("tag", first);
+    return particle.template set_data<typename particle_type::id_type>("id", first);
 }
 
 /**
- * Copy particle reverse tags to given array.
+ * Copy particle reverse IDs to given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-get_reverse_tag(particle_type const& particle, iterator_type const& first)
+get_reverse_id(particle_type const& particle, iterator_type const& first)
 {
-    return particle.template get_data<typename particle_type::reverse_tag_type>("reverse_tag", first);
+    return particle.template get_data<typename particle_type::reverse_id_type>("reverse_id", first);
 }
 
 /**
- * Copy particle reverse tags from given array.
+ * Copy particle reverse IDs from given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-set_reverse_tag(particle_type& particle, iterator_type const& first)
+set_reverse_id(particle_type& particle, iterator_type const& first)
 {
-    return particle.template set_data<typename particle_type::reverse_tag_type>("reverse_tag", first);
+    return particle.template set_data<typename particle_type::reverse_id_type>("reverse_id", first);
 }
 
 /**
@@ -632,7 +635,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_potential_energy(particle_type& particle, iterator_type const& first)
 {
-    return particle.template get_data<typename particle_type::en_pot_type>("en_pot", first);
+    return particle.template get_data<typename particle_type::en_pot_type>("potential_energy", first);
 }
 
 /**
@@ -642,7 +645,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_stress_pot(particle_type& particle, iterator_type const& first)
 {
-    return particle.template get_data<typename particle_type::stress_pot_type>("stress_pot", first);
+    return particle.template get_data<typename particle_type::stress_pot_type>("potential_stress_tensor", first);
 }
 
 } // namespace host

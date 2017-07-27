@@ -42,6 +42,7 @@
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
 #endif
 #include <test/tools/ctest.hpp>
+#include <test/tools/dsfloat.hpp>
 
 using namespace boost;
 using namespace halmd;
@@ -184,7 +185,7 @@ struct modified_lennard_jones
 
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::gpu::potentials::pair::modified_lennard_jones<float_type> base_potential_type;
+    typedef mdsim::gpu::potentials::pair::modified_lennard_jones<float> base_potential_type;
     typedef mdsim::gpu::potentials::pair::truncations::shifted<base_potential_type> potential_type;
 #ifndef USE_HOST_SINGLE_PRECISION
     typedef mdsim::host::potentials::pair::modified_lennard_jones<double> base_host_potential_type;
@@ -234,7 +235,7 @@ void modified_lennard_jones<float_type>::test()
     std::vector<vector_type> f_list(particle->nparticle());
     BOOST_CHECK( get_force(*particle, f_list.begin()) == f_list.end() );
 
-    const float_type tolerance = 20 * numeric_limits<float_type>::epsilon(); // FIXME the prefactor is an unjustified guess
+    const float_type tolerance = 20 * numeric_limits<float>::epsilon(); // FIXME the prefactor is an unjustified guess
 
     for (unsigned int i = 0; i < npart; ++i) {
         unsigned int type1 = species[i];
@@ -249,7 +250,7 @@ void modified_lennard_jones<float_type>::test()
         en_pot_ /= 2;
 
         // FIXME the tolerance needs to cover both very large and vanishing forces
-        BOOST_CHECK_SMALL(norm_inf(fval * r - f), max(norm_inf(fval * r), float_type(1)) * tolerance);
+        BOOST_CHECK_SMALL(float_type (norm_inf(fval * r - f)), max(norm_inf(fval * r), float_type(1)) * tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 4 * tolerance);
     }
 }
@@ -308,7 +309,14 @@ modified_lennard_jones<float_type>::modified_lennard_jones()
     particle->on_force([=](){force->apply();});
 }
 
-BOOST_FIXTURE_TEST_CASE( modified_lennard_jones_gpu, device ) {
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( modified_lennard_jones_gpu_dsfloat, device ) {
+    modified_lennard_jones<dsfloat>().test();
+}
+# endif
+# ifdef USE_GPU_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( modified_lennard_jones_gpu_float, device ) {
     modified_lennard_jones<float>().test();
 }
+# endif
 #endif // HALMD_WITH_GPU

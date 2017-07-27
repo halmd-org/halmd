@@ -268,15 +268,25 @@ struct gpu_modules
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
-    typedef observables::host::samples::sample<dimension, float_type> position_sample_type;
+    typedef observables::host::samples::sample<dimension, float> position_sample_type;
     typedef observables::gpu::phase_space<dimension, float_type> phase_space_type;
     static bool const gpu = true;
 };
 
-BOOST_FIXTURE_TEST_CASE( lattice_gpu_2d, device ) {
+# ifdef USE_GPU_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( lattice_gpu_float_2d, device ) {
     lattice<gpu_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( lattice_gpu_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( lattice_gpu_float_3d, device ) {
     lattice<gpu_modules<3, float> >().test();
 }
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( lattice_gpu_dsfloat_2d, device ) {
+    lattice<gpu_modules<2, dsfloat> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( lattice_gpu_dsfloat_3d, device ) {
+    lattice<gpu_modules<3, dsfloat> >().test();
+}
+# endif
 #endif // HALMD_WITH_GPU

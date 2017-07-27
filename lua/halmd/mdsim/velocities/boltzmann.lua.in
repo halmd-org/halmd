@@ -44,23 +44,7 @@ local random            = require("halmd.random")
 --
 --    \vec{v}_\text{shifted} \equiv \vec{v} - \vec{V}_\text{cm}
 --
--- to yield a centre of mass velocity of zero, and scaled,
---
--- .. math::
---
---    \vec{v}_\text{scaled} \equiv \vec{v}_\text{shifted}\;
---    \sqrt{\frac{\frac{1}{2} kT f N}{E_\text{kin}
---    - \frac{1}{2} M\left(\vec{V}_\text{cm}\right)^2}}
---
--- to yield the temperature :math:`T` for a system with :math:`f` positional
--- degrees of freedom, using centre of mass velocity and kinetic energy,
---
--- .. math::
---
---    \vec{V}_\text{cm} &= \frac{\vec{P}_\text{cm}}{M}
---    = \frac{\sum_{n = 1}^N m_n \vec{v}_n}{\sum_{n = 1}^N m_n} \\
---
---    E_\text{kin} &= \frac{1}{2} \sum_{n = 1}^N m_n v_n^2
+-- to yield a centre of mass velocity of zero.
 --
 
 -- grab C++ wrappers

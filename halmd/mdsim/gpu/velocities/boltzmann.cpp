@@ -41,7 +41,7 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
   // select thread-dependent implementation
   , gaussian_impl_(get_gaussian_impl(random_->rng().dim.threads_per_block()))
   // allocate GPU memory
-  , g_mv_(2 * random_->rng().dim.blocks_per_grid())
+  , g_mv_(random_->rng().dim.blocks_per_grid())
   , g_mv2_(random_->rng().dim.blocks_per_grid())
   , g_m_(random_->rng().dim.blocks_per_grid())
 {
@@ -52,7 +52,7 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void boltzmann<dimension, float_type, RandomNumberGenerator>::set_temperature(double temperature)
 {
     temp_ =  temperature;
-    LOG("temperature of Boltzmann distribution: " << temp_);
+    LOG("temperature of Boltzmann distribution: " << float(temp_));
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
@@ -103,9 +103,9 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
       , random_->rng().dim.threads_per_block() * (2 + dimension) * sizeof(dsfloat)
     );
     gaussian_impl_(
-        &*velocity->begin()
+        velocity->data()
       , particle_->nparticle()
-      , particle_->dim.threads()
+      , particle_->dim().threads()
       , temp_
       , g_mv_
       , g_mv2_
@@ -116,15 +116,12 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 
     // set center of mass velocity to zero and
     // rescale velocities to accurate temperature
-    cuda::configure(
-        particle_->dim.grid
-      , particle_->dim.block
-      , g_mv2_.size() * (2 + dimension) * sizeof(dsfloat)
-    );
-    wrapper_type::kernel.shift_rescale(
-        &*velocity->begin()
+    cuda::configure(particle_->dim().grid, particle_->dim().block,
+      g_mv2_.size() * (2 + dimension) * sizeof(dsfloat));
+    wrapper_type::kernel.shift(
+        velocity->data()
       , particle_->nparticle()
-      , particle_->dim.threads()
+      , particle_->dim().threads()
       , temp_
       , g_mv_
       , g_mv2_
@@ -169,14 +166,26 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_velocities_boltzmann(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     boltzmann<3, float, random::gpu::rand48>::luaopen(L);
     boltzmann<2, float, random::gpu::rand48>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    boltzmann<3, dsfloat, random::gpu::rand48>::luaopen(L);
+    boltzmann<2, dsfloat, random::gpu::rand48>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class boltzmann<3, float, random::gpu::rand48>;
 template class boltzmann<2, float, random::gpu::rand48>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class boltzmann<3, dsfloat, random::gpu::rand48>;
+template class boltzmann<2, dsfloat, random::gpu::rand48>;
+#endif
 
 } // namespace velocities
 } // namespace gpu

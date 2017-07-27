@@ -38,7 +38,8 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_binning<dimension, float_type>::from_binning(
-    std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+    std::shared_ptr<particle_type const> particle1
+  , std::shared_ptr<particle_type const> particle2
   , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>> binning
   , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
   , std::shared_ptr<box_type const> box
@@ -47,8 +48,8 @@ from_binning<dimension, float_type>::from_binning(
   , std::shared_ptr<logger> logger
 )
   // dependency injection
-  : particle1_(particle.first)
-  , particle2_(particle.second)
+  : particle1_(particle1)
+  , particle2_(particle2)
   , binning2_(binning.second)
   , displacement1_(displacement.first)
   , displacement2_(displacement.second)
@@ -76,10 +77,10 @@ template <int dimension, typename float_type>
 cache<std::vector<typename from_binning<dimension, float_type>::neighbour_list>> const&
 from_binning<dimension, float_type>::lists()
 {
-    cache<reverse_tag_array_type> const& reverse_tag_cache1 = particle1_->reverse_tag();
-    cache<reverse_tag_array_type> const& reverse_tag_cache2 = particle2_->reverse_tag();
+    cache<reverse_id_array_type> const& reverse_id_cache1 = particle1_->reverse_id();
+    cache<reverse_id_array_type> const& reverse_id_cache2 = particle2_->reverse_id();
 
-    auto current_cache = std::tie(reverse_tag_cache1, reverse_tag_cache2);
+    auto current_cache = std::tie(reverse_id_cache1, reverse_id_cache2);
 
     if (neighbour_cache_ != current_cache || displacement1_->compute() > r_skin_ / 2
         || displacement2_->compute() > r_skin_ / 2) {
@@ -231,7 +232,8 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &from_binning::runtime_)
               , def("from_binning", &std::make_shared<from_binning
-                  , std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
+                  , std::shared_ptr<particle_type const>
+                  , std::shared_ptr<particle_type const>
                   , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>>
                   , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>>
                   , std::shared_ptr<box_type const>

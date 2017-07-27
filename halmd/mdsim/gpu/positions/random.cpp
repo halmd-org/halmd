@@ -81,7 +81,7 @@ void random<dimension, float_type, RandomNumberGenerator>::set()
         wrapper_type::kernel.uniform(
             &*position->begin()
           , particle_->nparticle()
-          , particle_->dim.threads()
+          , particle_->dim().threads()
           , slab_length
           , rng_->rng().rng()
         );

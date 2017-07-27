@@ -19,4 +19,5 @@ add_test(unit/numeric/pow
 )
 
 add_subdirectory(blas)
+add_subdirectory(dsfloat)
 add_subdirectory(mp)

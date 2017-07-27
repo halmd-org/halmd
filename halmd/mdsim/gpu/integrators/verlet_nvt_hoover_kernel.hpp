@@ -36,10 +36,11 @@ struct verlet_nvt_hoover_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
+    typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
 
-    cuda::function <void (float4*, coalesced_vector_type*, float4*, coalesced_vector_type const*, float, float_type, vector_type)> integrate;
-    cuda::function <void (float4*, coalesced_vector_type const*, float)> finalize;
-    cuda::function <void (float4*, float_type)> rescale;
+    cuda::function <void (ptr_type, coalesced_vector_type*, ptr_type, coalesced_vector_type const*, float, float_type, vector_type)> integrate;
+    cuda::function <void (ptr_type, coalesced_vector_type const*, float)> finalize;
+    cuda::function <void (ptr_type, float_type)> rescale;
 
     static verlet_nvt_hoover_wrapper const kernel;
 };

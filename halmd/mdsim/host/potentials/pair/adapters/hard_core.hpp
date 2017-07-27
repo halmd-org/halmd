@@ -71,6 +71,7 @@ public:
         f_abs *= r_s / r;
         return make_tuple(f_abs, en_pot);
     }
+
     /**
      * Bind class to Lua.
      */
@@ -79,25 +80,28 @@ public:
         using namespace luaponte;
         module(L, "libhalmd")
         [
-                namespace_("mdsim")
+            namespace_("mdsim")
+            [
+                namespace_("host")
                 [
-                        namespace_("host")
+                    namespace_("potentials")
+                    [
+                        namespace_("pair")
                         [
-                                namespace_("potentials")
-                                [
-                                        namespace_("pair")
-                                        [
-                                                class_<hard_core, potential_type, std::shared_ptr<hard_core> >()
-                                                    .property("r_core_sigma", &hard_core::r_core_sigma)
-                                              , def("hard_core", &std::make_shared<hard_core
-                                                                                 , matrix_type const&
-                                                                                 , potential_type const&>)
-                                        ]
-                                ]
+                            class_<hard_core, potential_type, std::shared_ptr<hard_core> >()
+                                .property("r_core_sigma", &hard_core::r_core_sigma)
+
+                          , def("hard_core", &std::make_shared<hard_core
+                              , matrix_type const&
+                              , potential_type const&>
+                            )
                         ]
+                    ]
                 ]
+            ]
         ];
     }
+
 private:
     /** core radius in units of sigma */
     matrix_type r_core_sigma_;

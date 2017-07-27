@@ -27,10 +27,10 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
-
 #include <memory>
 
 namespace halmd {
@@ -53,7 +53,7 @@ public:
       , std::shared_ptr<particle_type> particle1
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
-      , float_type aux_weight = 1
+      , float aux_weight = 1
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -99,7 +99,7 @@ private:
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** weight for auxiliary variables */
-    float_type aux_weight_;
+    float aux_weight_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
@@ -127,7 +127,7 @@ pair_full<dimension, float_type, potential_type>::pair_full(
   , std::shared_ptr<particle_type> particle1
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
-  , float_type aux_weight
+  , float aux_weight
   , std::shared_ptr<logger> logger
 )
   : potential_(potential)
@@ -192,10 +192,10 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
 
     potential_->bind_textures();
 
-    cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+    configure_kernel(gpu_wrapper::kernel.compute, particle1_->dim(), true);
     gpu_wrapper::kernel.compute(
-        &*position1.begin()
-      , &*position2.begin()
+        position1.data()
+      , position2.data()
       , particle2_->nparticle()
       , &*force->begin()
       , nullptr
@@ -224,15 +224,15 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
 
     potential_->bind_textures();
 
-    float_type weight = aux_weight_;
+    float weight = aux_weight_;
     if (particle1_ == particle2_) {
         weight /= 2;
     }
 
-    cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+    configure_kernel(gpu_wrapper::kernel.compute_aux, particle1_->dim(), true);
     gpu_wrapper::kernel.compute_aux(
-        &*position1.begin()
-      , &*position2.begin()
+        position1.data()
+      , position2.data()
       , particle2_->nparticle()
       , &*force->begin()
       , &*en_pot->begin()
@@ -272,7 +272,7 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
-                  , float_type
+                  , float
                   , std::shared_ptr<logger>
                 >)
             ]

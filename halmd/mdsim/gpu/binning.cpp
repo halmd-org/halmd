@@ -27,7 +27,7 @@
 #include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
-
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -103,9 +103,9 @@ binning<dimension, float_type>::binning(
     // number of placeholders
     try {
         g_cell_offset_.resize(dim_cell_.blocks_per_grid());
-        g_cell_index_.reserve(particle_->dim.threads());
+        g_cell_index_.reserve(particle_->array_size());
         g_cell_index_.resize(particle_->nparticle());
-        g_cell_permutation_.reserve(particle_->dim.threads());
+        g_cell_permutation_.reserve(particle_->array_size());
         g_cell_permutation_.resize(particle_->nparticle());
     }
     catch (cuda::error const&) {
@@ -150,7 +150,7 @@ template <int dimension, typename float_type>
 cache<typename binning<dimension, float_type>::array_type> const&
 binning<dimension, float_type>::g_cell()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
+    auto const& position_cache = particle_->position();
     if (cell_cache_ != position_cache) {
         update();
         cell_cache_ = position_cache;
@@ -164,7 +164,7 @@ binning<dimension, float_type>::g_cell()
 template <int dimension, typename float_type>
 void binning<dimension, float_type>::update()
 {
-    position_array_type const& position = read_cache(particle_->position());
+    auto const& position = read_cache(particle_->position());
     auto g_cell = make_cache_mutable(g_cell_);
 
     LOG_TRACE("update cell lists");
@@ -177,22 +177,22 @@ void binning<dimension, float_type>::update()
         unsigned int nparticle = particle_->nparticle();
 
         // compute cell indices for particle positions
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        configure_kernel(kernel->compute_cell, particle_->dim(), true);
         kernel->compute_cell(
-            &*position.begin()
+            position.data()
           , g_cell_index_
           , cell_length_
           , static_cast<fixed_vector<uint, dimension> >(ncell_)
         );
 
         // generate permutation
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        configure_kernel(kernel->gen_index, particle_->dim(), true);
         kernel->gen_index(g_cell_permutation_, nparticle);
         radix_sort(g_cell_index_.begin(), g_cell_index_.end(), g_cell_permutation_.begin());
 
         // compute global cell offsets in sorted particle list
         cuda::memset(g_cell_offset_, 0xFF);
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        configure_kernel(kernel->find_cell_offset, particle_->dim(), true);
         kernel->find_cell_offset(g_cell_index_, g_cell_offset_, nparticle);
 
         // assign particles to cells
@@ -249,14 +249,26 @@ void binning<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_binning(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     binning<3, float>::luaopen(L);
     binning<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    binning<3, dsfloat>::luaopen(L);
+    binning<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class binning<3, float>;
 template class binning<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class binning<3, dsfloat>;
+template class binning<2, dsfloat>;
+#endif
 
 } // namespace gpu
 } // namespace mdsim

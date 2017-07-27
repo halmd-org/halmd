@@ -102,7 +102,7 @@ density_mode<dimension, float_type>::acquire()
 
             // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
             wrapper_type::kernel.compute(
-                position, &*group.begin(), group.size()
+                position.data(), &*group.begin(), group.size()
               , g_sin_block_, g_cos_block_, nq_
             );
             cuda::thread::synchronize();
@@ -167,14 +167,26 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_observables_gpu_density_mode(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     density_mode<3, float>::luaopen(L);
     density_mode<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    density_mode<3, dsfloat>::luaopen(L);
+    density_mode<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class density_mode<3, float>;
 template class density_mode<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class density_mode<3, dsfloat>;
+template class density_mode<2, dsfloat>;
+#endif
 
 }  // namespace gpu
 }  // namespace observables

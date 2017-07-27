@@ -103,6 +103,7 @@ public:
         en_pot = en_pot - en_cut_(a,b) + (r - r_cut_(a,b)) * force_cut_(a,b);
         return std::make_tuple(f_abs, en_pot);
     }
+
     /**
      * Bind class to Lua.
      */
@@ -111,26 +112,29 @@ public:
         using namespace luaponte;
         module(L, "libhalmd")
         [
-                namespace_("mdsim")
+            namespace_("mdsim")
+            [
+                namespace_("host")
                 [
-                        namespace_("host")
+                    namespace_("potentials")
+                    [
+                        namespace_("pair")
                         [
-                                namespace_("potentials")
-                                [
-                                        namespace_("pair")
-                                        [
-                                                class_<force_shifted, potential_type, std::shared_ptr<force_shifted> >()
-                                                    .property("r_cut", (matrix_type const& (force_shifted::*)() const) &force_shifted::r_cut)
-                                                    .property("r_cut_sigma", &force_shifted::r_cut_sigma)
-                                              , def("force_shifted", &std::make_shared<force_shifted
-                                                                 , matrix_type const&
-                                                                 , potential_type const&>)
-                                        ]
-                                ]
+                            class_<force_shifted, potential_type, std::shared_ptr<force_shifted> >()
+                                .property("r_cut", (matrix_type const& (force_shifted::*)() const) &force_shifted::r_cut)
+                                .property("r_cut_sigma", &force_shifted::r_cut_sigma)
+
+                          , def("force_shifted", &std::make_shared<force_shifted
+                              , matrix_type const&
+                              , potential_type const&>
+                            )
                         ]
+                    ]
                 ]
+            ]
         ];
     }
+
 private:
     /** cutoff length in units of sigma */
     matrix_type r_cut_sigma_;

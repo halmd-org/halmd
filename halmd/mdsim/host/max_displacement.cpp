@@ -52,7 +52,7 @@ void max_displacement<dimension, float_type>::zero()
     cache<position_array_type> const& position_cache = particle_->position();
     position_array_type const& position = read_cache(position_cache);
     scoped_timer_type timer(runtime_.zero);
-    std::copy(position.begin(), position.end(), r0_.begin());
+    std::copy(position.begin(), position.begin() + particle_->nparticle(), r0_.begin());
     displacement_ = 0;
     position_cache_ = position_cache;
 }

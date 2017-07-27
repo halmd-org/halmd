@@ -43,6 +43,7 @@
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
 #endif
 #include <test/tools/ctest.hpp>
+#include <test/tools/dsfloat.hpp>
 
 using namespace boost;
 using namespace halmd;
@@ -212,7 +213,7 @@ struct power_law_hard_core
 
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::gpu::potentials::pair::power_law<float_type> base_potential_type;
+    typedef mdsim::gpu::potentials::pair::power_law<float> base_potential_type;
     typedef mdsim::gpu::potentials::pair::adapters::hard_core<base_potential_type> modified_potential_type;
     typedef mdsim::gpu::potentials::pair::truncations::shifted<modified_potential_type> potential_type;
 
@@ -278,14 +279,14 @@ void power_law_hard_core<float_type>::test()
         en_pot_ /= 2;
 
         // estimated upper bound on floating-point error for (r - r_core)^n
-        float_type const eps = numeric_limits<float_type>::epsilon();
+        float_type const eps = numeric_limits<float>::epsilon();
         unsigned int index = host_potential->index()(type1, type2);
         float_type r_core = host_potential->r_core_sigma()(type1, type2) * host_potential->sigma()(type1, type2);
         float_type r_norm = norm_2(r);
         float_type tolerance = eps * index * (1 + r_norm / (r_norm - r_core));
 
         // check both absolute and relative error
-        BOOST_CHECK_SMALL(norm_inf(fval * r - f), max(norm_inf(fval * r), float_type(1)) * tolerance);
+        BOOST_CHECK_SMALL(float_type(norm_inf(fval * r - f)), max(norm_inf(fval * r), float_type(1)) * tolerance);
 
         // the prefactor is not justified, it is needed for absolute differences on the order 1e-14
         BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 3 * tolerance);
@@ -346,7 +347,14 @@ power_law_hard_core<float_type>::power_law_hard_core()
     particle->on_force([=](){force->apply();});
 }
 
-BOOST_FIXTURE_TEST_CASE( power_law_hard_core_gpu, device ) {
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( power_law_hard_core_gpu_dsfloat, device ) {
+    power_law_hard_core<dsfloat>().test();
+}
+# endif
+# ifdef USE_GPU_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( power_law_hard_core_gpu_float, device ) {
     power_law_hard_core<float>().test();
 }
+# endif
 #endif // HALMD_WITH_GPU

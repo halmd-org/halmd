@@ -70,7 +70,7 @@ neighbour_chain<dimension, float_type>::neighbour_chain(
     std::shared_ptr<particle_type const> particle
 )
   // member initialisation
-  : stride_(particle->dim.threads())  // total number of particles and ghost particles
+  : stride_(particle->dim().threads())  // total number of particles and ghost particles
 {
     auto g_neighbour = make_cache_mutable(g_neighbour_);
 

@@ -71,7 +71,7 @@ function main(args)
     phase_space:writer({file = file, fields = {"position", "velocity", "species", "mass"}, every = steps})
 
     -- define interaction of Kob-Andersen mixture using truncated Lennard-Jones potential
-    local potential = mdsim.potentials.pair.lennard_jones({cutoff = cutoff})
+    local potential = mdsim.potentials.pair.lennard_jones():truncate({cutoff = cutoff})
     -- compute forces
     local force = mdsim.forces.pair({
         box = box, particle = particle, potential = potential, -- neighbour_skin = 0.7

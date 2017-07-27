@@ -58,7 +58,8 @@ public:
     static void luaopen(lua_State* L);
 
     from_particle(
-        std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+        std::shared_ptr<particle_type const> particle1
+      , std::shared_ptr<particle_type const> particle2
       , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
@@ -87,7 +88,7 @@ public:
 
 private:
     typedef typename particle_type::position_array_type position_array_type;
-    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
+    typedef typename particle_type::reverse_id_array_type reverse_id_array_type;
     typedef typename particle_type::species_array_type species_array_type;
     typedef typename particle_type::species_type species_type;
     typedef typename particle_type::size_type size_type;

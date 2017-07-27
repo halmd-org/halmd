@@ -32,16 +32,9 @@ class sample_base
 public:
     virtual ~sample_base() {}
     virtual std::type_info const& type() const = 0;
-};
-
-/**
- * helper structure to identify GPU samples
- * sample_base::type() will return typeid(gpu_sample<T>) for a GPU sample of type T
- */
-template<typename T>
-struct gpu_sample
-{
-    typedef T type;
+#ifdef HALMD_WITH_GPU
+    virtual bool gpu() const = 0;
+#endif
 };
 
 } // namespace observables

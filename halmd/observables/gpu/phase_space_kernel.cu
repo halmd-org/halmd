@@ -51,7 +51,7 @@ template<int dimension> image<dimension>::type image<dimension>::tex_;
  */
 template <typename vector_type, typename T>
 __global__ void sample_position(
-    unsigned int const* g_reverse_tag
+    unsigned int const* g_reverse_id
   , T* g_r
   , vector_type box_length
   , unsigned int npart
@@ -62,13 +62,13 @@ __global__ void sample_position(
 
     if (GTID < npart) {
         // permutation index
-        uint const rtag = g_reverse_tag[GTID];
+        uint const rid = g_reverse_id[GTID];
         // fetch particle from texture caches
         unsigned int type;
         vector_type r;
-        tie(r, type) <<= tex1Dfetch(r_, rtag);
+        tie(r, type) <<= tex1Dfetch(r_, rid);
         // extend particle positions in periodic box
-        vector_type img = tex1Dfetch(image<dimension>::tex_, rtag);
+        vector_type img = tex1Dfetch(image<dimension>::tex_, rid);
         box_kernel::extend_periodic(r, img, box_length);
         // store particle in global memory
         g_r[GTID] <<= tie(r, type);
@@ -80,7 +80,7 @@ __global__ void sample_position(
  */
 template <typename vector_type, typename coalesced_vector_type>
 __global__ void reduce_periodic(
-    unsigned int const* g_reverse_tag
+    unsigned int const* g_reverse_id
   , float4* g_r
   , coalesced_vector_type* g_image
   , vector_type box_length
@@ -90,15 +90,15 @@ __global__ void reduce_periodic(
     enum { dimension = vector_type::static_size };
 
     if (GTID < npart) {
-        unsigned int rtag = g_reverse_tag[GTID];
+        unsigned int rid = g_reverse_id[GTID];
         vector_type r;
         unsigned int type;
-        tie(r, type) <<= tex1Dfetch(r_, rtag);
+        tie(r, type) <<= tex1Dfetch(r_, rid);
 
         vector_type image = box_kernel::reduce_periodic(r, box_length);
 
-        g_image[rtag] = image;
-        g_r[rtag] <<= tie(r, type);
+        g_image[rid] = image;
+        g_r[rid] <<= tie(r, type);
     }
 }
 
@@ -128,32 +128,59 @@ struct input
 // instantiate static members
 template<typename T> input<T>::type input<T>::tex_;
 
-template <typename T>
+template<typename T, typename U>
+struct converter
+{
+    static __device__ T const& convert (U const& u)
+    {
+        return u;
+    }
+};
+
+template<size_t dimension, typename U>
+struct converter<fixed_vector<dsfloat, dimension>, U>
+{
+    static __device__ tuple<U,U> convert (U const& u)
+    {
+        return make_tuple(u, U());
+    }
+};
+
+template<typename U>
+struct converter<dsfloat, U> : converter<fixed_vector<dsfloat, 1>, U> {};
+
+template <typename ptr_type, typename vector_type, typename T>
 __global__ void sample(
-        unsigned int const* g_reverse_tag
-        , T *data
+        unsigned int const* g_reverse_id
+        , ptr_type data
         , unsigned int npart
 ) {
     if (GTID < npart) {
         // permutation index
-        uint const rtag = g_reverse_tag[GTID];
+        uint const rid = g_reverse_id[GTID];
         // fetch particle data from texture caches
-        data[GTID] = tex1Dfetch(input<T>::tex_, rtag);
+        data[GTID] = converter<vector_type, T>::convert(tex1Dfetch(input<T>::tex_, rid));
     }
 }
 
 } // namespace phase_space_sample_kernel
 
-template <typename T>
-phase_space_sample_wrapper<T> const phase_space_sample_wrapper<T>::kernel = {
-        phase_space_sample_kernel::input<T>::tex_,
-        phase_space_sample_kernel::sample<T>,
-        phase_space_sample_kernel::sample<T>
+template <typename input_data_type, typename sample_data_type>
+phase_space_sample_wrapper<input_data_type, sample_data_type> const phase_space_sample_wrapper<input_data_type, sample_data_type>::kernel = {
+        phase_space_sample_kernel::input<sample_data_type>::tex_,
+        phase_space_sample_kernel::sample<sample_data_type*, sample_data_type, sample_data_type>,
+        phase_space_sample_kernel::sample<ptr_type, input_data_type, sample_data_type>
 };
 
 template class phase_space_sample_wrapper<float>;
 template class phase_space_sample_wrapper<float2>;
 template class phase_space_sample_wrapper<float4>;
+
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class phase_space_sample_wrapper<dsfloat, float>;
+template class phase_space_sample_wrapper<fixed_vector<dsfloat, 2>, float2>;
+template class phase_space_sample_wrapper<fixed_vector<dsfloat, 4>, float4>;
+#endif
 
 template class phase_space_sample_wrapper<int>;
 template class phase_space_sample_wrapper<int2>;

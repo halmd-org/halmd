@@ -29,6 +29,11 @@
 
 #include <halmd/numeric/mp/dsfun.hpp>
 #include <halmd/utility/tuple.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
+
+#ifndef __CUDACC__
+# include <ostream>
+#endif
 
 namespace halmd {
 namespace detail {
@@ -36,6 +41,10 @@ namespace numeric {
 namespace mp {
 
 struct dsfloat;
+template<typename T>
+struct dsfloat_ptr;
+template<typename T>
+struct dsfloat_const_ptr;
 
 } // namespace mp
 } // namespace numeric
@@ -43,6 +52,8 @@ struct dsfloat;
 
 // import into top-level namespace
 using detail::numeric::mp::dsfloat;
+using detail::numeric::mp::dsfloat_ptr;
+using detail::numeric::mp::dsfloat_const_ptr;
 
 } // namespace halmd
 
@@ -114,6 +125,24 @@ struct dsfloat
     HALMD_GPU_ENABLED operator double() const
     {
         return static_cast<double>(hi) + lo;
+    }
+
+    HALMD_GPU_ENABLED bool operator<(dsfloat const& rhs) const {
+        if (hi < rhs.hi) return true;
+        if (rhs.hi < hi) return false;
+        return lo < rhs.lo;
+    }
+    HALMD_GPU_ENABLED bool operator>(dsfloat const& rhs) const {
+        return rhs.operator<(*this);
+    }
+    HALMD_GPU_ENABLED bool operator<=(dsfloat const& rhs) const {
+        return !rhs.operator<(*this);
+    }
+    HALMD_GPU_ENABLED bool operator>=(dsfloat const& rhs) const {
+        return !operator<(rhs);
+    }
+    HALMD_GPU_ENABLED bool operator==(dsfloat const& rhs) const {
+        return (hi == rhs.hi) && (lo == rhs.lo);
     }
 };
 
@@ -288,6 +317,51 @@ inline HALMD_GPU_ENABLED dsfloat min(dsfloat const& v, dsfloat const& w)
 {
     return v.hi == w.hi ? (v.lo <= w.lo ? v : w) : (v.hi < w.hi ? v : w);
 }
+
+template<typename T>
+struct dsfloat_ptr
+{
+    T* hi;
+    T* lo;
+
+    HALMD_GPU_ENABLED halmd::tuple<T&, T&> operator[] (unsigned int idx)
+    {
+        return tie(hi[idx], lo[idx]);
+    };
+    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const
+    {
+        return tie(hi[idx], lo[idx]);
+    };
+
+    operator T*() const
+    {
+        return hi;
+    }
+};
+
+template<typename T>
+struct dsfloat_const_ptr
+{
+    T const* hi;
+    T const* lo;
+
+    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const
+    {
+        return tie(hi[idx], lo[idx]);
+    };
+
+    operator T const*() const
+    {
+        return hi;
+    }
+};
+
+#ifndef __CUDACC__
+inline std::ostream& operator<<(std::ostream& p, halmd::dsfloat const& val) {
+    p << double(val);
+    return p;
+}
+#endif
 
 } // namespace mp
 } // namespace numeric

@@ -115,14 +115,15 @@ private:
 template <int dimension> template <typename T>
 inline T box<dimension>::reduce_periodic(T& r) const
 {
+    typedef typename T::value_type scalar_type;
     T image;
     for (size_t j = 0; j < dimension; ++j) {
         if (r[j] > length_half_[j]) {
-            r[j] -= length_[j];
+            r[j] -= static_cast<scalar_type>(length_[j]);
             image[j] = 1;
         }
         else if (r[j] < -length_half_[j]) {
-            r[j] += length_[j];
+            r[j] += static_cast<scalar_type>(length_[j]);
             image[j] = -1;
         }
         else

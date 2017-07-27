@@ -22,6 +22,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/euler.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -74,11 +75,11 @@ void euler<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        configure_kernel(wrapper_type::kernel.integrate, particle_->dim(), true);
         wrapper_type::kernel.integrate(
-            &*position->begin()
-          , &*image->begin()
-          , &*velocity.begin()
+            position->data()
+          , image->data()
+          , velocity.data()
           , timestep_
           , static_cast<vector_type>(box_->length())
         );
@@ -142,14 +143,26 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_euler(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     euler<3, float>::luaopen(L);
     euler<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    euler<3, dsfloat>::luaopen(L);
+    euler<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class euler<3, float>;
 template class euler<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class euler<3, dsfloat>;
+template class euler<2, dsfloat>;
+#endif
 
 } // namespace integrators
 } // namespace gpu

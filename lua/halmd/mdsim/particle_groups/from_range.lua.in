@@ -39,7 +39,7 @@ local mdsim   = {
 --    -- construct particle instance for given simulation domain
 --    local system = halmd.mdsim.particle({particles = 10000, species = 2})
 --
---    -- select each species, assuming particles of a species have contiguous tags
+--    -- select each species, assuming particles of a species have contiguous IDs
 --    local group_A = halmd.mdsim.particle_groups.from_range({particle = system, range = {1, 5000}, label = "A"})
 --    local group_B = halmd.mdsim.particle_groups.from_range({particle = system, range = {5001, 10000}, label = "B"})
 --
@@ -48,18 +48,18 @@ local mdsim   = {
 local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 
 ---
--- Construct particle group from tag range.
+-- Construct particle group from ID range.
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
--- :param table args.range: particle tag range ``{first, last}``
+-- :param table args.range: particle ID range ``{first, last}``
 -- :param string args.label: group label
 -- :param boolean args.global: particle group can comprise the whole simulation
 --                             world (*default:* ``false``)
 --
 -- .. note::
 --
---    Particle tags are 1-based, i.e. the first particle has tag 1.
+--    Particle IDs are 1-based, i.e. the first particle has ID 1.
 --
 -- .. attribute:: label
 --
@@ -92,7 +92,7 @@ local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 --    .. note::
 --
 --       Only positions, mass, species and velocity are copied to the particle instance.
---       Other data (e.g. id, force) will not be copied.
+--       Other data (e.g. ID, force) will not be copied.
 --
 --    If ``args.particle`` is present, the particle group will be copied into the given
 --    particle instance. Otherwise a new suitable particle instance with the label
@@ -117,7 +117,7 @@ local M = module(function(args)
 
     local logger = log.logger({prefix = ("group (%s)"):format(label)})
 
-    -- construct particle group from tag range
+    -- construct particle group from ID range
     local self = from_range(particle, range, logger)
 
     -- capture C++ method to_particle

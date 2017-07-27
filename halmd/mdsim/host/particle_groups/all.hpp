@@ -35,7 +35,7 @@ namespace host {
 namespace particle_groups {
 
 /**
- * Select particles of a given particle instance by a contiguous range of particle tags.
+ * Select particles of a given particle instance by a contiguous range of particle IDs.
  */
 template <typename particle_type>
 class all
@@ -75,6 +75,10 @@ private:
     std::shared_ptr<particle_type const> const particle_;
     /** unordered sequence of particle indices */
     cache<array_type> unordered_;
+    /** ordered sequence of particle indices */
+    cache<array_type> ordered_;
+    /** ordered sequence of particle cache observer */
+    cache<> ordered_observer_;
     /** number of particles */
     cache<size_type> size_;
 };

@@ -127,9 +127,15 @@ void modified_lennard_jones<float_type>::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_modified_lennard_jones(lua_State* L)
 {
     modified_lennard_jones<float>::luaopen(L);
+#ifdef USE_GPU_SINGLE_PRECISION
     forces::pair_full<3, float, modified_lennard_jones<float> >::luaopen(L);
     forces::pair_full<2, float, modified_lennard_jones<float> >::luaopen(L);
-    truncations::truncations_luaopen<float, modified_lennard_jones<float> >(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    forces::pair_full<3, dsfloat, modified_lennard_jones<float> >::luaopen(L);
+    forces::pair_full<2, dsfloat, modified_lennard_jones<float> >::luaopen(L);
+#endif
+    truncations::truncations_luaopen<modified_lennard_jones<float> >(L);
     return 0;
 }
 
@@ -143,9 +149,17 @@ HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(modified_lennard_jones<f
 namespace forces {
 
 // explicit instantiation of force modules
+#ifdef USE_GPU_SINGLE_PRECISION
 template class pair_full<3, float, potentials::pair::modified_lennard_jones<float> >;
 template class pair_full<2, float, potentials::pair::modified_lennard_jones<float> >;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::modified_lennard_jones<float>)
+#endif
+
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class pair_full<3, dsfloat, potentials::pair::modified_lennard_jones<float> >;
+template class pair_full<2, dsfloat, potentials::pair::modified_lennard_jones<float> >;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(dsfloat, potentials::pair::modified_lennard_jones<float>)
+#endif
 
 } // namespace forces
 } // namespace gpu

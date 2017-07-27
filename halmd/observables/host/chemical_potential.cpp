@@ -68,7 +68,7 @@ chemical_potential<dimension, float_type>::chemical_potential(
         it += n;
         ++s;
     }
-    assert(it == species->end());
+    assert(it == species->begin() + npart); // FIXME should be species->end()
 }
 
 template <int dimension, typename float_type>

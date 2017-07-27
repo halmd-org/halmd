@@ -52,17 +52,17 @@ function main(args)
     -- create system state
     local particle = mdsim.particle({dimension = 3, particles = nparticle, species = 2})
 
-    -- set particle species, with continuous range of tags per species:
+    -- set particle species, with continuous range of IDs per species:
     -- construct array with particle species: (0, 0, … 0, 1, 1, … 1)
     local species = {}
     for i = 1, ngroup[1] do table.insert(species, 0) end
     for i = 1, ngroup[2] do table.insert(species, 1) end
-    particle:set_species(species)
+    particle.data["species"] = species
 
     -- set initial particle positions, randomise the particle species
     mdsim.positions.lattice({box = box, particle = particle}):set()
     -- randomly shuffle the positions
-    particle:set_position(random.generator({memory = "host"}):shuffle(particle:get_position()))
+    particle.data["position"] = random.generator({memory = "host"}):shuffle(particle.data["position"])
 
     -- set initial particle velocities
     mdsim.velocities.boltzmann({particle = particle, temperature = temperature}):set()
@@ -71,8 +71,7 @@ function main(args)
     local potential = mdsim.potentials.pair.lennard_jones({
         epsilon = {{1, 1.5}, {1.5, 0.5}} -- ((AA, AB), (BA, BB))
       , sigma = {{1, 0.8}, {0.8, 0.88}} -- ((AA, AB), (BA, BB))
-      , cutoff = 2.5
-    })
+    }):truncate({cutoff = 2.5})
     -- compute forces
     local force = mdsim.forces.pair({box = box, particle = particle, potential = potential})
 
@@ -118,9 +117,7 @@ end
 --
 -- Parse command-line arguments.
 --
-function define_args()
-    local parser = utility.program_options.argument_parser()
-
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
+function define_args(parser)
+    parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
         default = "kob_andersen_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 end

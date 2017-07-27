@@ -59,7 +59,7 @@ public:
     chemical_potential(
         std::shared_ptr<particle_type> test_particle
       , std::shared_ptr<position_type> position
-      , float_type temperature
+      , float temperature
       , std::vector<unsigned int> ntest_particle
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
@@ -82,12 +82,12 @@ public:
     /**
      * Set temperature.
      */
-    void set_temperature(float_type temperature);
+    void set_temperature(float temperature);
 
     /**
      * Returns temperature.
      */
-    float_type temperature() const
+    float temperature() const
     {
         return temperature_;
     }
@@ -119,7 +119,7 @@ private:
     /** number of test particles per species */
     std::vector<unsigned int> ntest_particle_;
     /** temperature */
-    float_type temperature_;
+    float temperature_;
 
     /** excess chemical potential per species */
     result_type mu_ex_;

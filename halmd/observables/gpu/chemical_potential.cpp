@@ -34,7 +34,7 @@ template <int dimension, typename float_type>
 chemical_potential<dimension, float_type>::chemical_potential(
     std::shared_ptr<particle_type> test_particle
   , std::shared_ptr<position_type> position
-  , float_type temperature
+  , float temperature
   , std::vector<unsigned int> ntest_particle
   , std::shared_ptr<halmd::logger> logger
 )
@@ -77,7 +77,7 @@ chemical_potential<dimension, float_type>::chemical_potential(
 }
 
 template <int dimension, typename float_type>
-void chemical_potential<dimension, float_type>::set_temperature(float_type temperature)
+void chemical_potential<dimension, float_type>::set_temperature(float temperature)
 {
     temperature_ = temperature;
     LOG("temperature assumed for computation: " << temperature_);
@@ -159,7 +159,7 @@ void chemical_potential<dimension, float_type>::luaopen(lua_State* L)
           , def("chemical_potential", &std::make_shared<chemical_potential
                 , std::shared_ptr<particle_type>
                 , std::shared_ptr<position_type>
-                , float_type
+                , float
                 , std::vector<unsigned int>
                 , std::shared_ptr<logger>
              >)
@@ -169,14 +169,26 @@ void chemical_potential<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_observables_gpu_chemical_potential(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     chemical_potential<3, float>::luaopen(L);
     chemical_potential<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    chemical_potential<3, dsfloat>::luaopen(L);
+    chemical_potential<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class chemical_potential<3, float>;
 template class chemical_potential<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class chemical_potential<3, dsfloat>;
+template class chemical_potential<2, dsfloat>;
+#endif
 
 } // namespace gpu
 } // namespace observables
