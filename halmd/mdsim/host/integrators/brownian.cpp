@@ -42,6 +42,7 @@ brownian<dimension, float_type>::brownian(
   , std::shared_ptr<random_type> random
   , std::shared_ptr<box_type const> box
   , double timestep
+  , double T
   , matrix_type const& D
   , std::shared_ptr<logger> logger
 )
@@ -49,6 +50,7 @@ brownian<dimension, float_type>::brownian(
   : particle_(particle)
   , random_(random)
   , box_(box)
+  , temperature_(T)
   , D_(D)
   , logger_(logger)
 {
@@ -62,6 +64,15 @@ template <int dimension, typename float_type>
 void brownian<dimension, float_type>::set_timestep(double timestep)
 {
     timestep_ = timestep;
+}
+
+/**
+ * set temperature of the heat bath
+ */
+template <int dimension, typename float_type>
+void brownian<dimension, float_type>::set_temperature(double temperature)
+{
+    temperature_= temperature;
 }
 
 /**
@@ -147,6 +158,7 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
                 class_<brownian>()
                     .property("integrate", &wrap_integrate<brownian>)
                     .property("timestep", &brownian::timestep)
+                    .property("temperature", &brownian::temperature_)
                     .def("set_timestep", &brownian::set_timestep)
                     .scope
                     [
@@ -159,6 +171,7 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<random_type>
                   , std::shared_ptr<box_type const>
+                  , double
                   , double
                   , matrix_type const&
                   , std::shared_ptr<logger>

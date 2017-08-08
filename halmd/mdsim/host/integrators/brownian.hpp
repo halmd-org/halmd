@@ -55,6 +55,7 @@ public:
       , std::shared_ptr<random_type> random
       , std::shared_ptr<box_type const> box
       , double timestep
+      , double T
 //      , host_vector_type const& D
       , matrix_type const& D
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
@@ -64,6 +65,7 @@ public:
 
     //! set integration timestep
     void set_timestep(double timestep);
+    void set_temperature(double temperature);
 
     //! returns integration timestep
     double timestep() const
@@ -96,6 +98,8 @@ private:
 
     /** integration time-step */
     float_type timestep_;
+    /** temperature */
+    float_type temperature_;
     /** profiling runtime accumulators */
     runtime runtime_;
     /** diffusion constant */
