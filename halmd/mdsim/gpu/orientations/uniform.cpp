@@ -35,11 +35,13 @@ namespace orientations {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 uniform<dimension, float_type, RandomNumberGenerator>::uniform(
-      std::shared_ptr<particle_type> particle
-    , std::shared_ptr<random_type> random
+    std::shared_ptr<particle_type> particle
+  , std::shared_ptr<random_type> random
+  , std::shared_ptr<logger> logger
 ) 
   : particle_(particle)
   , random_(random)
+  , logger_(logger)
     {}
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
