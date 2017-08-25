@@ -34,7 +34,7 @@ BENCHMARK_NAME=$1
 COUNT=${2:-5}
 INPUT_FILE=${3:-"${BENCHMARK_NAME}/configuration.h5"}
 SUFFIX=${4:+_$4}
-DEVICE_NAME=${5:-$(nvidia-smi -a | sed -ne '/Product Name/{s/.*Tesla \([A-Z][0-9]\+\).*/\1/p;q}')}
+DEVICE_NAME=${5:-$(nvidia-smi -a | sed -ne '/Product Name/{s/.*: [A-Za-z]* \(.*\)/\1/;s/ //g;p;q}')}
 HALMD_OPTIONS=$6
 
 HALMD_VERSION=$(halmd --version | cut -c 26- | sed -e '1s/-patch.* \([a-z0-9]\+\)\]/-g\1/;q')
