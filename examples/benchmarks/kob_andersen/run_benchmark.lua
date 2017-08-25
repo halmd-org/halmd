@@ -69,7 +69,7 @@ function main(args)
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
 
     -- create system state
-    local particle = mdsim.particle({dimension = 3, particles = nparticle, species = 2})
+    local particle = mdsim.particle({dimension = 3, particles = nparticle, species = 2, precision = args.precision})
 
     -- setup and sample each particle group separately
     local offset = 0
@@ -128,4 +128,5 @@ function define_args(parser)
     end, help = "H5MD trajectory file"})
 
     parser:add_argument("count", {type = "number", default = 5, help = "number of repetitions"})
+    parser:add_argument("precision", {type = "string", help = "floating-point precision"})
 end
