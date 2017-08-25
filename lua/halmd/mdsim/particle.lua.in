@@ -72,7 +72,9 @@ end
 -- device.
 --
 -- The supported values for ``precision`` are ``single`` and ``double-single``
--- if ``memory`` equals ``gpu``, and ``double`` for host memory.
+-- if ``memory`` equals ``gpu``, and ``@HALMD_HOST_PRECISION@`` for host
+-- memory. If ``precision`` is not specified, the highest available precision
+-- is used.
 --
 -- .. attribute:: nparticle
 --
@@ -243,7 +245,8 @@ local M = module(function(args)
     end
     particle = particle[dimension]
 
-    local precision = args and args.precision or (device.gpu and "@HALMD_DEFAULT_GPU_PRECISION@" or "@HALMD_HOST_PRECISION@")
+    local precision = args and args.precision or
+        (device.gpu and "@HALMD_DEFAULT_GPU_PRECISION@" or "@HALMD_HOST_PRECISION@")
     if not particle[precision] then
         error(("unsupported floating-point precision: '%s'"):format(float_type), 2)
     end
