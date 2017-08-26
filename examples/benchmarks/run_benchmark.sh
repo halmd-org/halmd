@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2011-2012  Felix Höfling
+# Copyright © 2011-2017 Felix Höfling
 #
 # This file is part of HALMD.
 #
@@ -50,12 +50,6 @@ halmd ${HALMD_OPTIONS} "${SCRIPT}" \
   --count "${COUNT}" \
   --verbose
 
-TIMINGS=$(sed -n -e 's/.*MD integration step: \([0-9.]*\).*/\1/p' "${OUTPUT}.log")
-PARTICLES=$(sed -n -e '/number of particles/{s/.*: \([0-9]*\).*/\1/p;q}' "${OUTPUT}.log")
-echo -e "$TIMINGS" | gawk -v N=$PARTICLES '{a += $1; n+=1}END{\
-    a = a/n;
-    print N, "particles"; \
-    print a, "ms per step"; \
-    print 1e6*a/N, "ns per step and particle"; \
-    print 1000/a, "steps per second" \
-}'
+# print results
+${SCRIPT_DIR}/print_timings.sh "${OUTPUT}.log"
+
