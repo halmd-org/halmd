@@ -96,7 +96,7 @@ struct test_brownian
     double density;
     double temp;
     double timestep;
-    matrix_type D = matrix_type(4, 1);
+    matrix_type D = matrix_type(1, 4);
     double maximum_lag_time;
     double resolution;
     unsigned int block_size;

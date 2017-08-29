@@ -80,11 +80,11 @@ void brownian<dimension, float_type>::set_temperature(double temperature)
  */
 
 template <int dimension, typename float_type>
-typename brownian<dimension, float_type>::vector_type brownian<dimension, float_type>::random_displacement_(double D)
+typename brownian<dimension, float_type>::vector_type brownian<dimension, float_type>::random_displacement_(double D_perp)
 {
    float_type eta1, eta2;
    vector_type dr;
-   float_type sigma = sqrt( 2 * timestep_ * D );
+   float_type sigma = sqrt( 2 * timestep_ * D_perp );
    std::tie(eta1, eta2) = random_->normal( sigma );
    dr[0] = eta1;
    dr[1] = eta2;
@@ -114,14 +114,15 @@ void brownian<dimension, float_type>::integrate()
     auto image = make_cache_mutable(particle_->image());
     auto species = make_cache_mutable(particle_->species());
     scoped_timer_type timer(runtime_.integrate);
-    float_type D;
-    unsigned int particle_species;
 
     for (size_type i = 0 ; i < nparticle; ++i) {
-        particle_species = (*species)[i];
-        D = D_.data()[ particle_species ];
+        unsigned int particle_species = (*species)[i];
+        float_type D_perp    = D_(particle_species, 0);
+        float_type D_par     = D_(particle_species, 1); 
+        float_type D_rot     = D_(particle_species, 2);
+        float_type prop_str  = D_(particle_species, 3);
         vector_type& r = (*position)[i];
-        vector_type dr = random_displacement_(D);
+        vector_type dr = random_displacement_(D_perp);
         r += dr;
         (*image)[i] += box_->reduce_periodic(r);
     }

@@ -108,7 +108,7 @@ private:
     /** module logger */
     std::shared_ptr<logger> logger_;
     /**random displacement */ 
-    brownian::vector_type random_displacement_(double D);
+    brownian::vector_type random_displacement_(double D_perp);
 };
 
 } // namespace integrators
