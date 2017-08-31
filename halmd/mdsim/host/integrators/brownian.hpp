@@ -109,6 +109,13 @@ private:
     std::shared_ptr<logger> logger_;
     /**random displacement */ 
     brownian::vector_type random_displacement_(double D_perp);
+
+    /**random orientation*/
+    void update_orientation_3d_(
+        double D_rot
+      , vector_type & u
+      , vector_type & tau
+      );
 };
 
 } // namespace integrators

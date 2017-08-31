@@ -27,6 +27,7 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
+#include <halmd/numeric/blas/detail/operators.hpp>
 
 using namespace std;
 
@@ -97,6 +98,43 @@ typename brownian<dimension, float_type>::vector_type brownian<dimension, float_
 }
 
 /**
+ * update orientation for 3d (currently only stochastic part)
+ */
+template <int dimension, typename float_type>
+void brownian<dimension, float_type>::update_orientation_3d_(
+    double D_rot
+  , vector_type & u
+  , vector_type & tau
+)
+{
+    //numerical limits for computation
+    float_type epsilon = std::numeric_limits<float_type>::epsilon();
+    vector_type e1, e2;
+    float_type eta1, eta2;
+
+    //construct trihedron along particle orientation
+    if ( u[1] > epsilon || u[2] > epsilon) {
+        e1[0] = 0; e1[1] = u[2]; e1[2] = -u[1];
+    }
+    else {
+        e1[0] = u[1]; e1[1] = -u[0]; e1[2] = 0;
+    }
+
+    e1 /= norm_2(e1);
+    e2  = cross_prod(u, e1);
+    e2 /= norm_2(e2);
+    float_type sigma_rot = sqrt( 2 * timestep_ * D_rot );
+    std::tie(eta1, eta2) = random_->normal( sigma_rot );
+
+    // first two terms are the random angular velocity, the final is the
+    // systematic torque
+    vector_type omega = eta1 * e1 + eta2 * e2 + tau * D_rot * timestep_ / temperature_ ;
+    float  alpha        = norm_2(omega);
+    omega              /= alpha;
+    u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
+    u /= norm_2(u);
+}
+/**
  * perform Brownian integration: update positions with random displacement 
  *
  * @f$ r(t + \Delta t) = \mu F(t) + \sigma d vec{W} @f$
@@ -108,11 +146,17 @@ void brownian<dimension, float_type>::integrate()
 
     //velocity_array_type const& velocity = read_cache(particle_->velocity());
     size_type nparticle = particle_->nparticle();
+    auto const& torque  = read_cache(particle_->torque());
+    auto const& force   = read_cache(particle_->force());
+
 
     // invalidate the particle caches after accessing the velocity!
-    auto position = make_cache_mutable(particle_->position());
-    auto image = make_cache_mutable(particle_->image());
-    auto species = make_cache_mutable(particle_->species());
+    auto position       = make_cache_mutable(particle_->position());
+    auto velocity       = make_cache_mutable(particle_->velocity());
+    auto orientation    = make_cache_mutable(particle_->orientation());
+    auto image          = make_cache_mutable(particle_->image());
+    auto species        = make_cache_mutable(particle_->species());
+
     scoped_timer_type timer(runtime_.integrate);
 
     for (size_type i = 0 ; i < nparticle; ++i) {
@@ -122,9 +166,15 @@ void brownian<dimension, float_type>::integrate()
         float_type D_rot     = D_(particle_species, 2);
         float_type prop_str  = D_(particle_species, 3);
         vector_type& r = (*position)[i];
+        vector_type& v = (*velocity)[i];
+        vector_type f  = force[i];
+        vector_type& u = (*orientation)[i];
+        vector_type tau = torque[i];
         vector_type dr = random_displacement_(D_perp);
         r += dr;
         (*image)[i] += box_->reduce_periodic(r);
+        // update orientation last (Ito interpretation)
+        update_orientation_3d_(D_rot, u, tau);
     }
 }
 
