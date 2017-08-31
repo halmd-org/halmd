@@ -77,24 +77,39 @@ void brownian<dimension, float_type>::set_temperature(double temperature)
 }
 
 /**
- * compute random displacement
+ * update both random and systematic parts of displacement
  */
-
 template <int dimension, typename float_type>
-typename brownian<dimension, float_type>::vector_type brownian<dimension, float_type>::random_displacement_(double D_perp)
+void brownian<dimension, float_type>::update_displacement_(
+    double D
+  , vector_type & r
+  , vector_type & u
+  , vector_type & v
+  , vector_type & f
+)
 {
-   float_type eta1, eta2;
-   vector_type dr;
-   float_type sigma = sqrt( 2 * timestep_ * D_perp );
-   std::tie(eta1, eta2) = random_->normal( sigma );
-   dr[0] = eta1;
-   dr[1] = eta2;
-   if(dimension % 2) {
-       float_type eta3, eta4;
-       std::tie(eta3, eta4) = random_->normal( sigma );
-       dr[2] = eta3;
-   }
-   return dr;
+    //random and systematic components of displacement
+    vector_type dr_r, dr_s;
+
+    //random part first
+    float_type eta1, eta2;
+
+    //not sure how sigma changes if D_perp != D_par
+    float_type sigma = sqrt( 2 * timestep_ * D );
+    std::tie(eta1, eta2) = random_->normal( sigma );
+    dr_r[0] = eta1;
+    dr_r[1] = eta2;
+    if(dimension % 2) {
+        float_type eta3, eta4;
+        std::tie(eta3, eta4) = random_->normal( sigma );
+        dr_r[2] = eta3;
+    }
+
+    //now systematic part (assumes D_perp = D_par)
+    dr_s = v * timestep_ + D * timestep_ / temperature_ * f;
+
+    r += dr_r + dr_s;
+
 }
 
 /**
@@ -165,14 +180,18 @@ void brownian<dimension, float_type>::integrate()
         float_type D_par     = D_(particle_species, 1); 
         float_type D_rot     = D_(particle_species, 2);
         float_type prop_str  = D_(particle_species, 3);
+
         vector_type& r = (*position)[i];
         vector_type& v = (*velocity)[i];
         vector_type f  = force[i];
         vector_type& u = (*orientation)[i];
         vector_type tau = torque[i];
-        vector_type dr = random_displacement_(D_perp);
-        r += dr;
+
+        update_displacement_(D_perp, r, u, v, f);
+
+        // enforce periodic boundary conditions
         (*image)[i] += box_->reduce_periodic(r);
+        
         // update orientation last (Ito interpretation)
         update_orientation_3d_(D_rot, u, tau);
     }

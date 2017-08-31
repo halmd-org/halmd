@@ -108,7 +108,14 @@ private:
     /** module logger */
     std::shared_ptr<logger> logger_;
     /**random displacement */ 
-    brownian::vector_type random_displacement_(double D_perp);
+    void update_displacement_(
+        double D
+      , vector_type & r
+      , vector_type & u
+      , vector_type & v
+      , vector_type & f
+      );
+
 
     /**random orientation*/
     void update_orientation_3d_(
