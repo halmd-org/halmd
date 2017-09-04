@@ -351,18 +351,18 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
 }
 
 #endif // HALMD_WITH_GPU
-/*
+///*
 BOOST_AUTO_TEST_CASE( brownian_host_2d_overdamped ) {
     test_brownian<host_modules<2, double> >().free_brownian_motion();
 }
-*/
+//*/
 
-///*
+/*
 // Try this one first
 BOOST_AUTO_TEST_CASE( brownian_host_3d_overdamped ) {
     test_brownian<host_modules<3, double> >().free_brownian_motion();
 }
-//*/
+*/
 
 #ifdef HALMD_WITH_GPU
 ///*

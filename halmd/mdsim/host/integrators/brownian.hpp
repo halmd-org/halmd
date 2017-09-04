@@ -109,19 +109,19 @@ private:
     std::shared_ptr<logger> logger_;
     /**random displacement */ 
     void update_displacement_(
-        double D
+        float_type const D
       , vector_type & r
       , vector_type & u
       , vector_type & v
-      , vector_type & f
+      , vector_type const& f
       );
 
 
     /**random orientation*/
-    void update_orientation_3d_(
-        double D_rot
+    void update_orientation_(
+        float_type const D_rot
       , vector_type & u
-      , vector_type & tau
+      , vector_type const& tau
       );
 };
 

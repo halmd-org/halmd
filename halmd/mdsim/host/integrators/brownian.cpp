@@ -81,11 +81,11 @@ void brownian<dimension, float_type>::set_temperature(double temperature)
  */
 template <int dimension, typename float_type>
 void brownian<dimension, float_type>::update_displacement_(
-    double D
+    float_type const D
   , vector_type & r
   , vector_type & u
   , vector_type & v
-  , vector_type & f
+  , vector_type const& f
 )
 {
     //random and systematic components of displacement
@@ -113,19 +113,26 @@ void brownian<dimension, float_type>::update_displacement_(
 }
 
 /**
- * update orientation for 3d (currently only stochastic part)
+ * free function to update orientation for 2d
  */
-template <int dimension, typename float_type>
-void brownian<dimension, float_type>::update_orientation_3d_(
-    double D_rot
-  , vector_type & u
-  , vector_type & tau
+template<typename float_type>
+void update_orientation_impl(
+    float_type const D_rot
+  , fixed_vector<float_type, 2> & u_2d
+  , fixed_vector<float_type, 2> const& tau_2d
+  , float_type timestep_
+  , float_type temperature_
+  , std::shared_ptr<random::host::random> random_
 )
 {
     //numerical limits for computation
     float_type epsilon = std::numeric_limits<float_type>::epsilon();
-    vector_type e1, e2;
+
+    //hack
     float_type eta1, eta2;
+    fixed_vector<float_type, 3> u, tau, e1, e2;
+    std::tie(u[0], u[1]) = std::tie(u_2d[0], u_2d[1]);
+    std::tie(tau[0], tau[1]) = std::tie(tau_2d[0], tau_2d[1]);
 
     //construct trihedron along particle orientation
     if ( u[1] > epsilon || u[2] > epsilon) {
@@ -143,12 +150,75 @@ void brownian<dimension, float_type>::update_orientation_3d_(
 
     // first two terms are the random angular velocity, the final is the
     // systematic torque
-    vector_type omega = eta1 * e1 + eta2 * e2 + tau * D_rot * timestep_ / temperature_ ;
-    float  alpha        = norm_2(omega);
+    fixed_vector<float_type, 3> omega; 
+    omega = eta1 * e1 + eta2 * e2 + tau * D_rot * timestep_ / temperature_ ;
+    float_type  alpha        = norm_2(omega);
+    omega              /= alpha;
+    u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
+    u /= norm_2(u);
+
+    // update the original 2d vector
+    u_2d[0] = u[0];
+    u_2d[1] = u[1];
+
+}
+
+/**
+ * free function to update orientation for 3d
+ */
+template<typename float_type>
+void update_orientation_impl(
+    float_type const D_rot
+  , fixed_vector<float_type, 3> & u
+  , fixed_vector<float_type, 3> const& tau
+  , float_type timestep_
+  , float_type temperature_
+  , std::shared_ptr<random::host::random> random_
+)
+{
+    //numerical limits for computation
+    float_type epsilon = std::numeric_limits<float_type>::epsilon();
+    fixed_vector<float_type, 3>  e1, e2;
+    float_type eta1, eta2;
+
+    //construct trihedron along particle orientation
+    if ( u[1] > epsilon || u[2] > epsilon) {
+        e1[0] = 0; e1[1] = u[2]; e1[2] = -u[1];
+    }
+    else {
+        e1[0] = u[1]; e1[1] = -u[0]; e1[2] = 0;
+    }
+
+    e1 /= norm_2(e1);
+    e2  = cross_prod(u, e1);
+    e2 /= norm_2(e2);
+    float_type sigma_rot = sqrt( 2 * timestep_ * D_rot );
+    std::tie(eta1, eta2) = random_->normal( sigma_rot );
+
+    fixed_vector<float_type, 3>  omega;
+
+    // first two terms are the random angular velocity, the final is the
+    // systematic torque
+    omega = eta1 * e1 + eta2 * e2 + tau * D_rot * timestep_ / temperature_ ;
+    float_type  alpha        = norm_2(omega);
     omega              /= alpha;
     u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
     u /= norm_2(u);
 }
+
+/**
+ * Wrapper for the free functions that update the orientation
+ */
+template <int dimension, typename float_type>
+void brownian<dimension, float_type>::update_orientation_(
+    float_type const D_rot
+  , vector_type & u
+  , vector_type const& tau
+)
+{
+   update_orientation_impl(D_rot, u, tau, timestep_, temperature_, random_);
+}
+
 /**
  * perform Brownian integration: update positions with random displacement 
  *
@@ -176,10 +246,10 @@ void brownian<dimension, float_type>::integrate()
 
     for (size_type i = 0 ; i < nparticle; ++i) {
         unsigned int particle_species = (*species)[i];
-        float_type D_perp    = D_(particle_species, 0);
-        float_type D_par     = D_(particle_species, 1); 
-        float_type D_rot     = D_(particle_species, 2);
-        float_type prop_str  = D_(particle_species, 3);
+        float_type const D_perp    = D_(particle_species, 0);
+        //float_type const D_par     = D_(particle_species, 1); 
+        float_type const D_rot     = D_(particle_species, 2);
+        //float_type prop_str  = D_(particle_species, 3);
 
         vector_type& r = (*position)[i];
         vector_type& v = (*velocity)[i];
@@ -193,7 +263,7 @@ void brownian<dimension, float_type>::integrate()
         (*image)[i] += box_->reduce_periodic(r);
         
         // update orientation last (Ito interpretation)
-        update_orientation_3d_(D_rot, u, tau);
+        update_orientation_(D_rot, u, tau);
     }
 }
 
