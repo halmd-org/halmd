@@ -132,7 +132,7 @@ static std::string wrap_type(H5::DataSet const& dataset)
     }
 }
 
-#if (H5_VERS_MAJOR > 1) || (H5_VERS_MAJOR == 1 && H5_VERS_MINOR >= 10)
+#if (H5_VERS_MAJOR > 1) || (H5_VERS_MAJOR == 1 && (H5_VERS_MINOR > 10 || (H5_VERS_MINOR == 10 && H5_VERS_RELEASE >= 1)))
 #define HALMD_H5_COMMON_BASE H5::H5Location
 /**
  * Open HDF5 DataSet.
@@ -197,7 +197,7 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
 
           , class_<H5::AbstractDs>("abstract_dataset")
 
-#if (H5_VERS_MAJOR > 1) || (H5_VERS_MAJOR == 1 && H5_VERS_MINOR >= 10)
+#if (H5_VERS_MAJOR > 1) || (H5_VERS_MAJOR == 1 && (H5_VERS_MINOR > 10 || (H5_VERS_MINOR == 10 && H5_VERS_RELEASE >= 1)))
           , class_<H5::H5Location>("location")
                 .def("open_dataset", &wrap_open_dataset)
                 .def("open_group", &wrap_open_group)
