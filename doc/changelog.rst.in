@@ -3,6 +3,52 @@
 Changelog
 *********
 
+Version 1.0-alpha6
+==================
+
+**Breaking changes**
+
+* simplifications of the simulation script: essential setup (e.g. logger) is no
+  longer the user's responsibility, merely routines ``main()`` and optionally
+  ``define_args()`` are needed, provide argument parser actions  *(Daniel
+  Kirchner)*
+
+* pair potentials are truncated or modified by generic potential adapters
+  *(Daniel Kirchner)*
+
+**Bug fixes**
+
+* remove velocity rescaling from ``halmd.mdsim.velocities.boltzmann``,
+  shifting of the velocities to zero centre of mass is retained. This fixes
+  also the integrator ``halmd.mdsim.integrators.verlet_nvt_boltzmann``,
+  which now samples correctly from a Maxwell-Boltzmann distribution (except for
+  the mentioned constraint). *(Felix Höfling, Daniel Kirchner*)
+
+* host backend compiles with single floating-point precision again *(Daniel
+  Kirchner)*
+
+* support very large particle numbers on the GPU (more than 1e7) by improved
+  choice of the CUDA configuration dimensions *(Daniel Kirchner)*
+
+**Improvements**
+
+* more flexible interfaces of ``halmd.mdsim.particle`` and
+  ``halmd.observables.phase_space`` using string-based identifiers of data
+  arrays *(Daniel Kirchner)*
+
+* specify floating-point precision in the simulation script (see construction
+  of ``halmd.mdsim.particle``). Use CMake flags to control for which precisions
+  GPU and host backends are built.  *(Daniel Kirchner)*
+
+* overwrite output files only if forced to do so, add command line flag
+  ``--overwrite``. (*Daniel Kirchner*)
+
+**Internal changes**
+
+* switch to extensible and generic data arrays in ``halmd.mdsim.particle``,
+  unified implementation of single and mixed precision arrays *(Daniel Kirchner)*
+
+
 Version 1.0-alpha5
 ==================
 
