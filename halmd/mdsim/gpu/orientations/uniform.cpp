@@ -95,12 +95,14 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_orientations_uniform(lua_State* L)
 {
     uniform<3, float, halmd::random::gpu::rand48>::luaopen(L);
     uniform<3, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
+    uniform<2, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class uniform<3, float, halmd::random::gpu::rand48>;
 template class uniform<3, float, halmd::random::gpu::mrg32k3a>;
+template class uniform<2, float, halmd::random::gpu::mrg32k3a>;
 
 } // namespace mdsim
 } // namespace gpu
