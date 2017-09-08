@@ -51,6 +51,135 @@ static texture<float4> param_;
  * @param rng           instance of random number generator 
  * @param box_length    edge lengths of cuboid box
  */
+
+template <int dimension, typename float_type, typename vector_type>
+__device__ void update_displacement(
+    float_type const D_par
+  , float_type const D_perp
+  , vector_type & r
+  , vector_type & u
+  , vector_type & v
+  , vector_type const& f
+  , float timestep
+  , float temperature
+  , float_type eta1
+  , float_type eta2
+  , float_type eta3
+)
+{
+    //random and systematic components of displacement
+    vector_type dr_r, dr_s;
+
+    // this is a simplified implementation of the random component, the old
+    // one was
+    // dr = eta1 * e1 + eta2 * e2 + (eta3 + prop_str * timestep) * u; 
+    // where e1, e2, e3 were the constructed tetrahedon
+    dr_r[0] = eta1;
+    dr_r[1] = eta2;
+    if(dimension % 2) {
+        dr_r[2] = eta3;
+    }
+
+    //now systematic part 
+    float_type f_u = inner_prod(f, u);
+    dr_s = ( timestep * f_u * D_par / temperature ) * u + ( timestep * D_perp
+            / temperature) * (f - f_u * u);
+
+    r += dr_r + dr_s;
+
+}
+
+template <typename float_type>
+__device__ void update_orientation(
+    float_type const D_rot
+  , fixed_vector<float_type, 2> & u_2d
+  , fixed_vector<float_type, 2> const& tau_2d
+  , float timestep
+  , float temp
+  , float_type eta1
+  , float_type eta2
+  , float epsilon
+  , float_type const sigma_rot
+)
+{
+    fixed_vector<float_type, 3> u, tau, e1, e2;
+    tie(u[0], u[1]) = tie(u_2d[0], u_2d[1]);
+    tie(tau[0], tau[1]) = tie(tau_2d[0], tau_2d[1]);
+    
+    //construct trihedron along particle orientation
+    if ( (float) u[1] > epsilon || (float) u[2] > epsilon) {
+        e1[0] = 0; e1[1] = u[2]; e1[2] = -u[1];
+    }
+    else {
+        e1[0] = u[1]; e1[1] = -u[0]; e1[2] = 0;
+    }
+    e1 /= norm_2(e1);
+    e2 = cross_prod(u, e1);
+    e2 /= norm_2(e2);
+
+    fixed_vector<float_type, 3> omega;
+
+    // first two terms are the random angular velocity, the final is the
+    // systematic torque
+    omega = eta1 * e1 + eta2 * e2 + tau * D_rot * timestep / temp ;
+    float  alpha = norm_2(omega);
+    omega /= alpha;
+    // Ω = eta1 * e1 + eta2 * e2
+    // => Ω × u = (eta1 * e1 × u + eta2  * e2 × u) = eta2 * e1 - eta1 * e2
+    // ??? assert( float(inner_prod(u, u)) < 2 * epsilon);
+    u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
+
+    //ensure normalization
+    u /= norm_2(u);
+
+    // update the original 2d vector
+    u_2d[0] = u[0];
+    u_2d[1] = u[1];
+}
+
+template <typename float_type>
+__device__ void update_orientation(
+    float_type const D_rot
+  , fixed_vector<float_type, 3> & u
+  , fixed_vector<float_type, 3> const& tau
+  , float timestep
+  , float temp
+  , float_type eta1
+  , float_type eta2
+  , float epsilon
+  , float_type const sigma_rot
+)
+{
+    fixed_vector<float_type, 3> e1, e2;
+    
+    //construct trihedron along particle orientation
+    if ( (float) u[1] > epsilon || (float) u[2] > epsilon) {
+        e1[0] = 0; e1[1] = u[2]; e1[2] = -u[1];
+    }
+    else {
+        e1[0] = u[1]; e1[1] = -u[0]; e1[2] = 0;
+    }
+    e1 /= norm_2(e1);
+    e2 = cross_prod(u, e1);
+    e2 /= norm_2(e2);
+
+    fixed_vector<float_type, 3> omega;
+
+    // first two terms are the random angular velocity, the final is the
+    // systematic torque
+    omega = eta1 * e1 + eta2 * e2 + tau * D_rot * timestep / temp ;
+    float  alpha = norm_2(omega);
+    omega /= alpha;
+    // Ω = eta1 * e1 + eta2 * e2
+    // => Ω × u = (eta1 * e1 × u + eta2  * e2 × u) = eta2 * e1 - eta1 * e2
+    // ??? assert( float(inner_prod(u, u)) < 2 * epsilon);
+    u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
+
+    //ensure normalization
+    u /= norm_2(u);
+}
+
+
 template <int dimension, typename float_type, typename rng_type, typename gpu_vector_type>
 __global__ void integrate(
     float4* g_position
@@ -89,40 +218,30 @@ __global__ void integrate(
 
     for (uint i = thread; i < nparticle; i += nthread) {
 
+        // read in relevant variables
 #ifdef USE_VERLET_DSFUN
         tie(r, species) <<= tie(g_position[i], g_position[i + nplace]);
         tie(u, nothing) <<= tie(g_orientation[i], g_orientation[i + nplace]);
-        tie(v, mass) <<= tie(g_velocity[i], g_velocity[i + nplace]);
+        tie(v, mass)    <<= tie(g_velocity[i], g_velocity[i + nplace]);
 #else
         tie(r, species) <<= g_position[i];
         tie(u, nothing) <<= g_orientation[i];
-        tie(v, mass) <<= g_velocity[i];
+        tie(v, mass)    <<= g_velocity[i];
 #endif
-        //initialize random displacement and trihedron
-        vector_type dr, e1, e2;
-        
-        //construct trihedron along particle orientation
-        if ( (float) u[1] > epsilon || (float) u[2] > epsilon) {
-            e1[0] = 0; e1[1] = u[2]; e1[2] = -u[1];
-        }
-        else {
-            e1[0] = u[1]; e1[1] = -u[0]; e1[2] = 0;
-        }
-        e1 /= norm_2(e1);
-        // compute cross product u x e1
-        e2 = cross_prod(u, e1);
-        e2 /= norm_2(e2);
-    
+         
         //normal distribution parameters
-        fixed_vector<float, 4> D = tex1Dfetch(param_, species);
-        float_type const D_perp =  D[0];
-        float_type const D_par = D[1];
-        float_type const D_rot = D[2];
-        float_type const prop_str = D[3];
+        fixed_vector<float, 4> D    = tex1Dfetch(param_, species);
+        float_type const D_perp     = D[0];
+        float_type const D_par      = D[1];
+        float_type const D_rot      = D[2];
+        float_type const prop_str   = D[3];
         float_type const sigma_perp = sqrtf(2 * D_perp * timestep );
-        float_type const sigma_par = sqrtf(2 * D_par * timestep );
-        float_type const sigma_rot = sqrtf(2 * D_rot * timestep );
-   
+        float_type const sigma_par  = sqrtf(2 * D_par * timestep );
+        float_type const sigma_rot  = sqrtf(2 * D_rot * timestep );
+
+        vector_type f   = static_cast<float_vector_type>(g_force[i]);
+        vector_type tau = static_cast<float_vector_type>(g_torque[i]);
+
         //draw random numbers
         float_type eta1, eta2, eta3, cache;
         bool cached = false;
@@ -135,29 +254,44 @@ __global__ void integrate(
                 eta3 = cache;
             }
         }
+
         // Brownian integration
-        // random displacement
-        dr = eta1 * e1 + eta2 * e2 + (eta3 + prop_str * timestep) * u; 
-        vector_type f = static_cast<float_vector_type>(g_force[i]);
-        vector_type tau = static_cast<float_vector_type>(g_torque[i]);
-        //systematic displacement
-        float_type f_u = inner_prod(f, u);
-        dr += ( timestep * f_u * D_par / temp ) * u + ( timestep * D_perp / temp) * (f - f_u * u);
-        r += dr; 
-        // update orientation last (Ito interpretation)
-        // no torque included!
-        tie(eta1, eta2) =  random::gpu::normal(rng, state, mean, sigma_rot);
-        vector_type omega = eta1 * e1 + eta2 * e2 + tau * D_rot * timestep / temp ;
-        float  alpha = norm_2(omega);
-        omega /= alpha;
-        // Ω = eta1 * e1 + eta2 * e2
-        // => Ω × u = (eta1 * e1 × u + eta2  * e2 × u) = eta2 * e1 - eta1 * e2
-        // ??? assert( float(inner_prod(u, u)) < 2 * epsilon);
-        u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
-        //ensure normalization
-        u /= norm_2(u);
+        update_displacement<dimension, float_type, vector_type>(
+            D_par 
+          , D_perp
+          , r
+          , u
+          , v
+          , f 
+          , timestep
+          , temp
+          , eta1
+          , eta2
+          , eta3
+         );
+
         // enforce periodic boundary conditions
         float_vector_type image = box_kernel::reduce_periodic(r, box_length);
+
+
+        tie(eta1, eta2) =  random::gpu::normal(rng, state, mean, sigma_rot);
+
+        // update orientation last (Ito interpretation)
+        update_orientation<float_type>(
+            D_rot
+          , u
+          , tau
+          , timestep
+          , temp
+          , eta1
+          , eta2
+          , epsilon
+          , sigma_rot
+        );
+
+
+
+
 
         // store position, species, image in global memory
 #ifdef USE_VERLET_DSFUN
