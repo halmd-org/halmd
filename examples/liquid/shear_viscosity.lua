@@ -66,13 +66,10 @@ function main(args)
     })
 
     -- H5MD file writer
-    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
-
-    -- sample phase space
-    local phase_space = observables.phase_space({box = box, group = particle_group})
 
     -- Sample macroscopic state variables.
     local msv = observables.thermodynamics({box = box, group = particle_group})
@@ -146,6 +143,13 @@ function main(args)
         msv:writer({file = file, fields = {"internal_energy"}, every = interval})
     end
 
+    -- sample phase space, only the last state by default
+    local interval = args.sampling.trajectory or steps
+    if interval > 0 then
+        observables.phase_space({box = box, group = particle_group})
+            :writer({file = file, fields = {"position", "velocity"}, every = interval})
+    end
+
     -- replace thermostat integrator by NVE velocity-Verlet
     integrator = mdsim.integrators.verlet({
         box = box
@@ -184,9 +188,9 @@ end
 --
 function define_args(parser)
 
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
+    parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
         default = "shear_viscosity_%Y%m%d", help = "prefix of output files"})
-    -- _%Y%m%d_%H%M%S
+    parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("density", {type = "number", default = 0.8442, help = "particle number density"})
     parser:add_argument("cutoff", {type = "float32", default = 2.5, help = "potential cutoff radius"})
