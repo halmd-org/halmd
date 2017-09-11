@@ -81,8 +81,8 @@ for p in f["particles"].itervalues():
 
 # VMD data in parameters group
 vmd = f.require_group("parameters/vmd_structure")
-vmd["indexOfSpecies"] = numpy.unique(s)
-nspecies = vmd["indexOfSpecies"].shape[0]
+vmd["indexOfSpecies"] = numpy.unique(s) if type(s) != type(None) else [0,]
+nspecies = len(vmd["indexOfSpecies"])
 vmd["name"] = numpy.array(("He", "Li", "Be", "B", "C", "N", "O", "F", "Ne"))[:nspecies]
 
 f.close()
