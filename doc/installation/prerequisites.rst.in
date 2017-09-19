@@ -48,14 +48,14 @@ Third-party libraries
     ABI incompatibility (C++98 vs. C++11). For instructions how to build Boost
     C++ with the C++11 ABI, see :ref:`automatic`.
 
-* `Lua interpreter <http://www.lua.org>`_ ≥ 5.1 *or* `Lua Just-In-Time compiler
-  <http://luajit.org/luajit.html>`_ ≥ 2.0
+* `Lua interpreter <http://www.lua.org>`_ ≥ 5.1, < 5.3 *or* `Lua Just-In-Time
+  compiler <http://luajit.org/luajit.html>`_ ≥ 2.0
 
   .. note::
 
-    We recommend Lua 5.2 or later. The Lua JIT compiler is recommended for
-    advanced simulation scripts containing loops, user-defined correlation
-    functions, etc.
+    Lua 5.3 is not supported. The Lua JIT compiler is recommended for advanced
+    simulation scripts containing loops, user-defined correlation functions,
+    etc.
 
   A simulation with HALMD is setup and configured by means of the Lua scripting
   language. The fast and lightweight Lua interpreter is embedded in the HALMD
