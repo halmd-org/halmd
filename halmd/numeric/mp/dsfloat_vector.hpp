@@ -21,23 +21,11 @@
 #ifndef HALMD_NUMERIC_MP_DSFLOAT_VECTOR_HPP
 #define HALMD_NUMERIC_MP_DSFLOAT_VECTOR_HPP
 
+#include <cuda_wrapper/cuda_wrapper.hpp>
+
 #include <halmd/numeric/mp/dsfloat.hpp>
 
 namespace halmd {
-namespace detail {
-namespace numeric {
-namespace mp {
-
-template<typename T>
-class dsfloat_vector;
-
-} // namespace mp
-} // namespace numeric
-} // namespace detail
-
-// import into top-level namespace
-using detail::numeric::mp::dsfloat_vector;
-
 namespace detail {
 namespace numeric {
 namespace mp {
@@ -114,6 +102,10 @@ private:
 } // namespace mp
 } // namespace numeric
 } // namespace detail
+
+// import into top-level namespace
+using detail::numeric::mp::dsfloat_vector;
+
 } // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_MP_DSFLOAT_VECTOR_HPP */
