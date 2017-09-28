@@ -18,29 +18,26 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_MP_DSFLOAT_VECTOR_HPP
-#define HALMD_NUMERIC_MP_DSFLOAT_VECTOR_HPP
+#ifndef HALMD_UTILITY_GPU_DSFLOAT_CUDA_VECTOR_HPP
+#define HALMD_UTILITY_GPU_DSFLOAT_CUDA_VECTOR_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 #include <halmd/numeric/mp/dsfloat.hpp>
 
 namespace halmd {
-namespace detail {
-namespace numeric {
-namespace mp {
 
 template<typename T>
-class dsfloat_vector
+class dsfloat_cuda_vector
 {
 public:
-    typedef dsfloat_vector<T> vector_type;
+    typedef dsfloat_cuda_vector<T> vector_type;
     typedef T value_type;
     typedef dsfloat_ptr<T> pointer;
     typedef dsfloat_const_ptr<T> const const_pointer;
     typedef size_t size_type;
 
-    dsfloat_vector(size_type size) : data_(size)
+    dsfloat_cuda_vector(size_type size) : data_(size)
     {
         data_.reserve(size * 2);
     }
@@ -99,13 +96,6 @@ private:
     cuda::vector<T> data_;
 };
 
-} // namespace mp
-} // namespace numeric
-} // namespace detail
-
-// import into top-level namespace
-using detail::numeric::mp::dsfloat_vector;
-
 } // namespace halmd
 
-#endif /* ! HALMD_NUMERIC_MP_DSFLOAT_VECTOR_HPP */
+#endif /* ! HALMD_UTILITY_GPU_DSFLOAT_CUDA_VECTOR_HPP */

@@ -22,8 +22,10 @@
 #include <boost/test/unit_test.hpp>
 
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/utility/gpu/dsfloat_cuda_vector.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
+
 #define HALMD_TEST_NO_LOGGING
 #include <test/tools/ctest.hpp>
 #include <test/tools/cuda.hpp>
@@ -66,7 +68,7 @@ static void test_dsfloat_performance() {
     }
     {
         halmd::accumulator<double> elapsed;
-        halmd::dsfloat_vector<float4> data(memsize);
+        halmd::dsfloat_cuda_vector<float4> data(memsize);
 
         for (unsigned int i = 0; i < iterations; i++) {
             cuda::configure(dim.grid, dim.block);
@@ -115,7 +117,7 @@ static void test_dsfloat_overload()
 
         cuda::memset(data.begin(), data.begin()+data.capacity(), 0);
 
-        halmd::dsfloat_vector<float4> dsdata(memsize);
+        halmd::dsfloat_cuda_vector<float4> dsdata(memsize);
         cuda::vector<float4> &dsdata_float4 = dsdata;
 
         cuda::memset(dsdata_float4.begin(), dsdata_float4.begin() + dsdata_float4.capacity(), 0);

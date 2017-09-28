@@ -31,6 +31,7 @@
 #include <halmd/mdsim/gpu/velocities/boltzmann_kernel.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/random/gpu/random.hpp>
+#include <halmd/utility/gpu/dsfloat_cuda_vector.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -97,7 +98,7 @@ private:
     /** temperature */
     float_type temp_;
     /** block sum of momentum */
-    dsfloat_vector<gpu_vector_type> g_mv_;
+    dsfloat_cuda_vector<gpu_vector_type> g_mv_;
     /** block sum of kinetic energy without 1/2 */
     cuda::vector<dsfloat> g_mv2_;
     /** block sum of mass */
