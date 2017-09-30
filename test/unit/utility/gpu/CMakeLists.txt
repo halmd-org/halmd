@@ -7,7 +7,7 @@ target_link_libraries(test_unit_utility_gpu_dsfloat_cuda_vector
   ${HALMD_TEST_LIBRARIES}
 )
 halmd_add_gpu_test(unit/utility/gpu/dsfloat_cuda_vector
-  test_unit_utility_dsfloat_cuda_vector --log_level=test_suite
+  test_unit_utility_gpu_dsfloat_cuda_vector --log_level=test_suite
 )
 
 # shared_memory test
