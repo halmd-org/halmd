@@ -102,26 +102,26 @@ __device__ void update_orientation(
   , float_type const sigma_rot
 )
 {
-    fixed_vector<float_type, 3> u, tau, e1, e2;
-    tie(u[0], u[1]) = tie(u_2d[0], u_2d[1]);
-    tie(tau[0], tau[1]) = tie(tau_2d[0], tau_2d[1]);
+    fixed_vector<float_type, 3> u, tau, e1;
+    u[0] = u_2d[0];
+    u[1] = u_2d[1];
+    u[2] = 0;
+
+    tau[0] = 0;
+    tau[1] = 0;
+    tau[2] = tau_2d[0];
     
-    //construct trihedron along particle orientation
-    if ( (float) u[1] > epsilon || (float) u[2] > epsilon) {
-        e1[0] = 0; e1[1] = u[2]; e1[2] = -u[1];
-    }
-    else {
-        e1[0] = u[1]; e1[1] = -u[0]; e1[2] = 0;
-    }
+    //construct trihedron along particle orientation for movement in x-y plane
+    // e1 lies in x-y plane
+    e1[0] = u[1]; e1[1] = -u[0];
+
     e1 /= norm_2(e1);
-    e2 = cross_prod(u, e1);
-    e2 /= norm_2(e2);
 
     fixed_vector<float_type, 3> omega;
 
     // first two terms are the random angular velocity, the final is the
     // systematic torque
-    omega = eta1 * e1 + eta2 * e2 + tau * D_rot * timestep / temp ;
+    omega = eta1 * e1 + tau * D_rot * timestep / temp ;
     float  alpha = norm_2(omega);
     omega /= alpha;
     // Ω = eta1 * e1 + eta2 * e2
