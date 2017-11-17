@@ -27,7 +27,7 @@ Version 1.0-alpha6
 * host backend compiles with single floating-point precision again *(Daniel
   Kirchner)*
 
-* support very large particle numbers on the GPU (more than 1e7) by improved
+* support very large particle numbers on the GPU (more than 10⁷) by improved
   choice of the CUDA configuration dimensions *(Daniel Kirchner)*
 
 **Improvements**
