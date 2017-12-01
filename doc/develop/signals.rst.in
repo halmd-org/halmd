@@ -1,0 +1,29 @@
+.. _structure:
+
+Programme flow: signals and data caches
+***************************************
+
+The design goals of modularity and scriptability of *HAL’s MD package* lead us
+to a data-driven programme flow, which shares similarities with functional
+programming. For instance, the sampling of an observable requires information
+about the system state (particle positions, velocities, forces, …) at the given
+time. This triggers the integrator, and reading the forces causes a
+recomputation of all force contributions defined. To avoid unnecessary
+recalculation of the same quantity, data caches and cache observes are used
+(see class ``halmd::utility::cache``). Such strict dependencies are implemented
+in the C++ layer.
+
+Second, the dependencies between modules are realised using signal/slot
+relations, which are set up in the Lua layer of each module. These connections
+are usually not explicit in the simulation script, but can be manipulated by
+advanced users. Upon emission of a signal, a number of previously connected
+slot functions is invoked. Slot functions are typically of signature ``void ()``.
+A typical molecular dynamics simulation using one velocity Verlet integrator
+and one truncated pair force is depicted below. Signals are shown as rectangles
+within the emitting module, methods are shown as ellipses; dashed lines are
+hard-coded dependencies across modules.  Observables would connect to the
+signal ``sample`` and have been omitted for clarity.
+
+.. image:: ../_images/signals.*
+   :width: 100%
+

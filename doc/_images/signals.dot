@@ -1,0 +1,141 @@
+digraph mdsim {
+
+    edge [dir=back, arrowtail=inv];
+    ranksep=1; nodesep=.75;
+    newrank=true; // http://stackoverflow.com/questions/6824431/placing-clusters-on-the-same-rank-in-graphviz
+
+    { rank=same sampler_run; core_mdstep; }
+    { rank=same sampler_on_sample; core_on_finalize; particle_rearrange; particle_get_force; A_; }
+    { rank=same verlet_integrate; particle_on_force; }
+    { rank=same clock_on_set_timestep; force_check_cache; displacement_compute; sort_order; binning_cell; }
+    { rank=sink neighbour_lists; }
+
+    subgraph clustersampler {
+        label="sampler"; labeljust=l; margin=12;
+        sampler_run [label="run"];
+        {
+            rank=same;
+            sampler_on_sample [shape=record, label="<prepend> | sample | <append>"];
+        }
+
+        edge [dir=forward];
+        sampler_run -> sampler_on_sample;
+    }
+
+    subgraph clustercore {
+        label="core"; labeljust=l; margin=12;
+        core_mdstep [label="mdstep"];
+        {
+            rank=same;
+            core_on_integrate [shape=record, label="<prepend> | integrate | <append>"];
+            core_on_finalize [shape=record, label="<prepend> | finalize | <append>"];
+        }
+
+        edge [dir=forward];
+        sampler_run -> core_mdstep;
+        core_mdstep -> core_on_integrate;
+        core_mdstep -> core_on_finalize;
+    }
+
+    subgraph clusterclock {
+        label="clock"; labeljust=l; margin=12;
+        clock_on_set_timestep [shape=record, label="set_timestep"];
+    }
+
+    subgraph clusterparticle {
+        label = "particle"; labeljust=l; margin=12;
+        particle_on_force [shape=record, label="<prepend> | force | <append>"];
+
+        particle_rearrange [label="rearrange"];
+
+        edge [dir=forward];
+        particle_get_force [label="get_force"];
+        particle_get_force -> particle_on_force;
+    }
+
+    subgraph clusterverlet {
+        label="verlet"; labeljust=l; margin=12;
+        rank=same;
+        verlet_integrate [label="integrate"];
+        verlet_finalize [label="finalize"];
+        verlet_set_timestep [label="set_timestep"];
+
+        core_on_integrate -> verlet_integrate;
+        core_on_finalize -> verlet_finalize;
+        clock_on_set_timestep -> verlet_set_timestep;
+
+        edge [dir=forward, style=dashed];
+        particle_get_force:sw -> verlet_integrate [constraint=false];
+    }
+
+    subgraph clusterforce {
+        label="force"; labeljust=l; margin=12;
+        rank=same;
+        force_check_cache [label="check_cache"];
+        force_apply [label="apply"];
+
+        particle_on_force:prepend -> force_check_cache;
+        particle_on_force -> force_apply;
+
+    }
+
+    subgraph {
+        // dummy node for layout purposes
+        {
+            A_ [fixedsize=true, width=0, height=0, label="", style=invisible];
+        }
+
+        subgraph clusterdisplacement {
+            label="max_displacement"; labeljust=l; margin=12;
+            displacement_compute [label="compute"];
+
+        }
+
+        subgraph clustersort {
+            label="sort"; labeljust=l; margin=12;
+            // sort_on_order [shape=record, label="order"];      // unused
+
+            edge [dir=forward];
+            sort_order [label="order"];
+            // sort_order -> sort_on_order;
+        }
+
+        subgraph clusterbinning {
+            label="binning"; labeljust=l; margin=12;
+            // binning_on_update [shape=Mrecord, label="update"];  // consider as part of binning_cell
+
+            edge [dir=forward];
+            binning_cell [label="cell"];
+            // binning_cell -> binning_on_update;
+        }
+
+        subgraph clusterneighbour {
+            label="neighbour"; labeljust=l; margin=12;
+            rank=same;
+            neighbour_lists [label="lists"];
+            neighbour_check [shape=diamond, label="?", fixedsize=true, width=.4, height=.4];
+            neighbour_on_update [shape=Mrecord, label="<prepend> | update | <append>"];
+
+            edge [dir=forward];
+            neighbour_lists -> neighbour_check [dir=none];
+            neighbour_check -> neighbour_on_update;
+        }
+
+        // relations between clusters
+        neighbour_on_update:prepend -> sort_order:s;
+
+        edge [dir=forward, style=dashed];
+        displacement_compute -> neighbour_check;
+        binning_cell -> neighbour_on_update;
+        binning_cell -> sort_order;
+        neighbour_lists -> force_apply;
+
+        edge [dir=forward, style=solid];
+        // tie position of dummy node
+        A_ -> binning_cell [style=invisible, dir=none];
+        // force edge 'sort_order -> particle_rearrange' to go around the whole graph
+        sort_order ->  A_:e [constraint=false, dir=none];
+        A_:w -> particle_rearrange [constraint=false];
+//        sort_order -> particle_rearrange [constraint=false];
+    }
+}
