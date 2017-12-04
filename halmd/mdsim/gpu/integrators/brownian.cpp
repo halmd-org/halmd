@@ -18,6 +18,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/numeric/ublas/io.hpp>
 #include <memory>
 #include <iostream>
 
@@ -48,13 +49,17 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   : particle_(particle)
   , random_(random)
   , box_(box)
-  , temperature_(T)
   , D_(D)
-  , g_param_(D_.size1() * D_.size2() )
+  , g_param_(D_.size1())
   , logger_(logger)
 {
+    if (D_.size2() != 4) {
+        throw std::invalid_argument("diffusion matrix has invalid shape: exactly 4 values per species are required");
+    }
+
     set_timestep(timestep);
-    
+    set_temperature(T);
+
     cuda::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p;
@@ -63,9 +68,11 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
         p[2] = D_(i,2);
         p[3] = D_(i,3);
         param[i] = p;
-    } 
+    }
 
     cuda::copy(param, g_param_);
+
+    LOG("diffusion constants: " << D_);
 }
 
 /**
@@ -75,6 +82,7 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void brownian<dimension, float_type, RandomNumberGenerator>::set_timestep(double timestep)
 {
     timestep_ = timestep;
+    LOG("integration timestep: " << timestep_);
 }
 
 /**
@@ -84,9 +92,10 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void brownian<dimension, float_type, RandomNumberGenerator>::set_temperature(double temperature)
 {
     temperature_ = temperature;
+    LOG("temperature: " << temperature_);
 }
 /**
- * perform Brownian integration: update positions from random distribution 
+ * perform Brownian integration: update positions from random distribution
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
@@ -119,7 +128,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
           , temperature_
           , random_->rng().rng()
           , particle_->nparticle()
-          , particle_->dim.threads()
+          , particle_->dim().threads()
           , static_cast<vector_type>(box_->length())
         );
         cuda::thread::synchronize();
@@ -186,17 +195,18 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_brownian(lua_State* L)
 {
+    brownian<2, float, halmd::random::gpu::rand48>::luaopen(L);
     brownian<3, float, halmd::random::gpu::rand48>::luaopen(L);
-    brownian<3, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
     brownian<2, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
+    brownian<3, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
+template class brownian<2, float, halmd::random::gpu::rand48>;
 template class brownian<3, float, halmd::random::gpu::rand48>;
-template class brownian<3, float, halmd::random::gpu::mrg32k3a>;
-//let's stay 3d for now
 template class brownian<2, float, halmd::random::gpu::mrg32k3a>;
+template class brownian<3, float, halmd::random::gpu::mrg32k3a>;
 
 } // namespace integrators
 } // namespace gpu

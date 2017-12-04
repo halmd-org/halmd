@@ -47,8 +47,8 @@ static texture<float4> param_;
  * @param g_velocity    velocities
  * @param g_force       forces
  * @param timestep      integration timestep
- * @param D             diffusion constant 
- * @param rng           instance of random number generator 
+ * @param D             diffusion constant
+ * @param rng           instance of random number generator
  * @param box_length    edge lengths of cuboid box
  */
 
@@ -72,7 +72,7 @@ __device__ void update_displacement(
 
     // this is a simplified implementation of the random component, the old
     // one was
-    // dr = eta1 * e1 + eta2 * e2 + (eta3 + prop_str * timestep) * u; 
+    // dr = eta1 * e1 + eta2 * e2 + (eta3 + prop_str * timestep) * u;
     // where e1, e2, e3 were the constructed tetrahedon
     dr_r[0] = eta1;
     dr_r[1] = eta2;
@@ -80,7 +80,7 @@ __device__ void update_displacement(
         dr_r[2] = eta3;
     }
 
-    //now systematic part 
+    //now systematic part
     float_type f_u = inner_prod(f, u);
     dr_s = ( timestep * f_u * D_par / temperature ) * u + ( timestep * D_perp
             / temperature) * (f - f_u * u);
@@ -110,7 +110,7 @@ __device__ void update_orientation(
     tau[0] = 0;
     tau[1] = 0;
     tau[2] = tau_2d[0];
-    
+
     //construct trihedron along particle orientation for movement in x-y plane
     // e1 lies in x-y plane
     e1[0] = u[1]; e1[1] = -u[0];
@@ -151,7 +151,7 @@ __device__ void update_orientation(
 )
 {
     fixed_vector<float_type, 3> e1, e2;
-    
+
     //construct trihedron along particle orientation
     if ( (float) u[1] > epsilon || (float) u[2] > epsilon) {
         e1[0] = 0; e1[1] = u[2]; e1[2] = -u[1];
@@ -192,7 +192,7 @@ __global__ void integrate(
   , float temp
   , rng_type rng
   , unsigned int nparticle
-  , unsigned int nplace 
+  , unsigned int nplace
   , fixed_vector<float, dimension> box_length
 )
 {
@@ -212,7 +212,7 @@ __global__ void integrate(
     float mass;
     float nothing;
     float const mean = 0;
-    
+
     //read random number generator state from global device memory
     typename rng_type::state_type state = rng[thread];
 
@@ -228,7 +228,7 @@ __global__ void integrate(
         tie(u, nothing) <<= g_orientation[i];
         tie(v, mass)    <<= g_velocity[i];
 #endif
-         
+
         //normal distribution parameters
         fixed_vector<float, 4> D    = tex1Dfetch(param_, species);
         float_type const D_perp     = D[0];
@@ -257,12 +257,12 @@ __global__ void integrate(
 
         // Brownian integration
         update_displacement<dimension, float_type, vector_type>(
-            D_par 
+            D_par
           , D_perp
           , r
           , u
           , v
-          , f 
+          , f
           , timestep
           , temp
           , eta1
@@ -324,10 +324,10 @@ brownian_wrapper<dimension, rng_type> const brownian_wrapper<dimension, rng_type
 };
 
 // explicit instantiation
+template class brownian_wrapper<2, random::gpu::rand48_rng>;
 template class brownian_wrapper<3, random::gpu::rand48_rng>;
-template class brownian_wrapper<3, random::gpu::mrg32k3a_rng>;
-// let's stay 3 dimensional for now
 template class brownian_wrapper<2, random::gpu::mrg32k3a_rng>;
+template class brownian_wrapper<3, random::gpu::mrg32k3a_rng>;
 
 } // namespace integrators
 } // namespace gpu

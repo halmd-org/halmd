@@ -19,6 +19,7 @@
  */
 
 #include <algorithm>
+#include <boost/numeric/ublas/io.hpp>
 #include <cmath>
 #include <memory>
 
@@ -51,11 +52,17 @@ brownian<dimension, float_type>::brownian(
   : particle_(particle)
   , random_(random)
   , box_(box)
-  , temperature_(T)
   , D_(D)
   , logger_(logger)
 {
+    if (D_.size2() != 4) {
+        throw std::invalid_argument("diffusion matrix has invalid shape: exactly 4 values per species are required");
+    }
+
     set_timestep(timestep);
+    set_temperature(T);
+
+    LOG("diffusion constants: " << D_);
 }
 
 /**
@@ -65,6 +72,7 @@ template <int dimension, typename float_type>
 void brownian<dimension, float_type>::set_timestep(double timestep)
 {
     timestep_ = timestep;
+    LOG("integration timestep: " << timestep_);
 }
 
 /**
@@ -74,6 +82,7 @@ template <int dimension, typename float_type>
 void brownian<dimension, float_type>::set_temperature(double temperature)
 {
     temperature_= temperature;
+    LOG("temperature: " << temperature_);
 }
 
 /**

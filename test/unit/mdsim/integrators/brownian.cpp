@@ -163,14 +163,14 @@ void test_brownian<modules_type>::free_brownian_motion()
         clock->advance();
         blocking_scheme.sample();
     }
-    blocking_scheme.finalise(); 
+    blocking_scheme.finalise();
     BOOST_TEST_MESSAGE("test correlation function of the motion");
 
     auto time = blocking_scheme.time()[0];
     auto msd = correlation_msd->result()[0];
     auto mqd = correlation_mqd->result()[0];
     //auto ocf = correlation_ocf->result()[0];
-    
+
     BOOST_TEST_MESSAGE("check if msd is close to 6 D t");
     double max_deviation = 0;
     for (size_t i = 0; i < time.size(); ++i) {
@@ -205,7 +205,7 @@ test_brownian<modules_type>::test_brownian()
     timestep = 0.001; // small, but typical timestep
     npart = gpu ? 512 : 108; // optimize filling of fcc lattice, use only few particles on the host
     box_ratios = (dimension == 3) ? vector_type{1., 2., 1.01} : vector_type{1., 2.};
-    //unsigned int seed = 1; 
+    //unsigned int seed = 1;
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
     double volume = npart / density;
     double edge_length = pow(volume / det, 1. / dimension);
@@ -364,17 +364,12 @@ BOOST_AUTO_TEST_CASE( brownian_host_3d_overdamped ) {
 }
 */
 
-#ifdef HALMD_WITH_GPU
-///*
 BOOST_FIXTURE_TEST_CASE( brownian_gpu_2d_overdamped, device ) {
     test_brownian<gpu_modules<2, float> >().free_brownian_motion();
 }
-//*/
 
-///*
 BOOST_FIXTURE_TEST_CASE( brownian_gpu_3d_overdamped, device ) {
     test_brownian<gpu_modules<3, float> >().free_brownian_motion();
 }
-//*/
 
 #endif // HALMD_WITH_GPU
