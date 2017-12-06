@@ -60,12 +60,13 @@ __global__ void compute(
   , unsigned int ntype2
   , vector_type box_length
   , bool force_zero
-  , bool torque_zero
+  , bool torque_zero    // FIXME flag is unneeded
   , float aux_weight
 )
 {
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type value_type;
+    typedef typename type_traits<dimension, float>::pseudo_vector_type torque_type;
     typedef typename type_traits<dimension, float>::stress_tensor_type stress_tensor_type;
     unsigned int const i = GTID;
 
@@ -82,10 +83,10 @@ __global__ void compute(
     // force sum
 #ifdef USE_FORCE_DSFUN
     fixed_vector<dsfloat, dimension> f_ = 0;
-    fixed_vector<dsfloat, dimension> tau_ = 0;
+    torque_type tau_ = 0;
 #else
     vector_type f_ = 0;
-    vector_type tau_ = 0;
+    torque_type tau_ = 0;
 #endif
 
     for (unsigned int j = 0; j < npart2; ++j) {
@@ -110,7 +111,8 @@ __global__ void compute(
         }
 
         value_type en_pot;
-        vector_type f, tau;
+        vector_type f;
+        torque_type tau;
         tie(f, tau, en_pot) = potential(r, u1, u2);
 
         // force from other particle acting on this particle
@@ -127,17 +129,16 @@ __global__ void compute(
     // add old force and auxiliary variables if not zero
     if (!force_zero) {
         f_ += static_cast<vector_type>(g_f[i]);
+        tau_ += static_cast<torque_type>(g_tau[i]);
         if (do_aux) {
             en_pot_ += g_en_pot[i];
             stress_pot += read_stress_tensor<stress_tensor_type>(g_stress_pot + i, GTDIM);
         }
     }
-    if (!torque_zero) {
-        tau_ += static_cast<vector_type>(g_tau[i]);
-    }
+
     // write results to global memory
     g_f[i] = static_cast<vector_type>(f_);
-    g_tau[i] = static_cast<vector_type>(tau_);
+    g_tau[i] = static_cast<torque_type>(tau_);
     if (do_aux) {
         g_en_pot[i] = en_pot_;
         write_stress_tensor(g_stress_pot + i, stress_pot, GTDIM);

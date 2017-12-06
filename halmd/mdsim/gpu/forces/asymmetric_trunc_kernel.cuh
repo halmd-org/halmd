@@ -67,94 +67,91 @@ __global__ void compute(
   , vector_type box_length
   , trunc_type const trunc
   , bool force_zero
-  , bool torque_zero
+  , bool torque_zero    // FIXME flag is unneeded
   , float aux_weight
-  )
-  {
-      enum { dimension = vector_type::static_size };
-      typedef typename vector_type::value_type value_type;
-      typedef typename type_traits<dimension, float>::pseudo_vector_type torque_type;
-      typedef typename type_traits<dimension, float>::stress_tensor_type stress_tensor_type;
-      unsigned int i = GTID;
+)
+{
+    enum { dimension = vector_type::static_size };
+    typedef typename vector_type::value_type value_type;
+    typedef typename type_traits<dimension, float>::pseudo_vector_type torque_type;
+    typedef typename type_traits<dimension, float>::stress_tensor_type stress_tensor_type;
+    unsigned int i = GTID;
 
-      // load particle associated with this thread
-      unsigned int type1, nothing;
-      vector_type r1, u1;
-      tie(r1, type1) <<= g_r1[i];
-      tie(u1, nothing) <<= g_u1[i];
+    // load particle associated with this thread
+    unsigned int type1, nothing;
+    vector_type r1, u1;
+    tie(r1, type1) <<= g_r1[i];
+    tie(u1, nothing) <<= g_u1[i];
 
-      // contribution to potential energy
-      float en_pot_ = 0;
-      // contribution to stress tensor
-      stress_tensor_type stress_pot = 0;
+    // contribution to potential energy
+    float en_pot_ = 0;
+    // contribution to stress tensor
+    stress_tensor_type stress_pot = 0;
 #ifdef USE_FORCE_DSFUN
-      // force sum
-      fixed_vector<dsfloat, dimension> f_ = 0;
-      torque_type tau_ = 0;
+    // force sum
+    fixed_vector<dsfloat, dimension> f_ = 0;
+    torque_type tau_ = 0;
 #else
-      vector_type f_ = 0;
-      torque_type tau_ = 0;
+    vector_type f_ = 0;
+    torque_type tau_ = 0;
 #endif
-      for (unsigned int k = 0; k < neighbour_size; ++k) {
+    for (unsigned int k = 0; k < neighbour_size; ++k) {
 
-          // coalesced read from neighbour list
-          unsigned int j = g_neighbour[k * neighbour_stride + i];
-          // skip placeholder particles
-          if (j == particle_kernel::placeholder) {
-              break;
-          }
-          // load particle
-          unsigned int type2, nothing;
-          vector_type r2, u2;
-          tie(r2, type2) <<= tex1Dfetch(r2_, j);
-          tie(u2, nothing) <<= tex1Dfetch(u2_, j);
-          // pair potential
-          potential_type const potential(type1, type2, ntype1, ntype2);
+      // coalesced read from neighbour list
+      unsigned int j = g_neighbour[k * neighbour_stride + i];
+      // skip placeholder particles
+      if (j == particle_kernel::placeholder) {
+          break;
+      }
+      // load particle
+      unsigned int type2, nothing;
+      vector_type r2, u2;
+      tie(r2, type2) <<= tex1Dfetch(r2_, j);
+      tie(u2, nothing) <<= tex1Dfetch(u2_, j);
+      // pair potential
+      potential_type const potential(type1, type2, ntype1, ntype2);
 
-          // particle distance vector
-          vector_type r = r1 - r2;
-          // enforce periodic boundary conditions
-          box_kernel::reduce_periodic(r, box_length);
-          // squared particle distance
-          value_type rr = inner_prod(r, r);
-          // enforce cutoff length
-          if (!potential.within_range(r, u1, u2)) {
-              continue;
-          }
-          value_type en_pot;
-          vector_type f;
-          torque_type tau;
-          tie(f, tau, en_pot) = potential(r, u1, u2);
-          f_ += f;
-          tau_ += tau;
-        // apply smoothing function to force and potential
-          value_type fval = sqrtf( inner_prod(f, f) );
-          //trunc(sqrt(rr), sqrt(potential.rr_cut()), fval, en_pot);
-        
-        if (do_aux) {
-            // potential energy contribution of this particle
-            en_pot_ += aux_weight * en_pot;
-            // contribution to stress tensor from this particle
-            stress_pot += aux_weight * fval * make_stress_tensor(r);
-        }
+      // particle distance vector
+      vector_type r = r1 - r2;
+      // enforce periodic boundary conditions
+      box_kernel::reduce_periodic(r, box_length);
+      // squared particle distance
+      value_type rr = inner_prod(r, r);
+      // enforce cutoff length
+      if (!potential.within_range(r, u1, u2)) {
+          continue;
+      }
+      value_type en_pot;
+      vector_type f;
+      torque_type tau;
+      tie(f, tau, en_pot) = potential(r, u1, u2);
+      f_ += f;
+      tau_ += tau;
+      // apply smoothing function to force and potential
+      value_type fval = sqrtf( inner_prod(f, f) );
+      //trunc(sqrt(rr), sqrt(potential.rr_cut()), fval, en_pot);
+
+      if (do_aux) {
+          // potential energy contribution of this particle
+          en_pot_ += aux_weight * en_pot;
+          // contribution to stress tensor from this particle
+          stress_pot += aux_weight * fval * make_stress_tensor(r);
+      }
     }
 
     // add old force and auxiliary variables if not zero
     if (!force_zero) {
         f_ += static_cast<vector_type>(g_f[i]);
+        tau_ += static_cast<torque_type>(g_tau[i]);
         if (do_aux) {
             en_pot_ += g_en_pot[i];
             stress_pot += read_stress_tensor<stress_tensor_type>(g_stress_pot + i, GTDIM);
         }
     }
-    // add old torque
-    if (!torque_zero) {
-        tau_ += static_cast<torque_type>(g_tau[i]);
-    }
+
     // write results to global memory
     g_f[i] = static_cast<vector_type>(f_);
     g_tau[i] = static_cast<torque_type>(tau_);
-
     if (do_aux) {
         g_en_pot[i] = en_pot_;
         write_stress_tensor(g_stress_pot + i, stress_pot, GTDIM);
