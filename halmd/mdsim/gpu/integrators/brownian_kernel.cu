@@ -29,6 +29,7 @@
 #include <limits>
 #include <cassert>
 #include <cmath>
+#include <cstdio>
 
 namespace halmd {
 namespace mdsim {
@@ -56,6 +57,7 @@ template <int dimension, typename float_type, typename vector_type>
 __device__ void update_displacement(
     float_type const D_par
   , float_type const D_perp
+  , float_type const prop_strength
   , vector_type & r
   , vector_type & u
   , vector_type & v
@@ -70,10 +72,6 @@ __device__ void update_displacement(
     //random and systematic components of displacement
     vector_type dr_r, dr_s;
 
-    // this is a simplified implementation of the random component, the old
-    // one was
-    // dr = eta1 * e1 + eta2 * e2 + (eta3 + prop_str * timestep) * u;
-    // where e1, e2, e3 were the constructed tetrahedon
     dr_r[0] = eta1;
     dr_r[1] = eta2;
     if(dimension % 2) {
@@ -82,18 +80,17 @@ __device__ void update_displacement(
 
     //now systematic part
     float_type f_u = inner_prod(f, u);
-    dr_s = ( timestep * f_u * D_par / temperature ) * u + ( timestep * D_perp
-            / temperature) * (f - f_u * u);
+    dr_s = ( timestep * f_u * D_par / temperature + prop_strength * timestep)
+        * u + ( timestep * D_perp / temperature) * (f - f_u * u);
 
     r += dr_r + dr_s;
-
 }
 
 template <typename float_type>
 __device__ void update_orientation(
     float_type const D_rot
-  , fixed_vector<float_type, 2> & u_2d
-  , fixed_vector<float_type, 2> const& tau_2d
+  , fixed_vector<float_type, 2> & u
+  , fixed_vector<float_type, 2> const& tau
   , float timestep
   , float temp
   , float_type eta1
@@ -102,39 +99,26 @@ __device__ void update_orientation(
   , float_type const sigma_rot
 )
 {
-    fixed_vector<float_type, 3> u, tau, e1;
-    u[0] = u_2d[0];
-    u[1] = u_2d[1];
-    u[2] = 0;
 
-    tau[0] = 0;
-    tau[1] = 0;
-    tau[2] = tau_2d[0];
+    fixed_vector<float_type, 2> e1;
 
     //construct trihedron along particle orientation for movement in x-y plane
     // e1 lies in x-y plane
-    e1[0] = u[1]; e1[1] = -u[0];
+    e1[0] = -u[1];
+    e1[1] = u[0];
 
-    e1 /= norm_2(e1);
+    fixed_vector<float_type, 1> omega;
+    // first term is the random torque, second is the systematic
+    // torque
+    omega = eta1 + tau[0] * D_rot * timestep / temp;
 
-    fixed_vector<float_type, 3> omega;
-
-    // first two terms are the random angular velocity, the final is the
-    // systematic torque
-    omega = eta1 * e1 + tau * D_rot * timestep / temp ;
-    float  alpha = norm_2(omega);
-    omega /= alpha;
-    // Ω = eta1 * e1 + eta2 * e2
-    // => Ω × u = (eta1 * e1 × u + eta2  * e2 × u) = eta2 * e1 - eta1 * e2
-    // ??? assert( float(inner_prod(u, u)) < 2 * epsilon);
-    u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
+    float  alpha = omega[0];
+    u = cos( alpha ) * u + sin( alpha ) * e1;
 
     //ensure normalization
-    u /= norm_2(u);
-
-    // update the original 2d vector
-    u_2d[0] = u[0];
-    u_2d[1] = u[1];
+    if ( (float) norm_2(u) != 0){
+        u /= norm_2(u);
+    }
 }
 
 template <typename float_type>
@@ -172,11 +156,12 @@ __device__ void update_orientation(
     omega /= alpha;
     // Ω = eta1 * e1 + eta2 * e2
     // => Ω × u = (eta1 * e1 × u + eta2  * e2 × u) = eta2 * e1 - eta1 * e2
-    // ??? assert( float(inner_prod(u, u)) < 2 * epsilon);
     u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
 
     //ensure normalization
-    u /= norm_2(u);
+    if ( (float) norm_2(u) != 0){
+        u /= norm_2(u);
+    }
 }
 
 
@@ -256,19 +241,9 @@ __global__ void integrate(
         }
 
         // Brownian integration
-        update_displacement<dimension, float_type, vector_type>(
-            D_par
-          , D_perp
-          , r
-          , u
-          , v
-          , f
-          , timestep
-          , temp
-          , eta1
-          , eta2
-          , eta3
-         );
+        update_displacement<dimension, float_type, vector_type>( D_par,
+                D_perp, prop_str, r, u, v, f, timestep, temp, eta1, eta2,
+                eta3);
 
         // enforce periodic boundary conditions
         float_vector_type image = box_kernel::reduce_periodic(r, box_length);
@@ -277,17 +252,9 @@ __global__ void integrate(
         tie(eta1, eta2) =  random::gpu::normal(rng, state, mean, sigma_rot);
 
         // update orientation last (Ito interpretation)
-        update_orientation<float_type>(
-            D_rot
-          , u
-          , tau
-          , timestep
-          , temp
-          , eta1
-          , eta2
-          , epsilon
-          , sigma_rot
-        );
+        update_orientation( D_rot, u, tau, timestep, temp, eta1, eta2,
+                epsilon, sigma_rot);
+
 
 
 
