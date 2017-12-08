@@ -25,6 +25,7 @@ local core              = require("halmd.mdsim.core")
 local log               = require("halmd.io.log")
 local utility           = require("halmd.utility")
 local module            = require("halmd.utility.module")
+local random            = require("halmd.random")
 local profiler          = require("halmd.utility.profiler")
 
 -- grab C++ wrappers
