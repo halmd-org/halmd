@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2017-2018  Jake Atwell
  * Copyright © 2016       Manuel Dibak
  * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
@@ -34,6 +35,52 @@ namespace gpu {
 namespace orientations {
 namespace uniform_kernel {
 
+// does rng need to be passed as a reference?
+// how is the state stored for other threads?
+template <typename float_type, typename rng_type>
+__device__ void initialize_orientation(
+        fixed_vector<float_type, 2> & u
+      , rng_type & rng
+      )
+{
+        //read random number generator state from global device memory
+        typename rng_type::state_type state = rng[GTID];
+
+        float theta = random::gpu::uniform(rng, state);
+
+        /* select random point on unit circle */
+        u[0] = sin(theta);
+        u[1] = cos(theta);
+
+        rng[GTID] = state;
+}
+
+template <typename float_type, typename rng_type>
+__device__ void initialize_orientation(
+        fixed_vector<float_type, 3> & u
+      , rng_type & rng
+      )
+{
+        //read random number generator state from global device memory
+        typename rng_type::state_type state = rng[GTID];
+
+        float theta = random::gpu::uniform(rng, state);
+        float phi = random::gpu::uniform(rng, state);
+        float pi = 4*atanf(1);
+
+        theta =  acosf(2*theta - 1);
+        phi = 2*pi*phi;
+
+        /* select random point on unit sphere */
+        u[0] = sin(theta) * cos(phi);
+        u[1] = sin(theta) * sin(phi);
+        u[2] = cos(theta);
+
+
+
+        rng[GTID] = state;
+}
+
 template <typename vector_type, typename rng_type>
 __global__ void uniform(
     float4* g_u
@@ -45,9 +92,6 @@ __global__ void uniform(
     unsigned int const threads = GTDIM;
 
     for (unsigned int i = GTID; i < npart; i += threads) {
-        //read random number generator state from global device memory
-        typename rng_type::state_type state = rng[GTID];
-
         // load particle orientation
         vector_type u;
         unsigned int nothing;
@@ -56,43 +100,34 @@ __global__ void uniform(
 #else
         tie(u, nothing) <<= g_u[i];
 #endif
-        float theta = random::gpu::uniform(rng, state);
-        float phi = random::gpu::uniform(rng, state);
-        float pi = 4*atanf(1);
 
-        theta =  acosf(2*theta - 1);
-        phi = 2*pi*phi;
-
-        /* select random point on unit sphere */ 
-        u[0] = sin(theta) * cos(phi);
-        u[1] = sin(theta) * sin(phi);
-        u[2] = cos(theta);
+        initialize_orientation(u, rng);
 
 #ifdef USE_VERLET_DSFUN
         tie(g_u[i], g_u[i + threads]) <<= tie(u, nothing);
 #else
         g_u[i] <<= tie(u, nothing);
 #endif
-        rng[GTID] = state;
     }
 }
 
 } // namespace uniform_kernel
 
-template <typename rng_type>
-uniform_wrapper<rng_type> const uniform_wrapper<rng_type>::kernel = {
+template <typename rng_type, int dimension>
+uniform_wrapper<rng_type, dimension> const uniform_wrapper<rng_type, dimension>::kernel = {
 #ifdef USE_VERLET_DSFUN
-    uniform_kernel::uniform<fixed_vector<dsfloat, 3>, rng_type>
+    uniform_kernel::uniform<fixed_vector<dsfloat, dimension>, rng_type>
 #else
-    uniform_kernel::uniform<fixed_vector<float, 3>, rng_type>
+    uniform_kernel::uniform<fixed_vector<float, dimension>, rng_type>
 #endif
 };
 
 //template class lattice_wrapper<close_packed_lattice<fixed_vector<float, 2>, fixed_vector<unsigned int, 2> > >;
 
-template class uniform_wrapper<random::gpu::rand48_rng>;
-template class uniform_wrapper<random::gpu::mrg32k3a_rng>;
-
+template class uniform_wrapper<random::gpu::rand48_rng, 2>;
+template class uniform_wrapper<random::gpu::rand48_rng, 3>;
+template class uniform_wrapper<random::gpu::mrg32k3a_rng, 2>;
+template class uniform_wrapper<random::gpu::mrg32k3a_rng, 3>;
 } // namespace mdsim
 } // namespace gpu
 } // namespace orientations

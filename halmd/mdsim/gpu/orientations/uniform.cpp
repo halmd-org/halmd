@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2017-2018  Jake Atwell
  * Copyright © 2016       Manuel Dibak
  * Copyright © 2008-2011  Felix Höfling
  * Copyright © 2013       Nicolas Höft
@@ -54,7 +55,7 @@ void uniform<dimension, float_type, RandomNumberGenerator>::set()
     size_t npart = last - first;
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        get_uniform_kernel<rng_type>().uniform(first, npart, random_->rng().rng() );
+        get_uniform_kernel<rng_type, dimension>().uniform(first, npart, random_->rng().rng() );
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {

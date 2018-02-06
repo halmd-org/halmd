@@ -30,7 +30,7 @@ namespace mdsim {
 namespace gpu {
 namespace orientations {
 
-template <typename RandomNumberGenerator>
+template <typename RandomNumberGenerator, int dimension>
 struct uniform_wrapper
 {
     //static unsigned int const dimension = vector_type::static_size;
@@ -40,10 +40,10 @@ struct uniform_wrapper
     static uniform_wrapper const kernel;
 };
 
-template<typename RandomNumberGenerator>
-inline uniform_wrapper<RandomNumberGenerator> const& get_uniform_kernel()
+template<typename RandomNumberGenerator, int dimension>
+inline uniform_wrapper<RandomNumberGenerator, dimension> const& get_uniform_kernel()
 {
-    return uniform_wrapper<RandomNumberGenerator>::kernel;
+    return uniform_wrapper<RandomNumberGenerator, dimension>::kernel;
 }
 
 } // namespace mdsim

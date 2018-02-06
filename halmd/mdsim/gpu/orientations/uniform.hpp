@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2017-2018  Jake Atwell
  * Copyright © 2016       Manuel Dibak
  * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
