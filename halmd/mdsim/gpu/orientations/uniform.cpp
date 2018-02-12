@@ -54,8 +54,9 @@ void uniform<dimension, float_type, RandomNumberGenerator>::set()
     auto last = &*orientation->end();
     size_t npart = last - first;
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
-        get_uniform_kernel<rng_type, dimension>().uniform(first, npart, random_->rng().rng() );
+        cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
+        get_uniform_kernel<rng_type, dimension>().uniform(
+                first, npart, random_->rng().rng() );
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
