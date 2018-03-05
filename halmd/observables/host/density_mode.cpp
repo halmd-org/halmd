@@ -32,7 +32,7 @@ template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
     shared_ptr<particle_type const> particle
   , shared_ptr<particle_group_type> particle_group
-  , wavevector_type const& wavevector
+  , shared_ptr<wavevector_type const> wavevector
   , shared_ptr<logger> logger
 )
     // dependency injection
@@ -62,10 +62,12 @@ density_mode<dimension, float_type>::acquire()
 
         scoped_timer_type timer(runtime_.acquire);
 
+        auto const& wavevector = wavevector_->value(); // array of wavevectors
+
         // allocate new memory which allows modules (e.g.,
         // dynamics::blocking_scheme) to hold a previous copy of the result or
         // to track the update via std::weak_ptr.
-        result_ = make_shared<result_type>(wavevector_.size());
+        result_ = make_shared<result_type>(wavevector.size());
 
         // compute density modes
         // initialise result array
@@ -78,7 +80,7 @@ density_mode<dimension, float_type>::acquire()
             // 2nd loop: iterate over wavevectors
             typedef typename result_type::value_type mode_type;
             auto rho_q = begin(*result_);
-            for (auto const& q : wavevector_) {
+            for (auto const& q : wavevector) {
                 float_type q_r = inner_prod(static_cast<vector_type>(q), r);
                 *rho_q++ += mode_type({{ cos(q_r), -sin(q_r) }});
             }
@@ -115,7 +117,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
           , def("density_mode", &make_shared<density_mode
               , shared_ptr<particle_type const>
               , shared_ptr<particle_group_type>
-              , wavevector_type const&
+              , shared_ptr<wavevector_type const>
               , shared_ptr<logger>
             >)
         ]

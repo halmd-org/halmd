@@ -25,13 +25,13 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 #include <memory>
-#include <vector>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_group.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
+#include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/owner_equal.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -57,15 +57,13 @@ class density_mode
 public:
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_group particle_group_type;
-
-    // wavevector_type shall agree with return type of observables::utility::wavevector<dimension>::value()
-    typedef std::vector<fixed_vector<double, dimension>> wavevector_type;
+    typedef observables::utility::wavevector<dimension> wavevector_type;
     typedef raw_array<fixed_vector<double, 2>> result_type;
 
     density_mode(
         std::shared_ptr<particle_type const> particle
       , std::shared_ptr<particle_group_type> particle_group
-      , wavevector_type const& wavevector
+      , std::shared_ptr<wavevector_type const> wavevector
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>("density_mode")
     );
 
@@ -89,9 +87,9 @@ public:
     }
 
     /**
-     * Return array of wavevectors passed to constructor
+     * Return wavevector instance passed to constructor
      */
-    wavevector_type const& wavevector() const
+    std::shared_ptr<wavevector_type const> wavevector()
     {
         return wavevector_;
     }
@@ -110,8 +108,8 @@ private:
     std::shared_ptr<particle_type const> particle_;
     /** particle forces */
     std::shared_ptr<particle_group_type> particle_group_;
-    /** array of wavevectors */
-    wavevector_type wavevector_;
+    /** wavevector grid */
+    std::shared_ptr<wavevector_type const> wavevector_;
     /** logger instance */
     std::shared_ptr<logger> logger_;
 
