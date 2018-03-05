@@ -52,7 +52,8 @@ local property = property
 --
 -- :param table args: keyword arguments
 -- :param args.group:      instance of :mod:`halmd.mdsim.particle_groups`
--- :param args.wavevector: instance of :class:`halmd.observables.utility.wavevector`
+-- :param args.wavevector: array of wavevectors, e.g., return value of
+--                         :meth:`halmd.observables.utility.wavevector:value()`
 -- :returns: instance of density mode sampler
 --
 -- .. method:: disconnect()
@@ -61,7 +62,7 @@ local property = property
 --
 -- .. attribute:: wavevector
 --
---    The ``wavevector`` instance passed upon construction.
+--    The ``wavevector`` array passed upon construction.
 --
 -- .. attribute:: label
 --
@@ -93,7 +94,7 @@ local property = property
 local M = module(function(args)
     local group = utility.assert_kwarg(args, "group")
     local particle = assert(group.particle)
-    local wavevector = utility.assert_kwarg(args, "wavevector")
+    local wavevector = utility.assert_type(utility.assert_kwarg(args, "wavevector"), "table")
 
     -- inherit label from particle group
     local label = assert(group.label)
@@ -116,7 +117,7 @@ local M = module(function(args)
 
         -- write wavevectors
         local writer = file:writer{location = location, mode = "truncate"}
-        writer:on_write(wavevector.value, {"wavevector"})
+        writer:on_write(function() return wavevector end, {"wavevector"})
         writer:write() -- FIXME pass arguments directly to write(), avoiding on_write
 
         -- write time series of density modes: register acquisitor with writer

@@ -32,7 +32,7 @@ template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
     shared_ptr<particle_type const> particle
   , shared_ptr<particle_group_type> particle_group
-  , shared_ptr<wavevector_type const> wavevector
+  , wavevector_type const& wavevector
   , shared_ptr<logger> logger
 )
     // dependency injection
@@ -41,7 +41,7 @@ density_mode<dimension, float_type>::density_mode(
   , wavevector_(wavevector)
   , logger_(logger)
     // member initialisation
-  , nq_(wavevector_->value().size())
+  , nq_(wavevector_.size())
   , dim_(50, 64 << DEVICE_SCALE) // at most 512 threads per block
     // memory allocation
   , g_q_(nq_)
@@ -57,10 +57,10 @@ density_mode<dimension, float_type>::density_mode(
     try {
         // cast from fixed_vector<double, ...> to fixed_vector<float, ...>
         // and finally to gpu_vector_type (float4 or float2)
-        auto const& q = wavevector_->value();
-        cuda::host::vector<gpu_vector_type> h_q(nq_);
-        for (unsigned int i = 0; i < q.size(); ++i) {
-            h_q[i] = static_cast<vector_type>(q[i]);
+        cuda::host::vector<gpu_vector_type> h_q(wavevector_.size());
+        auto it = h_q.begin();
+        for (auto const& q : wavevector_) {
+            *it++ = static_cast<vector_type>(q);
         }
         cuda::copy(h_q, g_q_);
     }
@@ -158,7 +158,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
           , def("density_mode", &make_shared<density_mode
               , shared_ptr<particle_type const>
               , shared_ptr<particle_group_type>
-              , shared_ptr<wavevector_type const>
+              , wavevector_type const&
               , shared_ptr<logger>
             >)
         ]

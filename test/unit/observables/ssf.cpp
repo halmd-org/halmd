@@ -144,7 +144,7 @@ void lattice<modules_type>::test()
     density_mode = std::make_shared<density_mode_type>(
         particle
       , std::make_shared<particle_group_type>(particle)
-      , wavevector
+      , wavevector->value()
     );
     ssf = std::make_shared<ssf_type>(
         density_mode_type::acquisitor(density_mode)
