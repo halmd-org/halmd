@@ -13,7 +13,11 @@ find_package(Sphinx QUIET)
 if(NOT SPHINX_FOUND)
   message(WARNING "Unable to find Sphinx documentation generator")
   set(GENERATE_DOC FALSE)
-endif(NOT SPHINX_FOUND)
+endif()
+if(${SPHINX_VERSION_STRING} VERSION_LESS "1.4.0")
+  message(WARNING "Version 1.4 or later of Sphinx documentation generator required")
+  set(GENERATE_DOC FALSE)
+endif()
 
 # Sphinx uses latex and dvipng to render LaTeX formulas.
 find_package(LATEX QUIET)
@@ -43,12 +47,6 @@ endif()
 # Accumulate list of input dependency files for documentation targets,
 # to avoid rebuilding documentation when input files remain unchanged.
 set(HALMD_DOC_INPUT_FILES)
-
-if(${SPHINX_VERSION_STRING} VERSION_LESS "1.4.0")
-  set (SPHINX_IMGMATH_EXT "sphinx.ext.pngmath")
-else()
-  set (SPHINX_IMGMATH_EXT "sphinx.ext.imgmath")
-endif()
 
 configure_file(conf.py.in conf.py)
 list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/conf.py)

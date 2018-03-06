@@ -74,7 +74,7 @@ Documentation
 Documentation is generated **optionally** in HTML and PDF format if these
 prerequisites are met:
 
-* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ ≥ 1.1
+* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ ≥ 1.4
 
   "Sphinx is a tool that makes it easy to create intelligent and beautiful
   documentation."
