@@ -1,5 +1,5 @@
 --
--- Copyright © 2011-2013  Felix Höfling
+-- Copyright © 2011-2018 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -28,9 +28,10 @@ local wavevector = assert(libhalmd.observables.utility.wavevector)
 -- Wavevector
 -- ==========
 --
--- The module constructs a set of wavevector shells compatible with the
--- reciprocal space of a periodic simulation box and a list of wavenumbers. The
--- wavevectors are of the form
+-- The module constructs a set of wavevectors :math:`\vec k` compatible with
+-- the reciprocal space of the periodic simulation box and grouped into shells
+-- according to their wavenumber, :math:`|\vec k|`. The wavevectors are of
+-- the form
 --
 -- .. math::
 --
@@ -38,10 +39,20 @@ local wavevector = assert(libhalmd.observables.utility.wavevector)
 --   \frac{2\pi}{L_y}, \dots \right)
 --
 -- where :math:`n_x, n_y, \dots` are integers and :math:`L_x, L_y, \dots`
--- denote the edge length of the cuboid box.  A wavevector "shell" is defined
--- by its wavenumber, i.e. the magnitude :math:`k=|\vec k|`, including a
--- tolerance. The number of wavevectors within each shell may be limited to
--- avoid excessively large shells for large wavenumber.
+-- denote the edge length of the cuboid box.
+--
+-- Two modes are supported:
+--
+--   1) a *sparse sampling* of thin shells according to a predefined set of
+--      wavenumbers :math:`\{ k_i \}`, allowing for a relative deviation of the
+--      wavenumber. The number of wavevectors per shell may be limited to avoid
+--      excessively large shells for large wavenumber.
+--
+--   2) a *dense grid* of wavevectors from all points of the reciprocal lattice
+--      up to the maximum wavenumber given, :math:`|\vec k| < \max \{ k_i \}`.
+--      The result is grouped into shells according to the wavenumbers given.
+--      In this case, shells are half-open sets, :math:`k_{i-1} \leq |\vec k| < k_i`,
+--      provided that :math:`k_i < k_j` for all :math:`i < j`.
 --
 -- The list of wavenumbers may be constructed using :class:`halmd.observables.utility.semilog_grid`,
 -- where the smallest wavenumber is given by :math:`2\pi / \max(L_x, L_y, \dots)`.
@@ -64,8 +75,13 @@ local wavevector = assert(libhalmd.observables.utility.wavevector)
 -- :param table args: keyword arguments
 -- :param args.box:               instance of :class:`halmd.mdsim.box`
 -- :param args.wavenumber:        list of wavenumbers
+-- :param boolean args.dense:     dense grid of wavevectors (*default:* ``false``)
 -- :param number args.tolerance:  relative tolerance on wavevector magnitude
 -- :param integer args.max_count: maximum number of wavevectors per wavenumber shell
+--
+-- If ``dense`` is ``true``, a dense grid of wavevectors is created. Otherwise,
+-- the arguments ``tolerance`` and ``max_count`` are required and a sparse
+-- sampling of wavevectors is returned.
 --
 -- .. method:: wavenumber()
 --
@@ -85,11 +101,16 @@ local wavevector = assert(libhalmd.observables.utility.wavevector)
 --
 local M = module(function(args)
     local box = utility.assert_kwarg(args, "box")
-    local wavenumber = utility.assert_kwarg(args, "wavenumber")
-    local tolerance = utility.assert_type(utility.assert_kwarg(args, "tolerance"), "number")
-    local max_count = utility.assert_type(utility.assert_kwarg(args, "max_count"), "number")
+    local wavenumber = utility.assert_type(utility.assert_kwarg(args, "wavenumber"), "table")
+    local dense = utility.assert_type(args.dense == nil and false or args.dense, "boolean")
 
-    return wavevector(wavenumber, box.length, tolerance, max_count)
+    if dense then
+        return wavevector(wavenumber, box.length)
+    else
+        local tolerance = utility.assert_type(utility.assert_kwarg(args, "tolerance"), "number")
+        local max_count = utility.assert_type(utility.assert_kwarg(args, "max_count"), "number")
+        return wavevector(wavenumber, box.length, tolerance, max_count)
+    end
 end)
 
 ---

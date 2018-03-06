@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011-2013 Felix Höfling
+ * Copyright © 2011-2018 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -48,12 +48,34 @@ public:
 
     static void luaopen(lua_State* L);
 
-    // constructor
+    /**
+     * construction of sparse wavevector grid
+     *
+     * For each wavenumber given, find at most `max_count` wavevectors on the
+     * reciprocal lattice of the simulation box and group them in shells
+     * according to the wavenumber.
+     *
+     * Allow for a relative deviation of the wavenumber as given by `tolerance`.
+     */
     wavevector(
         std::vector<double> const& wavenumber
       , vector_type const& box_length
       , double tolerance
       , unsigned int max_count
+    );
+
+    /**
+     * construction of dense wavevector grid
+     *
+     * Set up all wavevectors @f$ \vec q @f$ on the reciprocal lattice of the
+     * simulation box up to the maximum wavenumber given, $f@ |\vec q| \leq
+     * q_{max} @f$. Group results in shells according to the wavenumbers given.
+     *
+     * Shells are half open sets: @f$ q_{i-1} \leq |\vec q| < q_i @f$.
+     */
+    wavevector(
+        std::vector<double> const& wavenumber
+      , vector_type const& box_length
     );
 
     //! returns tolerance on wavevector magnitude

@@ -110,3 +110,5 @@ if(HALMD_WITH_GPU)
     )
   endif()
 endif()
+
+add_subdirectory(utility)
