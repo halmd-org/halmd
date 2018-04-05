@@ -46,11 +46,12 @@ __device__ void initialize_orientation(
         //read random number generator state from global device memory
         typename rng_type::state_type state = rng[GTID];
 
-        float theta = random::gpu::uniform(rng, state);
+        // pick a random number between 0 and 2π
+        float theta =  6.283185 * random::gpu::uniform(rng, state);
 
         /* select random point on unit circle */
-        u[0] = sin(theta);
-        u[1] = cos(theta);
+        u[0] = cos(theta);
+        u[1] = sin(theta);
 
         rng[GTID] = state;
 }
