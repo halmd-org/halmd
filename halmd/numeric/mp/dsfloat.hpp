@@ -29,7 +29,9 @@
 
 #include <halmd/numeric/mp/dsfun.hpp>
 #include <halmd/utility/tuple.hpp>
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#ifdef HALMD_WITH_GPU
+# include <cuda_wrapper/cuda_wrapper.hpp>
+#endif
 
 #ifndef __CUDACC__
 # include <ostream>
