@@ -1,0 +1,3 @@
+Compilation with CUDA ≥ 5.0 requires a bug fix:
+
+    git cherry-pick 340f50b
