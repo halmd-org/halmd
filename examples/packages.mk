@@ -66,10 +66,10 @@ env: env-cmake env-lua env-luajit env-boost env-hdf5 env-git env-python-sphinx e
 ## CMake
 ##
 
-CMAKE_VERSION = 3.9.2
+CMAKE_VERSION = 3.11.1
 CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
-CMAKE_TARBALL_URL = https://cmake.org/files/v3.9/$(CMAKE_TARBALL)
-CMAKE_TARBALL_SHA256 = 954a5801a456ee48e76f01107c9a4961677dd0f3e115275bbd18410dc22ba3c1
+CMAKE_TARBALL_URL = https://cmake.org/files/v3.11/$(CMAKE_TARBALL)
+CMAKE_TARBALL_SHA256 = 57bebc6ca4d1d42c6385249d148d9216087e0fda57a47dc5c858790a70217d0c
 CMAKE_SOURCE_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_BUILD_DIR = $(CMAKE_SOURCE_DIR)/build
 CMAKE_CONFIGURE_FLAGS = --sphinx-man
@@ -334,12 +334,12 @@ env-boost:
 ##
 ## HDF5 library
 ##
-HDF5_VERSION = 1.8.18
+HDF5_VERSION = 1.10.2
 HDF5_MAJOR_VERSION = $(shell echo $(HDF5_VERSION) | cut -f1 -d.)
 HDF5_MINOR_VERSION = $(shell echo $(HDF5_VERSION) | cut -f2 -d.)
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
-HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_MAJOR_VERSION).$(HDF5_MINOR_VERSION)/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
-HDF5_TARBALL_SHA256 = 01c6deadf4211f86922400da82c7a8b5b50dc8fc1ce0b5912de3066af316a48c
+HDF5_TARBALL_URL = https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_MAJOR_VERSION).$(HDF5_MINOR_VERSION)/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
+HDF5_TARBALL_SHA256 = 1cad5b7bfdf128dfc53cd16fba48f6e7ae4e93c75c371d9ec8dfc4df0c1fcb71
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
 HDF5_CONFIGURE_FLAGS = --enable-shared --enable-cxx --enable-fortran
