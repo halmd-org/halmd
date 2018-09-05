@@ -41,7 +41,7 @@ A detailed step-by-step guide for manual installation is given in section
   version control system. Git is available for many operating systems and
   their flavours.
 
-* `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.43.0
+* `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.55.0
 
   In addition, the proposed `Boost.Log <http://boost-log.sourceforge.net/>`_
   library is needed.
