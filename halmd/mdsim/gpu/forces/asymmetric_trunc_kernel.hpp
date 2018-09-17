@@ -36,13 +36,14 @@ struct asymmetric_trunc_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
+    typedef typename type_traits<dimension, float>::gpu::coalesced_pseudo_vector_type coalesced_pseudo_vector_type;
 
     /** compute forces only */
     cuda::function<void (
         float4 const*
       , float4 const*
       , coalesced_vector_type*
-      , coalesced_vector_type*
+      , coalesced_pseudo_vector_type*
       , unsigned int const*
       , unsigned int
       , unsigned int
@@ -61,7 +62,7 @@ struct asymmetric_trunc_wrapper
         float4 const*
       , float4 const*
       , coalesced_vector_type*
-      , coalesced_vector_type*
+      , coalesced_pseudo_vector_type*
       , unsigned int const*
       , unsigned int
       , unsigned int

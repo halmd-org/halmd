@@ -44,7 +44,8 @@ template <
     bool do_aux               //< compute auxiliary variables in addition to force
   , typename vector_type
   , typename potential_type
-  , typename gpu_vector_type
+  , typename coalesced_vector_type
+  , typename coalesced_pseudo_vector_type
 >
 __global__ void compute(
     float4 const* g_r1
@@ -52,8 +53,8 @@ __global__ void compute(
   , float4 const* g_r2
   , float4 const* g_u2
   , unsigned int npart2
-  , gpu_vector_type* g_f
-  , gpu_vector_type* g_tau
+  , coalesced_vector_type* g_f
+  , coalesced_pseudo_vector_type* g_tau
   , float* g_en_pot
   , float* g_stress_pot
   , unsigned int ntype1

@@ -49,14 +49,15 @@ template <
     bool do_aux               //< compute auxiliary variables in addition to force
   , typename vector_type
   , typename potential_type
-  , typename gpu_vector_type
+  , typename coalesced_vector_type
+  , typename coalesced_pseudo_vector_type
   , typename trunc_type
 >
 __global__ void compute(
     float4 const* g_r1
   , float4 const* g_u1
-  , gpu_vector_type* g_f
-  , gpu_vector_type* g_tau
+  , coalesced_vector_type* g_f
+  , coalesced_pseudo_vector_type* g_tau
   , unsigned int const* g_neighbour
   , unsigned int neighbour_size
   , unsigned int neighbour_stride
