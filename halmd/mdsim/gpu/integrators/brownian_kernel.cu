@@ -116,7 +116,7 @@ __device__ void update_orientation(
     u = cos( alpha ) * u + sin( alpha ) * e1;
 
     //ensure normalization
-    if ( (float) norm_2(u) != 0){
+    if ( (float) norm_2(u) > 2e-38){
         u /= norm_2(u);
     }
 }

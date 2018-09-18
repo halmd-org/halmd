@@ -197,10 +197,16 @@ void update_orientation_impl(
     else {
         e1[0] = u[1]; e1[1] = -u[0]; e1[2] = 0;
     }
-
-    e1 /= norm_2(e1);
     e2  = cross_prod(u, e1);
-    e2 /= norm_2(e2);
+
+    // normalize vectors
+    if ( (float) norm_2(e1) > 2e-38){
+        e1 /= norm_2(e1);
+    }
+    if ( (float) norm_2(e2) > 2e-38){
+        e2 /= norm_2(e2);
+    }
+
     float_type sigma_rot = sqrt( 2 * timestep_ * D_rot );
     std::tie(eta1, eta2) = random_->normal( sigma_rot );
 
@@ -209,10 +215,17 @@ void update_orientation_impl(
     // first two terms are the random angular velocity, the final is the
     // systematic torque
     omega = eta1 * e1 + eta2 * e2 + tau * D_rot * timestep_ / temperature_ ;
-    float_type  alpha        = norm_2(omega);
-    omega              /= alpha;
+    float_type alpha = norm_2( omega );
+
+    if ( (float) alpha > 2e-38){
+        omega /= alpha;
+    }
+
     u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
-    u /= norm_2(u);
+
+    if ( (float) norm_2(u) > 2e-38){
+        u /= norm_2(u);
+    }
 }
 
 /**
