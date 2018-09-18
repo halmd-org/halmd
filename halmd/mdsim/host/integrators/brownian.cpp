@@ -127,8 +127,8 @@ void brownian<dimension, float_type>::update_displacement_(
 template<typename float_type>
 void update_orientation_impl(
     float_type const D_rot
-  , fixed_vector<float_type, 2> & u_2d
-  , fixed_vector<float_type, 2> const& tau_2d
+  , fixed_vector<float_type, 2> & u
+  , fixed_vector<float_type, 2> const& tau
   , float_type timestep_
   , float_type temperature_
   , std::shared_ptr<random::host::random> random_
@@ -137,38 +137,28 @@ void update_orientation_impl(
     //numerical limits for computation
     float_type epsilon = std::numeric_limits<float_type>::epsilon();
 
-    //hack
-    float_type eta1, eta2;
-    fixed_vector<float_type, 3> u, tau, e1, e2;
-    std::tie(u[0], u[1]) = std::tie(u_2d[0], u_2d[1]);
-    std::tie(tau[0], tau[1]) = std::tie(tau_2d[0], tau_2d[1]);
+    //construct trihedron along particle orientation for movement in x-y plane
+    // e1 lies in x-y plane
+    fixed_vector<float_type, 2> e1;
+    e1[0] = -u[1];
+    e1[1] = u[0];
 
-    //construct trihedron along particle orientation
-    if ( u[1] > epsilon || u[2] > epsilon) {
-        e1[0] = 0; e1[1] = u[2]; e1[2] = -u[1];
-    }
-    else {
-        e1[0] = u[1]; e1[1] = -u[0]; e1[2] = 0;
-    }
+    float_type eta1;
 
-    e1 /= norm_2(e1);
-    e2  = cross_prod(u, e1);
-    e2 /= norm_2(e2);
     float_type sigma_rot = sqrt( 2 * timestep_ * D_rot );
-    std::tie(eta1, eta2) = random_->normal( sigma_rot );
+    std::tie(eta1, std::ignore) = random_->normal( sigma_rot );
+    // first term is the random torque, second is the systematic
+    // torque
+    fixed_vector<float_type, 1> omega;
+    omega = eta1 + tau[0] * D_rot * timestep_ / temperature_;
 
-    // first two terms are the random angular velocity, the final is the
-    // systematic torque
-    fixed_vector<float_type, 3> omega; 
-    omega = eta1 * e1 + eta2 * e2 + tau * D_rot * timestep_ / temperature_ ;
-    float_type  alpha        = norm_2(omega);
-    omega              /= alpha;
-    u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
-    u /= norm_2(u);
+    float  alpha = omega[0];
+    u = cos( alpha ) * u + sin( alpha ) * e1;
 
-    // update the original 2d vector
-    u_2d[0] = u[0];
-    u_2d[1] = u[1];
+    //ensure normalization
+    if ( (float) norm_2(u) > epsilon){
+        u /= norm_2(u);
+    }
 
 }
 
