@@ -164,15 +164,15 @@ __device__ void update_orientation(
     }
 }
 
-
-template <int dimension, typename float_type, typename rng_type, typename gpu_vector_type>
+template <int dimension, typename float_type, typename rng_type, typename
+    gpu_vector_type, typename gpu_pseudo_vector_type>
 __global__ void integrate(
     float4* g_position
   , float4* g_orientation
   , gpu_vector_type* g_image
   , float4 const* g_velocity
   , gpu_vector_type const* g_force
-  , gpu_vector_type const* g_torque
+  , gpu_pseudo_vector_type const* g_torque
   , float timestep
   , float temp
   , rng_type rng
