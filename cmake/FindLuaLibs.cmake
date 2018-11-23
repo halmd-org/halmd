@@ -15,7 +15,7 @@
 #=============================================================================
 # Copyright 2007-2009 Kitware, Inc.
 # Copyright 2011 Peter Colberg
-# Copyright 2013 Felix Höfling
+# Copyright 2013,2018 Felix Höfling
 #
 # Distributed under the OSI-approved BSD License (the "License");
 # see accompanying file Copyright.txt for details.
@@ -30,7 +30,7 @@
 find_path(LUA_INCLUDE_DIR lua.h
   HINTS
     ENV LUA_DIR
-  PATH_SUFFIXES include/luajit-2.0 include/lua52 include/lua5.2 include/lua-5.2 include/lua51 include/lua5.1 include/lua-5.1 include/lua include
+  PATH_SUFFIXES include/luajit-2.1 include/luajit-2.0 include/lua52 include/lua5.2 include/lua-5.2 include/lua51 include/lua5.1 include/lua-5.1 include/lua include
   PATHS
   ~/Library/Frameworks
   /Library/Frameworks
@@ -51,6 +51,7 @@ endif()
 
 find_library(LUA_LIBRARY
   NAMES luajit-5.2 luajit-5.1 lua lua52 lua5.2 lua-5.2 lua51 lua5.1 lua-5.1
+  NAMES_PER_DIR
   HINTS
     ENV LUA_DIR
   PATH_SUFFIXES lib64 lib
