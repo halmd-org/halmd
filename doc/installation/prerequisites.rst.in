@@ -44,9 +44,10 @@ Third-party libraries
 
   .. note::
 
-    System installations of the Boost C++ Libraries can not be used due to an
-    ABI incompatibility (C++98 vs. C++11). For instructions how to build Boost
-    C++ with the C++11 ABI, see :ref:`automatic`.
+    On older distributions based on GCC 4, the shipped Boost C++ Libraries can
+    not be used due to an ABI incompatibility (C++98 vs. C++11). For
+    instructions how to build Boost C++ with the C++11 ABI, see
+    :ref:`automatic`.
 
 * `Lua interpreter <http://www.lua.org>`_ ≥ 5.1, < 5.3 *or* `Lua Just-In-Time
   compiler <http://luajit.org/luajit.html>`_ ≥ 2.0

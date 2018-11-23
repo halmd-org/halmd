@@ -22,7 +22,7 @@ Example: a Lennard-Jones fluid
 
 Let us consider a simple fluid with 20,000 Lennard-Jones particles at density :math:`\rho^*=0.8`.
 Equilibration is done with a Boltzmann thermostat at temperature
-:math:`T^*=2` over 10,000 steps ::
+:math:`T^*=2` over 10,000 steps::
 
   halmd liquid/lennard_jones_equilibration.lua -v \
     --timestep 0.005 --time 50 \
@@ -43,7 +43,7 @@ its name, ``lennard_jones_equilibration_%Y%m%d_%H%M%S.h5`` and a corresponding
 log file.
 
 We may now continue the simulation at constant energy by resuming from the H5MD
-file using the accompanying script ::
+file using the accompanying script::
 
   halmd liquid/lennard_jones.lua -v \
     --timestep 0.001 --time 100 \
@@ -59,20 +59,21 @@ Inspection of the results
 -------------------------
 
 If the HDF5 tools are properly installed, you may have a quick overview of the
-output file ::
+output file::
 
   h5ls output.h5
 
-or look at a specific data set ::
+or look at a specific data set::
 
-  h5dump -d observables/potential_energy output.h5 | less
+  h5ls -d output.h5/observables/potential_energy | less
 
-For a more advanced inspection and analysis of the HDF5 output files, see
-:ref:`plotting`. You may try the exemplary script ::
+For more advanced inspection and analysis of the HDF5 output files, see
+:ref:`plotting`. You may try the exemplary script::
 
   plotting/plot_h5md.py output.h5
+  plotting/plot_h5md.py --no-plot --range 20 100 output.h5
 
 You may also have a look at the `H5MD tools
-<http://github.com/halmd-org/h5md-tools>`_, a collection of analysis and plot
-scripts.
+<http://github.com/halmd-org/h5md-tools>`_, a collection of analysis and
+plotting scripts.
 

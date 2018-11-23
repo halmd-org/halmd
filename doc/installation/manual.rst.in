@@ -26,7 +26,7 @@ the initial cmake command might look like this ::
 
    CMAKE_PREFIX_PATH=~/opt/boost_1_57_0:/opt/cuda-5.5:~/opt/lua-5.2.3 cmake ~/projects/halmd
 
-Instead of setting CMAKE_PREFIX_PATH manually, you would include the package directories in your ~/.bashrc (or your favourite shell’s equivalent) ::
+Instead of setting CMAKE_PREFIX_PATH manually, you would include the package directories in your ~/.bashrc (or your favourite shell’s equivalent)::
 
    export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_57_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
    export CMAKE_PREFIX_PATH="/opt/cuda-5.5${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
