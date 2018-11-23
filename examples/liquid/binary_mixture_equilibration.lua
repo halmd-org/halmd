@@ -199,7 +199,7 @@ function define_args(parser)
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser:add_argument("initial-temperature", {type = "number", default = 1.5, help = "initial temperature"})
     parser:add_argument("temperature", {type = "number", default = 0.7, help = "target temperature"})
-    parser:add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
+    parser:add_argument("rate", {type = "number", default = 2, help = "heat bath collision rate"})
     parser:add_argument("time", {type = "number", default = 1000, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.002, help = "integration time step"})
 

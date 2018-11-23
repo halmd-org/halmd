@@ -20,8 +20,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local rescale_velocity = require("rescale_velocity")
-
 -- grab modules
 local mdsim = halmd.mdsim
 local numeric = halmd.numeric
@@ -186,6 +184,7 @@ function main(args)
 
     -- rescale velocities of all particles
     if args.rescale_to_energy then
+        local rescale_velocity = require("rescale_velocity")
         rescale_velocity({msv = msv, internal_energy = args.rescale_to_energy})
     end
 

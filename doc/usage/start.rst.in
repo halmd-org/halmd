@@ -31,10 +31,10 @@ Equilibration is done with a Boltzmann thermostat at temperature
     --sampling state-vars=100
 
 Many parameters have sensible default values and may be omitted, e.g, the
-collision rate of the thermostat (0.1), or the cutoff radius of the potential
-(:math:`r_c=2^{1/6}\sigma` corresponding to a purely repulsive potential). The
-option ``-v`` makes the output more verbose, check that your CUDA device has
-beed detected properly.
+collision rate of the thermostat, :math:`2\tau^{-1}`, or the cutoff radius of
+the potential, :math:`r_c=2^{1/6}\sigma`, corresponding to a purely repulsive
+potential. The option ``-v`` makes the output more verbose, check that your
+CUDA device has been detected properly.
 
 The system state is written at the beginning and the end of the simulation if
 not specified differently. The initial configuration of the particles is an fcc

@@ -166,7 +166,7 @@ function define_args(parser)
     parser:add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser:add_argument("temperature", {type = "number", default = 1.5, help = "initial system temperature"})
-    parser:add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
+    parser:add_argument("rate", {type = "number", default = 2, help = "heat bath collision rate"})
     parser:add_argument("time", {type = "number", default = 100, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.005, help = "integration time step"})
 
