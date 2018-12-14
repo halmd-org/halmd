@@ -30,7 +30,7 @@ function test_dense_grid_2d()
     local box = mdsim.box({length = {.5 * pi, 4 * pi}})
 
     -- construct wavevectors
-    local wavevector = utility.wavevector({wavenumber=q, box=box, sparse=false})
+    local wavevector = utility.wavevector({wavenumber=q, box=box, dense=true})
 
     log.debug("Wavevectors:")
     local q_vec = wavevector:value()
