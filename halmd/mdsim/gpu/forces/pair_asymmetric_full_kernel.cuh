@@ -61,7 +61,6 @@ __global__ void compute(
   , unsigned int ntype2
   , vector_type box_length
   , bool force_zero
-  , bool torque_zero    // FIXME flag is unneeded
   , float aux_weight
 )
 {

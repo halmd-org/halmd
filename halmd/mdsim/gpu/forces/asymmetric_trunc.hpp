@@ -195,7 +195,6 @@ inline void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>:
         force_cache_ = current_state;
     }
     particle1_->force_zero_disable();
-    particle1_->torque_zero_disable();
 }
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
@@ -233,7 +232,6 @@ inline void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>:
       , static_cast<position_type>(box_->length())
       , *trunc_
       , particle1_->force_zero()
-      , particle1_->torque_zero()
       , 1 // only relevant for kernel.compute_aux()
     );
     cuda::thread::synchronize();
@@ -281,7 +279,6 @@ inline void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>:
       , static_cast<position_type>(box_->length())
       , *trunc_
       , particle1_->force_zero()
-      , particle1_->torque_zero()
       , weight
     );
     cuda::thread::synchronize();

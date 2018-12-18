@@ -53,7 +53,6 @@ struct pair_asymmetric_full_wrapper
       , unsigned int
       , vector_type
       , bool
-      , bool
       , float
     )> compute;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
@@ -70,7 +69,6 @@ struct pair_asymmetric_full_wrapper
       , unsigned int
       , unsigned int
       , vector_type
-      , bool
       , bool
       , float
     )> compute_aux;

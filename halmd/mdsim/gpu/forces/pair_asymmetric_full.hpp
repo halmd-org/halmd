@@ -217,7 +217,6 @@
         , particle2_->nspecies()
         , static_cast<position_type>(box_->length())
         , particle1_->force_zero()
-        , particle1_->torque_zero()
         , 1 // aux_weight is relevant for kernel.compute_aux() only
       );
       cuda::thread::synchronize();
@@ -261,7 +260,6 @@
         , particle2_->nspecies()
         , static_cast<position_type>(box_->length())
         , particle1_->force_zero()
-        , particle1_->torque_zero()
         , weight
       );
       cuda::thread::synchronize();
