@@ -59,16 +59,18 @@ typename max_displacement_wrapper<dimension>::displacement_impl_type
 max_displacement<dimension, float_type>::get_displacement_impl(int threads)
 {
     switch (threads) {
-      case 512:
+      case 1024:
         return max_displacement_wrapper<dimension>::kernel.displacement_impl[0];
-      case 256:
+      case 512:
         return max_displacement_wrapper<dimension>::kernel.displacement_impl[1];
-      case 128:
+      case 256:
         return max_displacement_wrapper<dimension>::kernel.displacement_impl[2];
-      case 64:
+      case 128:
         return max_displacement_wrapper<dimension>::kernel.displacement_impl[3];
-      case 32:
+      case 64:
         return max_displacement_wrapper<dimension>::kernel.displacement_impl[4];
+      case 32:
+        return max_displacement_wrapper<dimension>::kernel.displacement_impl[5];
       default:
         throw std::logic_error("invalid reduction thread count");
     }
