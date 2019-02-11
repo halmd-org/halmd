@@ -133,7 +133,7 @@ void boltzmann<modules_type>::test()
     // shift mean velocity to zero
     v_cm = get_v_cm(*particle, group);
     shift_velocity_group(*particle, group, -v_cm);
-    vcm_tolerance = modules_type::tolerance::value;
+    vcm_tolerance = modules_type::tolerance::value / 4;                         // yields 0.5 ulp, the 4 is empirical
     BOOST_CHECK_SMALL(norm_inf(get_v_cm(*particle, group)), vcm_tolerance);
 
     // first shift, then rescale in one step
@@ -203,11 +203,12 @@ struct gpu_tolerance
     static double const value;
 };
 
+// dsfloat has effectively 43 bits, single float merely 24
 template<>
-double const gpu_tolerance<halmd::dsfloat>::value = 0.1 * std::numeric_limits<float>::epsilon();
+double const gpu_tolerance<halmd::dsfloat>::value = (1U << (43 - 24)) * std::numeric_limits<float>::epsilon();
 
 template<>
-double const gpu_tolerance<float>::value = 0.2 * std::numeric_limits<float>::epsilon();
+double const gpu_tolerance<float>::value = std::numeric_limits<float>::epsilon();
 
 template <int dimension, typename float_type>
 struct gpu_modules

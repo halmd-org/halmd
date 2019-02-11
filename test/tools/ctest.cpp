@@ -51,6 +51,6 @@ ctest_logging::ctest_logging()
 #ifdef NDEBUG
     logging::get().open_console(logging::info);
 #else
-    logging::get().open_console(logging::debug);
+    logging::get().open_console(logging::trace);
 #endif
 }
