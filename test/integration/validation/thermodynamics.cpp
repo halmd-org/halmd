@@ -97,10 +97,10 @@ BOOST_AUTO_TEST_CASE( validation )
 
     // CM velocity at first step
     const double vcm_limit = gpu ? 0.5 * eps_float : 30 * eps;
-    fixed_vector<double, 3> v_cm;
+    fixed_vector<double, 3> v_cm = 0;                           // zero all components
     h5xx::detail::read_chunked_dataset<double, 1>(
         observables.openDataSet("center_of_mass_velocity/value")
-      , reinterpret_cast<double*>(&v_cm)
+      , reinterpret_cast<double*>(&v_cm[0])
       , 0
     );
 //    h5xx::read_chunked_dataset(
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE( validation )
     // CM velocity at last step
     h5xx::detail::read_chunked_dataset<double, 1>(  // FIXME see above
         observables.openDataSet("center_of_mass_velocity/value")
-      , reinterpret_cast<double*>(&v_cm)
+      , reinterpret_cast<double*>(&v_cm[0])
       , -1
     );
     BOOST_CHECK_SMALL(norm_inf(v_cm), vcm_limit);
