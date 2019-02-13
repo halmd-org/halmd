@@ -94,8 +94,7 @@ BOOST_FIXTURE_TEST_CASE( default_log_level, console )
 #else
     LOG_DEBUG("debug");
     LOG_TRACE("trace");
-    // default level was increased globally in ctest_logging (see test/tools/ctest.cpp)
-    BOOST_CHECK_EQUAL( count_lines(console::stream()), 2 );
+    BOOST_CHECK_EQUAL( count_lines(console::stream()), 1 );
 #endif
 }
 
