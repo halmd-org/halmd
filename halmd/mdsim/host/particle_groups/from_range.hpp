@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_HOST_PARTICLE_GROUPS_FROM_RANGE_HPP
@@ -35,7 +36,7 @@ namespace host {
 namespace particle_groups {
 
 /**
- * Select particles of a given particle instance by a contiguous range of particle tags.
+ * Select particles of a given particle instance by a contiguous range of particle IDs.
  */
 template <typename particle_type>
 class from_range
@@ -47,7 +48,7 @@ public:
     typedef std::pair<size_type, size_type> range_type;
 
     /**
-     * Select by tag range [begin, end).
+     * Select by ID range [begin, end).
      */
     from_range(
         std::shared_ptr<particle_type const> particle
@@ -76,12 +77,12 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    /** validate tag range */
+    /** validate ID range */
     range_type const& check_range(range_type const&);
 
     /** particle instance */
     std::shared_ptr<particle_type const> const particle_;
-    /** particle tag range */
+    /** particle ID range */
     range_type const range_;
     /** module logger */
     std::shared_ptr<logger> logger_;
@@ -91,9 +92,9 @@ private:
     cache<array_type> unordered_;
     /** number of particles */
     cache<size_type> size_;
-    /** cache observer of particle reverse tags */
+    /** cache observer of particle reverse IDs */
     cache<> ordered_cache_;
-    /** cache observer of particle reverse tags */
+    /** cache observer of particle reverse IDs */
     cache<> unordered_cache_;
 };
 

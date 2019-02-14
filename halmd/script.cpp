@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <luaponte/class_info.hpp>
@@ -64,6 +65,15 @@ script::script()
 
     // load HALMD Lua C++ wrapper
     luaopen_halmd(L);
+
+    // load lua interface of HALMD Lua C++ wrapper
+    if(luaL_dostring(L, "halmd = require(\"halmd\")")) {
+        size_t len = 0;
+        const char *errmsg = lua_tolstring(L, -1, &len);
+        std::string error("Cannot load halmd module: " + std::string(errmsg, len));
+        lua_pop(L, 1);
+        throw std::runtime_error(error);
+    }
 }
 
 /**
@@ -183,6 +193,29 @@ void script::dofile(std::string const& filename)
 
     if (luaL_loadfile(L, fn) || lua_pcall(L, 0, 0, 1)) {
         std::string error(lua_tostring(L, -1));
+        lua_pop(L, 1);
+        throw std::runtime_error(error);
+    }
+}
+
+void script::run()
+{
+    // error handler passed to lua_pcall as last argument
+    lua_pushcfunction(L, &script::traceback);
+    int stacktrace_index = lua_gettop(L);
+
+    if (luaL_loadstring(L, "halmd.run()")) {
+        size_t len = 0;
+        const char *errmsg = lua_tolstring(L, -1, &len);
+        std::string error("cannot load run script: " + std::string(errmsg, len));
+        lua_pop(L, 1);
+        throw std::runtime_error(error);
+    }
+
+    if (lua_pcall(L, 0, 0, stacktrace_index)) {
+        size_t len = 0;
+        const char *errmsg = lua_tolstring(L, -1, &len);
+        std::string error(std::string(errmsg, len));
         lua_pop(L, 1);
         throw std::runtime_error(error);
     }

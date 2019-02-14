@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/mdsim/host/neighbours/from_particle.hpp>
@@ -35,7 +36,8 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_particle<dimension, float_type>::from_particle(
-    std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+    std::shared_ptr<particle_type const> particle1
+  , std::shared_ptr<particle_type const> particle2
   , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
   , std::shared_ptr<box_type const> box
   , matrix_type const& r_cut
@@ -43,8 +45,8 @@ from_particle<dimension, float_type>::from_particle(
   , std::shared_ptr<logger> logger
 )
   // dependency injection
-  : particle1_(particle.first)
-  , particle2_(particle.second)
+  : particle1_(particle1)
+  , particle2_(particle2)
   , displacement1_(displacement.first)
   , displacement2_(displacement.second)
   , box_(box)
@@ -71,10 +73,10 @@ template <int dimension, typename float_type>
 cache<std::vector<typename from_particle<dimension, float_type>::neighbour_list>> const&
 from_particle<dimension, float_type>::lists()
 {
-    cache<reverse_tag_array_type> const& reverse_tag_cache1 = particle1_->reverse_tag();
-    cache<reverse_tag_array_type> const& reverse_tag_cache2 = particle2_->reverse_tag();
+    cache<reverse_id_array_type> const& reverse_id_cache1 = particle1_->reverse_id();
+    cache<reverse_id_array_type> const& reverse_id_cache2 = particle2_->reverse_id();
 
-    auto current_cache = std::tie(reverse_tag_cache1, reverse_tag_cache2);
+    auto current_cache = std::tie(reverse_id_cache1, reverse_id_cache2);
 
     if (neighbour_cache_ != current_cache || displacement1_->compute() > r_skin_ / 2
         || displacement2_->compute() > r_skin_ / 2) {
@@ -161,7 +163,8 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &from_particle::runtime_)
               , def("from_particle", &std::make_shared<from_particle
-                        , std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
+                        , std::shared_ptr<particle_type const>
+                        , std::shared_ptr<particle_type const>
                         , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>>
                         , std::shared_ptr<box_type const>
                         , matrix_type const&

@@ -4,17 +4,18 @@
 -- This file is part of HALMD.
 --
 -- HALMD is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- GNU Lesser General Public License for more details.
 --
--- You should have received a copy of the GNU General Public License
--- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
 --
 
 -- grab C++ wrappers
@@ -38,12 +39,17 @@ local device = assert(libhalmd.utility.gpu.device)
 --        -- using host
 --    end
 --
--- To select a specific GPU, you may use the `nvlock <http://git.colberg.org/nvcuda-tools.git>`_ tool::
+-- To select a specific GPU, you may use the `nvlock <https://github.com/halmd-org/nvcuda-tools>`_ tool::
 --
---    CUDA_DEVICE=0 nvlock halmd liquid.lua
+--    CUDA_VISIBLE_DEVICES=0 nvlock halmd liquid.lua
 --
 -- nvlock will lock the CUDA device for other processes using nvlock, similar
 -- to compute prohibitive mode. This allows scheduling one process per GPU.
+--
+-- .. warning::
+-- 
+--    The ``nvlock`` tool is broken with recent NVIDIA drivers, e.g., later
+--    than version 346.
 --
 -- .. attribute:: gpu
 --

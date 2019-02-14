@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/config.hpp>
@@ -26,6 +27,7 @@
 
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
 #include <halmd/utility/demangle.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace std;
@@ -39,9 +41,9 @@ template <int dimension, typename float_type>
 verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
-  , float_type timestep
-  , float_type temperature
-  , float_type resonance_frequency
+  , double timestep
+  , double temperature
+  , double resonance_frequency
   , std::shared_ptr<logger> logger
 )
   // public member initialisation
@@ -121,12 +123,12 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
     float_type scale = propagate_chain();
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        configure_kernel(wrapper_type::kernel.integrate, particle_->dim(), true);
         wrapper_type::kernel.integrate(
-            &*position->begin()
-          , &*image->begin()
-          , &*velocity->begin()
-          , &*force.begin()
+            position->data()
+          , image->data()
+          , velocity->data()
+          , force.data()
           , timestep_
           , scale
           , static_cast<vector_type>(box_->length())
@@ -155,16 +157,16 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
-        wrapper_type::kernel.finalize(&*velocity->begin(), &*force.begin(), timestep_);
+        configure_kernel(wrapper_type::kernel.finalize, particle_->dim(), true);
+        wrapper_type::kernel.finalize(velocity->data(), force.data(), timestep_);
         cuda::thread::synchronize();
 
         float_type scale = propagate_chain();
 
         // rescale velocities
         scoped_timer_type timer2(runtime_.rescale);
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
-        wrapper_type::kernel.rescale(&*velocity->begin(), scale);
+        configure_kernel(wrapper_type::kernel.rescale, particle_->dim(), true);
+        wrapper_type::kernel.rescale(velocity->data(), scale);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -186,7 +188,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 template <int dimension, typename float_type>
 float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
-    velocity_array_type const& velocity = read_cache(particle_->velocity());
+    cuda::vector<float4> const& velocity = read_cache(particle_->velocity());
 
     scoped_timer_type timer(runtime_.propagate);
 
@@ -301,9 +303,9 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
               , def("verlet_nvt_hoover", &std::make_shared<verlet_nvt_hoover
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<box_type const>
-                  , float_type
-                  , float_type
-                  , float_type
+                  , double
+                  , double
+                  , double
                   , std::shared_ptr<logger>
                 >)
             ]
@@ -313,23 +315,25 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet_nvt_hoover(lua_State* L)
 {
-#ifdef USE_VERLET_DSFUN
-    verlet_nvt_hoover<3, double>::luaopen(L);
-    verlet_nvt_hoover<2, double>::luaopen(L);
-#else
+#ifdef USE_GPU_SINGLE_PRECISION
     verlet_nvt_hoover<3, float>::luaopen(L);
     verlet_nvt_hoover<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    verlet_nvt_hoover<3, double>::luaopen(L);
+    verlet_nvt_hoover<2, double>::luaopen(L);
 #endif
     return 0;
 }
 
 // explicit instantiation
-#ifdef USE_VERLET_DSFUN
-template class verlet_nvt_hoover<3, double>;
-template class verlet_nvt_hoover<2, double>;
-#else
+#ifdef USE_GPU_SINGLE_PRECISION
 template class verlet_nvt_hoover<3, float>;
 template class verlet_nvt_hoover<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class verlet_nvt_hoover<3, double>;
+template class verlet_nvt_hoover<2, double>;
 #endif
 
 } // namespace integrators

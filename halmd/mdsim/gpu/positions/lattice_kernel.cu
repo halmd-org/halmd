@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/mdsim/gpu/positions/lattice_kernel.hpp>
@@ -29,9 +30,9 @@ namespace gpu {
 namespace positions {
 namespace lattice_kernel {
 
-template <typename vector_type, typename lattice_type>
+template <typename ptr_type, typename vector_type, typename lattice_type>
 __global__ void lattice(
-    float4* g_r
+    ptr_type g_r
   , unsigned int npart
   , float a
   , unsigned int skip
@@ -49,11 +50,7 @@ __global__ void lattice(
         // load particle type
         vector_type r;
         unsigned int type;
-#ifdef USE_VERLET_DSFUN
-        tie(r, type) <<= tie(g_r[i], g_r[i + threads]);
-#else
         tie(r, type) <<= g_r[i];
-#endif
 
         // introduce a vacancy after every (skip - 1) particles
         uint nvacancies = (skip > 1) ? (i / (skip - 1)) : 0;
@@ -64,27 +61,25 @@ __global__ void lattice(
         // scale with lattice constant and shift origin of lattice to offset
         r = e * a + offset; //< cast sum to dsfloat-based type
 
-#ifdef USE_VERLET_DSFUN
-        tie(g_r[i], g_r[i + threads]) <<= tie(r, type);
-#else
         g_r[i] <<= tie(r, type);
-#endif
     }
 }
 
 } // namespace lattice_kernel
 
-template <typename lattice_type>
-lattice_wrapper<lattice_type> const lattice_wrapper<lattice_type>::kernel = {
-#ifdef USE_VERLET_DSFUN
-    lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, lattice_type>
-#else
-    lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_type>
-#endif
+template <typename float_type, typename lattice_type>
+lattice_wrapper<float_type, lattice_type> const lattice_wrapper<float_type, lattice_type>::kernel = {
+    lattice_kernel::lattice<ptr_type, fixed_vector<float_type, dimension>, lattice_type>
 };
 
-template class lattice_wrapper<close_packed_lattice<fixed_vector<float, 3>, fixed_vector<unsigned int, 3> > >;
-template class lattice_wrapper<close_packed_lattice<fixed_vector<float, 2>, fixed_vector<unsigned int, 2> > >;
+#ifdef USE_GPU_SINGLE_PRECISION
+template class lattice_wrapper<float, close_packed_lattice<fixed_vector<float, 3>, fixed_vector<unsigned int, 3> > >;
+template class lattice_wrapper<float, close_packed_lattice<fixed_vector<float, 2>, fixed_vector<unsigned int, 2> > >;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class lattice_wrapper<dsfloat, close_packed_lattice<fixed_vector<float, 3>, fixed_vector<unsigned int, 3> > >;
+template class lattice_wrapper<dsfloat, close_packed_lattice<fixed_vector<float, 2>, fixed_vector<unsigned int, 2> > >;
+#endif
 
 } // namespace mdsim
 } // namespace gpu

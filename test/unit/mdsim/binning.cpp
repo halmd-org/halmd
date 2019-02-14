@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/config.hpp>
@@ -271,8 +272,28 @@ HALMD_TEST_INIT( binning )
     test_suite* ts_gpu_two = BOOST_TEST_SUITE( "two" );
     ts_gpu->add(ts_gpu_two);
 
+# ifdef USE_GPU_SINGLE_PRECISION
+    test_suite* ts_gpu_two_float = BOOST_TEST_SUITE( "float" );
+    ts_gpu_two->add(ts_gpu_two_float);
+# endif
+
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    test_suite* ts_gpu_two_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
+    ts_gpu_two->add(ts_gpu_two_dsfloat);
+# endif
+
     test_suite* ts_gpu_three = BOOST_TEST_SUITE( "three" );
     ts_gpu->add(ts_gpu_three);
+
+# ifdef USE_GPU_SINGLE_PRECISION
+    test_suite* ts_gpu_three_float = BOOST_TEST_SUITE( "float" );
+    ts_gpu_three->add(ts_gpu_three_float);
+# endif
+
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    test_suite* ts_gpu_three_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
+    ts_gpu_three->add(ts_gpu_three_dsfloat);
+# endif
 #endif
 
     // lower bound on edge length of cells
@@ -311,6 +332,7 @@ HALMD_TEST_INIT( binning )
                 ts_host_three->add(BOOST_TEST_CASE( non_uniform_density ));
             }
 #ifdef HALMD_WITH_GPU
+# ifdef USE_GPU_SINGLE_PRECISION
             {
                 typedef halmd::mdsim::gpu::binning<2, float> binning_type;
                 auto non_uniform_density = [=]() {
@@ -321,7 +343,7 @@ HALMD_TEST_INIT( binning )
                       , compression
                     );
                 };
-                ts_gpu_two->add(BOOST_TEST_CASE( non_uniform_density ));
+                ts_gpu_two_float->add(BOOST_TEST_CASE( non_uniform_density ));
             }
             {
                 typedef halmd::mdsim::gpu::binning<3, float> binning_type;
@@ -333,8 +355,35 @@ HALMD_TEST_INIT( binning )
                       , compression
                     );
                 };
-                ts_gpu_three->add(BOOST_TEST_CASE( non_uniform_density ));
+                ts_gpu_three_float->add(BOOST_TEST_CASE( non_uniform_density ));
             }
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+            {
+                typedef halmd::mdsim::gpu::binning<2, halmd::dsfloat> binning_type;
+                auto non_uniform_density = [=]() {
+                    set_cuda_device device;
+                    test_non_uniform_density<binning_type>(
+                        {2 * unit, 3 * unit} // non-square box with coprime edge lengths
+                      , cell_length
+                      , compression
+                    );
+                };
+                ts_gpu_two_dsfloat->add(BOOST_TEST_CASE( non_uniform_density ));
+            }
+            {
+                typedef halmd::mdsim::gpu::binning<3, halmd::dsfloat> binning_type;
+                auto non_uniform_density = [=]() {
+                    set_cuda_device device;
+                    test_non_uniform_density<binning_type>(
+                        {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
+                      , cell_length
+                      , compression
+                    );
+                };
+                ts_gpu_three_dsfloat->add(BOOST_TEST_CASE( non_uniform_density ));
+            }
+# endif
 #endif
         }
     }

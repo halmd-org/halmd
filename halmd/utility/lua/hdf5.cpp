@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <h5xx/h5xx.hpp>
@@ -86,12 +87,100 @@ static void wrap_shape(H5::DataSet const& dataset, std::vector<hsize_t>& shape)
 }
 
 /**
+ * Returns a string encoding the data type of the dataset.
+ */
+static std::string wrap_type(H5::DataSet const& dataset)
+{
+    switch(dataset.getTypeClass())
+    {
+        case H5T_INTEGER:
+            switch (dataset.getIntType().getSign())
+            {
+                case H5T_SGN_NONE:
+                    return "unsigned_int";
+                case H5T_SGN_2:
+                    return "int";
+                default:
+                    throw std::runtime_error("unsupported dataset type: invalid integer sign");
+            }
+        case H5T_FLOAT:
+#ifndef USE_HOST_SINGLE_PRECISION
+            return "double";
+#else
+            return "float";
+#endif
+        case H5T_TIME:
+            throw std::runtime_error("unsupported dataset type: time");
+        case H5T_STRING:
+            throw std::runtime_error("unsupported dataset type: string");
+        case H5T_BITFIELD:
+            throw std::runtime_error("unsupported dataset type: bitfield");
+        case H5T_OPAQUE:
+            throw std::runtime_error("unsupported dataset type: opaque");
+        case H5T_COMPOUND:
+            throw std::runtime_error("unsupported dataset type: compound");
+        case H5T_REFERENCE:
+            throw std::runtime_error("unsupported dataset type: reference");
+        case H5T_ENUM:
+            throw std::runtime_error("unsupported dataset type: enum");
+        case H5T_VLEN:
+            throw std::runtime_error("unsupported dataset type: vlen");
+        case H5T_ARRAY:
+            throw std::runtime_error("unsupported dataset type: array");
+        default:
+            throw std::runtime_error("unsupported dataset type: unknown");
+    }
+}
+
+#if (H5_VERS_MAJOR > 1) || (H5_VERS_MAJOR == 1 && (H5_VERS_MINOR > 10 || (H5_VERS_MINOR == 10 && H5_VERS_RELEASE >= 1)))
+#define HALMD_H5_COMMON_BASE H5::H5Location
+/**
+ * Open HDF5 DataSet.
+ */
+static H5::DataSet wrap_open_dataset(H5::H5Location const& group, std::string const& name)
+{
+    return group.openDataSet(name);
+}
+
+static bool wrap_exists_group(H5::H5Location const& loc, std::string const& name)
+{
+    using namespace h5xx;
+    hid_t hid;
+    H5E_BEGIN_TRY {
+        hid = H5Gopen(loc.getId(), name.c_str(), H5P_DEFAULT);
+        if (hid > 0) {
+            H5Gclose(hid);
+        }
+    } H5E_END_TRY
+    return (hid > 0);
+}
+
+static H5::Group wrap_open_group(H5::H5Location const& loc, std::string const& path)
+{
+    using namespace h5xx;
+    hid_t group_id;
+    H5E_BEGIN_TRY {
+        group_id = H5Gopen(loc.getId(), path.c_str(), H5P_DEFAULT);
+    } H5E_END_TRY
+    if (group_id < 0) {
+        H5::PropList pl = create_intermediate_group_property();
+        group_id = H5Gcreate(loc.getId(), path.c_str(), pl.getId(), H5P_DEFAULT, H5P_DEFAULT);
+    }
+    if (group_id < 0) {
+        throw error("failed to create group \"" + path + "\"");
+    }
+    return H5::Group(group_id);
+}
+#else
+#define HALMD_H5_COMMON_BASE H5::CommonFG
+/**
  * Open HDF5 DataSet.
  */
 static H5::DataSet wrap_open_dataset(H5::CommonFG const& group, std::string const& name)
 {
     return group.openDataSet(name);
 }
+#endif
 
 /**
  * Register HDF5 classes and functions with Lua
@@ -108,10 +197,17 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
 
           , class_<H5::AbstractDs>("abstract_dataset")
 
+#if (H5_VERS_MAJOR > 1) || (H5_VERS_MAJOR == 1 && (H5_VERS_MINOR > 10 || (H5_VERS_MINOR == 10 && H5_VERS_RELEASE >= 1)))
+          , class_<H5::H5Location>("location")
+                .def("open_dataset", &wrap_open_dataset)
+                .def("open_group", &wrap_open_group)
+                .def("exists_group", &wrap_exists_group)
+#else
           , class_<H5::CommonFG>("common_fg")
                 .def("open_dataset", &wrap_open_dataset)
                 .def("open_group", &h5xx::open_group)
                 .def("exists_group", &h5xx::exists_group)
+#endif
 
           , class_<H5::H5Object, H5::IdComponent>("object")
                 .def("read_attribute", &read_attribute<bool>)
@@ -142,13 +238,14 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
                 .def("write_attribute", &write_attribute<vector<double> >)
                 .def("write_attribute", &write_attribute<vector<string> >)
 
-          , class_<H5::H5File, bases<H5::IdComponent, H5::CommonFG> >("file")
+          , class_<H5::H5File, bases<H5::IdComponent, HALMD_H5_COMMON_BASE> >("file")
 
-          , class_<H5::Group, bases<H5::H5Object, H5::CommonFG> >("group")
+          , class_<H5::Group, bases<H5::H5Object, HALMD_H5_COMMON_BASE> >("group")
                 .def("exists_dataset", &h5xx::exists_dataset)
 
           , class_<H5::DataSet, bases<H5::H5Object, H5::AbstractDs> >("dataset")
                 .property("shape", &wrap_shape, pure_out_value(_2))
+                .property("type", &wrap_type)
 
           , class_<type_wrapper<bool> >("bool")
                 .def(constructor<>())

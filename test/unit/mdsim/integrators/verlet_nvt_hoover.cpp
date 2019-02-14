@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/config.hpp>
@@ -37,6 +38,7 @@
 #include <halmd/mdsim/host/max_displacement.hpp>
 #include <halmd/mdsim/host/neighbours/from_binning.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
+#include <halmd/mdsim/host/potentials/pair/truncations/shifted.hpp>
 #include <halmd/mdsim/host/potentials/pair/lennard_jones.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -50,6 +52,7 @@
 # include <halmd/mdsim/gpu/max_displacement.hpp>
 # include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/truncations/shifted.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/lennard_jones.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
@@ -65,9 +68,6 @@ using namespace std;
 /**
  * test NVT Verlet integrator with Nosé-Hoover chain thermostat
  */
-
-const double eps = numeric_limits<double>::epsilon();
-const float eps_float = numeric_limits<float>::epsilon();
 
 /**
  * heat capacity from canonical fluctuations (variance) of potential and kinetic energy
@@ -109,6 +109,9 @@ struct verlet_nvt_hoover
     double resonance_frequency;
     fixed_vector<double, dimension> box_ratios;
     float skin;
+
+    typedef typename modules_type::tolerance tolerance;
+    typedef typename modules_type::en_tolerance en_tolerance;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<potential_type> potential;
@@ -198,13 +201,13 @@ void verlet_nvt_hoover<modules_type>::test()
     //
     // these tolerances have no deeper justification, except that even a small
     // energy drift requires a scaling with the number of simulation steps
-    const double en_tolerance = max(5e-5, steps * 1e-12);
+    const double en_tolerance = max(modules_type::en_tolerance::value, steps * 1e-12);
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_nhc0), en_tolerance);
 
     //
     // test conservation of total momentum
     //
-    double vcm_tolerance = gpu ? 0.1 * eps_float : 20 * eps;
+    double vcm_tolerance = modules_type::tolerance::value;
     BOOST_TEST_MESSAGE("Absolute tolerance on centre-of-mass velocity: " << vcm_tolerance);
     for (unsigned int i = 0; i < dimension; ++i) {
         BOOST_CHECK_SMALL(mean(v_cm[i]), vcm_tolerance);
@@ -296,7 +299,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     potential = std::make_shared<potential_type>(cutoff, epsilon, sigma);
     binning = std::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     max_displacement = std::make_shared<max_displacement_type>(particle, box);
-    neighbour = std::make_shared<neighbour_type>(std::make_pair(particle, particle), std::make_pair(binning, binning), std::make_pair(max_displacement, max_displacement), box, potential->r_cut(), skin);
+    neighbour = std::make_shared<neighbour_type>(particle, particle, std::make_pair(binning, binning), std::make_pair(max_displacement, max_displacement), box, potential->r_cut(), skin);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
     particle->on_prepend_force([=](){force->check_cache();});
     particle->on_force([=](){force->apply();});
@@ -307,11 +310,36 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
 }
 
+template<typename float_type>
+struct host_tolerance
+{
+    static double const value;
+};
+
+template<>
+double const host_tolerance<float>::value = 25 * numeric_limits<float>::epsilon();
+
+template<>
+double const host_tolerance<double>::value = 20 * numeric_limits<double>::epsilon();
+
+template<typename float_type>
+struct host_en_tolerance
+{
+    static double const value;
+};
+
+template<>
+double const host_en_tolerance<float>::value = 6e-5;
+
+template<>
+double const host_en_tolerance<double>::value = 5e-5;
+
 template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::host::potentials::pair::lennard_jones<float_type> potential_type;
+    typedef mdsim::host::potentials::pair::lennard_jones<float_type> base_potential_type;
+    typedef mdsim::host::potentials::pair::truncations::shifted<base_potential_type> potential_type;
     typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::host::binning<dimension, float_type> binning_type;
     typedef mdsim::host::neighbours::from_binning<dimension, float_type> neighbour_type;
@@ -324,30 +352,65 @@ struct host_modules
     typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
     typedef observables::host::thermodynamics<dimension, float_type> thermodynamics_type;
     static bool const gpu = false;
+    typedef host_tolerance<float_type> tolerance;
+    typedef host_en_tolerance<float_type> en_tolerance;
 };
 
+#ifndef USE_HOST_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_2d ) {
     verlet_nvt_hoover<host_modules<2, double> >().test();
 }
 BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_3d ) {
     verlet_nvt_hoover<host_modules<3, double> >().test();
 }
+#else
+BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_2d ) {
+    verlet_nvt_hoover<host_modules<2, float> >().test();
+}
+BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_3d ) {
+    verlet_nvt_hoover<host_modules<3, float> >().test();
+}
+#endif
 
 #ifdef HALMD_WITH_GPU
+template<typename T>
+struct gpu_tolerance
+{
+    static double const value;
+};
+
+template<>
+double const gpu_tolerance<dsfloat>::value = 0.1 * numeric_limits<float>::epsilon();
+
+// TODO: Is the high tolerance reasonable?
+template<>
+double const gpu_tolerance<float>::value = 16 * numeric_limits<float>::epsilon();
+
+template<typename float_type>
+struct gpu_en_tolerance
+{
+    static double const value;
+};
+
+template<>
+double const gpu_en_tolerance<float>::value = 1e-4;
+
+template<>
+double const gpu_en_tolerance<dsfloat>::value = 5e-5;
+
+
 template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::gpu::potentials::pair::lennard_jones<float_type> potential_type;
+    typedef mdsim::gpu::potentials::pair::lennard_jones<float> base_potential_type;
+    typedef mdsim::gpu::potentials::pair::truncations::shifted<base_potential_type> potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::gpu::binning<dimension, float_type> binning_type;
     typedef mdsim::gpu::neighbours::from_binning<dimension, float_type> neighbour_type;
     typedef mdsim::gpu::max_displacement<dimension, float_type> max_displacement_type;
-#ifdef USE_VERLET_DSFUN
-    typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
-#else
-    typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, float> integrator_type;
-#endif
+    typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension,
+    typename std::conditional<std::is_same<float_type, dsfloat>::value, double, float_type>::type> integrator_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
@@ -355,12 +418,24 @@ struct gpu_modules
     typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
     static bool const gpu = true;
+    typedef gpu_tolerance<float_type> tolerance;
+    typedef gpu_en_tolerance<float_type> en_tolerance;
 };
 
-BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_2d, device ) {
+# ifdef USE_GPU_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_float_2d, device ) {
     verlet_nvt_hoover<gpu_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_float_3d, device ) {
     verlet_nvt_hoover<gpu_modules<3, float> >().test();
 }
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_dsfloat_2d, device ) {
+    verlet_nvt_hoover<gpu_modules<2, halmd::dsfloat> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_dsfloat_3d, device ) {
+    verlet_nvt_hoover<gpu_modules<3, halmd::dsfloat> >().test();
+}
+# endif
 #endif // HALMD_WITH_GPU

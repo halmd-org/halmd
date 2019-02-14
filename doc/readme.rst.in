@@ -7,17 +7,18 @@ has been specifically designed to support acceleration through `CUDA
 <http://en.wikipedia.org/wiki/CUDA>`_-enabled graphics processors.
 
 *HAL’s MD package* is maintained and developed by `Felix Höfling
-<http://www.is.mpg.de/dietrich/hoefling>`_ and was initially written together
+<http://page.mi.fu-berlin.de/hoefling>`_ and was initially written together
 with Peter Colberg. Special credit goes to `Nicolas Höft
-<http://www2.thphy.uni-duesseldorf.de/~nhoeft>`_ for his many contributions.
+<http://www2.thphy.uni-duesseldorf.de/~nhoeft>`_ and `Daniel Kirchner
+<https://de.linkedin.com/in/daniel-kirchner-6024b375>`_ for their manifold
+contributions.
 
 .. note::
 
    A description of the implementation, performance tests, numerical stability
-   tests, and an application to the slow glassy dynamics of the Kob-Andersen
-   mixture is found in the article by Peter H. Colberg and Felix Höfling,
-   `Highly accelerated simulations of glassy dynamics using GPUs: Caveats on
-   limited floating-point precision
+   tests, and an application to slow glassy dynamics can be found in the
+   article by P. H. Colberg and F. Höfling, `Highly accelerated simulations of
+   glassy dynamics using GPUs: Caveats on limited floating-point precision
    <http://dx.doi.org/10.1016/j.cpc.2011.01.009>`_, Comput. Phys. Commun.
    **182**, 1120 (2011) `[arXiv:0912.3824] <http://arxiv.org/abs/0912.3824>`_.
 
@@ -60,7 +61,7 @@ Features
 
 * extensibility by the generic and modular design
 
-* free availability under GPL license
+* free software under LGPL-3+ license
 
 
 Technical features

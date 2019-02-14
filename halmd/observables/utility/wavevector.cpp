@@ -1,22 +1,24 @@
 /*
- * Copyright © 2011-2013  Felix Höfling
+ * Copyright © 2011-2018 Felix Höfling
  *
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <cmath>
 #include <exception>
 #include <iterator>
@@ -26,6 +28,7 @@
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/multi_index.hpp>
 
 using namespace std;
 
@@ -107,6 +110,90 @@ wavevector<dimension>::wavevector(
     LOG_DEBUG("total number of wavevectors found: " << wavevector_.size());
 }
 
+template <int dimension>
+wavevector<dimension>::wavevector(
+    vector<double> const& wavenumber
+  , vector_type const& box_length
+)
+  // initialise members
+  : wavenumber_(wavenumber)
+  , box_length_(box_length)
+  , tolerance_(0)
+  , max_count_(0)
+  , logger_(make_shared<logger>("wavevector"))
+{
+    typedef fixed_vector<int, dimension> index_type;
+
+    // sort wavenumber array
+    std::sort(begin(wavenumber_), end(wavenumber_));
+    double q_max = wavenumber_.back();
+
+    // determine unit cell in reciprocal lattice
+    // and number of grid points per dimension up up to q_max
+    vector_type unit_cell = element_div(vector_type(2 * M_PI), box_length_);
+    auto max_n = static_cast<index_type>(ceil(element_div(vector_type(q_max), unit_cell)));
+
+    LOG("construct dense grid of wavevectors");
+    LOG("maximum wavenumber: " << q_max);
+    LOG_DEBUG("grid points per dimension: " << (2 * max_n + index_type(1)));
+#ifndef NDEBUG
+    ostringstream s;
+    copy(begin(wavenumber_), end(wavenumber_), ostream_iterator<double>(s, " "));
+    LOG_DEBUG("wavenumber shells (upper bounds): " << s.str());
+#endif
+
+    // construct dense grid of wavevectors,
+    // loop over multi-index: -max_n[i] ≤ n[i] ≤ max_n[i]
+    for (index_type idx = -max_n; idx[dimension-1] <= max_n[dimension-1]; ) {
+        // wavevector: q[i] = n[i] * 2 \pi / L[i]
+        vector_type q = element_prod(unit_cell, static_cast<vector_type>(idx));
+        // apply |q| < q_max
+        if (inner_prod(q, q) < q_max * q_max) {
+            wavevector_.push_back(q);
+        }
+
+        // increment index tuple at end of loop,
+        // obey -max_n[j] ≤ idx[j] ≤ max_n[j]
+        ++idx[0];                            // always increment first 'digit' (element)
+        for (unsigned int j = 0; j < dimension - 1; ++j) {
+            if (idx[j] <= max_n[j]) {           // test upper bound
+                break;                          // still within range, exit loop
+            }
+            idx[j] = -max_n[j];                 // reset this 'digit'
+            ++idx[j+1];                         // increment next 'digit'
+        }
+    }
+    LOG_DEBUG("total number of wavevectors: " << wavevector_.size());
+
+    // partition into wavenumber shells
+    double q_lower = 0;
+    auto first = begin(wavevector_);
+    auto last = end(wavevector_);
+    auto start = first;
+    for (auto q_it = begin(wavenumber_); q_it != end(wavenumber_); ) {
+        // partition into wavevectors with norm smaller (<) and greater (≥) than q_bound,
+        // returned iterator points at second partition
+        double bound = (*q_it) * (*q_it);
+        auto next = std::partition(start, last, [=](vector_type const& q) { return inner_prod(q, q) < bound; } );
+
+        // if some wavevectors met the criterion
+        if (next != start) {
+            LOG_TRACE(next - start << " wavevectors in shell with " << q_lower << " ≤ |q| < " << *q_it);
+            shell_.push_back(std::make_pair(start - first, next - first));
+            start = next;
+            q_lower = *q_it++;
+        }
+        else {
+            // remove wavenumbers with empty wavevector shells,
+            // postpone deletion since we must not invalidate our loop iterator
+            LOG_WARNING("reciprocal lattice not compatible with " << q_lower << " ≤ |q| < " << *q_it << ", value discarded");
+            q_it = wavenumber_.erase(q_it);
+        }
+    }
+    assert(start == last);                        // no wavevectors left with |q| ≥ q_max
+    assert(wavenumber_.size() == shell_.size());  // correspondence between wavenumbers and shells
+}
+
 template <typename wavevector_type>
 static function<typename wavevector_type::wavevector_array_type const& ()>
 wrap_value(shared_ptr<wavevector_type const> self)
@@ -145,20 +232,19 @@ void wavevector<dimension>::luaopen(lua_State* L)
             namespace_("utility")
             [
                 class_<wavevector>()
-                    .def(constructor<
-                         vector<double> const&
-                       , vector_type const&
-                       , double, unsigned int
-                    >())
                     .property("wavenumber", &wrap_wavenumber<wavevector>)
                     .property("value", &wrap_value<wavevector>)
+                    .def("shell", &wavevector::shell)
                     .def("__eq", &equal<wavevector>) // operator= in Lua
-
               , def("wavevector", &make_shared<wavevector
                   , vector<double> const&
                   , vector_type const&
                   , double
                   , unsigned int
+                 >)
+              , def("wavevector", &make_shared<wavevector
+                  , vector<double> const&
+                  , vector_type const&
                  >)
             ]
         ]

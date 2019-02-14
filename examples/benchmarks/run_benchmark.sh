@@ -1,21 +1,22 @@
 #!/bin/bash
 #
-# Copyright © 2011-2012  Felix Höfling
+# Copyright © 2011-2017 Felix Höfling
 #
 # This file is part of HALMD.
 #
-# HALMD is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# HALMD is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
 #
 
 ##
@@ -33,10 +34,10 @@ BENCHMARK_NAME=$1
 COUNT=${2:-5}
 INPUT_FILE=${3:-"${BENCHMARK_NAME}/configuration.h5"}
 SUFFIX=${4:+_$4}
-DEVICE_NAME=${5:-$(nvidia-smi -a | sed -ne '/Product Name/{s/.*Tesla \([A-Z][0-9]\+\).*/\1/p;q}')}
+DEVICE_NAME=${5:-$(nvidia-smi -a | sed -ne '/Product Name/{s/.*: [A-Za-z]* \(.*\)/\1/;s/ //g;p;q}')}
 HALMD_OPTIONS=$6
 
-HALMD_VERSION=$(halmd --version | cut -c 26- | sed -e '1s/-patch.* \([a-z0-9]\+\)\]/-g\1/;q')
+HALMD_VERSION=$(halmd --version | cut -f 5- -d ' ' | sed -e '1s/-patch.* \([a-z0-9]\+\)\]/-g\1/;q')
 BENCHMARK_TAG="${DEVICE_NAME}_${HALMD_VERSION}${SUFFIX}"
 
 SCRIPT="${SCRIPT_DIR}/${BENCHMARK_NAME}/run_benchmark.lua"
@@ -49,12 +50,6 @@ halmd ${HALMD_OPTIONS} "${SCRIPT}" \
   --count "${COUNT}" \
   --verbose
 
-TIMINGS=$(sed -n -e 's/.*MD integration step: \([0-9.]*\).*/\1/p' "${OUTPUT}.log")
-PARTICLES=$(sed -n -e '/number of particles/{s/.*: \([0-9]*\).*/\1/p;q}' "${OUTPUT}.log")
-echo -e "$TIMINGS" | gawk -v N=$PARTICLES '{a += $1; n+=1}END{\
-    a = a/n;
-    print N, "particles"; \
-    print a, "ms per step"; \
-    print 1e6*a/N, "ns per step and particle"; \
-    print 1000/a, "steps per second" \
-}'
+# print results
+/bin/bash ${SCRIPT_DIR}/print_timings.sh "${OUTPUT}.log"
+

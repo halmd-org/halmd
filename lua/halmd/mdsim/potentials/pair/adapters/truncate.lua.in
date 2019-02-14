@@ -1,0 +1,307 @@
+--
+-- Copyright © 2017 Felix Höfling
+-- Copyright © 2016 Daniel Kirchner
+-- Copyright © 2012 Peter Colberg
+-- Copyright © 2012 Nicolas Höft
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+local device  = require("halmd.utility.device")
+local numeric = require("halmd.numeric")
+local utility = require("halmd.utility")
+
+local force_shifted = { host = libhalmd.mdsim.host.potentials.pair.force_shifted }
+local smooth_r4 = { host = libhalmd.mdsim.host.potentials.pair.smooth_r4 }
+local sharp = { host = libhalmd.mdsim.host.potentials.pair.sharp }
+local shifted = { host = libhalmd.mdsim.host.potentials.pair.shifted }
+
+if device.gpu then
+    force_shifted.gpu = force_shifted.host and assert(libhalmd.mdsim.gpu.potentials.pair.force_shifted)
+    sharp.gpu = sharp.host and assert(libhalmd.mdsim.gpu.potentials.pair.sharp)
+    smooth_r4.gpu = smooth_r4.host and assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
+    shifted.gpu = shifted.host and assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
+end
+
+---
+-- .. _pair_potential_truncations:
+--
+-- Potential truncations
+-- =====================
+--
+-- sharp
+-- -----
+--
+-- Create sharp truncation by setting the potential to zero for particle
+-- distances :math:`r` larger than the cutoff distance :math:`r_c`, i.e., by multiplying
+-- with a step function:
+--
+-- .. math::
+--
+--   \tilde U(r) = U(r) \Theta(r_c - r)
+--
+-- Both potential and force are discontinuous at the cutoff.
+--
+-- Example::
+--
+--     potential = potential:truncate({"sharp", cutoff = 4})
+--
+--
+-- shifted
+-- -------
+--
+-- Amend the sharp truncation by an energy shift such that the potential is
+-- continuous at the cutoff distance :math:`r_c`:
+--
+-- .. math::
+--
+--   \tilde U(r) = [U(r) - U(r_c)] \Theta(r_c - r)
+--
+-- The force is not affected by this and remains discontinuous at the cutoff.
+--
+-- Example::
+--
+--     potential = potential:truncate({"shifted", cutoff = 2.5})
+--
+--
+-- force_shifted
+-- -------------
+--
+-- Amend the energy-shifted potential by a linear term, effectively shifting
+-- the force to zero at the cutoff distance :math:`r_c`:
+--
+-- .. math::
+--
+--   \tilde U(r) = [U(r) - U(r_c) - (r - r_c) U'(r_c)] \Theta(r_c - r)
+--
+-- Both energy and force are continuous at the cutoff. Note that this
+-- modification globally tilts the potential with possible physical
+-- implications for, e.g., phase diagrams.
+--
+-- Example::
+--
+--     potential = potential:truncate({"force_shifted", cutoff = 2.5})
+--
+--
+-- .. _smooth_r4:
+--
+-- smooth_r4
+-- ---------
+--
+-- Truncate the potential :math:`U(r)` such that it remains a C²-continuous
+-- function at the cutoff, i.e., the force being continuously differentiable.
+-- As a consequence, momentum and energy drift are drastically diminished
+-- even from long runs using symplectic integrators such as
+-- :class:`halmd.mdsim.integrators.verlet`.
+--
+-- The truncation is implemented by multiplication of the energy-shifted
+-- potential with the local smoothing function
+--
+-- .. math::
+--
+--   g(\xi) = \frac{\xi^4}{1 + \xi^4}, \qquad \xi = \frac{r - r_c}{h r_c} \,,
+--
+-- where :math:`r_c` is the cutoff distance, and the dimensionless parameter
+-- :math:`h \ll 1` controls the the range of smoothing. The C²-continuous
+-- truncated potential then reads
+--
+-- .. math::
+--
+--   \tilde U(r) = [U(r) - U(r_c)] \, g\left(\frac{r - r_c}{h r_c}\right) \Theta(r_c - r),
+--
+-- and the C¹-continuous force is
+--
+-- .. math::
+--
+--   \lvert\tilde{\vec{F}}\left(\vec{r}\right)\rvert =
+--     \lvert\vec{F}\left(\vec{r}\right)\rvert g\left(\frac{r - r_c}{h r_c}\right)
+--     - \frac{1}{h r_c} U\left(r\right) g^\prime\left(\frac{r - r_c}{h r_c}\right)
+--     \Theta(r_c - r)
+--
+-- with the derivative of the smoothing function
+-- :math:`g^\prime(\xi) = 4 \xi^3 \bigl(1 + \xi^4\bigr)^{-2}`.
+--
+-- Example::
+--
+--     potential = potential:truncate({"smooth_r4", cutoff = 2.5, h = 0.005})
+--
+-- The following figure shows unmodified and C²-smooth variants of the
+-- Weeks-Chandler-Andersen potential, the repulsive part of the Lennard-Jones
+-- potential sharply cutoff at :math:`r_c = \sqrt[6]{2}`.
+--
+-- .. plot::
+--
+--   import numpy
+--   import matplotlib
+--   from matplotlib import pyplot as plot
+--
+--   matplotlib.rc('figure', figsize=(6, 5))
+--   matplotlib.rc('text', usetex=True)
+--   matplotlib.rc('font', size=12)
+--
+--   # Lennard Jones potential
+--   V = lambda r: 4 * (pow(r, -12) - pow(r, -6))
+--   # truncated Lennard-Jones potential
+--   V_c = lambda r, r_c: numpy.piecewise(r, [r < r_c, r >= r_c], [lambda r: V(r) - V(r_c), 0])
+--
+--   # smoothing function
+--   g_xi = lambda xi: pow(xi, 4) / (1 + pow(xi, 4))
+--   # smoothing function with scale parameter
+--   g = lambda r, r_c, h: g_xi((r - r_c) / (h * r_c))
+--
+--   # smoothed Lennard-Jones potential
+--   V_s = lambda r, r_c, h: g(r, r_c, h) * V_c(r, r_c)
+--
+--   # particle distance
+--   r = numpy.linspace(1, 1.4, 1000)
+--   # cutoff distance
+--   r_c = pow(2, 1./6)
+--   # smoothing function scale parameters
+--   h = (0.002, 0.005, 0.010)
+--
+--   # plot potentials
+--   ax = plot.axes()
+--   ax.axhline(0, 0, 1, color="k", lw=0.5, ls="--")
+--   ax.plot(r, V_c(r, r_c), label=r"$h \rightarrow 0$")
+--   for h in h:
+--       ax.plot(r, V_s(r, r_c, h), label=r"$h = {0:.3f}$".format(h))
+--
+--   ax.legend(loc="upper right")
+--
+--   major_formatter = matplotlib.ticker.ScalarFormatter()
+--   ax.yaxis.set_major_formatter(major_formatter)
+--
+--   plot.setp(ax, xlim=(1.08, 1.14 + 1e-15))
+--   plot.setp(ax, ylim=(-0.00499, 0.03 + 1e-15))
+--
+--   plot.xlabel(r"$r / \sigma$")
+--   plot.ylabel(r"$U(r) / \epsilon$")
+--   plot.show()
+--
+--
+-- The following figure shows the absolute value of the force.
+--
+-- .. plot::
+--
+--   import numpy
+--   import matplotlib
+--   from matplotlib import pyplot as plot
+--
+--   matplotlib.rc('figure', figsize=(6, 5))
+--   matplotlib.rc('text', usetex=True)
+--   matplotlib.rc('font', size=12)
+--
+--   # Lennard Jones potential
+--   V = lambda r: 4 * (pow(r, -12) - pow(r, -6))
+--   # truncated Lennard-Jones potential
+--   V_c = lambda r, r_c: numpy.piecewise(r, [r < r_c, r >= r_c], [lambda r: V(r) - V(r_c), 0])
+--   # Lennard Jones force
+--   F = lambda r: 48 * (pow(r, -14) - 0.5*pow(r, -8))
+--   # truncated Lennard-Jones force
+--   F_c = lambda r, r_c: numpy.piecewise(r, [r < r_c, r >= r_c], [F, 0])
+--
+--   # smoothing function
+--   g_xi = lambda xi: pow(xi, 4) / (1 + pow(xi, 4))
+--   # smoothing function with scale parameter
+--   g = lambda r, r_c, h: g_xi((r - r_c) / (h * r_c))
+--   # first derivative of smoothing function
+--   Dg_xi = lambda xi: 4 * pow(xi, 3) / pow(1 + pow(xi, 4), 2)
+--   # first derivative of smoothing function with scale parameter
+--   Dg = lambda r, r_c, h: Dg_xi((r - r_c) / (h * r_c)) / (h * r_c)
+--
+--   # smoothed Lennard-Jones force
+--   F_s = lambda r, r_c, h: F_c(r, r_c) * g(r, r_c, h) - V_c(r, r_c) * Dg(r, r_c, h)
+--
+--   # particle distance
+--   r = numpy.linspace(1, 1.4, 1000)
+--   # cutoff distance
+--   r_c = pow(2, 1./6)
+--   # smoothing function scale parameters
+--   h = (0.002, 0.005, 0.010)
+--
+--   # plot forces
+--   ax = plot.axes()
+--   ax.axhline(0, 0, 1, color="k", lw=0.5, ls="--")
+--   ax.plot(r, F_c(r, r_c), label=r"$h \rightarrow 0$")
+--   for h in h:
+--       ax.plot(r, F_s(r, r_c, h), label=r"$h = {0:.3f}$".format(h))
+--
+--   ax.legend(loc="upper right")
+--
+--   major_formatter = matplotlib.ticker.ScalarFormatter()
+--   ax.yaxis.set_major_formatter(major_formatter)
+--
+--   plot.setp(ax, xlim=(1.08, 1.14 + 1e-15))
+--   plot.setp(ax, ylim=(-0.25, 2))
+--
+--   plot.xlabel(r"$r / \sigma$")
+--   plot.ylabel(r"$|\vec{F}(\vec{r})| / \epsilon \sigma^{-1}$")
+--   plot.show()
+--
+
+-- set up metatable that does the actual transformation
+local truncate_table = {}
+
+if force_shifted.host then
+    truncate_table.force_shifted = function(potential, cutoff, args)
+        return force_shifted[potential.memory](cutoff, potential)
+    end
+end
+if sharp.host then
+    truncate_table.sharp = function(potential, cutoff, args)
+        return sharp[potential.memory](cutoff, potential)
+    end
+end
+if shifted.host then
+    truncate_table.shifted = function(potential, cutoff, args)
+        return shifted[potential.memory](cutoff, potential)
+    end
+end
+if smooth_r4.host then
+    truncate_table.smooth_r4 = function(potential, cutoff, args)
+        local h = utility.assert_type(utility.assert_kwarg(args, "h"), "number")
+        return smooth_r4[potential.memory](cutoff, h, potential)
+    end
+end
+
+truncate_table = setmetatable(truncate_table, {
+    __index = function(tbl, key)
+        error("invalid truncation type '" .. key .. "'", 2)
+    end
+})
+
+local M = function(potential, args)
+    local cutoff = utility.assert_kwarg(args, "cutoff")
+    local trunctype = args[1] or "shifted"
+    if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
+        error("bad argument 'cutoff'", 2)
+    end
+    if type(cutoff) == "number" then
+        cutoff = numeric.scalar_matrix(potential.species, potential.species, cutoff)
+    end
+
+    local newpot = truncate_table[trunctype](potential, cutoff, args)
+    newpot.description = trunctype .. " " .. potential.description
+    newpot.species = potential.species
+    newpot.memory = potential.memory
+    newpot.logger = potential.logger
+    newpot.truncate = potential.truncate
+    newpot.modify = potential.modify
+    return newpot
+end
+
+return M

@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_OBSERVABLES_GPU_PHASE_SPACE_KERNEL_CUH
@@ -39,16 +40,47 @@ struct phase_space_wrapper
     cuda::texture<float4> r;
     /** minimum image vectors */
     cuda::texture<coalesced_vector_type> image;
-    /** velocities, tags */
-    cuda::texture<float4> v;
-    /** sample phase space for all particle of a single species */
-    cuda::function<void (unsigned int const*, float4*, float4*, vector_type, unsigned int)> sample;
+    /** sample position for all particle of a single species */
+    cuda::function<void (unsigned int const*, float4*, vector_type, unsigned int)> sample_position;
     /** shift particle positions to range (-L/2, L/2) */
     cuda::function<void (unsigned int const*, float4*, coalesced_vector_type*, vector_type, unsigned int)> reduce_periodic;
-    /** copy particle group from GPU to host memory */
-    cuda::function<void (unsigned int const*, unsigned int*, unsigned int size)> copy_particle_group;
 
     static phase_space_wrapper const kernel;
+};
+
+namespace detail {
+
+template<typename T>
+struct sample_ptr_type
+{
+    typedef T* ptr_type;
+};
+
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template<size_t dimension>
+struct sample_ptr_type<fixed_vector<dsfloat, dimension> >
+{
+    typedef typename mdsim::type_traits<dimension, dsfloat>::gpu::ptr_type ptr_type;
+};
+
+template<>
+struct sample_ptr_type<dsfloat> : sample_ptr_type<fixed_vector<dsfloat, 1> >
+{
+};
+#endif // USE_GPU_DOUBLE_SINGLE_PRECISION
+
+
+} // namespace detail
+
+template<typename input_data_type, typename sample_data_type = input_data_type>
+struct phase_space_sample_wrapper
+{
+    cuda::texture<sample_data_type> input;
+    typedef typename detail::sample_ptr_type<input_data_type>::ptr_type ptr_type;
+    cuda::function<void (unsigned int const*, sample_data_type*, unsigned int)> sample;
+    cuda::function<void (unsigned int const*, ptr_type, unsigned int)> set;
+
+    static phase_space_sample_wrapper const kernel;
 };
 
 template <int dimension>

@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/io/logger.hpp>
@@ -58,16 +59,18 @@ typename max_displacement_wrapper<dimension>::displacement_impl_type
 max_displacement<dimension, float_type>::get_displacement_impl(int threads)
 {
     switch (threads) {
-      case 512:
+      case 1024:
         return max_displacement_wrapper<dimension>::kernel.displacement_impl[0];
-      case 256:
+      case 512:
         return max_displacement_wrapper<dimension>::kernel.displacement_impl[1];
-      case 128:
+      case 256:
         return max_displacement_wrapper<dimension>::kernel.displacement_impl[2];
-      case 64:
+      case 128:
         return max_displacement_wrapper<dimension>::kernel.displacement_impl[3];
-      case 32:
+      case 64:
         return max_displacement_wrapper<dimension>::kernel.displacement_impl[4];
+      case 32:
+        return max_displacement_wrapper<dimension>::kernel.displacement_impl[5];
       default:
         throw std::logic_error("invalid reduction thread count");
     }
@@ -80,12 +83,12 @@ template <int dimension, typename float_type>
 void max_displacement<dimension, float_type>::zero()
 {
     cache<position_array_type> const& position_cache = particle_->position();
-    position_array_type const& position = read_cache(position_cache);
+    cuda::vector<float4> const& position = read_cache(position_cache);
 
     LOG_TRACE("zero maximum squared displacement");
 
     scoped_timer_type timer(runtime_.zero);
-    cuda::copy(position.begin(), position.end(), g_r0_.begin());
+    cuda::copy(position.begin(), position.begin() + particle_->nparticle(), g_r0_.begin());
     displacement_ = 0;
     position_cache_ = position_cache;
 }
@@ -111,7 +114,7 @@ float_type max_displacement<dimension, float_type>::compute()
               , dim_reduce_.threads_per_block() * sizeof(float)
             );
             displacement_impl_(
-                &*position.begin()
+                position.data()
               , g_r0_
               , g_rr_
               , particle_->nparticle()
@@ -155,14 +158,26 @@ void max_displacement<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_max_displacement(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     max_displacement<3, float>::luaopen(L);
     max_displacement<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    max_displacement<3, dsfloat>::luaopen(L);
+    max_displacement<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class max_displacement<3, float>;
 template class max_displacement<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class max_displacement<3, dsfloat>;
+template class max_displacement<2, dsfloat>;
+#endif
 
 } // namespace mdsim
 } // namespace gpu

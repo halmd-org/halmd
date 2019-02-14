@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <boost/bind.hpp>
@@ -59,7 +60,7 @@ binning<dimension, float_type>::binning(
             r_cut_max = std::max(r_cut_skin(i, j), r_cut_max);
         }
     }
-    vector_type L = box->length();
+    vector_type L = static_cast<vector_type>(box->length());
     ncell_ = element_max(static_cast<cell_size_type>(L / r_cut_max), cell_size_type(1));
 
     auto cell = make_cache_mutable(cell_);

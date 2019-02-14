@@ -6,24 +6,21 @@
 -- This file is part of HALMD.
 --
 -- HALMD is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- GNU Lesser General Public License for more details.
 --
--- You should have received a copy of the GNU General Public License
--- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
 --
-
-local halmd = require("halmd")
-local rescale_velocity = require("rescale_velocity")
 
 -- grab modules
-local log = halmd.io.log
 local mdsim = halmd.mdsim
 local numeric = halmd.numeric
 local observables = halmd.observables
@@ -34,7 +31,7 @@ local writers = halmd.io.writers
 --
 -- Setup and run simulation
 --
-local function liquid(args)
+function main(args)
     -- open H5MD file for reading
     local file = readers.h5md({path = args.input})
 
@@ -61,15 +58,16 @@ local function liquid(args)
     local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = nspecies})
 
     -- smoothly truncated Lennard-Jones potential
-    local potential = mdsim.potentials.pair.lennard_jones({cutoff = args.cutoff, species = particle.nspecies})
+    local potential = mdsim.potentials.pair.lennard_jones({species = particle.nspecies})
     -- smooth truncation
-    local trunc
     if args.smoothing > 0 then
-        trunc = mdsim.forces.trunc.local_r4({h = args.smoothing})
+        potential = potential:truncate({"smooth_r4", cutoff = args.cutoff, h = args.smoothing})
+    else
+        potential = potential:truncate({cutoff = args.cutoff})
     end
     -- compute forces
-    local force = mdsim.forces.pair_trunc({
-        box = box, particle = particle, potential = potential, trunc = trunc
+    local force = mdsim.forces.pair({
+        box = box, particle = particle, potential = potential
     })
 
     -- add velocity-Verlet integrator
@@ -83,7 +81,7 @@ local function liquid(args)
     local steps = math.ceil(args.time / args.timestep)
 
     -- H5MD file writer
-    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
@@ -131,7 +129,7 @@ local function liquid(args)
         })
 
         -- compute density modes and output their time series,
-        local density_mode = observables.density_mode({group = particle_group, wavevector = wavevector})
+        density_mode = observables.density_mode({group = particle_group, wavevector = wavevector})
         if interval > 0 then
             density_mode:writer({file = file, every = interval})
         end
@@ -158,7 +156,7 @@ local function liquid(args)
 
     -- time correlation functions
     local interval = args.sampling.correlation
-    if interval > 0 and density_mode then
+    if interval > 0 then
         -- setup blocking scheme
         local max_lag = steps * integrator.timestep / 10
         local blocking_scheme = dynamics.blocking_scheme({
@@ -176,34 +174,17 @@ local function liquid(args)
         -- compute velocity autocorrelation function
         local vacf = dynamics.velocity_autocorrelation({phase_space = phase_space})
         blocking_scheme:correlation({tcf = vacf, file = file})
-        -- compute intermediate scattering function
-        local isf = dynamics.intermediate_scattering_function({density_mode = density_mode, norm = nparticle})
-        blocking_scheme:correlation({tcf = isf, file = file })
 
-        -- compute interdiffusion coefficient
-        local selfdiffusion = dynamics.correlation({
-            -- acquire centre of mass
-            acquire = function()
-                return msv:center_of_mass()
-            end
-            -- correlate centre of mass at first and second point in time
-          , correlate = function(first, second)
-                local result = 0
-                for i = 1, #first do
-                    result = result + math.pow(second[i] - first[i], 2)
-                end
-                return result
-            end
-            -- file location
-          , location = {"dynamics", particle_group.label, "selfdiffusion"}
-            -- module description
-          , desc = "selfdiffusion coefficient of A particles"
-        })
-        blocking_scheme:correlation({tcf = selfdiffusion, file = file})
+        if density_mode then
+            -- compute intermediate scattering function
+            local isf = dynamics.intermediate_scattering_function({density_mode = density_mode, norm = nparticle})
+            blocking_scheme:correlation({tcf = isf, file = file })
+        end
     end
 
     -- rescale velocities of all particles
     if args.rescale_to_energy then
+        local rescale_velocity = require("rescale_velocity")
         rescale_velocity({msv = msv, internal_energy = args.rescale_to_energy})
     end
 
@@ -225,24 +206,10 @@ end
 --
 -- Parse command-line arguments.
 --
-local function parse_args()
-    local parser = halmd.utility.program_options.argument_parser()
-
-    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
-        -- substitute current time
-        args[key] = os.date(value)
-    end, default = "lennard_jones_%Y%m%d_%H%M%S", help = "prefix of output files"})
-
-    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
-        local level = {
-            -- console, file
-            {"warning", "info" },
-            {"info"   , "info" },
-            {"debug"  , "debug"},
-            {"trace"  , "trace"},
-        }
-        args[key] = level[value] or level[#level]
-    end, default = 1, help = "increase logging verbosity"})
+function define_args(parser)
+    parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
+        default = "lennard_jones_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("input", {type = "string", required = true, action = function(args, key, value)
         readers.h5md.check(value)
@@ -265,18 +232,4 @@ local function parse_args()
     local wavevector = parser:add_argument_group("wavevector", {help = "wavevector shells in reciprocal space"})
     observables.utility.wavevector.add_options(wavevector, {tolerance = 0.01, max_count = 7})
     observables.utility.semilog_grid.add_options(wavevector, {maximum = 15, decimation = 0})
-
-    return parser:parse_args()
 end
-
-local args = parse_args()
-
--- log to console
-halmd.io.log.open_console({severity = args.verbose[1]})
--- log to file
-halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
--- log version
-halmd.utility.version.prologue()
-
--- run simulation
-liquid(args)

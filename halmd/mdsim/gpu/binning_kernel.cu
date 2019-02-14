@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/mdsim/gpu/binning_kernel.hpp>
@@ -66,7 +67,11 @@ __global__ void compute_cell(
     fixed_vector<float, dimension> r;
     unsigned int type;
     tie(r, type) <<= g_r[GTID];
-    g_cell[GTID] = compute_cell_index(r, cell_length, ncell);
+    if (type == -1U) {
+        g_cell[GTID] = -1U;
+    } else {
+        g_cell[GTID] = compute_cell_index(r, cell_length, ncell);
+    }
 }
 
 /**
@@ -90,8 +95,8 @@ __global__ void assign_cells(
     int* g_ret
   , unsigned int const* g_cell
   , unsigned int const* g_cell_offset
-  , unsigned int const* g_itag
-  , unsigned int* g_otag
+  , unsigned int const* g_iid
+  , unsigned int* g_oid
   , unsigned int const nbox
   , unsigned int const cell_size
 )
@@ -111,17 +116,17 @@ __global__ void assign_cells(
         // global offset of this thread's particle
         const unsigned int n = offset + i;
         // mark as virtual particle
-        unsigned int tag = particle_kernel::placeholder;
+        unsigned int id = particle_kernel::placeholder;
         // mark as real particle if appropriate
         if (offset != particle_kernel::placeholder && n < nbox && g_cell[n] == BID) {
-            tag = g_itag[n];
+            id = g_iid[n];
         }
         // return failure if any cell list is fully occupied
-        if (tag != particle_kernel::placeholder && (i + 1) == cell_size) {
+        if (id != particle_kernel::placeholder && (i + 1) == cell_size) {
             *g_ret = EXIT_FAILURE;
         }
         // store particle in this block's cell
-        g_otag[BID * cell_size + i] = tag;
+        g_oid[BID * cell_size + i] = id;
     }
 }
 

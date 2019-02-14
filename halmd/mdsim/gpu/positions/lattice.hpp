@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_GPU_POSITIONS_LATTICE_HPP
@@ -35,10 +36,11 @@ namespace mdsim {
 namespace gpu {
 namespace positions {
 
-template <int dimension, typename float_type>
+template <int dimension, typename float_type_>
 class lattice
 {
 public:
+    typedef float_type_ float_type;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef typename particle_type::vector_type vector_type;
@@ -76,12 +78,12 @@ private:
     typename box_type::vector_type slab_;
 
     /**
-     *  assign range of particle positions [first, last) to fcc lattice
+     *  assign range of particle positions [first, first+npart) to fcc lattice
      *  of extents 'length' with origin at 'offset'
      */
     template <typename position_iterator>
     void fcc(
-        position_iterator first, position_iterator last
+        position_iterator first, size_t npart
       , gpu_vector_type const& length, gpu_vector_type const& offset
     );
 

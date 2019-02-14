@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/io/logger.hpp>
@@ -42,8 +43,8 @@ void velocity_autocorrelation<dimension, float_type>::operator() (
 )
 {
     accumulator<result_type> acc;
-    typename sample_type::position_array_type::const_iterator v1, v2, end = first.velocity().end();
-    for (v1 = first.velocity().begin(), v2 = second.velocity().begin(); v1 != end; ++v1, ++v2) {
+    typename sample_type::array_type::const_iterator v1, v2, end = first.data().end();
+    for (v1 = first.data().begin(), v2 = second.data().begin(); v1 != end; ++v1, ++v2) {
         // accumulate velocity autocorrelation
         acc(correlate_function_type()(*v1, *v2));
     }

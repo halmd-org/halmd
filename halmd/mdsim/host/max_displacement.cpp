@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <algorithm>
@@ -51,7 +52,7 @@ void max_displacement<dimension, float_type>::zero()
     cache<position_array_type> const& position_cache = particle_->position();
     position_array_type const& position = read_cache(position_cache);
     scoped_timer_type timer(runtime_.zero);
-    std::copy(position.begin(), position.end(), r0_.begin());
+    std::copy(position.begin(), position.begin() + particle_->nparticle(), r0_.begin());
     displacement_ = 0;
     position_cache_ = position_cache;
 }

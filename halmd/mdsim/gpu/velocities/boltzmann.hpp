@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_HPP
@@ -30,6 +31,7 @@
 #include <halmd/mdsim/gpu/velocities/boltzmann_kernel.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/random/gpu/random.hpp>
+#include <halmd/utility/gpu/dsfloat_cuda_vector.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -80,11 +82,7 @@ private:
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef typename random_type::rng_type rng_type;
-#ifdef USE_VERLET_DSFUN
-    typedef boltzmann_wrapper<dimension, dsfloat, rng_type> wrapper_type;
-#else
-    typedef boltzmann_wrapper<dimension, float, rng_type> wrapper_type;
-#endif
+    typedef boltzmann_wrapper<dimension, float_type, rng_type> wrapper_type;
     typedef typename wrapper_type::gaussian_impl_type gaussian_impl_type;
 
     static gaussian_impl_type get_gaussian_impl(int threads);
@@ -100,7 +98,7 @@ private:
     /** temperature */
     float_type temp_;
     /** block sum of momentum */
-    cuda::vector<gpu_vector_type> g_mv_;
+    dsfloat_cuda_vector<gpu_vector_type> g_mv_;
     /** block sum of kinetic energy without 1/2 */
     cuda::vector<dsfloat> g_mv2_;
     /** block sum of mass */

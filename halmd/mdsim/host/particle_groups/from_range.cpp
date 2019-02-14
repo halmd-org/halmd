@@ -6,17 +6,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/algorithm/host/radix_sort.hpp>
@@ -52,10 +53,10 @@ typename from_range<particle_type>::range_type const&
 from_range<particle_type>::check_range(range_type const& range)
 {
     if (range.second <= range.first) {
-        throw std::invalid_argument("particle_group: inverse tag ranges not allowed");
+        throw std::invalid_argument("particle_group: inverse ID ranges not allowed");
     }
     if (range.second > particle_->nparticle()) {
-        throw std::invalid_argument("particle_group: tag range exceeds particle array");
+        throw std::invalid_argument("particle_group: ID range exceeds particle array");
     }
     return range;
 }
@@ -64,17 +65,17 @@ template <typename particle_type>
 cache<typename from_range<particle_type>::array_type> const&
 from_range<particle_type>::ordered()
 {
-    cache<array_type> const& reverse_tag_cache = particle_->reverse_tag();
-    if (ordered_cache_ != reverse_tag_cache) {
+    cache<array_type> const& reverse_id_cache = particle_->reverse_id();
+    if (ordered_cache_ != reverse_id_cache) {
         LOG_TRACE("ordered sequence of particle indices");
-        array_type const& reverse_tag = read_cache(reverse_tag_cache);
+        array_type const& reverse_id = read_cache(reverse_id_cache);
         auto ordered = make_cache_mutable(ordered_);
         std::copy(
-            reverse_tag.begin() + range_.first
-          , reverse_tag.begin() + range_.second
+            reverse_id.begin() + range_.first
+          , reverse_id.begin() + range_.second
           , ordered->begin()
         );
-        ordered_cache_ = reverse_tag_cache;
+        ordered_cache_ = reverse_id_cache;
     }
     return ordered_;
 }
@@ -83,21 +84,21 @@ template <typename particle_type>
 cache<typename from_range<particle_type>::array_type> const&
 from_range<particle_type>::unordered()
 {
-    cache<array_type> const& reverse_tag_cache = particle_->reverse_tag();
-    if (unordered_cache_ != reverse_tag_cache) {
+    cache<array_type> const& reverse_id_cache = particle_->reverse_id();
+    if (unordered_cache_ != reverse_id_cache) {
         LOG_TRACE("unordered sequence of particle indices");
-        array_type const& reverse_tag = read_cache(reverse_tag_cache);
+        array_type const& reverse_id = read_cache(reverse_id_cache);
         auto unordered = make_cache_mutable(unordered_);
         std::copy(
-            reverse_tag.begin() + range_.first
-          , reverse_tag.begin() + range_.second
+            reverse_id.begin() + range_.first
+          , reverse_id.begin() + range_.second
           , unordered->begin()
         );
         radix_sort(
             unordered->begin()
           , unordered->end()
         );
-        unordered_cache_ = reverse_tag_cache;
+        unordered_cache_ = reverse_id_cache;
     }
     return unordered_;
 }
@@ -111,7 +112,7 @@ from_range<particle_type>::size()
 
 /**
  * This function serves as a Lua wrapper around the C++ constructor,
- * converting from a 1-based particle tag range to a 0-based range.
+ * converting from a 1-based particle ID range to a 0-based range.
  */
 template <typename particle_type>
 static std::shared_ptr<from_range<particle_type> >

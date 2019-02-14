@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <algorithm>
@@ -22,6 +23,7 @@
 #include <memory>
 
 #include <halmd/mdsim/gpu/integrators/verlet.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -41,7 +43,7 @@ verlet<dimension, float_type>::verlet(
   , box_(box)
   , logger_(logger)
   // reference CUDA C++ verlet_wrapper
-  , wrapper_(&verlet_wrapper<dimension>::wrapper)
+  , wrapper_(&verlet_wrapper<dimension, float_type>::wrapper)
 {
     set_timestep(timestep);
 }
@@ -73,12 +75,12 @@ void verlet<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        configure_kernel(wrapper_->integrate, particle_->dim(), true);
         wrapper_->integrate(
-            &*position->begin()
-          , &*image->begin()
-          , &*velocity->begin()
-          , &*force.begin()
+            position->data()
+          , image->data()
+          , velocity->data()
+          , force.data()
           , timestep_
           , static_cast<vector_type>(box_->length())
         );
@@ -106,10 +108,10 @@ void verlet<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        configure_kernel(wrapper_->finalize, particle_->dim(), true);
         wrapper_->finalize(
-            &*velocity->begin()
-          , &*force.begin()
+            velocity->data()
+          , force.data()
           , timestep_
         );
         cuda::thread::synchronize();
@@ -156,14 +158,26 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     verlet<3, float>::luaopen(L);
     verlet<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    verlet<3, dsfloat>::luaopen(L);
+    verlet<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class verlet<3, float>;
 template class verlet<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class verlet<3, dsfloat>;
+template class verlet<2, dsfloat>;
+#endif
 
 } // namespace mdsim
 } // namespace gpu

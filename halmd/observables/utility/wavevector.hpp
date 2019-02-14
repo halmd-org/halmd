@@ -1,20 +1,21 @@
 /*
- * Copyright © 2011-2013 Felix Höfling
+ * Copyright © 2011-2018 Felix Höfling
  *
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_OBSERVABLES_UTILITY_WAVEVECTOR_HPP
@@ -47,12 +48,34 @@ public:
 
     static void luaopen(lua_State* L);
 
-    // constructor
+    /**
+     * construction of sparse wavevector grid
+     *
+     * For each wavenumber given, find at most `max_count` wavevectors on the
+     * reciprocal lattice of the simulation box and group them in shells
+     * according to the wavenumber.
+     *
+     * Allow for a relative deviation of the wavenumber as given by `tolerance`.
+     */
     wavevector(
         std::vector<double> const& wavenumber
       , vector_type const& box_length
       , double tolerance
       , unsigned int max_count
+    );
+
+    /**
+     * construction of dense wavevector grid
+     *
+     * Set up all wavevectors @f$ \vec q @f$ on the reciprocal lattice of the
+     * simulation box up to the maximum wavenumber given, $f@ |\vec q| \leq
+     * q_{max} @f$. Group results in shells according to the wavenumbers given.
+     *
+     * Shells are half open sets: @f$ q_{i-1} \leq |\vec q| < q_i @f$.
+     */
+    wavevector(
+        std::vector<double> const& wavenumber
+      , vector_type const& box_length
     );
 
     //! returns tolerance on wavevector magnitude

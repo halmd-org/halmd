@@ -6,17 +6,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_VERSION_H
@@ -44,22 +45,28 @@
 # define _PROGRAM_VARIANT_2	_PROGRAM_VARIANT_1 ""
 #endif
 
-#ifdef USE_VERLET_DSFUN
-# define _PROGRAM_VARIANT_3	_PROGRAM_VARIANT_2 " +VERLET_DSFUN"
+#ifdef USE_GPU_SINGLE_PRECISION
+# define _PROGRAM_VARIANT_3	_PROGRAM_VARIANT_2 " +GPU_SINGLE_PRECISION"
 #else
 # define _PROGRAM_VARIANT_3	_PROGRAM_VARIANT_2 ""
 #endif
 
-#ifdef USE_FORCE_DSFUN
-# define _PROGRAM_VARIANT_4	_PROGRAM_VARIANT_3 " +FORCE_DSFUN"
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+# define _PROGRAM_VARIANT_4	_PROGRAM_VARIANT_3 " +GPU_DOUBLE_SINGLE_PRECISION"
 #else
 # define _PROGRAM_VARIANT_4	_PROGRAM_VARIANT_3 ""
 #endif
 
-#ifdef USE_HILBERT_ALT_3D
-# define PROGRAM_VARIANT	_PROGRAM_VARIANT_4 " +HILBERT_ALT_3D"
+#ifdef USE_FORCE_DSFUN
+# define _PROGRAM_VARIANT_5	_PROGRAM_VARIANT_4 " +FORCE_DSFUN"
 #else
-# define PROGRAM_VARIANT	_PROGRAM_VARIANT_4 ""
+# define _PROGRAM_VARIANT_5	_PROGRAM_VARIANT_4 ""
+#endif
+
+#ifdef USE_HILBERT_ALT_3D
+# define PROGRAM_VARIANT	_PROGRAM_VARIANT_5 " +HILBERT_ALT_3D"
+#else
+# define PROGRAM_VARIANT	_PROGRAM_VARIANT_5 ""
 #endif
 
 #define PROGRAM_DATE			"@PROGRAM_DATE@"

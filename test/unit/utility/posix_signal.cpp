@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #define BOOST_TEST_MODULE posix_signal
@@ -29,6 +30,7 @@
 #include <halmd/utility/timer.hpp>
 #include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
+#include <boost/version.hpp>
 
 using namespace boost;
 using namespace halmd;
@@ -141,11 +143,16 @@ HALMD_TEST_INIT( init_unit_test_suite )
 
     for (size_t i = 1, j = 1, t; j <= 144; t = j, j += i, i = t)
     {
+#if BOOST_VERSION >= 105900
+        typedef boost::function<void(int)> callback_type;
+#else
+        typedef callback1<int> callback_type;
+#endif
         master_test_suite().add( BOOST_PARAM_TEST_CASE(
-            callback1<int>(test_signal_wait(j)), signum.begin(), signum.end()
+            callback_type(test_signal_wait(j)), signum.begin(), signum.end()
         ) );
         master_test_suite().add( BOOST_PARAM_TEST_CASE(
-            callback1<int>(test_signal_poll(j)), signum.begin(), signum.end()
+            callback_type(test_signal_poll(j)), signum.begin(), signum.end()
         ) );
     }
 }

@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/mdsim/host/particle.hpp>
@@ -32,6 +33,7 @@ template <typename particle_type>
 all<particle_type>::all(std::shared_ptr<particle_type const> particle)
   : particle_(particle)
   , unordered_(particle_->nparticle())
+  , ordered_(particle_->nparticle())
   , size_(particle_->nparticle())
 {
     auto unordered = make_cache_mutable(unordered_);
@@ -42,7 +44,11 @@ template <typename particle_type>
 cache<typename all<particle_type>::array_type> const&
 all<particle_type>::ordered()
 {
-    return particle_->reverse_tag();
+    if (!(ordered_observer_ == particle_->reverse_id())) {
+        get_reverse_id(*particle_, make_cache_mutable(ordered_)->begin());
+        ordered_observer_ = particle_->reverse_id();
+    }
+    return ordered_;
 }
 
 template <typename particle_type>

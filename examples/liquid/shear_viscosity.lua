@@ -7,20 +7,20 @@
 -- This file is part of HALMD.
 --
 -- HALMD is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- GNU Lesser General Public License for more details.
 --
--- You should have received a copy of the GNU General Public License
--- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = require("halmd")
 local rescale_velocity = require("rescale_velocity")
 
 -- grab modules
@@ -30,11 +30,12 @@ local observables = halmd.observables
 local dynamics = halmd.observables.dynamics
 local readers = halmd.io.readers
 local writers = halmd.io.writers
+local utility = halmd.utility
 
 --
 -- Setup and run simulation
 --
-local function shear_viscosity(args)
+function main(args)
     local nparticle = 10000   -- total number of particles
     local equi_steps = 5e5    -- steps used to equilibrate the system
 
@@ -60,18 +61,15 @@ local function shear_viscosity(args)
     local potential = mdsim.potentials.pair.lennard_jones({cutoff = args.cutoff})
 
     -- compute forces
-    local force = mdsim.forces.pair_trunc({
+    local force = mdsim.forces.pair({
         box = box, particle = particle, potential = potential
     })
 
     -- H5MD file writer
-    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
-
-    -- sample phase space
-    local phase_space = observables.phase_space({box = box, group = particle_group})
 
     -- Sample macroscopic state variables.
     local msv = observables.thermodynamics({box = box, group = particle_group})
@@ -108,7 +106,7 @@ local function shear_viscosity(args)
     -- run equilibration
     observables.sampler:run(equi_steps)
     -- log profiler results
-    halmd.utility.profiler:profile()
+    utility.profiler:profile()
 
     integrator:disconnect()
     runtime:disconnect()
@@ -145,6 +143,13 @@ local function shear_viscosity(args)
         msv:writer({file = file, fields = {"internal_energy"}, every = interval})
     end
 
+    -- sample phase space, only the last state by default
+    local interval = args.sampling.trajectory or steps
+    if interval > 0 then
+        observables.phase_space({box = box, group = particle_group})
+            :writer({file = file, fields = {"position", "velocity"}, every = interval})
+    end
+
     -- replace thermostat integrator by NVE velocity-Verlet
     integrator = mdsim.integrators.verlet({
         box = box
@@ -175,31 +180,17 @@ local function shear_viscosity(args)
     observables.sampler:run(steps)
 
     -- log profiler results
-    halmd.utility.profiler:profile()
+    utility.profiler:profile()
 end
 
 --
--- Parse command-line arguments.
+-- Define command-line arguments.
 --
-local function parse_args()
-    local parser = halmd.utility.program_options.argument_parser()
+function define_args(parser)
 
-    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
-        -- substitute current time
-        args[key] = os.date(value)
-    end, default = "shear_viscosity_%Y%m%d", help = "prefix of output files"})
-    -- _%Y%m%d_%H%M%S
-
-    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
-        local level = {
-            -- console, file
-            {"warning", "info" },
-            {"info"   , "info" },
-            {"debug"  , "debug"},
-            {"trace"  , "trace"},
-        }
-        args[key] = level[value] or level[#level]
-    end, default = 1, help = "increase logging verbosity"})
+    parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
+        default = "shear_viscosity_%Y%m%d", help = "prefix of output files"})
+    parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("density", {type = "number", default = 0.8442, help = "particle number density"})
     parser:add_argument("cutoff", {type = "float32", default = 2.5, help = "potential cutoff radius"})
@@ -212,18 +203,4 @@ local function parse_args()
     local sampling = parser:add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})
     sampling:add_argument("trajectory", {type = "integer", help = "for trajectory"})
     sampling:add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
-
-    return parser:parse_args()
 end
-
-local args = parse_args()
-
--- log to console
-halmd.io.log.open_console({severity = args.verbose[1]})
--- log to file
-halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
--- log version
-halmd.utility.version.prologue()
-
--- run simulation
-shear_viscosity(args)

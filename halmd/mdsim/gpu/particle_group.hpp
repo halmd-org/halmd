@@ -1,22 +1,24 @@
 /*
  * Copyright © 2012      Peter Colberg
  * Copyright © 2012      Felix Höfling
+ * Copyright © 2016      Daniel Kirchner
  * Copyright © 2013-2015 Nicolas Höft
  *
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_GPU_PARTICLE_GROUP_HPP
@@ -28,6 +30,7 @@
 #include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_group_kernel.hpp>
 #include <halmd/utility/cache.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
@@ -49,6 +52,7 @@ class particle_group
 public:
     typedef cuda::vector<unsigned int> array_type;
     typedef array_type::value_type size_type;
+    typedef cuda::host::vector<size_type> host_array_type;
 
     /**
      * Returns ordered sequence of particle indices.
@@ -66,9 +70,29 @@ public:
     virtual cache<size_type> const& size() = 0;
 
     /**
+     * Returns ordered sequence of particle indices in host memory.
+     * If the stored cached copy of the indices is no longer valid,
+     * it is automatically updated from the GPU storage.
+     */
+    host_array_type const& ordered_host_cached()
+    {
+        if (!(ordered_observer_ == ordered())) {
+            auto const& indices = read_cache(ordered());
+            cached_ordered_.resize(indices.size());
+            cuda::copy(indices.begin(), indices.end(), cached_ordered_.begin());
+            ordered_observer_ = ordered();
+        }
+        return cached_ordered_;
+    }
+
+    /**
      * Bind class to Lua.
      */
     static void luaopen(lua_State* L);
+
+private:
+    host_array_type cached_ordered_;
+    cache<> ordered_observer_;
 };
 
 /**
@@ -234,6 +258,7 @@ get_stress_tensor(particle_type& particle, particle_group& group)
 template <typename particle_type>
 void particle_group_to_particle(particle_type const& particle_src, particle_group& group, particle_type& particle_dst)
 {
+    typedef typename particle_type::float_type float_type;
     enum { dimension = particle_type::force_type::static_size };
 
     if(*group.size() != particle_dst.nparticle()) {
@@ -246,20 +271,16 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
     auto image    = make_cache_mutable(particle_dst.image());
     auto velocity = make_cache_mutable(particle_dst.velocity());
 
-    particle_group_wrapper<dimension>::kernel.r.bind(read_cache(particle_src.position()));
-    particle_group_wrapper<dimension>::kernel.image.bind(read_cache(particle_src.image()));
-    particle_group_wrapper<dimension>::kernel.v.bind(read_cache(particle_src.velocity()));
+    particle_group_wrapper<dimension, float_type>::kernel.r.bind(read_cache(particle_src.position()));
+    particle_group_wrapper<dimension, float_type>::kernel.image.bind(read_cache(particle_src.image()));
+    particle_group_wrapper<dimension, float_type>::kernel.v.bind(read_cache(particle_src.velocity()));
 
-    cuda::configure(
-        (ordered.size() + particle_dst.dim.threads_per_block() - 1) / particle_dst.dim.threads_per_block()
-      , particle_dst.dim.block
-    );
-
-    particle_group_wrapper<dimension>::kernel.particle_group_to_particle(
+    configure_kernel(particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle, ordered.size());
+    particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle(
         &*ordered.begin()
-      , &*position->begin()
+      , position->data()
       , &*image->begin()
-      , &*velocity->begin()
+      , velocity->data()
       , ordered.size()
     );
 }

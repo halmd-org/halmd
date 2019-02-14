@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_IO_WRITERS_H5MD_FILE_HPP
@@ -50,7 +51,12 @@ public:
      * entry for the real user id of the calling process. If author_email is
      * empty output of this optional field is skipped.
      */
-    file(std::string const& path, std::string const& author_name = "", std::string const& author_email = "");
+    file(
+        std::string const& path
+      , std::string const& author_name = ""
+      , std::string const& author_email = ""
+      , bool overwrite = false
+    );
 
     /** flush file to disk */
     void flush();

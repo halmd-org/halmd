@@ -6,32 +6,31 @@
 -- This file is part of HALMD.
 --
 -- HALMD is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- GNU Lesser General Public License for more details.
 --
--- You should have received a copy of the GNU General Public License
--- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
 --
-
-local halmd = require("halmd")
 
 -- grab modules
-local log = halmd.io.log
 local mdsim = halmd.mdsim
 local numeric = halmd.numeric
 local observables = halmd.observables
 local writers = halmd.io.writers
+local utility = halmd.utility
 
 --
 -- Setup and run simulation
 --
-local function liquid(args)
+function main(args)
     -- total number of particles from sum of particles per species
     local nspecies = #args.particles
     local nparticle = numeric.sum(args.particles)
@@ -50,14 +49,15 @@ local function liquid(args)
 
     -- create system state
     local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = nspecies})
-    -- set particle species, with continuous range of tags per species
+    -- set particle species, with continuous range of IDs per species
     local species = {}
     for s = 0, nspecies - 1 do
         local nparticle = assert(args.particles[s + 1])
         for i = 1, nparticle do table.insert(species, s) end
     end
-    particle:set_species(species)
+    particle.data["species"] = species
 
+    -- select particles from upper right quadrant of the box
     local origin = {}
     for i = 1, dimension do
         origin[i] = 0
@@ -77,22 +77,23 @@ local function liquid(args)
     boltzmann:set()
 
     -- smoothly truncated Lennard-Jones potential
-    local potential = mdsim.potentials.pair.lennard_jones({cutoff = args.cutoff, species = particle.nspecies})
+    local potential = mdsim.potentials.pair.lennard_jones({species = particle.nspecies})
     -- smooth truncation
-    local trunc = nil
     if args.smoothing > 0 then
-        trunc = mdsim.forces.trunc.local_r4({h = args.smoothing})
+        potential = potential:truncate({"smooth_r4", cutoff = args.cutoff, h = args.smoothing})
+    else
+        potential = potential:truncate({cutoff = args.cutoff})
     end
     -- compute forces
-    local force = mdsim.forces.pair_trunc({
-        box = box, particle = particle, potential = potential, trunc = trunc
+    local force = mdsim.forces.pair({
+        box = box, particle = particle, potential = potential
     })
 
     -- convert integration time to number of steps
     local steps = math.ceil(args.time / args.timestep)
 
     -- H5MD file writer
-    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
@@ -159,31 +160,19 @@ local function liquid(args)
     observables.sampler:run(steps)
 
     -- log profiler results
-    halmd.utility.profiler:profile()
+    utility.profiler:profile()
 end
 
 --
 -- Parse command-line arguments.
 --
-local function parse_args()
-    local parser = halmd.utility.program_options.argument_parser()
+function define_args(parser)
+    parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
+        default = "lennard_jones_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
-    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
-        -- substitute current time
-        args[key] = os.date(value)
-    end, default = "lennard_jones_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
-
-    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
-        local level = {
-            -- console, file
-            {"warning", "info" },
-            {"info"   , "info" },
-            {"debug"  , "debug"},
-            {"trace"  , "trace"},
-        }
-        args[key] = level[value] or level[#level]
-    end, default = 1, help = "increase logging verbosity"})
-    parser:add_argument("random-seed", {type = "integer", help = "seed for random number generator"})
+    parser:add_argument("random-seed", {type = "integer", action = parser.action.random_seed,
+        help = "seed for random number generator"})
 
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {10000}, help = "number of particles"})
     parser:add_argument("density", {type = "number", default = 0.75, help = "particle number density"})
@@ -197,31 +186,11 @@ local function parse_args()
     parser:add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser:add_argument("temperature", {type = "number", default = 1.5, help = "initial system temperature"})
-    parser:add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
+    parser:add_argument("rate", {type = "number", default = 2, help = "heat bath collision rate"})
     parser:add_argument("time", {type = "number", default = 100, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.005, help = "integration time step"})
 
     local sampling = parser:add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})
     sampling:add_argument("trajectory", {type = "integer", help = "for trajectory"})
     sampling:add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
-
-
-    return parser:parse_args()
 end
-
-local args = parse_args()
-
--- log to console
-halmd.io.log.open_console({severity = args.verbose[1]})
--- log to file
-halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
--- log version
-halmd.utility.version.prologue()
-
--- seed the random number generator
-if args.random_seed then
-    halmd.random.generator({seed = args.random_seed})
-end
-
--- run simulation
-liquid(args)

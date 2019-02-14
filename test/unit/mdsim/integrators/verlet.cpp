@@ -6,17 +6,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/config.hpp>
@@ -53,8 +54,12 @@ using namespace boost;
 using namespace halmd;
 using namespace std;
 
+#ifndef USE_HOST_SINGLE_PRECISION
 const double eps = numeric_limits<double>::epsilon();
-const float eps_float = numeric_limits<float>::epsilon();
+#else
+const double eps = numeric_limits<float>::epsilon();
+#endif
+const float eps_float = 1.5f * numeric_limits<float>::epsilon();
 
 /** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */
 
@@ -74,13 +79,16 @@ struct ideal_gas
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     static unsigned int const dimension = vector_type::static_size;
+    typedef fixed_vector<float, dimension> float_vector_type;
 
     float density;
     float temp;
     double timestep;
     unsigned int npart;
-    fixed_vector<double, dimension> box_ratios;
-    fixed_vector<double, dimension> slab;
+    float_vector_type box_ratios;
+    typename modules_type::slab_type slab;
+
+    typedef typename modules_type::tolerance tolerance;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<integrator_type> integrator;
@@ -102,7 +110,7 @@ void ideal_gas<modules_type>::test()
     position->set();
     velocity->set();
 
-    const double vcm_tolerance = gpu ? 0.1 * eps_float : eps;
+    const double vcm_tolerance = tolerance::value;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_tolerance);
 
     double en_kin = thermodynamics->en_kin();
@@ -121,23 +129,26 @@ void ideal_gas<modules_type>::test()
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_tolerance);
     BOOST_CHECK_CLOSE_FRACTION(en_kin, thermodynamics->en_kin(), 10 * eps);
 
-    BOOST_CHECK_CLOSE_FRACTION(temp, (float)thermodynamics->temp(), eps_float);
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
-    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->pressure() / temp / density, 1., eps_float);
+    // TODO: Is it reasonable to test these quantities at all in this test scenario?
+    //       Since the rescale in velocities/boltzmann was removed very large
+    //       tolerances are necessary.
+    const double tol = 5 / std::sqrt(npart); // standard error scales as N^{-1/2}, prefactor is approx. 1
+    BOOST_CHECK_CLOSE_FRACTION(temp, (float)thermodynamics->temp(), tol);
+    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->pressure() / temp / density, 1., tol);
 }
 
 template <typename modules_type>
 ideal_gas<modules_type>::ideal_gas()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
-    typedef fixed_vector<double, dimension> vector_type;
 
     // set module parameters
     density = 1;
     temp = 1;
     double timestep = 0.001;
     npart = 1000;
-    box_ratios = (dimension == 3) ? vector_type{1., 2., 1.01} : vector_type{1., 2.};
+    box_ratios = (dimension == 3) ? float_vector_type{1., 2., 1.01} : float_vector_type{1., 2.};
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
     double volume = npart / density;
     double edge_length = pow(volume / det, 1. / dimension);
@@ -235,9 +246,17 @@ make_stress_pot_from_particle(
 }
 #endif
 
+template<typename float_type>
+struct host_tolerance
+{
+    static constexpr double value = numeric_limits<float_type>::epsilon();
+};
+
 template <int dimension, typename float_type>
 struct host_modules
 {
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef vector_type slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::integrators::verlet<dimension, float_type> integrator_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
@@ -247,19 +266,42 @@ struct host_modules
     typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
     typedef observables::host::thermodynamics<dimension, float_type> thermodynamics_type;
     static bool const gpu = false;
+    typedef host_tolerance<float_type> tolerance;
 };
 
+#ifndef USE_HOST_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE( ideal_gas_host_2d ) {
     ideal_gas<host_modules<2, double> >().test();
 }
 BOOST_AUTO_TEST_CASE( ideal_gas_host_3d ) {
     ideal_gas<host_modules<3, double> >().test();
 }
+#else
+BOOST_AUTO_TEST_CASE( ideal_gas_host_2d ) {
+    ideal_gas<host_modules<2, float> >().test();
+}
+BOOST_AUTO_TEST_CASE( ideal_gas_host_3d ) {
+    ideal_gas<host_modules<3, float> >().test();
+}
+#endif
 
 #ifdef HALMD_WITH_GPU
+template<typename T>
+struct gpu_tolerance;
+template<>
+struct gpu_tolerance<dsfloat> {
+    static constexpr double value = 0.2 * numeric_limits<float>::epsilon();
+};
+template<>
+struct gpu_tolerance<float> {
+    static constexpr double value = 0.3 * numeric_limits<float>::epsilon();
+};
+
 template <int dimension, typename float_type>
 struct gpu_modules
 {
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef fixed_vector<double, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::integrators::verlet<dimension, float_type> integrator_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
@@ -268,13 +310,24 @@ struct gpu_modules
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
+    typedef gpu_tolerance<float_type> tolerance;
     static bool const gpu = true;
 };
 
-BOOST_FIXTURE_TEST_CASE( ideal_gas_gpu_2d, device ) {
+# ifdef USE_GPU_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( ideal_gas_gpu_float_2d, device ) {
     ideal_gas<gpu_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( ideal_gas_gpu_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( ideal_gas_gpu_float_3d, device ) {
     ideal_gas<gpu_modules<3, float> >().test();
 }
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( ideal_gas_gpu_dsfloat_2d, device ) {
+    ideal_gas<gpu_modules<2, dsfloat> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( ideal_gas_gpu_dsfloat_3d, device ) {
+    ideal_gas<gpu_modules<3, dsfloat> >().test();
+}
+# endif
 #endif // HALMD_WITH_GPU

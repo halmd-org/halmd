@@ -5,17 +5,18 @@
 -- This file is part of HALMD.
 --
 -- HALMD is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- GNU Lesser General Public License for more details.
 --
--- You should have received a copy of the GNU General Public License
--- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
 --
 
 local clock             = require("halmd.mdsim.clock")
@@ -41,6 +42,7 @@ local h5md = libhalmd.io.writers.h5md
 -- :param table args: keyword arguments
 -- :param string args.path: pathname of output file
 -- :param string args.email: email address of file author *(optional)*
+-- :param boolean args.overwrite: if true, overwrite existing file *(default: false)*
 -- :returns: instance of file writer
 --
 -- Create the output file and writes the H5MD metadata.
@@ -104,7 +106,8 @@ local h5md = libhalmd.io.writers.h5md
 local M = module(function(args)
     local path = utility.assert_kwarg(args, "path")
     local email = args.email or ""
-    local file = h5md.file(path, "", email) -- retrieve author name automatically if field is empty
+    local overwrite = args.overwrite or false
+    local file = h5md.file(path, "", email, overwrite) -- retrieve author name automatically if field is empty
 
     file.writer = function(self, args)
         local mode = utility.assert_kwarg(args, "mode")

@@ -1,20 +1,23 @@
 /*
- * Copyright © 2008-2012  Peter Colberg and Felix Höfling
+ * Copyright © 2016       Daniel Kirchner
+ * Copyright © 2008-2012  Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_OBSERVABLES_HOST_PHASE_SPACE_HPP
@@ -24,25 +27,37 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_group.hpp>
-#include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/observables/host/samples/sample.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace observables {
 namespace host {
 
+/**
+ * phase space sampler abstraction
+ *
+ * abstract base class defining the interface for the actual sampling implementation
+ * this interface is implemented for each data type
+ */
+class phase_space_sampler {
+public:
+    virtual std::shared_ptr<sample_base> acquire(void) = 0;
+    virtual void set(std::shared_ptr<sample_base const> sample) = 0;
+    virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) = 0;
+    virtual luaponte::object data_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) = 0;
+    virtual void set_lua(luaponte::object sample) = 0;
+};
+
 template <int dimension, typename float_type>
 class phase_space
 {
 public:
-    typedef samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::clock clock_type;
 
     /**
      * Construct phase_space sampler from particle group.
@@ -51,19 +66,35 @@ public:
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<particle_group_type> particle_group
       , std::shared_ptr<box_type const> box
-      , std::shared_ptr<clock_type const> clock
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
-    /**
-     * Acquire phase_space sample.
-     */
-    std::shared_ptr<sample_type const> acquire();
+    void set(std::string const& name, std::shared_ptr<sample_base const> sample)
+    {
+        get_sampler(name)->set(sample);
+    }
 
-    /**
-     * Set particles from phase_space sample.
-     */
-    void set(std::shared_ptr<sample_type const> sample);
+    typename particle_type::size_type nparticle() const
+    {
+        return particle_->nparticle();
+    }
+
+    template<typename sample_type>
+    std::shared_ptr<sample_type const> acquire(std::string const& name)
+    {
+        auto sample = get_sampler(name)->acquire();
+        if (sample->type() != typeid(typename sample_type::data_type)) {
+            throw std::runtime_error("invalid sample data type");
+        }
+        return std::static_pointer_cast<sample_type const>(sample);
+    }
+
+    std::type_info const& sample_type(std::string const& name)
+    {
+        return particle_->get_array(name)->type();
+    }
+
+    std::shared_ptr<phase_space_sampler> get_sampler(std::string const& name);
 
     /**
      * Bind class to Lua.
@@ -71,29 +102,19 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    typedef typename particle_type::size_type size_type;
-    typedef typename particle_type::position_array_type position_array_type;
-    typedef typename particle_type::image_array_type image_array_type;
-    typedef typename particle_type::velocity_array_type velocity_array_type;
-    typedef typename particle_type::species_array_type species_array_type;
-    typedef typename particle_type::species_type species_type;
-    typedef typename particle_type::mass_array_type mass_array_type;
-    typedef typename particle_group_type::array_type group_array_type;
-
     /** particle instance to particle group */
     std::shared_ptr<particle_type> particle_;
     /** particle group */
     std::shared_ptr<particle_group_type> particle_group_;
     /** simulation box */
     std::shared_ptr<box_type const> box_;
-    /** simulation clock */
-    std::shared_ptr<clock_type const> clock_;
     /** logger instance */
     std::shared_ptr<logger> logger_;
-    /** cached phase_space sample */
-    std::shared_ptr<sample_type> sample_;
 
-    typedef typename sample_type::vector_type vector_type;
+    /** Associative container mapping identifiers of particle arrays to
+        already created sampler implementations */
+    std::unordered_map<std::string, std::shared_ptr<phase_space_sampler>> samplers_;
+
     typedef halmd::utility::profiler::accumulator_type accumulator_type;
     typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
 

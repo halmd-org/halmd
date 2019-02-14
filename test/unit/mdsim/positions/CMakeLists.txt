@@ -27,12 +27,22 @@ add_test(unit/mdsim/positions/lattice/host/3d
   test_unit_mdsim_positions_lattice --run_test=lattice_host_3d --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  add_test(unit/mdsim/positions/lattice/gpu/2d
-    test_unit_mdsim_positions_lattice --run_test=lattice_gpu_2d --log_level=test_suite
-  )
-  add_test(unit/mdsim/positions/lattice/gpu/3d
-    test_unit_mdsim_positions_lattice --run_test=lattice_gpu_3d --log_level=test_suite
-  )
+  if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+    halmd_add_gpu_test(unit/mdsim/positions/lattice/gpu/float/2d
+      test_unit_mdsim_positions_lattice --run_test=lattice_gpu_float_2d --log_level=test_suite
+    )
+    halmd_add_gpu_test(unit/mdsim/positions/lattice/gpu/float/3d
+      test_unit_mdsim_positions_lattice --run_test=lattice_gpu_float_3d --log_level=test_suite
+    )
+  endif()
+  if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+    halmd_add_gpu_test(unit/mdsim/positions/lattice/gpu/dsfloat/2d
+      test_unit_mdsim_positions_lattice --run_test=lattice_gpu_dsfloat_2d --log_level=test_suite
+    )
+    halmd_add_gpu_test(unit/mdsim/positions/lattice/gpu/dsfloat/3d
+      test_unit_mdsim_positions_lattice --run_test=lattice_gpu_dsfloat_3d --log_level=test_suite
+    )
+  endif()
 endif()
 
 add_executable(test_unit_mdsim_positions_lattice_primitive

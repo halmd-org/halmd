@@ -13,7 +13,7 @@ if(HALMD_WITH_GPU)
     halmd_algorithm_gpu
     halmd_utility_gpu
   )
-  add_test(unit/mdsim/particle_groups/all/gpu
+  halmd_add_gpu_test(unit/mdsim/particle_groups/all/gpu
     test_unit_mdsim_particle_groups_all --run_test=gpu --log_level=test_suite
   )
 endif()
@@ -39,7 +39,7 @@ if(HALMD_WITH_GPU)
     halmd_algorithm_gpu
     halmd_utility_gpu
   )
-  add_test(unit/mdsim/particle_groups/from_range/gpu
+  halmd_add_gpu_test(unit/mdsim/particle_groups/from_range/gpu
     test_unit_mdsim_particle_groups_from_range --run_test=gpu --log_level=test_suite
   )
 endif()

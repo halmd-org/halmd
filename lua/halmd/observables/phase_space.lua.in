@@ -4,17 +4,18 @@
 -- This file is part of HALMD.
 --
 -- HALMD is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- GNU Lesser General Public License for more details.
 --
--- You should have received a copy of the GNU General Public License
--- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
 --
 
 local clock    = require("halmd.mdsim.clock")
@@ -26,10 +27,7 @@ local sampler  = require("halmd.observables.sampler")
 local utility  = require("halmd.utility")
 
 -- grab C++ classes
-local phase_space = {host = assert(libhalmd.observables.host.phase_space)}
-if device.gpu then
-    phase_space.gpu = assert(libhalmd.observables.gpu.phase_space)
-end
+local phase_space = assert(libhalmd.observables.phase_space)
 
 ---
 -- Phase Space
@@ -38,7 +36,7 @@ end
 -- A phase_space sampler acquires particle coordinates from an instance of
 -- particle or particle_group. The sampler can copy particle data from
 -- host to host, gpu to host, or gpu to gpu memory. The particles are
--- ordered by tag, which guarantees that a particle has the same array
+-- ordered by ID, which guarantees that a particle has the same array
 -- index over the course of the simulation.
 --
 
@@ -51,20 +49,45 @@ end
 --
 -- .. note::
 --
---    The sample will be updated at most *once* per step, so you can reuse
---    the same sampler with multiple observable modules for optimal
+--    The sample will only be updated when the underlying particle data has changed,
+--    so you can reuse the same sampler with multiple observable modules for optimal
 --    performance.
 --
--- .. method:: acquire(args)
+-- .. method:: acquire(name)
 --
---    Returns data slot to acquire phase space sample.
+--    Returns data slot to acquire phase space sample for the given particle array.
 --
---    :param table args: keyword arguments (optional)
---    :param string args.memory: memory location of phase space sample (optional)
+--    :param string name: identifier of the particle array to be sampled
 --
---    The supported values for ``memory`` are "host" and "gpu". If ``memory``
---    is not specified, the memory location is selected according to the
---    compute device.
+--    The memory location of the sample depends on the type of the particle array.
+--    GPU particle arrays (e.g. "g_position") will be sampled to GPU memory, host
+--    wrappers (e.g. "position") will be sampled to Host memory.
+--
+-- .. method:: acquire_position()
+--
+--    Returns data slot to acquire position data. The memory type is inferred from the
+--    particle instance (for GPU particles this samples the "g_position" data, for
+--    Host particles the "position" data).
+--
+-- .. method:: acquire_velocity()
+--
+--    Returns data slot to acquire velocity data. The memory type is inferred from the
+--    particle instance (for GPU particles this samples the "g_velocity" data, for
+--    Host particles the "velocity" data).
+--
+-- .. method:: acquire_species()
+--
+--    Returns data slot to acquire species data. This always samples to host memory,
+--    as species data is packed together with position data on GPU memory.
+--    acquire("g_position") can be used to obtain a GPU sample of both position and
+--    species.
+--
+-- .. method:: acquire_mass()
+--
+--    Returns data slot to acquire mass data. This always samples to host memory,
+--    as mass data is packed together with velocity data on GPU memory.
+--    acquire("g_velocity") can be used to obtain a GPU sample of both velocity and
+--    mass.
 --
 -- .. method:: position()
 --
@@ -90,9 +113,12 @@ end
 --
 --    :returns: data slot that returns mass array in host memory
 --
--- .. method:: set(sample)
+-- .. method:: set(samples)
 --
---    Set positions, velocities, species and masses from phase space sample.
+--    Sets particle data from phase space samples.
+--
+--    :param table samples: List of samples to be set. The keys of the table contain the
+--                          identifiers for the particle array, the values the sample.
 --
 -- .. method:: disconnect()
 --
@@ -144,41 +170,67 @@ local M = module(function(args)
     local logger = log.logger({label = ("phase_space (%s)"):format(label)})
 
     -- construct phase space samplers
-    local samplers = {}
-    samplers.host = phase_space.host(particle, group, box, clock, logger)
-    if particle.memory == "gpu" then
-        samplers.gpu = phase_space.gpu(particle, group, box, clock, logger)
-    end
+    local phase_space = phase_space(particle, group, box, logger)
 
     -- construct unified Lua object for host and gpu sampler
     local self = {group = group}
 
-    self.acquire = function(self, args)
-        local memory = args and args.memory
-        if not memory then
-            memory = samplers.gpu and "gpu" or "host"
+    if particle.memory == "gpu" then
+        self.acquire = function(self, name, gpu)
+            return phase_space:acquire(name, gpu or false)
         end
-        local sampler = samplers[memory]
-        if not sampler then
-            error(("unsupported phase_space memory type '%s'"):format(memory), 2)
+
+        self.acquire_position = function(self)
+            return phase_space:acquire("position", true)
         end
-        return assert(sampler.acquire)
+
+        self.acquire_velocity = function(self)
+            return phase_space:acquire("velocity", true)
+        end
+
+        self.acquire_species = function(self)
+            return phase_space:acquire("species", false)
+        end
+
+        self.acquire_mass = function(self)
+            return phase_space:acquire("mass", false)
+        end
+    else
+        self.acquire = function(self, name)
+            return phase_space:acquire(name)
+        end
+
+        self.acquire_position = function(self)
+            return phase_space:acquire("position")
+        end
+
+        self.acquire_velocity = function(self)
+            return phase_space:acquire("velocity")
+        end
+
+        self.acquire_species = function(self)
+            return phase_space:acquire("species")
+        end
+
+        self.acquire_mass = function(self)
+            return phase_space:acquire("mass")
+        end
     end
 
     self.position = function(self)
-        return assert(samplers.host.position)
+        return phase_space:data("position")
     end
 
     self.velocity = function(self)
-        return assert(samplers.host.velocity)
+        return phase_space:data("velocity")
     end
 
     self.species = function(self)
-        return assert(samplers.host.species)
+        return phase_space:data("species")
     end
 
     self.mass = function(self)
-        return assert(samplers.host.mass)
+        return phase_space:data("mass")
     end
 
     self.writer = function(self, args)
@@ -196,7 +248,7 @@ local M = module(function(args)
         -- in the latter case, the value string is assigned to the group name
         for k,v in pairs(fields) do
             local name = (type(k) == "string") and k or v
-            writer:on_write(assert(self[v])(), {name})
+            writer:on_write(phase_space:data(v), {name})
         end
 
         -- store box information
@@ -218,9 +270,20 @@ local M = module(function(args)
         return writer
     end
 
-    self.set = function(self, ...)
-        logger:info(("setting particles from phase space sample"):format(label))
-        samplers.host:set(...)
+    if particle.memory == "gpu" then
+        self.set = function(self, samples)
+            logger:info(("setting particles from phase space sample"):format(label))
+            for name,sample in pairs(samples) do
+                phase_space:set(name, sample, sample.gpu and sample:gpu() or false)
+            end
+        end
+    else
+        self.set = function(self, samples)
+            logger:info(("setting particles from phase space sample"):format(label))
+            for name,sample in pairs(samples) do
+                phase_space:set(name, sample)
+            end
+        end
     end
 
     -- sequence of signal connections
@@ -228,30 +291,14 @@ local M = module(function(args)
     self.disconnect = utility.signal.disconnect(conn, "phase_space sampler")
 
     -- connect runtime accumulators to profiler
-    for memory, sampler in pairs(samplers) do
-        local label = assert(self.group.label)
-        local desc = ("phase space sample of %s particles on %s"):format(label, memory)
-        local runtime = assert(sampler.runtime)
-        table.insert(conn, profiler:on_profile(runtime.acquire, ("acquisition of %s"):format(desc)))
-        table.insert(conn, profiler:on_profile(runtime.reset, ("reset %s"):format(desc)))
-    end
+    local label = assert(self.group.label)
+    local desc = ("phase space sample of %s particles on %s"):format(label, particle.memory)
+    local runtime = assert(phase_space.runtime)
+    table.insert(conn, profiler:on_profile(runtime.acquire, ("acquisition of %s"):format(desc)))
+    table.insert(conn, profiler:on_profile(runtime.reset, ("reset %s"):format(desc)))
 
     return self
 end)
-
--- grab C++ classes
-local phase_space = {}
-phase_space.host = {
-    [2] = assert(libhalmd.observables.host.samples.phase_space_2_double)
-  , [3] = assert(libhalmd.observables.host.samples.phase_space_3_double)
-}
-
-if device.gpu then
-    phase_space.gpu = {
-        [2] = assert(libhalmd.observables.host.samples.phase_space_2_float)
-      , [3] = assert(libhalmd.observables.host.samples.phase_space_3_float)
-    }
-end
 
 ---
 -- .. class:: reader(args)
@@ -311,7 +358,8 @@ end
 --
 --          If ``time`` is negative, seek backward from last (``-0``) sample.
 --
---    The returned phase space sample has these attributes.
+--    The returned phase space sample is a table mapping identifiers to the individual data
+--    samples and has the following additional attributes.
 --
 --       .. attribute:: nparticle
 --
@@ -336,9 +384,6 @@ function M.reader(args)
     local location = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
 
     local memory = args and args.memory or (device.gpu and "gpu" or "host")
-    if not phase_space[memory] then
-        error(("unsupported phase space memory type '%s'"):format(memory), 2)
-    end
 
     local self = file:reader({location = location, mode = "append"})
     local group = assert(#fields > 0) and ({next(fields)})[2] -- some field name
@@ -346,23 +391,41 @@ function M.reader(args)
     local shape = assert(dataset.shape)
     local nparticle = assert(shape[2])
     local dimension = assert(shape[3])
-    local phase_space = phase_space[memory][dimension]
-    if not phase_space then
-        error(("unsupported space dimension: %d"):format(dimension), 2)
-    end
-    local sample = phase_space(nparticle)
+    -- create a metatable for the sample list, so that meta-information about the
+    -- samples can be obtained; pairs(samples) will still only iterate over the
+    -- actual samples, but samples.nparticle, samples.dimension, and samples.nspecies
+    -- will return the desired values
+    local sample_metainfo = { nparticle = nparticle, dimension = dimension }
+    local samples = setmetatable({}, {
+        __index = function(table, key)
+            -- calculate nspecies from the species sample if available
+            if key == "nspecies" then
+                local species = rawget(table, "species")
+                return species and (species:maximum() + 1) or 1
+            end
+            return sample_metainfo[key]
+        end
+    })
 
     -- register data fields with reader,
     -- the keys of 'field' may either be strings (dictionary) or numbers (table),
     -- in the latter case, the value string is assigned the field name
     for k,v in pairs(fields) do
         local name = (type(k) == "string") and k or v
-        local array, array_to_sample = assert(sample[v])(sample)
-        self:on_read(array, {name})
-        self:on_append_read(array_to_sample)
+
+        local dataset = self.group:open_group(name):open_dataset("value")
+        local shape = assert(dataset.shape)
+        local dimension = shape[3] or 1
+        local type = dataset.type
+        type = (type == "double" and ((memory == "host") and "@HALMD_HOST_FLOAT_TYPE@" or "float") or type)
+
+        local sample = assert(libhalmd.observables.host.samples["sample_"..dimension.."_"..type])(nparticle)
+        self:on_read(sample:data_setter(), {name})
+
+        samples[v] = sample
     end
 
-    return self, sample
+    return self, samples
 end
 
 return M

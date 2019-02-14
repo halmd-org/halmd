@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/config.hpp>
@@ -179,6 +180,32 @@ hsize_t append::read_time_index(
     return first - times.begin();
 }
 
+/**
+ * Wrapper function to allow one step reading.
+ *
+ * This wrapper internally creates an array and  connects it to the on_read slot.
+ * Additionally it connects to the on_append_read slot and passes the read array
+ * to the given slot function. After that the internal array is freed.
+ * This way complete datasets can be directly passed to a single slot function
+ * by const reference.
+ */
+template<typename T>
+void wrap_on_read(
+    std::shared_ptr<append> self
+  , H5::Group& group
+  , std::function<void(const T&)> slot
+  , std::vector<std::string> const& location
+)
+{
+    std::shared_ptr<T> array = std::make_shared<T>();
+
+    self->on_read<T&>(group, [array]() -> T& { return *array; }, location);
+    self->on_append_read([array, slot] () mutable {
+        slot(*array);
+        array.reset();
+    });
+}
+
 void append::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -210,6 +237,16 @@ void append::luaopen(lua_State* L)
                         .def("on_read", &append::on_read<vector<fixed_vector<double, 3> >&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<vector<boost::array<float, 3> >&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<vector<boost::array<double, 3> >&>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<float>>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<double>>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<unsigned int>>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<int>>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<fixed_vector<float, 2> >>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<fixed_vector<float, 3> >>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<fixed_vector<double, 2> >>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<fixed_vector<double, 3> >>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<boost::array<float, 3> >>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<boost::array<double, 3> >>, pure_out_value(_2))
                         .def("on_prepend_read", &append::on_prepend_read)
                         .def("on_append_read", &append::on_append_read)
                 ]

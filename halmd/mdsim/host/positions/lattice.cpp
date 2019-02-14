@@ -6,17 +6,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <algorithm>
@@ -68,12 +69,12 @@ void lattice<dimension, float_type>::set()
     auto image = make_cache_mutable(particle_->image());
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
-    vector_type length = element_prod(box_->length(), slab_);
+    vector_type length = element_prod(static_cast<vector_type>(box_->length()), slab_);
     vector_type offset = -length / 2;
-    fcc(position->begin(), position->end(), length, offset);
+    fcc(position->begin(), position->begin() + particle_->nparticle(), length, offset);
 
     // assign particle image vectors
-    fill(image->begin(), image->end(), 0);
+    fill(image->begin(), image->begin() + particle_->nparticle(), 0);
 }
 
 /**

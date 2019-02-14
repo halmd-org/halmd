@@ -1,6 +1,17 @@
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+# Set cmake policies to avoid warnings in newer cmake versions.
+if(POLICY CMP0053)
+  cmake_policy(SET CMP0053 NEW)
+endif()
+if(POLICY CMP0026)
+  cmake_policy(SET CMP0026 NEW)
+endif()
+if(POLICY CMP0058)
+  cmake_policy(SET CMP0058 NEW)
+endif()
 
 # If the subdirectory cmake/ contains a version.cmake.in file, we are in a git
 # repository, then extract the git commit from the repository to generate
@@ -61,21 +72,74 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   endif()
 
   if(CUDA_FOUND)
-    enable_language(CUDA)
-    if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 5.0)
-      message(SEND_ERROR "Minium required CUDA version is 5.0 (found ${CMAKE_CUDA_COMPILER_VERSION})")
-    endif()
+    if(COMMAND cuda_add_library)
+      # original CMake
 
-    set(HALMD_WITH_GPU TRUE)
+      if(CUDA_VERSION VERSION_LESS 6.5)
+        set(HALMD_GPU_ARCH "120") # sane default value
+        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12" CACHE STRING "Flags used by the compiler during all build types")
+      else()
+        set(HALMD_GPU_ARCH "210") # sane default value
+        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch=compute_20 -code=compute_20 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true" CACHE STRING "Flags used by the compiler during all build types")
+      endif()
 
-    try_compile(success "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu" OUTPUT_VARIABLE result)
-    if(result MATCHES "__CUDA_ARCH__([0-9]+)__")
-      set(HALMD_GPU_ARCH "${CMAKE_MATCH_1}")
+      string(REPLACE " " ";" __NVCC_ARGS "${CMAKE_CUDA_FLAGS}")
+      if(NOT "${CUDA_HOST_COMPILER}" STREQUAL "")
+		list(APPEND __NVCC_ARGS -ccbin "${CUDA_HOST_COMPILER}")
+      endif()
+      execute_process(COMMAND "${CUDA_NVCC_EXECUTABLE}" ${__NVCC_ARGS} "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu"
+              WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/CMakeFiles/"
+              ERROR_VARIABLE result OUTPUT_QUIET)
+      if(result MATCHES "__CUDA_ARCH__([0-9]+)__")
+        set(HALMD_GPU_ARCH "${CMAKE_MATCH_1}")
+      else()
+        message(WARNING "${result}")
+      endif()
+
+
+      set(CMAKE_CUDA_COMPILER_ID "NVCC")
+      set(CMAKE_CUDA_COMPILER_VERSION "${CUDA_VERSION}")
+      mark_as_advanced(CMAKE_CUDA_FLAGS)
+
+      set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} \"-DBOOST_NOINLINE=__attribute__((noinline))\"" CACHE INTERNAL "Internal NVCC flags (invisible to the user and overwritten by CMAKE_CUDA_FLAGS)" FORCE)
+      set(CUDA_PROPAGATE_HOST_FLAGS OFF CACHE INTERNAL "Internal host flag propagation flag (invisible to the user and always disabled)" FORCE)
+      set(CUDA_INCLUDE_DIR ${CUDA_INCLUDE_DIRS})
+
+      # output information about CUDA Compiler
+      message(STATUS "The CUDA compiler identification is NVCC ${CUDA_VERSION}")
     else()
-      message(SEND_ERROR "${result}")
+      # CMake with CUDA patch by Peter Colberg
+
+      enable_language(CUDA)
+      if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 5.0)
+        message(SEND_ERROR "Minium required CUDA version is 5.0 (found ${CMAKE_CUDA_COMPILER_VERSION})")
+      endif()
+
+      try_compile(success "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu" OUTPUT_VARIABLE result)
+      if(result MATCHES "__CUDA_ARCH__([0-9]+)__")
+        set(HALMD_GPU_ARCH "${CMAKE_MATCH_1}")
+      else()
+        message(SEND_ERROR "${result}")
+      endif()
+
+      # create macros for compatibility with unpatched cmake
+      macro(cuda_add_library)
+        add_library(${ARGN})
+      endmacro()
+      macro(cuda_add_executable)
+        add_executable(${ARGN})
+      endmacro()
     endif()
+    set(HALMD_WITH_GPU TRUE)
   else()
     set(HALMD_WITH_GPU FALSE)
+    # create macros for some of the tests
+    macro(cuda_add_library)
+      add_library(${ARGN})
+    endmacro()
+    macro(cuda_add_executable)
+      add_executable(${ARGN})
+    endmacro()
   endif()
 
   set(HALMD_USE_STATIC_LIBS FALSE CACHE BOOL
@@ -106,13 +170,20 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     thread
     unit_test_framework
   )
-  find_package(HDF5 QUIET REQUIRED)
+  find_package(HDF5 QUIET REQUIRED COMPONENTS CXX)
   find_package(LuaLibs QUIET REQUIRED)
+
+  # detect HDF5 version manually for cmake < 3.3
+  if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} LESS 3.3)
+    find_path(H5PUBCONF_PATH H5pubconf.h PATHS ${HDF5_INCLUDE_DIRS} NO_DEFAULT_PATH)
+    file(STRINGS "${H5PUBCONF_PATH}/H5pubconf.h" HDF5_VERSION LIMIT_COUNT 1 REGEX "#define H5_VERSION \"(.*)\"")
+    string(REGEX REPLACE "#define H5_VERSION \"(.*)\"" "\\1" HDF5_VERSION "${HDF5_VERSION}")
+  endif()
 
   # be verbose about library versions (but suppress all the gory details given by find_package)
   message(STATUS "Boost version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
   message(STATUS "Lua library version: ${LUA_VERSION_STRING}")
-  message(STATUS "HDF5 library version: ${HDF5_VERSION_STRING}")
+  message(STATUS "HDF5 library version: ${HDF5_VERSION}")
 
   # Set HALMD build variant flags
   include(${CMAKE_SOURCE_DIR}/cmake/variant.cmake)
@@ -139,8 +210,8 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
-    ${HDF5_CPP_LIBRARY}
-    ${HDF5_LIBRARY}
+    ${HDF5_CXX_LIBRARIES}
+    ${HDF5_LIBRARIES}
     ${LUA_LIBRARIES}
   )
   if(HALMD_WITH_GPU)
@@ -164,7 +235,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   include_directories(${HALMD_SOURCE_DIR})
   include_directories(${HALMD_BINARY_DIR})
   include_directories(SYSTEM ${Boost_INCLUDE_DIR})
-  include_directories(SYSTEM ${HDF5_INCLUDE_DIR})
+  include_directories(SYSTEM ${HDF5_INCLUDE_DIRS})
   include_directories(SYSTEM ${LUA_INCLUDE_DIR})
   if(HALMD_WITH_GPU)
     include_directories(SYSTEM ${CUDA_INCLUDE_DIR})

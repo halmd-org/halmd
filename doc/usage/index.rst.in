@@ -5,7 +5,9 @@ Usage
    :maxdepth: 2
 
    start
+   scripts
    h5md
    plotting
    multi-gpu
 
+   diffusion

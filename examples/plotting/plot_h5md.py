@@ -5,18 +5,19 @@
 #
 # This file is part of HALMD.
 #
-# HALMD is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# HALMD is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
 #
 
 import argparse
@@ -39,7 +40,7 @@ def main():
 
     # open and read data file
     H5 = h5py.File(args.input, 'r')
-    H5obs = H5['observables'][args.group]
+    H5obs = H5['observables']
     H5particle = H5['particles'][args.group]
     H5box = H5particle['box']
 
@@ -54,7 +55,7 @@ def main():
     # compute and print some averages
     # the simplest selection of a data set looks like this:
     #     temp, temp_err = compute_average(H5obs['temperature'], 'Temperature')
-    # full support for slicing (th second pair of brackets) requires conversion to a NumPy array before
+    # full support for slicing (the second pair of brackets) requires conversion to a NumPy array before
     temp, temp_err = compute_average(array(H5obs['temperature/value'])[range[0]:range[1]], 'Temperature')
     pressure, pressure_err = compute_average(array(H5obs['pressure/value'])[range[0]:range[1]], 'Pressure')
     epot, epot_err = compute_average(array(H5obs['potential_energy/value'])[range[0]:range[1]], 'Potential energy')

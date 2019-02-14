@@ -6,17 +6,18 @@
 -- This file is part of HALMD.
 --
 -- HALMD is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- GNU Lesser General Public License for more details.
 --
--- You should have received a copy of the GNU General Public License
--- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
 --
 
 local core              = require("halmd.mdsim.core")
@@ -34,7 +35,6 @@ local utility           = require("halmd.utility")
 
 -- grab C++ wrappers
 local pair_trunc = assert(libhalmd.mdsim.forces.pair_trunc)
-local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 
 ---
 -- Construct truncated pair force.
@@ -43,7 +43,6 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 -- :param args.particle: instance, or sequence of two instances, of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :mod:`halmd.mdsim.box`
 -- :param args.potential: instance of :mod:`halmd.mdsim.potentials`
--- :param args.trunc: instance of :mod:`halmd.mdsim.forces.trunc` (optional)
 -- :param args.neighbour: instance of :mod:`halmd.mdsim.neighbour` (optional)
 -- :param number args.weight: weight of the auxiliary variables *(default: 1)*
 --
@@ -65,9 +64,6 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 --   Newton's 3rd law is not obeyed. To restore such a behaviour, the module
 --   must be constructed a second time with the order of particle instances
 --   reversed.
---
--- If ``trunc`` is not specified, the pair potential is :math:`C^0` continuous
--- at the cutoff.
 --
 -- If ``neighbour`` is left unspecified, a default neighbour list module is
 -- constructed using the default parameters of :mod:`halmd.mdsim.neighbour`. If
@@ -106,21 +102,13 @@ local M = module(function(args)
     end
 
     local logger = assert(potential.logger)
-    local trunc = args.trunc
-    if trunc then
-        -- log parameters if smoothing function was specified
-        trunc:log(logger)
-    else
-        -- otherwise default to empty function
-        trunc = discontinuous()
-    end
 
     -- create neighbour lists with cutoff radii of potential
     local r_cut = assert(potential.r_cut)
     local neighbour = args.neighbour or neighbour({box = box, particle = particle, r_cut = r_cut})
 
     -- construct force module
-    local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, weight, trunc, logger)
+    local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, weight, logger)
 
     -- attach potential instance as read-only Lua property
     self.potential = property(function(self)

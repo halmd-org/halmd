@@ -4,26 +4,27 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/modified_lennard_jones_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/truncations/truncations.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 #include <halmd/utility/tuple.hpp>
-#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -34,8 +35,6 @@ namespace modified_lennard_jones_kernel {
 
 /** array of Lennard-Jones potential parameters for all combinations of particle types */
 static texture<float4> param_;
-/** squares of potential cutoff radius and energy shift for all combinations of particle types */
-static texture<float2> rr_en_cut_;
 
 /**
  * Lennard-Jones interaction of a pair of particles.
@@ -56,27 +55,7 @@ public:
       , unsigned int ntype1, unsigned int ntype2
     )
       : pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
-      , pair_rr_en_cut_(tex1Dfetch(rr_en_cut_, type1 * ntype2 + type2))
     {}
-
-    /**
-     * Returns square of cutoff distance.
-     */
-    HALMD_GPU_ENABLED float rr_cut() const
-    {
-        return pair_rr_en_cut_[0];
-    }
-
-    /**
-     * Check whether particles are in interaction range.
-     *
-     * @param rr squared distance between particles
-     */
-    template <typename float_type>
-    HALMD_GPU_ENABLED bool within_range(float_type rr) const
-    {
-        return (rr < pair_rr_en_cut_[0]);
-    }
 
     /**
      * Compute force and potential for interaction.
@@ -92,29 +71,19 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
-        float_type rri = pair_[SIGMA2] / rr;
-        unsigned short m_2 = static_cast<unsigned short>(pair_[INDEX_M_2]);
-        unsigned short n_2 = static_cast<unsigned short>(pair_[INDEX_N_2]);
-        float_type rni = halmd::pow(rri, n_2);
-        float_type rmni = (m_2 - n_2 == n_2) ? rni : halmd::pow(rri, m_2 - n_2);
-        float_type eps_rni = pair_[EPSILON] * rni;
-        float_type fval = 8 * rri * eps_rni * (m_2 * rmni - n_2) / pair_[SIGMA2];
-        float_type en_pot = 4 * eps_rni * (rmni - 1) - pair_rr_en_cut_[1];
-
-        return make_tuple(fval, en_pot);
+        return compute(rr, pair_[SIGMA2], pair_[EPSILON], static_cast<unsigned short>(pair_[INDEX_M_2])
+                     , static_cast<unsigned short>(pair_[INDEX_N_2]));
     }
 
 private:
     /** potential parameters for particle pair */
     fixed_vector<float, 4> pair_;
-    /** squared cutoff radius and energy shift for particle pair */
-    fixed_vector<float, 2> pair_rr_en_cut_;
 };
 
 } // namespace modified_lennard_jones_kernel
 
 cuda::texture<float4> modified_lennard_jones_wrapper::param = modified_lennard_jones_kernel::param_;
-cuda::texture<float2> modified_lennard_jones_wrapper::rr_en_cut = modified_lennard_jones_kernel::rr_en_cut_;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(modified_lennard_jones_kernel::modified_lennard_jones);
 
 } // namespace pair
 } // namespace potentials
@@ -123,15 +92,10 @@ cuda::texture<float2> modified_lennard_jones_wrapper::rr_en_cut = modified_lenna
 namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::pair::modified_lennard_jones_kernel;
-using namespace halmd::mdsim::forces::trunc;
 
 template class pair_full_wrapper<3, modified_lennard_jones>;
 template class pair_full_wrapper<2, modified_lennard_jones>;
-
-template class pair_trunc_wrapper<3, modified_lennard_jones>;
-template class pair_trunc_wrapper<2, modified_lennard_jones>;
-template class pair_trunc_wrapper<3, modified_lennard_jones, local_r4<float> >;
-template class pair_trunc_wrapper<2, modified_lennard_jones, local_r4<float> >;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCE_KERNELS(modified_lennard_jones);
 
 } // namespace forces
 

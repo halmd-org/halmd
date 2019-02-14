@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_HOST_POTENTIALS_PAIR_LENNARD_JONES_HPP
@@ -38,15 +39,15 @@ namespace pair {
 /**
  * define Lennard-Jones potential and parameters
  */
-template <typename float_type>
+template <typename float_type_>
 class lennard_jones
 {
 public:
+    typedef float_type_ float_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
 
     lennard_jones(
-        matrix_type const& cutoff
-      , matrix_type const& epsilon
+        matrix_type const& epsilon
       , matrix_type const& sigma
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
@@ -59,29 +60,9 @@ public:
         float_type r6i = rri * rri * rri;
         float_type eps_r6i = epsilon_(a, b) * r6i;
         float_type fval = 48 * rri * eps_r6i * (r6i - 0.5) / sigma2;
-        float_type en_pot = 4 * eps_r6i * (r6i - 1) - en_cut_(a, b);
+        float_type en_pot = 4 * eps_r6i * (r6i - 1);
 
         return std::make_tuple(fval, en_pot);
-    }
-
-    matrix_type const& r_cut() const
-    {
-        return r_cut_;
-    }
-
-    float_type r_cut(unsigned a, unsigned b) const
-    {
-        return r_cut_(a, b);
-    }
-
-    float_type rr_cut(unsigned a, unsigned b) const
-    {
-        return rr_cut_(a, b);
-    }
-
-    matrix_type const& r_cut_sigma() const
-    {
-        return r_cut_sigma_;
     }
 
     matrix_type const& epsilon() const
@@ -114,16 +95,8 @@ private:
     matrix_type epsilon_;
     /** pair separation in MD units */
     matrix_type sigma_;
-    /** cutoff length in units of sigma */
-    matrix_type r_cut_sigma_;
-    /** cutoff length in MD units */
-    matrix_type r_cut_;
-    /** square of cutoff length */
-    matrix_type rr_cut_;
     /** square of pair separation */
     matrix_type sigma2_;
-    /** potential energy at cutoff length in MD units */
-    matrix_type en_cut_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

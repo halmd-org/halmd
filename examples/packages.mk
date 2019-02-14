@@ -1,20 +1,21 @@
 #
-# Copyright © 2011-2014 Peter Colberg
+# Copyright © 2011-2017 Peter Colberg
+# Copyright © 2013-2017 Felix Höfling
 # Copyright © 2013      Nicolas Höft
-# Copyright © 2013-2014 Felix Höfling
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
 #
 
 # default installation prefix
@@ -49,71 +50,72 @@ WGET      = wget
 ## define top-level targets
 ##
 
-build: build-cmake build-lua build-luajit build-boost build-hdf5 build-git build-python-sphinx build-graphviz build-gdb build-clang build-gcc build-halmd build-nvcuda-tools build-ninja
+build: build-cmake build-lua build-luajit build-boost build-hdf5 build-git build-python-sphinx build-graphviz build-gdb build-llvm build-clang build-gcc build-halmd build-nvcuda-tools build-ninja
 
-fetch: fetch-cmake fetch-lua fetch-luajit fetch-boost fetch-hdf5 fetch-git fetch-python-sphinx fetch-graphviz fetch-gdb fetch-clang fetch-gcc fetch-halmd fetch-nvcuda-tools fetch-ninja
+fetch: fetch-cmake fetch-lua fetch-luajit fetch-boost fetch-hdf5 fetch-git fetch-python-sphinx fetch-graphviz fetch-gdb fetch-llvm fetch-clang fetch-gcc fetch-halmd fetch-nvcuda-tools fetch-ninja
 
-install: install-cmake install-lua install-luajit install-boost install-hdf5 install-git install-python-sphinx install-graphviz install-gdb install-clang install-gcc install-halmd install-nvcuda-tools install-ninja
+install: install-cmake install-lua install-luajit install-boost install-hdf5 install-git install-python-sphinx install-graphviz install-gdb install-llvm install-clang install-gcc install-halmd install-nvcuda-tools install-ninja
 
-clean: clean-cmake clean-lua clean-luajit clean-boost clean-hdf5 clean-git clean-python-sphinx clean-graphviz clean-gdb clean-clang clean-gcc clean-halmd clean-nvcuda-tools clean-ninja
+clean: clean-cmake clean-lua clean-luajit clean-boost clean-hdf5 clean-git clean-python-sphinx clean-graphviz clean-gdb clean-llvm clean-clang clean-gcc clean-halmd clean-nvcuda-tools clean-ninja
 
-distclean: distclean-cmake distclean-lua distclean-luajit distclean-boost distclean-hdf5 distclean-git distclean-python-sphinx distclean-graphviz distclean-gdb distclean-clang distclean-gcc distclean-halmd distclean-nvcuda-tools distclean-ninja
+distclean: distclean-cmake distclean-lua distclean-luajit distclean-boost distclean-hdf5 distclean-git distclean-python-sphinx distclean-graphviz distclean-gdb distclean-llvm distclean-clang distclean-gcc distclean-halmd distclean-nvcuda-tools distclean-ninja
 
-env: env-cmake env-lua env-luajit env-boost env-hdf5 env-git env-python-sphinx env-graphviz env-gdb env-clang env-gcc env-halmd env-nvcuda-tools env-ninja
+env: env-cmake env-lua env-luajit env-boost env-hdf5 env-git env-python-sphinx env-graphviz env-gdb env-llvm env-clang env-gcc env-halmd env-nvcuda-tools env-ninja
 
 ##
-## CMake with CMake-CUDA patch
+## CMake
 ##
 
-CMAKE_CUDA_VERSION = 2.8.12.2-cuda
-CMAKE_CUDA_TARBALL = $(CMAKE_CUDA_VERSION).tar.gz
-CMAKE_CUDA_TARBALL_SHA256 = e884782cfc9fcb2c3720c51d1924d2a0dacebb10d09a6524e773ada1ba76c093
-CMAKE_CUDA_TARBALL_URL = http://git.halmd.org/cmake-cuda/archive/$(CMAKE_CUDA_TARBALL)
-CMAKE_SOURCE_DIR = cmake-cuda-$(CMAKE_CUDA_VERSION)
+CMAKE_VERSION = 3.11.1
+CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
+CMAKE_TARBALL_URL = https://cmake.org/files/v3.11/$(CMAKE_TARBALL)
+CMAKE_TARBALL_SHA256 = 57bebc6ca4d1d42c6385249d148d9216087e0fda57a47dc5c858790a70217d0c
+CMAKE_SOURCE_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_BUILD_DIR = $(CMAKE_SOURCE_DIR)/build
-CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_CUDA_VERSION)
+CMAKE_CONFIGURE_FLAGS = --sphinx-man
+CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_VERSION)
 
-.fetch-cmake-$(CMAKE_CUDA_VERSION):
-	@$(RM) $(CMAKE_CUDA_TARBALL)
-	$(WGET) $(CMAKE_CUDA_TARBALL_URL) -O $(CMAKE_CUDA_TARBALL)
-	@echo '$(CMAKE_CUDA_TARBALL_SHA256)  $(CMAKE_CUDA_TARBALL)' | $(SHA256SUM)
+.fetch-cmake-$(CMAKE_VERSION):
+	@$(RM) $(CMAKE_TARBALL)
+	$(WGET) $(CMAKE_TARBALL_URL) -O $(CMAKE_TARBALL)
+	@echo '$(CMAKE_TARBALL_SHA256)  $(CMAKE_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-cmake: .fetch-cmake-$(CMAKE_CUDA_VERSION)
+fetch-cmake: .fetch-cmake-$(CMAKE_VERSION)
 
-.extract-cmake-$(CMAKE_CUDA_VERSION): .fetch-cmake-$(CMAKE_CUDA_VERSION)
+.extract-cmake-$(CMAKE_VERSION): .fetch-cmake-$(CMAKE_VERSION)
 	$(RM) $(CMAKE_SOURCE_DIR)
-	$(TAR) -xzf $(CMAKE_CUDA_TARBALL)
+	$(TAR) -xzf $(CMAKE_TARBALL)
 	@$(TOUCH) $@
 
-extract-cmake: .extract-cmake-$(CMAKE_CUDA_VERSION)
+extract-cmake: .extract-cmake-$(CMAKE_VERSION)
 
-.configure-cmake-$(CMAKE_CUDA_VERSION): .extract-cmake-$(CMAKE_CUDA_VERSION)
+.configure-cmake-$(CMAKE_VERSION): .extract-cmake-$(CMAKE_VERSION)
 	$(MKDIR) $(CMAKE_BUILD_DIR)
-	cd $(CMAKE_BUILD_DIR) && ../configure --prefix=$(CMAKE_INSTALL_DIR)
+	cd $(CMAKE_BUILD_DIR) && ../configure --prefix=$(CMAKE_INSTALL_DIR) $(CMAKE_CONFIGURE_FLAGS)
 	@$(TOUCH) $@
 
-configure-cmake: .configure-cmake-$(CMAKE_CUDA_VERSION)
+configure-cmake: .configure-cmake-$(CMAKE_VERSION)
 
-.build-cmake-$(CMAKE_CUDA_VERSION): .configure-cmake-$(CMAKE_CUDA_VERSION)
+.build-cmake-$(CMAKE_VERSION): .configure-cmake-$(CMAKE_VERSION)
 	cd $(CMAKE_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-cmake: .build-cmake-$(CMAKE_CUDA_VERSION)
+build-cmake: .build-cmake-$(CMAKE_VERSION)
 
-install-cmake: .build-cmake-$(CMAKE_CUDA_VERSION)
+install-cmake: .build-cmake-$(CMAKE_VERSION)
 	cd $(CMAKE_BUILD_DIR) && $(MAKE) install
 
 clean-cmake:
-	@$(RM) .build-cmake-$(CMAKE_CUDA_VERSION)
-	@$(RM) .configure-cmake-$(CMAKE_CUDA_VERSION)
+	@$(RM) .build-cmake-$(CMAKE_VERSION)
+	@$(RM) .configure-cmake-$(CMAKE_VERSION)
 	$(RM) $(CMAKE_BUILD_DIR)
 
 distclean-cmake: clean-cmake
-	@$(RM) .fetch-cmake-$(CMAKE_CUDA_VERSION)
-	@$(RM) .extract-cmake-$(CMAKE_CUDA_VERSION)
+	@$(RM) .fetch-cmake-$(CMAKE_VERSION)
+	@$(RM) .extract-cmake-$(CMAKE_VERSION)
 	$(RM) $(CMAKE_SOURCE_DIR)
-	$(RM) $(CMAKE_CUDA_TARBALL)
+	$(RM) $(CMAKE_TARBALL)
 
 env-cmake:
 	@echo 'export PATH="$(CMAKE_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
@@ -127,8 +129,8 @@ ifdef USE_LUA51
 LUA_VERSION = 5.1.5
 LUA_TARBALL_SHA256 = 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
 else
-LUA_VERSION = 5.3.0
-LUA_TARBALL_SHA256 = ae4a5eb2d660515eb191bfe3e061f2b8ffe94dce73d32cfd0de090ddcc0ddb01
+LUA_VERSION = 5.2.4
+LUA_TARBALL_SHA256 = b9e2e4aad6789b3b63a056d442f7b39f0ecfca3ae0f1fc0ae4e9614401b69f4b
 endif
 LUA_TARBALL = lua-$(LUA_VERSION).tar.gz
 LUA_TARBALL_URL = http://www.lua.org/ftp/$(LUA_TARBALL)
@@ -184,10 +186,10 @@ env-lua:
 ## LuaJIT
 ##
 
-LUAJIT_VERSION = 2.0.4
+LUAJIT_VERSION = 2.0.5
 LUAJIT_TARBALL = LuaJIT-$(LUAJIT_VERSION).tar.gz
 LUAJIT_TARBALL_URL = http://luajit.org/download/$(LUAJIT_TARBALL)
-LUAJIT_TARBALL_SHA256 = 620fa4eb12375021bef6e4f237cbd2dd5d49e56beb414bee052c746beef1807d
+LUAJIT_TARBALL_SHA256 = 874b1f8297c697821f561f9b73b57ffd419ed8f4278c82e05b48806d30c1e979
 LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
 LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
 LUAJIT_CFLAGS = -fPIC -DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_CPU_SSE2
@@ -266,13 +268,13 @@ distclean-luatrace: clean-luatrace
 ## Boost C++ libraries with C++11 ABI
 ##
 
-BOOST_VERSION = 1.58.0
-BOOST_RELEASE = 1_58_0
+BOOST_VERSION = 1.65.1
+BOOST_RELEASE = 1_65_1
 BOOST_ABI = c++11
 BOOST_TOOLSET = gcc
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
-BOOST_TARBALL_SHA256 = fdfc204fc33ec79c99b9a74944c3e54bd78be4f7f15e260c0e2700a36dc7d3e5
+BOOST_TARBALL_SHA256 = 9807a5d16566c57fd74fb522764e0b134a8bbe6b6e8967b83afefd30dcd3be81
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)-$(BOOST_ABI)
 BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged toolset=$(BOOST_TOOLSET) cxxflags="-fPIC -std=$(BOOST_ABI)" dll-path=$(BOOST_INSTALL_DIR)/lib
@@ -332,10 +334,12 @@ env-boost:
 ##
 ## HDF5 library
 ##
-HDF5_VERSION = 1.8.15
+HDF5_VERSION = 1.10.2
+HDF5_MAJOR_VERSION = $(shell echo $(HDF5_VERSION) | cut -f1 -d.)
+HDF5_MINOR_VERSION = $(shell echo $(HDF5_VERSION) | cut -f2 -d.)
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
-HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
-HDF5_TARBALL_SHA256 = 0003ac76314b9c3dd819f595eb33890f02f6bf000414013a89f9907ac09e3920
+HDF5_TARBALL_URL = https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_MAJOR_VERSION).$(HDF5_MINOR_VERSION)/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
+HDF5_TARBALL_SHA256 = 1cad5b7bfdf128dfc53cd16fba48f6e7ae4e93c75c371d9ec8dfc4df0c1fcb71
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
 HDF5_CONFIGURE_FLAGS = --enable-shared --enable-cxx --enable-fortran
@@ -449,13 +453,13 @@ distclean-curl: clean-curl
 ##
 ## Git version control
 ##
-GIT_VERSION = 2.4.0
+GIT_VERSION = 2.18.0
 GIT_TARBALL = git-$(GIT_VERSION).tar.gz
 GIT_TARBALL_URL = https://www.kernel.org/pub/software/scm/git/$(GIT_TARBALL)
-GIT_TARBALL_SHA256 = d58c766a80d86a5e1846c04c74618e98bfec158734fa1a8904c64740b72b511a
+GIT_TARBALL_SHA256 = 94faf2c0b02a7920b0b46f4961d8e9cad08e81418614102898a55f980fa3e7e4
 GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.gz
 GIT_MANPAGES_TARBALL_URL = https://www.kernel.org/pub/software/scm/git/$(GIT_MANPAGES_TARBALL)
-GIT_MANPAGES_TARBALL_SHA256 = ab3f0824e0d17bd9ce5075964350b0ab13bb8991e85a87f7d822be882b3a102e
+GIT_MANPAGES_TARBALL_SHA256 = 6cf38ab3ad43ccdcd6a73ffdcf2a016d56ab6b4b240a574b0bb96f520a04ff55
 GIT_BUILD_DIR = git-$(GIT_VERSION)
 GIT_CONFIGURE_FLAGS = --without-python
 GIT_INSTALL_DIR = $(PREFIX)/git-$(GIT_VERSION)
@@ -514,10 +518,11 @@ env-git:
 ## python-sphinx
 ##
 
-PYTHON_SPHINX_VERSION = 1.2.3
+PYTHON_SPHINX_VERSION = 1.6.3
 PYTHON_SPHINX_TARBALL = Sphinx-$(PYTHON_SPHINX_VERSION).tar.gz
-PYTHON_SPHINX_TARBALL_URL = http://pypi.python.org/packages/source/S/Sphinx/$(PYTHON_SPHINX_TARBALL)
-PYTHON_SPHINX_TARBALL_SHA256 = 94933b64e2fe0807da0612c574a021c0dac28c7bd3c4a23723ae5a39ea8f3d04
+PYTHON_SPHINX_TARBALL_HASH = 10/91/ceb2e0d763e0c626f7afd7e3272a5bb76dd06eed1f0b908270ea31984062
+PYTHON_SPHINX_TARBALL_URL = https://pypi.python.org/packages/$(PYTHON_SPHINX_TARBALL_HASH)/$(PYTHON_SPHINX_TARBALL)
+PYTHON_SPHINX_TARBALL_SHA256 = af8bdb8c714552b77d01d4536e3d6d2879d6cb9d25423d29163d5788e27046e6
 PYTHON_SPHINX_BUILD_DIR = Sphinx-$(PYTHON_SPHINX_VERSION)
 PYTHON_SPHINX_INSTALL_DIR = $(PREFIX)/python-sphinx-$(PYTHON_SPHINX_VERSION)
 PYTHON_SPHINX_PYTHONPATH = $(PYTHON_SPHINX_INSTALL_DIR)/lib/python
@@ -673,51 +678,107 @@ env-gdb:
 	@echo 'export CMAKE_PREFIX_PATH="$(GDB_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
+## LLVM compiler infrastructure
+##
+
+LLVM_VERSION = 5.0.0
+LLVM_TARBALL = llvm-$(LLVM_VERSION).src.tar.xz
+LLVM_TARBALL_URL = https://releases.llvm.org/$(LLVM_VERSION)/$(LLVM_TARBALL)
+LLVM_TARBALL_SHA256 = e35dcbae6084adcf4abb32514127c5eabd7d63b733852ccdb31e06f1373136da
+LLVM_SOURCE_DIR = llvm-$(LLVM_VERSION).src
+LLVM_BUILD_DIR = $(LLVM_SOURCE_DIR)/build
+LLVM_CONFIGURE_FLAGS = -DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_ENABLE_RTTI=ON -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON
+LLVM_INSTALL_DIR = $(PREFIX)/llvm-$(LLVM_VERSION)
+
+.fetch-llvm-$(LLVM_VERSION):
+	@$(RM) $(LLVM_TARBALL)
+	$(WGET) -O $(LLVM_TARBALL) $(LLVM_TARBALL_URL)
+	@echo '$(LLVM_TARBALL_SHA256)  $(LLVM_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-llvm: .fetch-llvm-$(LLVM_VERSION)
+
+.extract-llvm-$(LLVM_VERSION): .fetch-llvm-$(LLVM_VERSION)
+	$(RM) $(LLVM_SOURCE_DIR)
+	$(TAR) -xf $(LLVM_TARBALL)
+	@$(TOUCH) $@
+
+extract-llvm: .extract-llvm-$(LLVM_VERSION)
+
+.configure-llvm-$(LLVM_VERSION): .extract-llvm-$(LLVM_VERSION)
+	$(MKDIR) $(LLVM_BUILD_DIR)
+	cd $(LLVM_BUILD_DIR) && $(CMAKE) -DCMAKE_INSTALL_PREFIX=$(LLVM_INSTALL_DIR) $(LLVM_CONFIGURE_FLAGS) ..
+	@$(TOUCH) $@
+
+configure-llvm: .configure-llvm-$(LLVM_VERSION)
+
+.build-llvm-$(LLVM_VERSION): .configure-llvm-$(LLVM_VERSION)
+	cd $(LLVM_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-llvm: .build-llvm-$(LLVM_VERSION)
+
+install-llvm: .build-llvm-$(LLVM_VERSION)
+	cd $(LLVM_BUILD_DIR) && $(MAKE) install
+
+clean-llvm:
+	@$(RM) .build-llvm-$(LLVM_VERSION)
+	@$(RM) .configure-llvm-$(LLVM_VERSION)
+	@$(RM) .extract-llvm-$(LLVM_VERSION)
+	$(RM) $(LLVM_SOURCE_DIR)
+
+distclean-llvm: clean-llvm
+	@$(RM) .fetch-llvm-$(LLVM_VERSION)
+	$(RM) $(LLVM_TARBALL)
+
+env-llvm:
+	@echo 'export PATH="$(LLVM_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export CPATH="$(LLVM_INSTALL_DIR)/include$${CPATH+:$$CPATH}"'
+	@echo 'export LIBRARY_PATH="$(LLVM_INSTALL_DIR)/lib$${LIBRARY_PATH+:$$LIBRARY_PATH}"'
+	@echo 'export LD_LIBRARY_PATH="$(LLVM_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
+	@echo 'export CMAKE_PREFIX_PATH="$(LLVM_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
+
+##
 ## Clang C++ compiler
 ##
-CLANG_VERSION = 3.6.0
-LLVM_TARBALL = llvm-$(CLANG_VERSION).src.tar.xz
-LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
-LLVM_TARBALL_SHA256 = b39a69e501b49e8f73ff75c9ad72313681ee58d6f430bfad4d81846fe92eb9ce
-CFE_TARBALL = cfe-$(CLANG_VERSION).src.tar.xz
-CFE_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CFE_TARBALL)
-CFE_TARBALL_SHA256 = be0e69378119fe26f0f2f74cffe82b7c26da840c9733fe522ed3c1b66b11082d
-CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
-CLANG_CONFIGURE_FLAGS = --enable-optimized --enable-bindings=none --enable-shared
-CLANG_BUILD_FLAGS = REQUIRES_RTTI=1
+
+CLANG_VERSION = 5.0.0
+CLANG_TARBALL = cfe-$(CLANG_VERSION).src.tar.xz
+CLANG_TARBALL_URL = https://releases.llvm.org/$(CLANG_VERSION)/$(CLANG_TARBALL)
+CLANG_TARBALL_SHA256 = 019f23c2192df793ac746595e94a403908749f8e0c484b403476d2611dd20970
+CLANG_SOURCE_DIR = cfe-$(CLANG_VERSION).src
+CLANG_BUILD_DIR = $(CLANG_SOURCE_DIR)/build
+CLANG_CONFIGURE_FLAGS = -DCMAKE_BUILD_TYPE=Release
 CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
 
-ifdef CLANG_GCC_TOOLCHAIN
-    CLANG_CONFIGURE_FLAGS += --with-gcc-toolchain=$(CLANG_GCC_TOOLCHAIN)
+ifndef USE_SYSTEM_GCC
+CLANG_CONFIGURE_FLAGS += -DGCC_INSTALL_PREFIX=$(GCC_INSTALL_DIR)
 endif
 
 .fetch-clang-$(CLANG_VERSION):
-	@$(RM) $(LLVM_TARBALL)
-	@$(RM) $(CFE_TARBALL)
-	$(WGET) $(LLVM_TARBALL_URL)
-	$(WGET) $(CFE_TARBALL_URL)
-	@echo '$(LLVM_TARBALL_SHA256)  $(LLVM_TARBALL)' | $(SHA256SUM)
-	@echo '$(CFE_TARBALL_SHA256)  $(CFE_TARBALL)' | $(SHA256SUM)
+	@$(RM) $(CLANG_TARBALL)
+	$(WGET) -O $(CLANG_TARBALL) $(CLANG_TARBALL_URL)
+	@echo '$(CLANG_TARBALL_SHA256)  $(CLANG_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-clang: .fetch-clang-$(CLANG_VERSION)
 
 .extract-clang-$(CLANG_VERSION): .fetch-clang-$(CLANG_VERSION)
-	$(RM) $(CLANG_BUILD_DIR)
-	$(TAR) -xJf $(LLVM_TARBALL)
-	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xJf $(CURDIR)/$(CFE_TARBALL) && mv cfe-$(CLANG_VERSION).src clang
+	$(RM) $(CLANG_SOURCE_DIR)
+	$(TAR) -xf $(CLANG_TARBALL)
 	@$(TOUCH) $@
 
 extract-clang: .extract-clang-$(CLANG_VERSION)
 
 .configure-clang-$(CLANG_VERSION): .extract-clang-$(CLANG_VERSION)
-	cd $(CLANG_BUILD_DIR) && ./configure $(CLANG_CONFIGURE_FLAGS) --prefix=$(CLANG_INSTALL_DIR)
+	$(MKDIR) $(CLANG_BUILD_DIR)
+	cd $(CLANG_BUILD_DIR) && $(CMAKE) -DCMAKE_INSTALL_PREFIX=$(CLANG_INSTALL_DIR) $(CLANG_CONFIGURE_FLAGS) ..
 	@$(TOUCH) $@
 
 configure-clang: .configure-clang-$(CLANG_VERSION)
 
 .build-clang-$(CLANG_VERSION): .configure-clang-$(CLANG_VERSION)
-	cd $(CLANG_BUILD_DIR) && $(MAKE) $(CLANG_BUILD_FLAGS) $(PARALLEL_BUILD_FLAGS)
+	cd $(CLANG_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-clang: .build-clang-$(CLANG_VERSION)
@@ -729,26 +790,24 @@ clean-clang:
 	@$(RM) .build-clang-$(CLANG_VERSION)
 	@$(RM) .configure-clang-$(CLANG_VERSION)
 	@$(RM) .extract-clang-$(CLANG_VERSION)
-	$(RM) $(CLANG_BUILD_DIR)
+	$(RM) $(CLANG_SOURCE_DIR)
 
 distclean-clang: clean-clang
 	@$(RM) .fetch-clang-$(CLANG_VERSION)
-	$(RM) $(LLVM_TARBALL)
-	$(RM) $(CFE_TARBALL)
+	$(RM) $(CLANG_TARBALL)
 
 env-clang:
 	@echo 'export PATH="$(CLANG_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(CLANG_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
-	@echo 'export LD_LIBRARY_PATH="$(CLANG_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
 
 ##
 ## GMP (GNU Multiple Precision Arithmetic Library)
 ##
 
-GMP_VERSION = 5.1.3
+GMP_VERSION = 6.1.2
 GMP_TARBALL = gmp-$(GMP_VERSION).tar.bz2
 GMP_TARBALL_URL = http://ftp.gnu.org/gnu/gmp/$(GMP_TARBALL)
-GMP_TARBALL_SHA256 = 752079520b4690531171d0f4532e40f08600215feefede70b24fabdc6f1ab160
+GMP_TARBALL_SHA256 = 5275bb04f4863a13516b2f39392ac5e272f5e1bb8057b18aec1c9b79d73d8fb2
 GMP_BUILD_DIR = gmp-$(GMP_VERSION)
 GMP_INSTALL_DIR = $(CURDIR)/.gmp-$(GMP_VERSION)
 
@@ -907,10 +966,10 @@ distclean-mpc: clean-mpc
 ## ISL (Integer Set Library)
 ##
 
-ISL_VERSION = 0.14
+ISL_VERSION = 0.16.1
 ISL_TARBALL = isl-$(ISL_VERSION).tar.bz2
 ISL_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(ISL_TARBALL)
-ISL_TARBALL_SHA256 = 7e3c02ff52f8540f6a85534f54158968417fd676001651c8289c705bd0228f36
+ISL_TARBALL_SHA256 = 412538bb65c799ac98e17e8cfcdacbb257a57362acfaaff254b0fcae970126d2
 ISL_BUILD_DIR = isl-$(ISL_VERSION)
 ISL_INSTALL_DIR = $(CURDIR)/.isl-$(ISL_VERSION)
 
@@ -961,10 +1020,10 @@ distclean-isl: clean-isl
 ## GCC (GNU Compiler Collection)
 ##
 
-GCC_VERSION = 5.1.0
+GCC_VERSION = 6.3.0
 GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
 GCC_TARBALL_URL = http://ftp.gwdg.de/pub/misc/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
-GCC_TARBALL_SHA256 = b7dafdf89cbb0e20333dbf5b5349319ae06e3d1a30bf3515b5488f7e89dca5ad
+GCC_TARBALL_SHA256 = f06ae7f3f790fbf0f018f6d40e844451e6bc3b7bc96e128e63b09825c1f8b29f
 GCC_BUILD_DIR = gcc-$(GCC_VERSION)
 GCC_BUILD_FLAGS = --enable-cxx-flags=-fPIC --enable-languages=c,c++,fortran,lto --disable-multilib
 GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
@@ -1022,7 +1081,7 @@ env-gcc:
 ## HALMD Highly Accerelated Large-scale Molecular Dynamics
 ##
 
-HALMD_VERSION = 1.0-alpha4
+HALMD_VERSION = 1.0-alpha6
 HALMD_TARBALL = halmd-$(HALMD_VERSION).tar.bz2
 HALMD_TARBALL_URL = http://code.halmd.org/tar/$(HALMD_TARBALL)
 HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)
@@ -1144,11 +1203,11 @@ env-nvcuda-tools:
 ##
 ## Ninja - a small build system with a focus on speed
 ##
-NINJA_VERSION = 1.5.3
+NINJA_VERSION = 1.8.2
 NINJA_TARBALL = ninja-$(NINJA_VERSION).tar.gz
 NINJA_TARBALL_REMOTE = v$(NINJA_VERSION).tar.gz
-NINJA_TARBALL_URL = https://github.com/martine/ninja/archive/$(NINJA_TARBALL_REMOTE)
-NINJA_TARBALL_SHA256 = 7c953b5a7c26cfcd082882e3f3e2cd08fee8848ad228bb47223b18ea18777ec0
+NINJA_TARBALL_URL = https://github.com/ninja-build/ninja/archive/$(NINJA_TARBALL_REMOTE)
+NINJA_TARBALL_SHA256 = 86b8700c3d0880c2b44c2ff67ce42774aaf8c28cbf57725cb881569288c1c6f4
 NINJA_BUILD_DIR = ninja-$(NINJA_VERSION)
 NINJA_CONFIGURE_FLAGS =
 NINJA_INSTALL_DIR = $(PREFIX)/ninja-$(NINJA_VERSION)

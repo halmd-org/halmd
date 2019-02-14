@@ -6,17 +6,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_GPU_NEIGHBOURS_FROM_BINNING_HPP
@@ -52,7 +53,7 @@ private:
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
+    typedef boost::numeric::ublas::matrix<float> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef gpu::binning<dimension, float_type> binning_type;
     typedef max_displacement<dimension, float_type> displacement_type;
@@ -69,7 +70,8 @@ public:
     static void luaopen(lua_State* L);
 
     from_binning(
-        std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+        std::shared_ptr<particle_type const> particle1
+      , std::shared_ptr<particle_type const> particle2
       , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>> binning
       , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
       , std::shared_ptr<box_type const> box
@@ -91,13 +93,13 @@ public:
     }
 
     //! returns neighbour list skin in MD units
-    float_type r_skin() const
+    float r_skin() const
     {
         return r_skin_;
     }
 
     //! returns neighbour list skin in MD units
-    float_type cell_occupancy() const
+    float cell_occupancy() const
     {
         return nu_cell_;
     }
@@ -131,7 +133,7 @@ public:
 
 private:
     typedef typename particle_type::position_array_type position_array_type;
-    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
+    typedef typename particle_type::reverse_id_array_type reverse_id_array_type;
     typedef typename binning_type::array_type cell_array_type;
 
     typedef utility::profiler::accumulator_type accumulator_type;
@@ -155,15 +157,15 @@ private:
     std::shared_ptr<logger> logger_;
 
     /** neighbour list skin in MD units */
-    float_type r_skin_;
+    float r_skin_;
     /** maximum cutoff length */
-    float_type r_cut_max_;
+    float r_cut_max_;
     /** (cutoff lengths + neighbour list skin)² */
     matrix_type rr_cut_skin_;
     /** (cutoff lengths + neighbour list skin)² */
-    cuda::vector<float_type> g_rr_cut_skin_;
+    cuda::vector<float> g_rr_cut_skin_;
     /** FIXME average desired cell occupancy */
-    float_type nu_cell_;
+    float nu_cell_;
     /** preferred algorithm for update */
     algorithm preferred_algorithm_;
     /** neighbour lists */
@@ -189,7 +191,7 @@ private:
 template <int dimension, typename float_type>
 struct from_binning<dimension, float_type>::defaults
 {
-    static float_type occupancy();
+    static float occupancy();
 };
 
 } // namespace neighbours

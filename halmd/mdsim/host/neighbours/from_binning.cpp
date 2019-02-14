@@ -6,17 +6,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/mdsim/host/neighbours/from_binning.hpp>
@@ -37,7 +38,8 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_binning<dimension, float_type>::from_binning(
-    std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+    std::shared_ptr<particle_type const> particle1
+  , std::shared_ptr<particle_type const> particle2
   , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>> binning
   , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
   , std::shared_ptr<box_type const> box
@@ -46,8 +48,8 @@ from_binning<dimension, float_type>::from_binning(
   , std::shared_ptr<logger> logger
 )
   // dependency injection
-  : particle1_(particle.first)
-  , particle2_(particle.second)
+  : particle1_(particle1)
+  , particle2_(particle2)
   , binning1_(binning.first)
   , binning2_(binning.second)
   , displacement1_(displacement.first)
@@ -76,10 +78,10 @@ template <int dimension, typename float_type>
 cache<std::vector<typename from_binning<dimension, float_type>::neighbour_list>> const&
 from_binning<dimension, float_type>::lists()
 {
-    cache<reverse_tag_array_type> const& reverse_tag_cache1 = particle1_->reverse_tag();
-    cache<reverse_tag_array_type> const& reverse_tag_cache2 = particle2_->reverse_tag();
+    cache<reverse_id_array_type> const& reverse_id_cache1 = particle1_->reverse_id();
+    cache<reverse_id_array_type> const& reverse_id_cache2 = particle2_->reverse_id();
 
-    auto current_cache = std::tie(reverse_tag_cache1, reverse_tag_cache2);
+    auto current_cache = std::tie(reverse_id_cache1, reverse_id_cache2);
 
     if (neighbour_cache_ != current_cache || displacement1_->compute() > r_skin_ / 2
         || displacement2_->compute() > r_skin_ / 2) {
@@ -245,7 +247,8 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &from_binning::runtime_)
               , def("from_binning", &std::make_shared<from_binning
-                  , std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
+                  , std::shared_ptr<particle_type const>
+                  , std::shared_ptr<particle_type const>
                   , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>>
                   , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>>
                   , std::shared_ptr<box_type const>

@@ -18,7 +18,7 @@ The setup procedure has the following steps:
  * assign random velocities according to a Maxwell–Boltzmann distribution
 
 .. literalinclude:: /test/lua/recipes/create_mixture.lua
-   :lines: 4-
+   :lines: 3-35
    :language: lua
 
 .. note::

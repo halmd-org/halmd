@@ -15,9 +15,12 @@ add_executable(test_tools_ctest_linking
 target_link_libraries(test_tools_ctest_linking
   ${HALMD_TEST_LIBRARIES}
 )
-get_target_property(
-  TEST_TOOLS_CTEST_LINKING_LOCATION test_tools_ctest_linking LOCATION
-)
+
+set(TEST_TOOLS_CTEST_LINKING_LOCATION_FILE
+  ${CMAKE_CURRENT_BINARY_DIR}/test_tools_ctest_linking_location)
+file(GENERATE OUTPUT ${TEST_TOOLS_CTEST_LINKING_LOCATION_FILE}
+  CONTENT "$<TARGET_FILE:test_tools_ctest_linking>")
+
 configure_file(
   ctest_linking.cmake.in
   test_tools_ctest_linking.cmake

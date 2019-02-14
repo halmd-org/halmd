@@ -6,17 +6,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <algorithm>
@@ -30,6 +31,7 @@
 #include <halmd/mdsim/gpu/positions/lattice.hpp>
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 using namespace std;
 
@@ -72,7 +74,7 @@ void lattice<dimension, float_type>::set()
     gpu_vector_type length = static_cast<gpu_vector_type>(element_prod(box_->length(), slab_));
     gpu_vector_type offset = -length / 2;
 
-    fcc(&*position->begin(), &*position->end(), length, offset);
+    fcc(position->data(), particle_->nparticle(), length, offset);
 
     // reset particle image vectors
     cuda::memset(image->begin(), image->begin() + image->capacity(), 0);
@@ -112,7 +114,7 @@ void lattice<dimension, float_type>::set()
 template <int dimension, typename float_type>
 template <typename position_iterator>
 void lattice<dimension, float_type>::fcc(
-    position_iterator first, position_iterator last
+    position_iterator first, size_t npart
   , gpu_vector_type const& length, gpu_vector_type const& offset
 )
 {
@@ -122,15 +124,14 @@ void lattice<dimension, float_type>::fcc(
     // determine maximal lattice constant
     // use the same floating point precision as the CUDA device,
     // assign lattice coordinates to (sub-)volume of the box
-    LOG_TRACE("generating fcc lattice for " << last - first << " particles, box: " << length << ", offset: " << offset);
-    size_t npart = last - first;
-    float_type u = lattice_type(1).size();
-    float_type V = accumulate(
+    LOG_TRACE("generating fcc lattice for " << npart << " particles, box: " << length << ", offset: " << offset);
+    float u = lattice_type(1).size();
+    float V = accumulate(
         length.begin(), length.end()
-      , float_type(1) / ceil(npart / u)
-      , multiplies<float_type>()
+      , 1.f / ceil(npart / u)
+      , multiplies<float>()
     );
-    float_type a = pow(V, float_type(1) / dimension);
+    float a = pow(V, 1.f / dimension);
     index_type n(length / a);
     while (npart > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
         gpu_vector_type t;
@@ -165,8 +166,9 @@ void lattice<dimension, float_type>::fcc(
     }
 
     try {
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
-        get_lattice_kernel<lattice_type>().lattice(first, npart, a, skip, offset, n);
+        auto const& lattice_kernel = get_lattice_kernel<float_type, lattice_type>().lattice;
+        configure_kernel(lattice_kernel, particle_->dim(), false);
+        lattice_kernel(first, npart, a, skip, offset, n);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -208,14 +210,26 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_positions_lattice(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     lattice<3, float>::luaopen(L);
     lattice<2, float>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    lattice<3, dsfloat>::luaopen(L);
+    lattice<2, dsfloat>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class lattice<3, float>;
 template class lattice<2, float>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class lattice<3, dsfloat>;
+template class lattice<2, dsfloat>;
+#endif
 
 } // namespace mdsim
 } // namespace gpu

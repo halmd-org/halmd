@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_GPU_INTEGRATORS_VERLET_NVT_HOOVER_HPP
@@ -42,23 +43,23 @@ template <int dimension, typename float_type>
 class verlet_nvt_hoover
 {
 public:
-    typedef particle<dimension, float> particle_type;
+    typedef typename boost::mpl::if_<
+      boost::is_same<float_type, double>, dsfloat, float_type
+    >::type gpu_float_type;
+    typedef particle<dimension, gpu_float_type> particle_type;
     typedef box<dimension> box_type;
     typedef fixed_vector<float_type, 2> chain_type;
 
     typedef typename particle_type::vector_type vector_type;
-    typedef typename boost::mpl::if_<
-        boost::is_same<float_type, double>, dsfloat, float_type
-    >::type gpu_float_type;
 
     static void luaopen(lua_State* L);
 
     verlet_nvt_hoover(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
-      , float_type timestep
-      , float_type temperature
-      , float_type resonance_frequency
+      , double timestep
+      , double temperature
+      , double resonance_frequency
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 

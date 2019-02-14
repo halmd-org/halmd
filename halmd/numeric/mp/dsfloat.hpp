@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_NUMERIC_MP_DSFLOAT_CUH
@@ -28,6 +29,39 @@
 
 #include <halmd/numeric/mp/dsfun.hpp>
 #include <halmd/utility/tuple.hpp>
+#ifdef HALMD_WITH_GPU
+# include <cuda_wrapper/cuda_wrapper.hpp>
+#endif
+
+#ifndef __CUDACC__
+# include <ostream>
+#endif
+
+namespace halmd {
+namespace detail {
+namespace numeric {
+namespace mp {
+
+// forward declaration
+struct dsfloat;
+
+} // namespace mp
+} // namespace numeric
+} // namespace detail
+} // namespace halmd
+
+namespace boost {
+
+//
+// In order to make dsfloat completely act like a number, it is necessary
+// to specify it as floating point number by the means of
+// boost::is_floating_point<>. Therefore, add a specialization for
+// boost::is_floating_point<dsfloat>.
+//
+template<>
+struct is_floating_point<halmd::detail::numeric::mp::dsfloat> : public boost::true_type {};
+
+} // namespace boost
 
 namespace halmd {
 namespace detail {
@@ -83,6 +117,24 @@ struct dsfloat
     HALMD_GPU_ENABLED operator double() const
     {
         return static_cast<double>(hi) + lo;
+    }
+
+    HALMD_GPU_ENABLED bool operator<(dsfloat const& rhs) const {
+        if (hi < rhs.hi) return true;
+        if (rhs.hi < hi) return false;
+        return lo < rhs.lo;
+    }
+    HALMD_GPU_ENABLED bool operator>(dsfloat const& rhs) const {
+        return rhs.operator<(*this);
+    }
+    HALMD_GPU_ENABLED bool operator<=(dsfloat const& rhs) const {
+        return !rhs.operator<(*this);
+    }
+    HALMD_GPU_ENABLED bool operator>=(dsfloat const& rhs) const {
+        return !operator<(rhs);
+    }
+    HALMD_GPU_ENABLED bool operator==(dsfloat const& rhs) const {
+        return (hi == rhs.hi) && (lo == rhs.lo);
     }
 };
 
@@ -258,27 +310,60 @@ inline HALMD_GPU_ENABLED dsfloat min(dsfloat const& v, dsfloat const& w)
     return v.hi == w.hi ? (v.lo <= w.lo ? v : w) : (v.hi < w.hi ? v : w);
 }
 
-} // namespace detail
-} // namespace numeric
+template<typename T>
+struct dsfloat_ptr
+{
+    T* hi;
+    T* lo;
+
+    HALMD_GPU_ENABLED halmd::tuple<T&, T&> operator[] (unsigned int idx)
+    {
+        return tie(hi[idx], lo[idx]);
+    };
+    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const
+    {
+        return tie(hi[idx], lo[idx]);
+    };
+
+    operator T*() const
+    {
+        return hi;
+    }
+};
+
+template<typename T>
+struct dsfloat_const_ptr
+{
+    T const* hi;
+    T const* lo;
+
+    HALMD_GPU_ENABLED halmd::tuple<T const&, T const&> operator[] (unsigned int idx) const
+    {
+        return tie(hi[idx], lo[idx]);
+    };
+
+    operator T const*() const
+    {
+        return hi;
+    }
+};
+
+#ifndef __CUDACC__
+inline std::ostream& operator<<(std::ostream& p, dsfloat const& val) {
+    p << double(val);
+    return p;
+}
+#endif
+
 } // namespace mp
+} // namespace numeric
+} // namespace detail
 
 // import into top-level namespace
 using detail::numeric::mp::dsfloat;
+using detail::numeric::mp::dsfloat_ptr;
+using detail::numeric::mp::dsfloat_const_ptr;
 
 } // namespace halmd
-
-namespace boost
-{
-
-//
-// In order to make dsfloat completely act like a number, it is necessary
-// to specify it as floating point number by the means of
-// boost::is_floating_point<>. Therefore, add a specialization for
-// boost::is_floating_point<dsfloat>.
-//
-template<>
-struct is_floating_point<halmd::dsfloat> : public boost::true_type {};
-
-} // namespace boost
 
 #endif /* ! HALMD_NUMERIC_MP_DSFLOAT_CUH */

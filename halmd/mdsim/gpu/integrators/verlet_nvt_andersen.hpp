@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_GPU_INTEGRATORS_VERLET_NVT_ANDERSEN_HPP
@@ -47,7 +48,7 @@ public:
 private:
     typedef typename particle_type::vector_type vector_type;
     typedef typename random_type::rng_type rng_type;
-    typedef verlet_nvt_andersen_wrapper<dimension, rng_type> wrapper_type;
+    typedef verlet_nvt_andersen_wrapper<dimension, float_type, rng_type> wrapper_type;
 
 public:
     /**
@@ -57,9 +58,9 @@ public:
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<random_type> random
-      , float_type timestep
-      , float_type temperature
-      , float_type coll_rate
+      , double timestep
+      , double temperature
+      , double coll_rate
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 

@@ -4,24 +4,22 @@
 -- This file is part of HALMD.
 --
 -- HALMD is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- GNU Lesser General Public License for more details.
 --
--- You should have received a copy of the GNU General Public License
--- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = require("halmd")
-local mdsim = require("halmd.mdsim")
-local sampler = require("halmd.observables.sampler")
-
-halmd.io.log.open_console({severity = "debug"})
+local mdsim = halmd.mdsim
+local sampler = halmd.observables.sampler
 
 function rel_error(a, b)
     return math.abs(a - b) / math.abs(b)
@@ -41,8 +39,8 @@ function test_construction(args)
     })
 
     -- check parameter passing
-    assert(rel_error(integrator.timestep, args.timestep) < 1e-15)
-    assert(rel_error(integrator.temperature, args.temperature) < 1e-15)
+    assert(rel_error(integrator.timestep, args.timestep) < args.parameter_tolerance)
+    assert(rel_error(integrator.temperature, args.temperature) < args.parameter_tolerance)
 
     -- check integrator masses
     local dimension = box.dimension
@@ -85,9 +83,7 @@ function test_writer(integrator, args)
 end
 
 -- define command line arguments
-function parse_args()
-    local parser = halmd.utility.program_options.argument_parser()
-
+function define_args(parser)
     parser:add_argument("particles", {type = "integer", default=1600, help = "number of particles"})
     parser:add_argument("box-length", {type = "vector", dtype = "number", default = {20, 40, 20}
       , help = "edge lengths of simulation box"
@@ -96,16 +92,16 @@ function parse_args()
     parser:add_argument("temperature", {type = "number", default=3.0, help = "temperature"})
     parser:add_argument("frequency", {type = "number", default=5.0, help = "resonance frequency"})
     parser:add_argument("output,o", {type = "string", help = "prefix of output files"})
-
-    return parser:parse_args()
+    parser:add_argument("parameter-tolerance", {type = "number", default=1e-15
+      , help = "parameter passing tolerance"
+    })
 end
 
-local args = parse_args()
-
 -- start tests
-local integrator = test_construction(args)
-test_methods(integrator, args)
-test_writer(integrator, args)
+function main(args)
+    local integrator = test_construction(args)
+    test_methods(integrator, args)
+    test_writer(integrator, args)
 
-integrator:disconnect()
-
+    integrator:disconnect()
+end

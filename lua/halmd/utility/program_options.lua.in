@@ -4,22 +4,25 @@
 -- This file is part of HALMD.
 --
 -- HALMD is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- GNU Lesser General Public License for more details.
 --
--- You should have received a copy of the GNU General Public License
--- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
 --
 
 local utility = require("halmd.utility") -- utility.sorted
 
 ---
+-- .. _program_options:
+--
 -- Program Options
 -- ===============
 --
@@ -153,36 +156,58 @@ local function format_help(self)
     local left = {}
     local right = {}
     local padding = 0
+    local max_padding = 40
     local options = assert(self._desc.options)
     local groups = assert(self._groups)
     for i = 1, #options do
         local option = options[i]
         local name, desc = format_argument(option)
-        if #name > padding then
-            padding = #name
-        end
         table.insert(left, name)
+        if #name > max_padding then
+          -- for overlong lines don't increase padding, but
+          -- output description on next line
+          table.insert(right, "")
+          table.insert(left, "")
+        else
+          if #name > padding then
+              padding = #name
+          end
+        end
         table.insert(right, desc)
+
         local long_name = assert(option.long_name)
         local group = groups[long_name]
         if group then
             local options = assert(group._desc.options)
             for i = 1, #options do
                 local name, desc = format_group_argument(options[i])
-                if #name > padding then
-                    padding = #name
-                end
                 table.insert(left, name)
+                if #name > max_padding then
+                  -- for overlong lines don't increase padding, but
+                  -- output description on next line
+                  table.insert(right, "")
+                  table.insert(left, "")
+                else
+                  if #name > padding then
+                      padding = #name
+                  end
+                end
                 table.insert(right, desc)
             end
         end
     end
+    if padding > max_padding then
+        padding = max_padding
+    end
     local msg = {}
     local args = format_cmdline()
     table.insert(msg, ("Usage: %s [args]\n"):format(args))
-    local fmt = ("  %%-%ds  %%s"):format(padding)
     for i = 1, #left do
-        table.insert(msg, fmt:format(left[i], right[i]))
+        local whitespace = ""
+        if 2 + padding - #left[i] > 0 then
+          whitespace = string.rep(" ", 2 + padding - #left[i])
+        end
+        table.insert(msg, "  "..left[i]..whitespace..right[i])
     end
     return table.concat(msg, "\n")
 end
@@ -222,8 +247,13 @@ end
 -- Example::
 --
 --    local options = require("halmd.utility.program_options")
---
 --    local parser = options.argument_parser()
+--
+-- .. note::
+--    Typically, the argument parser is not created directly. Instead
+--    a simulation script may define a global method ``define_args``,
+--    which receives an argument parser as its argument, see
+--    :ref:`scripts`.
 --
 function M.argument_parser()
     local self = {
@@ -528,5 +558,54 @@ function argument_parser:parse_args(args)
     self._pcall(vm.store, vm, parsed)
     return self._pcall(vm.notify, vm, {})
 end
+
+argument_parser.action = {}
+
+---
+-- .. class:: halmd.utility.program_options.argument_parser.action
+--
+--    .. method:: substitute_date_time(args, key, value)
+--
+--       Substitute date/time helper action.
+--
+--       :param table args: parsed arguments
+--       :param string key: args table key of this argument
+--       :param value: parsed value of this argument
+--
+--       Helper function that can be used as action argument for argument_parser:add_argument
+--       and substitutes day and time in the parsed value of the argument.
+--
+--       Example::
+--
+--          parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
+--              default = "lennard_jones_%Y%m%d_%H%M%S", help = "prefix of output files"})
+--
+function argument_parser.action.substitute_date_time(args, key, value)
+    -- substitute current time
+    args[key] = os.date(value)
+end
+
+---
+--    .. method:: random_seed(args, key, value)
+--
+--       Random seed helper action.
+--
+--       :param table args: parsed arguments
+--       :param string key: args table key of this argument
+--       :param value: parsed value of this argument
+--
+--       Helper function that can be used as action argument for argument_parser:add_argument
+--       and initializes the RNG with a given seed.
+--
+--       Example::
+--
+--          parser:add_argument("random-seed", {type = "integer", action = parser.action.random_seed,
+--              help = "seed for random number generator"})
+--
+function argument_parser.action.random_seed(args, key, value)
+    -- seed the random number generator
+    halmd.random.generator({seed = value})
+end
+
 
 return M

@@ -6,17 +6,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_HPP
@@ -24,14 +25,13 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
-
 #include <memory>
 #include <tuple>
 
@@ -43,7 +43,7 @@ namespace forces {
 /**
  * class template for modules implementing short ranged potential forces
  */
-template <int dimension, typename float_type, typename potential_type, typename trunc_type = mdsim::forces::trunc::discontinuous>
+template <int dimension, typename float_type, typename potential_type>
 class pair_trunc
 {
 public:
@@ -57,8 +57,7 @@ public:
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<neighbour_type> neighbour
-      , float_type aux_weight = 1
-      , std::shared_ptr<trunc_type const> trunc = std::make_shared<trunc_type>()
+      , float aux_weight = 1
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -83,7 +82,7 @@ private:
     typedef typename particle_type::position_type position_type;
     typedef typename neighbour_type::array_type neighbour_array_type;
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
-    typedef pair_trunc_wrapper<dimension, gpu_potential_type, trunc_type> gpu_wrapper;
+    typedef pair_trunc_wrapper<dimension, gpu_potential_type> gpu_wrapper;
 
     typedef typename particle_type::force_array_type force_array_type;
     typedef typename particle_type::en_pot_array_type en_pot_array_type;
@@ -106,9 +105,7 @@ private:
     /** neighbour lists */
     std::shared_ptr<neighbour_type> neighbour_;
     /** weight for auxiliary variables */
-    float_type aux_weight_;
-    /** smoothing functor */
-    std::shared_ptr<trunc_type const> trunc_;
+    float aux_weight_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
@@ -130,15 +127,14 @@ private:
     runtime runtime_;
 };
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
+template <int dimension, typename float_type, typename potential_type>
+pair_trunc<dimension, float_type, potential_type>::pair_trunc(
     std::shared_ptr<potential_type const> potential
   , std::shared_ptr<particle_type> particle1
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<neighbour_type> neighbour
-  , float_type aux_weight
-  , std::shared_ptr<trunc_type const> trunc
+  , float aux_weight
   , std::shared_ptr<logger> logger
 )
   : potential_(potential)
@@ -147,7 +143,6 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , box_(box)
   , neighbour_(neighbour)
   , aux_weight_(aux_weight)
-  , trunc_(trunc)
   , logger_(logger)
 {
     if (std::min(potential_->size1(), potential_->size2()) < std::max(particle1_->nspecies(), particle2_->nspecies())) {
@@ -155,8 +150,8 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
     }
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::check_cache()
+template <int dimension, typename float_type, typename potential_type>
+inline void pair_trunc<dimension, float_type, potential_type>::check_cache()
 {
     cache<position_array_type> const& position1_cache = particle1_->position();
     cache<position_array_type> const& position2_cache = particle2_->position();
@@ -172,8 +167,8 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::check
     }
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::apply()
+template <int dimension, typename float_type, typename potential_type>
+inline void pair_trunc<dimension, float_type, potential_type>::apply()
 {
     cache<position_array_type> const& position1_cache = particle1_->position();
     cache<position_array_type> const& position2_cache = particle2_->position();
@@ -192,8 +187,8 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::apply
     particle1_->force_zero_disable();
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_()
+template <int dimension, typename float_type, typename potential_type>
+inline void pair_trunc<dimension, float_type, potential_type>::compute_()
 {
     position_array_type const& position1 = read_cache(particle1_->position());
     position_array_type const& position2 = read_cache(particle2_->position());
@@ -207,9 +202,9 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
     gpu_wrapper::kernel.r2.bind(position2);
     potential_->bind_textures();
 
-    cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+    configure_kernel(gpu_wrapper::kernel.compute, particle1_->dim(), true);
     gpu_wrapper::kernel.compute(
-        &*position1.begin()
+        position1.data()
       , &*force->begin()
       , &*g_neighbour.begin()
       , neighbour_->size()
@@ -219,15 +214,14 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
       , particle1_->nspecies()
       , particle2_->nspecies()
       , static_cast<position_type>(box_->length())
-      , *trunc_
       , particle1_->force_zero()
       , 1 // only relevant for kernel.compute_aux()
     );
     cuda::thread::synchronize();
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_aux_()
+template <int dimension, typename float_type, typename potential_type>
+inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
 {
     position_array_type const& position1 = read_cache(particle1_->position());
     position_array_type const& position2 = read_cache(particle2_->position());
@@ -243,14 +237,14 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
     gpu_wrapper::kernel.r2.bind(position2);
     potential_->bind_textures();
 
-    float_type weight = aux_weight_;
+    float weight = aux_weight_;
     if (particle1_ == particle2_) {
         weight /= 2;
     }
 
-    cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+    configure_kernel(gpu_wrapper::kernel.compute_aux, particle1_->dim(), true);
     gpu_wrapper::kernel.compute_aux(
-        &*position1.begin()
+        position1.data()
       , &*force->begin()
       , &*g_neighbour.begin()
       , neighbour_->size()
@@ -260,15 +254,14 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
       , particle1_->nspecies()
       , particle2_->nspecies()
       , static_cast<position_type>(box_->length())
-      , *trunc_
       , particle1_->force_zero()
       , weight
     );
     cuda::thread::synchronize();
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_State* L)
+template <int dimension, typename float_type, typename potential_type>
+void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -294,8 +287,7 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<neighbour_type>
-                  , float_type
-                  , std::shared_ptr<trunc_type const>
+                  , float
                   , std::shared_ptr<logger>
                 >)
             ]

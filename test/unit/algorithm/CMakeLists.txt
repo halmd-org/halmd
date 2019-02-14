@@ -6,7 +6,7 @@ if(HALMD_WITH_GPU)
     halmd_algorithm_gpu
     ${HALMD_TEST_LIBRARIES}
   )
-  add_test(unit/algorithm/iota
+  halmd_add_gpu_test(unit/algorithm/iota
     test_unit_algorithm_iota --log_level=test_suite
   )
 endif()

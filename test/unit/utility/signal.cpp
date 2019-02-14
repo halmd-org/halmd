@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #define BOOST_TEST_MODULE signal
@@ -242,7 +243,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal0 )
     BOOST_CHECK( !conn2.connected() );
     BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4.disconnect() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() );
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -300,7 +301,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal1 )
     BOOST_CHECK( !conn2.connected() );
     BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4.disconnect() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() );
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -358,7 +359,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal2 )
     BOOST_CHECK( !conn2.connected() );
     BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4.disconnect() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() );
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -416,7 +417,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal3 )
     BOOST_CHECK( !conn2.connected() );
     BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4.disconnect() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() );
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -476,7 +477,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal4 )
     BOOST_CHECK( !conn2.connected() );
     BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4.disconnect() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() );
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -534,7 +535,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal5 )
     BOOST_CHECK( !conn2.connected() );
     BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4.disconnect() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() );
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -592,7 +593,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal6 )
     BOOST_CHECK( !conn2.connected() );
     BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4.disconnect() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() );
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -652,7 +653,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal7 )
     BOOST_CHECK( !conn2.connected() );
     BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4.disconnect() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() );
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -710,7 +711,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal8 )
     BOOST_CHECK( !conn2.connected() );
     BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4.disconnect() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() );
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -768,7 +769,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal9 )
     BOOST_CHECK( !conn2.connected() );
     BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4.disconnect() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() );
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 

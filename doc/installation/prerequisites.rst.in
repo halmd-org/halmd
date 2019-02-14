@@ -24,19 +24,10 @@ Build environment
   HALMD makes extensive use of C++11 features. Instructions for a
   semi-automated build of GCC are given in :ref:`automatic`.
 
-* `CMake <http://www.cmake.org/>`_ ≥ 2.8.8 with a patch for
-  `native CUDA support <https://github.com/halmd-org/cmake-cuda>`_
+* `CMake <http://www.cmake.org/>`_ ≥ 2.8.12
 
   The build process of HALMD depends on CMake, a cross-platform, open-source
   build system.
-
-  .. note::
-
-    The CMake-CUDA patch adds *native* CUDA source file compilation and linking
-    support to CMake and is not to be confused nor compatible with the CUDA
-    module in CMake 2.8.
-
-    The patch is not needed for builds without GPU acceleration.
 
 * `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 5.0
 
@@ -53,18 +44,19 @@ Third-party libraries
 
   .. note::
 
-    System installations of the Boost C++ Libraries can not be used due to an
-    ABI incompatibility (C++98 vs. C++11). For instructions how to build Boost
-    C++ with the C++11 ABI, see :ref:`automatic`.
+    On older distributions based on GCC 4, the shipped Boost C++ Libraries can
+    not be used due to an ABI incompatibility (C++98 vs. C++11). For
+    instructions how to build Boost C++ with the C++11 ABI, see
+    :ref:`automatic`.
 
-* `Lua interpreter <http://www.lua.org>`_ ≥ 5.1 *or* `Lua Just-In-Time compiler
-  <http://luajit.org/luajit.html>`_ ≥ 2.0
+* `Lua interpreter <http://www.lua.org>`_ ≥ 5.1, < 5.3 *or* `Lua Just-In-Time
+  compiler <http://luajit.org/luajit.html>`_ ≥ 2.0
 
   .. note::
 
-    We recommend Lua 5.2 or later. The Lua JIT compiler is recommended for
-    advanced simulation scripts containing loops, user-defined correlation
-    functions, etc.
+    Lua 5.3 is not supported. The Lua JIT compiler is recommended for advanced
+    simulation scripts containing loops, user-defined correlation functions,
+    etc.
 
   A simulation with HALMD is setup and configured by means of the Lua scripting
   language. The fast and lightweight Lua interpreter is embedded in the HALMD
@@ -83,7 +75,7 @@ Documentation
 Documentation is generated **optionally** in HTML and PDF format if these
 prerequisites are met:
 
-* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ ≥ 1.1
+* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ ≥ 1.4
 
   "Sphinx is a tool that makes it easy to create intelligent and beautiful
   documentation."

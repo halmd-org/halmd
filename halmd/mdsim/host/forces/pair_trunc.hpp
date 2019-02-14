@@ -6,17 +6,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_HOST_FORCES_PAIR_TRUNC_HPP
@@ -25,7 +26,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force_kernel.hpp>
-#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -43,7 +43,7 @@ namespace forces {
 /**
  * template class for modules implementing short ranged potential forces
  */
-template <int dimension, typename float_type, typename potential_type, typename trunc_type = mdsim::forces::trunc::discontinuous>
+template <int dimension, typename float_type, typename potential_type>
 class pair_trunc
 {
 public:
@@ -58,7 +58,6 @@ public:
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<neighbour_type> neighbour
       , float_type aux_weight = 1
-      , std::shared_ptr<trunc_type const> trunc = std::make_shared<trunc_type>()
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -108,8 +107,6 @@ private:
     std::shared_ptr<neighbour_type> neighbour_;
     /** weight for auxiliary variables */
     float_type aux_weight_;
-    /** smoothing functor */
-    std::shared_ptr<trunc_type const> trunc_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
@@ -131,15 +128,14 @@ private:
     runtime runtime_;
 };
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
+template <int dimension, typename float_type, typename potential_type>
+pair_trunc<dimension, float_type, potential_type>::pair_trunc(
     std::shared_ptr<potential_type const> potential
   , std::shared_ptr<particle_type> particle1
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<neighbour_type> neighbour
   , float_type aux_weight
-  , std::shared_ptr<trunc_type const> trunc
   , std::shared_ptr<logger> logger
 )
   : potential_(potential)
@@ -148,13 +144,12 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , box_(box)
   , neighbour_(neighbour)
   , aux_weight_(aux_weight)
-  , trunc_(trunc)
   , logger_(logger)
 {
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::check_cache()
+template <int dimension, typename float_type, typename potential_type>
+inline void pair_trunc<dimension, float_type, potential_type>::check_cache()
 {
     cache<position_array_type> const& position1_cache = particle1_->position();
     cache<position_array_type> const& position2_cache = particle2_->position();
@@ -172,8 +167,8 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::check
     }
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::apply()
+template <int dimension, typename float_type, typename potential_type>
+inline void pair_trunc<dimension, float_type, potential_type>::apply()
 {
     cache<position_array_type> const& position1_cache = particle1_->position();
     cache<position_array_type> const& position2_cache = particle2_->position();
@@ -194,8 +189,8 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::apply
     particle1_->force_zero_disable();
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_()
+template <int dimension, typename float_type, typename potential_type>
+inline void pair_trunc<dimension, float_type, potential_type>::compute_()
 {
     auto force = make_cache_mutable(particle1_->mutable_force());
 
@@ -231,14 +226,11 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
             float_type rr = inner_prod(r, r);
 
             // truncate potential at cutoff length
-            if (rr >= potential_->rr_cut(a, b))
+            if (!potential_->within_range(rr, a, b))
                 continue;
 
             float_type fval, pot;
             std::tie(fval, pot) = (*potential_)(rr, a, b);
-
-            // optionally smooth potential yielding continuous 2nd derivative
-            (*trunc_)(std::sqrt(rr), potential_->r_cut(a, b), fval, pot);
 
             // add force contribution to both particles
             (*force)[i] += r * fval;
@@ -249,8 +241,8 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
     }
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_aux_()
+template <int dimension, typename float_type, typename potential_type>
+inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
 {
     auto force      = make_cache_mutable(particle1_->mutable_force());
     auto en_pot     = make_cache_mutable(particle1_->mutable_potential_energy());;
@@ -301,9 +293,6 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
             float_type fval, pot;
             std::tie(fval, pot) = (*potential_)(rr, a, b);
 
-            // optionally smooth potential yielding continuous 2nd derivative
-            (*trunc_)(std::sqrt(rr), potential_->r_cut(a, b), fval, pot);
-
             // add force contribution to both particles
             (*force)[i] += r * fval;
             if (reactio) {
@@ -328,8 +317,8 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
     }
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_State* L)
+template <int dimension, typename float_type, typename potential_type>
+void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -356,7 +345,6 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<neighbour_type>
                   , float_type
-                  , std::shared_ptr<trunc_type const>
                   , std::shared_ptr<logger>
                 >)
             ]

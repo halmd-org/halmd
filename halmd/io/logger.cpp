@@ -6,17 +6,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 // increase compiler compatibility, e.g. with Clang 2.8
@@ -24,9 +25,12 @@
 #include <boost/log/attributes/clock.hpp>
 #include <boost/log/support/date_time.hpp>
 #include <boost/log/expressions.hpp>
-// the following header is deprecated, use boost/core/null_deleter.hpp instead
-// in Boost C++ ≥ 1.56
-#include <boost/utility/empty_deleter.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 105600
+# include <boost/core/null_deleter.hpp>
+#else
+# include <boost/utility/empty_deleter.hpp>
+#endif
 #include <boost/version.hpp>
 
 #include <halmd/io/logger.hpp>
@@ -48,7 +52,11 @@ void logging::open_console(severity_level level)
 {
     boost::shared_ptr<console_backend_type> backend(boost::make_shared<console_backend_type>());
     backend->add_stream(
+#if BOOST_VERSION >= 105600
+        boost::shared_ptr<std::ostream>(&std::clog, boost::null_deleter())
+#else
         boost::shared_ptr<std::ostream>(&std::clog, boost::empty_deleter())
+#endif
     );
     backend->auto_flush(true);
 

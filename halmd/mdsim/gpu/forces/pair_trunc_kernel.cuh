@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
@@ -46,7 +47,6 @@ template <
   , typename vector_type
   , typename potential_type
   , typename gpu_vector_type
-  , typename trunc_type
 >
 __global__ void compute(
     float4 const* g_r1
@@ -59,7 +59,6 @@ __global__ void compute(
   , unsigned int ntype1
   , unsigned int ntype2
   , vector_type box_length
-  , trunc_type const trunc
   , bool force_zero
   , float aux_weight
 )
@@ -114,9 +113,6 @@ __global__ void compute(
         value_type fval, en_pot;
         tie(fval, en_pot) = potential(rr);
 
-        // apply smoothing function to force and potential
-        trunc(sqrt(rr), sqrt(potential.rr_cut()), fval, en_pot);
-
         // force from other particle acting on this particle
         f += fval * r;
         if (do_aux) {
@@ -146,9 +142,9 @@ __global__ void compute(
 
 } // namespace pair_trunc_kernel
 
-template <int dimension, typename potential_type, typename trunc_type>
-pair_trunc_wrapper<dimension, potential_type, trunc_type> const
-pair_trunc_wrapper<dimension, potential_type, trunc_type>::kernel = {
+template <int dimension, typename potential_type>
+pair_trunc_wrapper<dimension, potential_type> const
+pair_trunc_wrapper<dimension, potential_type>::kernel = {
     pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::r2_

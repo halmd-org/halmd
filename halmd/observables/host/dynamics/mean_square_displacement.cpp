@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <memory>
@@ -38,8 +39,8 @@ void mean_square_displacement<dimension, float_type>::operator() (
 )
 {
     accumulator<result_type> acc;
-    typename sample_type::position_array_type::const_iterator r1, r2, end = first.position().end();
-    for (r1 = first.position().begin(), r2 = second.position().begin(); r1 != end; ++r1, ++r2) {
+    typename sample_type::array_type::const_iterator r1, r2, end = first.data().end();
+    for (r1 = first.data().begin(), r2 = second.data().begin(); r1 != end; ++r1, ++r2) {
         // accumulate square displacement
         acc(correlate_function_type()(*r1, *r2));
     }

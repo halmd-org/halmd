@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2016      Daniel Kirchner
  * Copyright © 2010-2012 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
@@ -6,73 +7,92 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_GPU_PARTICLE_HPP
 #define HALMD_MDSIM_GPU_PARTICLE_HPP
 
+#include <halmd/mdsim/force_kernel.hpp>
+#include <halmd/mdsim/gpu/particle_array_gpu.hpp>
+#include <halmd/mdsim/gpu/particle_array_host.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
-#include <halmd/mdsim/force_kernel.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
 #include <algorithm>
 #include <vector>
+#include <unordered_map>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
 
-template <int dimension, typename float_type>
+class particle_group;
+
+template <int dimension, typename float_type_>
 class particle
 {
 public:
+    typedef float_type_ float_type;
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 
-    typedef typename type_traits<dimension, float_type>::vector_type vector_type;
+    typedef typename type_traits<dimension, float>::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
+    typedef typename type_traits<4, float_type>::gpu::coalesced_vector_type gpu_hp_vector_type;
 
     typedef unsigned int size_type;
     typedef vector_type position_type;
     typedef vector_type image_type;
     typedef vector_type velocity_type;
-    typedef unsigned int tag_type;
-    typedef unsigned int reverse_tag_type;
+    typedef unsigned int id_type;
+    typedef unsigned int reverse_id_type;
     typedef unsigned int species_type;
     typedef float mass_type;
-    typedef fixed_vector<float_type, dimension> force_type;
-    typedef float_type en_pot_type;
-    typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
+    typedef vector_type force_type;
+    typedef float en_pot_type;
+    typedef stress_tensor_wrapper<typename type_traits<dimension, float>::stress_tensor_type> stress_pot_type;
 
-    typedef cuda::vector<float4> position_array_type;
-    typedef cuda::vector<gpu_vector_type> image_array_type;
-    typedef cuda::vector<float4> velocity_array_type;
-    typedef cuda::vector<tag_type> tag_array_type;
-    typedef cuda::vector<reverse_tag_type> reverse_tag_array_type;
-    typedef cuda::vector<typename type_traits<dimension, float_type>::gpu::coalesced_vector_type> force_array_type;
-    typedef cuda::vector<en_pot_type> en_pot_array_type;
-    typedef cuda::vector<typename stress_pot_type::value_type> stress_pot_array_type;
+    typedef gpu_hp_vector_type gpu_position_type;
+    typedef gpu_hp_vector_type gpu_velocity_type;
+    typedef gpu_vector_type gpu_image_type;
+    typedef id_type gpu_id_type;
+    typedef reverse_id_type gpu_reverse_id_type;
+    typedef gpu_vector_type gpu_force_type;
+    typedef en_pot_type gpu_en_pot_type;
+    typedef float gpu_stress_pot_type;
+
+    typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_vector_type position_array_type;
+    typedef typename particle_array_gpu<gpu_vector_type>::gpu_vector_type image_array_type;
+    typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_vector_type velocity_array_type;
+    typedef cuda::vector<unsigned int> id_array_type;
+    typedef cuda::vector<unsigned int>  reverse_id_array_type;
+    typedef typename particle_array_gpu<gpu_vector_type>::gpu_vector_type force_array_type;
+    typedef typename particle_array_gpu<float>::gpu_vector_type en_pot_array_type;
+    typedef typename particle_array_gpu<float>::gpu_vector_type stress_pot_array_type;
 
     void rearrange(cuda::vector<unsigned int> const& g_index);
 
     /** grid and block dimensions for CUDA calls */
-    cuda::config const dim;
+    cuda::config const& dim() const {
+        return dim_;
+    }
 
     /**
      * Allocate particle arrays in GPU memory.
@@ -98,6 +118,11 @@ public:
         return nparticle_;
     }
 
+    size_type array_size() const
+    {
+        return array_size_;
+    }
+
     /**
      * Returns number of species.
      */
@@ -107,11 +132,67 @@ public:
     }
 
     /**
+     * get data from named particle array with iterator
+     *
+     * @param name identifier of the particle array
+     * @param first output iterator
+     * @return output iterator
+     *
+     * throws an exception if the array does not exist or has an invalid type
+     */
+    template<typename T, typename iterator_type>
+    iterator_type get_data(std::string const& name, iterator_type const& first) const
+    {
+        return particle_array_host<T>::cast(get_host_array(name))->get_data(first);
+    }
+
+    /**
+     * set data in named particle array with iterator
+     *
+     * @param name identifier of the particle array
+     * @param first input iterator
+     * @return input iterator
+     *
+     * throws an exception if the array does not exist or has an invalid type
+     */
+    template <typename T, typename iterator_type>
+    iterator_type set_data(const std::string &name, iterator_type const& first)
+    {
+        return particle_array_host<T>::cast(get_host_array(name))->set_data(first);
+    }
+
+    /**
+     * Returns const reference to the data of a named particle array.
+     *
+     * @param name identifier of the particle array
+     * @return const reference to the array
+     *
+     * throws an exception if the array does not exist or has an invalid type
+     */
+    template<typename T>
+    cache<typename particle_array_gpu<T>::gpu_vector_type> const &data(const std::string &name) const {
+        return particle_array_gpu<T>::cast(get_gpu_array(name))->data();
+    }
+
+    /**
+     * Returns non-const reference to the data of a named particle array.
+     *
+     * @param name identifier of the particle array
+     * @return non-const reference to the array
+     *
+     * throws an exception if the array does not exist or has an invalid type
+     */
+    template<typename T>
+    cache<typename particle_array_gpu<T>::gpu_vector_type>& mutable_data(const std::string &name) {
+        return particle_array_gpu<T>::cast(get_gpu_array(name))->mutable_data();
+    }
+
+    /**
      * Returns const reference to particle positions and species.
      */
     cache<position_array_type> const& position() const
     {
-        return g_position_;
+        return data<gpu_position_type>("position");
     }
 
     /**
@@ -119,7 +200,7 @@ public:
      */
     cache<position_array_type>& position()
     {
-        return g_position_;
+        return mutable_data<gpu_position_type>("position");
     }
 
     /**
@@ -127,7 +208,7 @@ public:
      */
     cache<image_array_type> const& image() const
     {
-        return g_image_;
+        return data<gpu_image_type>("image");
     }
 
     /**
@@ -135,7 +216,7 @@ public:
      */
     cache<image_array_type>& image()
     {
-        return g_image_;
+        return mutable_data<gpu_image_type>("image");
     }
 
     /**
@@ -143,7 +224,7 @@ public:
      */
     cache<velocity_array_type> const& velocity() const
     {
-        return g_velocity_;
+        return data<gpu_velocity_type>("velocity");
     }
 
     /**
@@ -151,39 +232,39 @@ public:
      */
     cache<velocity_array_type>& velocity()
     {
-        return g_velocity_;
+        return mutable_data<gpu_velocity_type>("velocity");
     }
 
     /**
-     * Returns const reference to particle tags.
+     * Returns const reference to particle ID.
      */
-    cache<tag_array_type> const& tag() const
+    cache<id_array_type> const& id() const
     {
-        return g_tag_;
+        return id_;
     }
 
     /**
-     * Returns non-const reference to particle tags.
+     * Returns non-const reference to particle IDs.
      */
-    cache<tag_array_type>& tag()
+    cache<id_array_type>& id()
     {
-        return g_tag_;
+        return id_;
     }
 
     /**
-     * Returns const reference to particle reverse tags.
+     * Returns const reference to particle reverse IDs.
      */
-    cache<reverse_tag_array_type> const& reverse_tag() const
+    cache<reverse_id_array_type> const& reverse_id() const
     {
-        return g_reverse_tag_;
+        return reverse_id_;
     }
 
     /**
-     * Returns non-const reference to particle reverse tags.
+     * Returns non-const reference to particle reverse IDs.
      */
-    cache<reverse_tag_array_type>& reverse_tag()
+    cache<reverse_id_array_type>& reverse_id()
     {
-        return g_reverse_tag_;
+        return reverse_id_;
     }
 
     /**
@@ -191,8 +272,7 @@ public:
      */
     cache<force_array_type> const& force()
     {
-        update_force_();
-        return g_force_;
+        return data<gpu_force_type>("force");
     }
 
     /**
@@ -200,7 +280,7 @@ public:
      */
     cache<force_array_type>& mutable_force()
     {
-        return g_force_;
+        return mutable_data<gpu_force_type>("force");
     }
 
     /**
@@ -208,8 +288,7 @@ public:
      */
     cache<en_pot_array_type> const& potential_energy()
     {
-        update_force_(true);
-        return g_en_pot_;
+        return data<gpu_en_pot_type>("potential_energy");
     }
 
     /**
@@ -217,7 +296,7 @@ public:
      */
     cache<en_pot_array_type>& mutable_potential_energy()
     {
-        return g_en_pot_;
+        return mutable_data<gpu_en_pot_type>("potential_energy");
     }
 
     /**
@@ -225,15 +304,14 @@ public:
      */
     cache<stress_pot_array_type> const& stress_pot()
     {
-        update_force_(true);
-        return g_stress_pot_;
+        return data<gpu_stress_pot_type>("potential_stress_tensor");
     }
     /**
      * Returns non-const reference to potential part of stress tensor.
      */
     cache<stress_pot_array_type>& mutable_stress_pot()
     {
-        return g_stress_pot_;
+        return mutable_data<gpu_stress_pot_type>("potential_stress_tensor");
     }
 
     /**
@@ -302,6 +380,36 @@ public:
         return on_append_force_.connect(slot);
     }
 
+    std::shared_ptr<particle_array_host_base> const& get_host_array(std::string const& name) const
+    {
+        auto it = host_data_.find(name);
+        if(it == host_data_.end()) {
+            throw std::invalid_argument("host particle array \"" + name + "\" not registered");
+        }
+        return it->second;
+    }
+
+    std::shared_ptr<particle_array_gpu_base> const& get_gpu_array(std::string const& name) const
+    {
+        auto it = gpu_data_.find(name);
+        if(it == gpu_data_.end()) {
+            throw std::invalid_argument("gpu particle array \"" + name + "\" not registered");
+        }
+        return it->second;
+    }
+
+    bool has_host_array(std::string const& name) const
+    {
+        return host_data_.find(name) != host_data_.end();
+    }
+
+    bool has_gpu_array(std::string const& name) const
+    {
+        return gpu_data_.find(name) != gpu_data_.end();
+    }
+
+    void insert(std::shared_ptr<particle> const& new_particles);
+
     /**
      * Bind class to Lua.
      */
@@ -310,24 +418,24 @@ public:
 private:
     /** number of particles */
     size_type nparticle_;
+    /** array size */
+    size_type array_size_;
     /** number of particle species */
     unsigned int nspecies_;
-    /** positions, species */
-    cache<position_array_type> g_position_;
-    /** minimum image vectors */
-    cache<image_array_type> g_image_;
-    /** velocities, masses */
-    cache<velocity_array_type> g_velocity_;
-    /** particle tags */
-    cache<tag_array_type> g_tag_;
-    /** reverse particle tags */
-    cache<reverse_tag_array_type> g_reverse_tag_;
-    /** total force on particles */
-    cache<force_array_type> g_force_;
-    /** potential energy per particle */
-    cache<en_pot_array_type> g_en_pot_;
-    /** potential part of stress tensor for each particle */
-    cache<stress_pot_array_type> g_stress_pot_;
+    /** grid and block dimensions for CUDA calls */
+    cuda::config dim_;
+
+    /** particle IDs */
+    cache<id_array_type> id_;
+
+    /** particle reverse IDs */
+    cache<reverse_id_array_type> reverse_id_;
+
+    /** map of the stored gpu particle arrays */
+    std::unordered_map<std::string, std::shared_ptr<particle_array_gpu_base>> gpu_data_;
+
+    /** map of the stored host particle arrays */
+    std::unordered_map<std::string, std::shared_ptr<particle_array_host_base>> host_data_;
 
     /** flag that the force has to be reset to zero prior to reading */
     bool force_zero_;
@@ -374,18 +482,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_position(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::position_array_type position_array_type;
-    position_array_type const& g_position = read_cache(particle.position());
-    cuda::host::vector<typename position_array_type::value_type> h_position(g_position.size());
-    cuda::copy(g_position.begin(), g_position.end(), h_position.begin());
-    iterator_type output = first;
-    for (typename position_array_type::value_type const& v : h_position) {
-        typename particle_type::position_type position;
-        typename particle_type::species_type species;
-        tie(position, species) <<= v;
-        *output++ = position;
-    }
-    return output;
+    return particle.template get_data<typename particle_type::position_type>("position", first);
 }
 
 /**
@@ -395,23 +492,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_position(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::position_array_type position_array_type;
-    auto g_position = make_cache_mutable(particle.position());
-    cuda::host::vector<typename position_array_type::value_type> h_position(g_position->size());
-    cuda::copy(g_position->begin(), g_position->end(), h_position.begin());
-    iterator_type input = first;
-    for (typename position_array_type::value_type& v : h_position) {
-        typename particle_type::position_type position;
-        typename particle_type::species_type species;
-        tie(position, species) <<= v;
-        position = *input++;
-        v <<= tie(position, species);
-    }
-#ifdef USE_VERLET_DSFUN
-    cuda::memset(g_position->begin(), g_position->begin() + g_position->capacity(), 0);
-#endif
-    cuda::copy(h_position.begin(), h_position.end(), g_position->begin());
-    return input;
+    return particle.template set_data<typename particle_type::position_type>("position", first);
 }
 
 /**
@@ -421,18 +502,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_species(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::position_array_type position_array_type;
-    position_array_type const& g_position = read_cache(particle.position());
-    cuda::host::vector<typename position_array_type::value_type> h_position(g_position.size());
-    cuda::copy(g_position.begin(), g_position.end(), h_position.begin());
-    iterator_type output = first;
-    for (typename position_array_type::value_type const& v : h_position) {
-        typename particle_type::position_type position;
-        typename particle_type::species_type species;
-        tie(position, species) <<= v;
-        *output++ = species;
-    }
-    return output;
+    return particle.template get_data<typename particle_type::species_type>("species", first);
 }
 
 /**
@@ -442,20 +512,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_species(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::position_array_type position_array_type;
-    auto g_position = make_cache_mutable(particle.position());
-    cuda::host::vector<typename position_array_type::value_type> h_position(g_position->size());
-    cuda::copy(g_position->begin(), g_position->end(), h_position.begin());
-    iterator_type input = first;
-    for (typename position_array_type::value_type& v : h_position) {
-        typename particle_type::position_type position;
-        typename particle_type::species_type species;
-        tie(position, species) <<= v;
-        species = *input++;
-        v <<= tie(position, species);
-    }
-    cuda::copy(h_position.begin(), h_position.end(), g_position->begin());
-    return input;
+    return particle.template set_data<typename particle_type::species_type>("species", first);
 }
 
 /**
@@ -465,11 +522,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_image(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::image_array_type image_array_type;
-    image_array_type const& g_image = read_cache(particle.image());
-    cuda::host::vector<typename image_array_type::value_type> h_image(g_image.size());
-    cuda::copy(g_image.begin(), g_image.end(), h_image.begin());
-    return std::copy(h_image.begin(), h_image.end(), first);
+    return particle.template get_data<typename particle_type::image_type>("image", first);
 }
 
 /**
@@ -479,15 +532,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_image(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::image_array_type image_array_type;
-    auto g_image = make_cache_mutable(particle.image());
-    cuda::host::vector<typename image_array_type::value_type> h_image(g_image->size());
-    iterator_type input = first;
-    for (typename image_array_type::value_type& image : h_image) {
-        image = *input++;
-    }
-    cuda::copy(h_image.begin(), h_image.end(), g_image->begin());
-    return input;
+    return particle.template set_data<typename particle_type::image_type>("image", first);
 }
 
 /**
@@ -497,18 +542,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_velocity(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::velocity_array_type velocity_array_type;
-    velocity_array_type const& g_velocity = read_cache(particle.velocity());
-    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity.size());
-    cuda::copy(g_velocity.begin(), g_velocity.end(), h_velocity.begin());
-    iterator_type output = first;
-    for (typename velocity_array_type::value_type const& v : h_velocity) {
-        typename particle_type::velocity_type velocity;
-        typename particle_type::mass_type mass;
-        tie(velocity, mass) <<= v;
-        *output++ = velocity;
-    }
-    return output;
+    return particle.template get_data<typename particle_type::velocity_type>("velocity", first);
 }
 
 /**
@@ -518,23 +552,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_velocity(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::velocity_array_type velocity_array_type;
-    auto g_velocity = make_cache_mutable(particle.velocity());
-    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity->size());
-    cuda::copy(g_velocity->begin(), g_velocity->end(), h_velocity.begin());
-    iterator_type input = first;
-    for (typename velocity_array_type::value_type& v : h_velocity) {
-        typename particle_type::velocity_type velocity;
-        typename particle_type::mass_type mass;
-        tie(velocity, mass) <<= v;
-        velocity = *input++;
-        v <<= tie(velocity, mass);
-    }
-#ifdef USE_VERLET_DSFUN
-    cuda::memset(g_velocity->begin(), g_velocity->begin() + g_velocity->capacity(), 0);
-#endif
-    cuda::copy(h_velocity.begin(), h_velocity.end(), g_velocity->begin());
-    return input;
+    return particle.template set_data<typename particle_type::velocity_type>("velocity", first);
 }
 
 /**
@@ -544,18 +562,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_mass(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::velocity_array_type velocity_array_type;
-    velocity_array_type const& g_velocity = read_cache(particle.velocity());
-    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity.size());
-    cuda::copy(g_velocity.begin(), g_velocity.end(), h_velocity.begin());
-    iterator_type output = first;
-    for (typename velocity_array_type::value_type const& v : h_velocity) {
-        typename particle_type::velocity_type velocity;
-        typename particle_type::mass_type mass;
-        tie(velocity, mass) <<= v;
-        *output++ = mass;
-    }
-    return output;
+    return particle.template get_data<typename particle_type::mass_type>("mass", first);
 }
 
 /**
@@ -565,83 +572,74 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_mass(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::velocity_array_type velocity_array_type;
-    auto g_velocity = make_cache_mutable(particle.velocity());
-    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity->size());
-    cuda::copy(g_velocity->begin(), g_velocity->end(), h_velocity.begin());
-    iterator_type input = first;
-    for (typename velocity_array_type::value_type& v : h_velocity) {
-        typename particle_type::velocity_type velocity;
-        typename particle_type::mass_type mass;
-        tie(velocity, mass) <<= v;
-        mass = *input++;
-        v <<= tie(velocity, mass);
+    return particle.template set_data<typename particle_type::mass_type>("mass", first);
+}
+
+/**
+ * Copy particle IDs to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_id(particle_type const& particle, iterator_type const& first)
+{
+    auto const& g_id = read_cache(particle.id());
+    cuda::host::vector<unsigned int> id(particle.nparticle());
+    cuda::copy(g_id.begin(), g_id.begin() + particle.nparticle(), id.begin());
+    auto output = first;
+    for (size_t i = 0; i < particle.nparticle(); i++) {
+        *output++ = id[i];
     }
-    cuda::copy(h_velocity.begin(), h_velocity.end(), g_velocity->begin());
+    return output;
+}
+
+/**
+ * Copy particle IDs from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_id(particle_type& particle, iterator_type const& first)
+{
+    cuda::host::vector<unsigned int> id(particle.nparticle());
+    auto input = first;
+    for (size_t i = 0; i < particle.nparticle(); i++) {
+        id[i] = *input++;
+    }
+    auto output = make_cache_mutable(particle.id());
+    cuda::copy(id.begin(), id.end(), output->begin());
     return input;
 }
 
 /**
- * Copy particle tags to given array.
+ * Copy particle reverse IDs to given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-get_tag(particle_type const& particle, iterator_type const& first)
+get_reverse_id(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::tag_array_type tag_array_type;
-    tag_array_type const& g_tag = read_cache(particle.tag());
-    cuda::host::vector<typename tag_array_type::value_type> h_tag(g_tag.size());
-    cuda::copy(g_tag.begin(), g_tag.end(), h_tag.begin());
-    return std::copy(h_tag.begin(), h_tag.end(), first);
-}
-
-/**
- * Copy particle tags from given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-set_tag(particle_type& particle, iterator_type const& first)
-{
-    typedef typename particle_type::tag_array_type tag_array_type;
-    auto g_tag = make_cache_mutable(particle.tag());
-    cuda::host::vector<typename tag_array_type::value_type> h_tag(g_tag->size());
-    iterator_type input = first;
-    for (typename tag_array_type::value_type& tag : h_tag) {
-        tag = *input++;
+    auto const& g_reverse_id = read_cache(particle.reverse_id());
+    cuda::host::vector<unsigned int> reverse_id(particle.nparticle());
+    cuda::copy(g_reverse_id.begin(), g_reverse_id.begin() + particle.nparticle(), reverse_id.begin());
+    auto output = first;
+    for (size_t i = 0; i < particle.nparticle(); i++) {
+        *output++ = reverse_id[i];
     }
-    cuda::copy(h_tag.begin(), h_tag.end(), g_tag->begin());
-    return input;
+    return output;
 }
 
 /**
- * Copy particle reverse tags to given array.
+ * Copy particle reverse IDs from given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-get_reverse_tag(particle_type const& particle, iterator_type const& first)
+set_reverse_id(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
-    reverse_tag_array_type const& g_reverse_tag = read_cache(particle.reverse_tag());
-    cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag.size());
-    cuda::copy(g_reverse_tag.begin(), g_reverse_tag.end(), h_reverse_tag.begin());
-    return std::copy(h_reverse_tag.begin(), h_reverse_tag.end(), first);
-}
-
-/**
- * Copy particle reverse tags from given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-set_reverse_tag(particle_type& particle, iterator_type const& first)
-{
-    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
-    auto g_reverse_tag = make_cache_mutable(particle.reverse_tag());
-    cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag->size());
-    iterator_type input = first;
-    for (typename reverse_tag_array_type::value_type& reverse_tag : h_reverse_tag) {
-        reverse_tag = *input++;
+    cuda::host::vector<unsigned int> reverse_id(particle.nparticle());
+    auto input = first;
+    for (size_t i = 0; i < particle.nparticle(); i++) {
+        reverse_id[i] = *input++;
     }
-    cuda::copy(h_reverse_tag.begin(), h_reverse_tag.end(), g_reverse_tag->begin());
+    auto output = make_cache_mutable(particle.reverse_id());
+    cuda::copy(reverse_id.begin(), reverse_id.end(), output->begin());
     return input;
 }
 
@@ -652,11 +650,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_force(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::force_array_type force_array_type;
-    force_array_type const& g_force = read_cache(particle.force());
-    cuda::host::vector<typename force_array_type::value_type> h_force(g_force.size());
-    cuda::copy(g_force.begin(), g_force.end(), h_force.begin());
-    return std::copy(h_force.begin(), h_force.end(), first);
+    return particle.template get_data<typename particle_type::force_type>("force", first);
 }
 
 /**
@@ -666,11 +660,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_potential_energy(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::en_pot_array_type en_pot_array_type;
-    en_pot_array_type const& g_en_pot = read_cache(particle.potential_energy());
-    cuda::host::vector<typename en_pot_array_type::value_type> h_en_pot(g_en_pot.size());
-    cuda::copy(g_en_pot.begin(), g_en_pot.end(), h_en_pot.begin());
-    return std::copy(h_en_pot.begin(), h_en_pot.end(), first);
+    return particle.template get_data<typename particle_type::en_pot_type>("potential_energy", first);
 }
 
 /**
@@ -680,21 +670,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_stress_pot(particle_type& particle, iterator_type const& first)
 {
-    // copy data from GPU to host
-    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
-    stress_pot_array_type const& g_stress_pot = read_cache(particle.stress_pot());
-    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot.size());
-    h_stress_pot.reserve(g_stress_pot.capacity());
-    cuda::copy(g_stress_pot.begin(), g_stress_pot.begin() + g_stress_pot.capacity(), h_stress_pot.begin());
-
-    // convert from column-major to row-major layout
-    typedef typename particle_type::stress_pot_type stress_pot_type;
-    unsigned int stride = h_stress_pot.capacity() / stress_pot_type::static_size;
-    iterator_type output = first;
-    for (auto const& stress : h_stress_pot) {
-        *output++ = read_stress_tensor<stress_pot_type>(&stress, stride);
-    }
-    return output;
+    return particle.template get_data<typename particle_type::stress_pot_type>("potential_stress_tensor", first);
 }
 
 } // namespace gpu

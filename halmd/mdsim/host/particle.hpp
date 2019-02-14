@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2016      Daniel Kirchner
  * Copyright © 2010-2012 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
@@ -6,40 +7,45 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_HOST_PARTICLE_HPP
 #define HALMD_MDSIM_HOST_PARTICLE_HPP
 
+#include <halmd/mdsim/host/particle_array.hpp>
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/utility/profiler.hpp>
-#include <halmd/utility/cache.hpp>
-#include <halmd/utility/raw_array.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/utility/cache.hpp>
+#include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/profiler.hpp>
+#include <halmd/utility/raw_array.hpp>
 
 #include <lua.hpp>
 
+#include <unordered_map>
 #include <algorithm>
 
 namespace halmd {
 namespace mdsim {
 namespace host {
 
-template <int dimension, typename float_type>
+template <int dimension, typename float_type_>
 class particle
 {
 public:
+    typedef float_type_ float_type;
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 
@@ -49,19 +55,19 @@ public:
     typedef vector_type position_type;
     typedef vector_type image_type;
     typedef vector_type velocity_type;
-    typedef unsigned int tag_type;
-    typedef unsigned int reverse_tag_type;
+    typedef unsigned int id_type;
+    typedef unsigned int reverse_id_type;
     typedef unsigned int species_type;
-    typedef double mass_type;
+    typedef float_type mass_type;
     typedef fixed_vector<float_type, dimension> force_type;
-    typedef double en_pot_type;
+    typedef float_type en_pot_type;
     typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
 
     typedef raw_array<position_type> position_array_type;
     typedef raw_array<image_type> image_array_type;
     typedef raw_array<velocity_type> velocity_array_type;
-    typedef raw_array<tag_type> tag_array_type;
-    typedef raw_array<reverse_tag_type> reverse_tag_array_type;
+    typedef raw_array<id_type> id_array_type;
+    typedef raw_array<reverse_id_type> reverse_id_array_type;
     typedef raw_array<species_type> species_array_type;
     typedef raw_array<mass_type> mass_array_type;
     typedef raw_array<force_type> force_array_type;
@@ -103,11 +109,89 @@ public:
     }
 
     /**
+     * register typed particle data
+     *
+     * @param name identifier for the particle data
+     * @param update_function optional update function
+     * @return the newly created particle array
+     *
+     * throws an exception if a particle array with the same name already exists
+     */
+    template<typename T>
+    std::shared_ptr<particle_array_typed<T>>
+    register_data(std::string const& name, std::function<void()> update_function = std::function<void()>())
+    {
+        auto ptr = particle_array::create<T>(nparticle_, capacity_, update_function);
+        if (!data_.insert(std::make_pair(name, ptr)).second) {
+            throw std::runtime_error("a particle array named \"" + name + "\" already exists");
+        }
+        return ptr;
+    }
+
+    /**
+     * get data from named particle array with iterator
+     *
+     * @param name identifier of the particle array
+     * @param first output iterator
+     * @return output iterator
+     *
+     * throws an exception if the array does not exist or has an invalid type
+     */
+    template<typename T, typename iterator_type>
+    iterator_type get_data(std::string const& name, iterator_type const& first) const
+    {
+        return particle_array::cast<T>(get_array(name))->get_data(first);
+    }
+
+    /**
+     * set data in named particle array with iterator
+     *
+     * @param name identifier of the particle array
+     * @param first input iterator
+     * @return input iterator
+     *
+     * throws an exception if the array does not exist or has an invalid type
+     */
+    template <typename T, typename iterator_type>
+    iterator_type set_data(std::string const& name, iterator_type const& first)
+    {
+        return particle_array::cast<T>(get_array(name))->set_data(first);
+    }
+
+    /**
+     * Returns const reference to the data of a named particle array.
+     *
+     * @param name identifier of the particle array
+     * @return const reference to the data
+     *
+     * throws an exception if the array does not exist or has an invalid type
+     */
+    template<typename T>
+    cache<raw_array<T>> const& data(std::string const& name) const
+    {
+        return particle_array::cast<T>(get_array(name))->data();
+    }
+
+    /**
+     * Returns non-const reference to the data of a named particle array.
+     *
+     * @param name identifier of the particle array
+     * @return non-const reference to the data
+     *
+     * throws an exception if the array does not exist or has an invalid type
+     */
+    template<typename T>
+    cache<raw_array<T>>& mutable_data(std::string const& name)
+    {
+        return particle_array::cast<T>(get_array(name))->mutable_data();
+    }
+
+    /**
      * Returns const reference to particle positions.
      */
     cache<position_array_type> const& position() const
     {
-        return position_;
+        return data<position_type>("position");
     }
 
     /**
@@ -115,7 +199,7 @@ public:
      */
     cache<position_array_type>& position()
     {
-        return position_;
+        return mutable_data<position_type>("position");
     }
 
     /**
@@ -123,7 +207,7 @@ public:
      */
     cache<image_array_type> const& image() const
     {
-        return image_;
+        return data<image_type>("image");
     }
 
     /**
@@ -131,7 +215,7 @@ public:
      */
     cache<image_array_type>& image()
     {
-        return image_;
+        return mutable_data<image_type>("image");
     }
 
     /**
@@ -139,7 +223,7 @@ public:
      */
     cache<velocity_array_type> const& velocity() const
     {
-        return velocity_;
+        return data<velocity_type>("velocity");
     }
 
     /**
@@ -147,39 +231,39 @@ public:
      */
     cache<velocity_array_type>& velocity()
     {
-        return velocity_;
+        return mutable_data<velocity_type>("velocity");
     }
 
     /**
-     * Returns const reference to particle tags.
+     * Returns const reference to particle IDs.
      */
-    cache<tag_array_type> const& tag() const
+    cache<id_array_type> const& id() const
     {
-        return tag_;
+        return data<id_type>("id");
     }
 
     /**
-     * Returns non-const reference to particle tags.
+     * Returns non-const reference to particle IDs.
      */
-    cache<tag_array_type>& tag()
+    cache<id_array_type>& id()
     {
-        return tag_;
+        return mutable_data<id_type>("id");
     }
 
     /**
-     * Returns const reference to particle reverse tags.
+     * Returns const reference to particle reverse IDs.
      */
-    cache<reverse_tag_array_type> const& reverse_tag() const
+    cache<reverse_id_array_type> const& reverse_id() const
     {
-        return reverse_tag_;
+        return data<reverse_id_type>("reverse_id");
     }
 
     /**
-     * Returns non-const reference to particle reverse tags.
+     * Returns non-const reference to particle reverse IDs.
      */
-    cache<reverse_tag_array_type>& reverse_tag()
+    cache<reverse_id_array_type>& reverse_id()
     {
-        return reverse_tag_;
+        return mutable_data<reverse_id_type>("reverse_id");
     }
 
     /**
@@ -187,7 +271,7 @@ public:
      */
     cache<species_array_type> const& species() const
     {
-        return species_;
+        return data<species_type>("species");
     }
 
     /**
@@ -195,7 +279,7 @@ public:
      */
     cache<species_array_type>& species()
     {
-        return species_;
+        return mutable_data<species_type>("species");
     }
 
     /**
@@ -203,7 +287,7 @@ public:
      */
     cache<mass_array_type> const& mass() const
     {
-        return mass_;
+        return data<mass_type>("mass");
     }
 
     /**
@@ -211,15 +295,14 @@ public:
      */
     cache<mass_array_type>& mass()
     {
-        return mass_;
+        return mutable_data<mass_type>("mass");
     }
     /**
      * Returns const reference to particle force.
      */
     cache<force_array_type> const& force()
     {
-        update_force_();
-        return force_;
+        return data<force_type>("force");
     }
 
     /**
@@ -227,7 +310,7 @@ public:
      */
     cache<force_array_type>& mutable_force()
     {
-        return force_;
+        return mutable_data<force_type>("force");
     }
 
     /**
@@ -235,8 +318,7 @@ public:
      */
     cache<en_pot_array_type> const& potential_energy()
     {
-        update_force_(true);
-        return en_pot_;
+        return data<en_pot_type>("potential_energy");
     }
 
     /**
@@ -244,7 +326,7 @@ public:
      */
     cache<en_pot_array_type>& mutable_potential_energy()
     {
-        return en_pot_;
+        return mutable_data<en_pot_type>("potential_energy");
     }
 
     /**
@@ -252,8 +334,7 @@ public:
      */
     cache<stress_pot_array_type> const& stress_pot()
     {
-        update_force_(true);
-        return stress_pot_;
+        return data<stress_pot_type>("potential_stress_tensor");
     }
 
     /**
@@ -261,7 +342,7 @@ public:
      */
     cache<stress_pot_array_type>& mutable_stress_pot()
     {
-        return stress_pot_;
+        return mutable_data<stress_pot_type>("potential_stress_tensor");
     }
 
     /**
@@ -329,6 +410,20 @@ public:
         return on_append_force_.connect(slot);
     }
 
+    std::shared_ptr<particle_array> const& get_array(std::string const& name) const
+    {
+        auto it = data_.find(name);
+        if(it == data_.end()) {
+            throw std::invalid_argument("particle array \"" + name + "\" not registered");
+        }
+        return it->second;
+    }
+
+    bool has_array(std::string const& name) const
+    {
+        return data_.find(name) != data_.end();
+    }
+
     /**
      * Bind class to Lua.
      */
@@ -337,28 +432,13 @@ public:
 private:
     /** number of particles */
     unsigned int nparticle_;
+    /** array size */
+    unsigned int capacity_;
     /** number of particle species */
     unsigned int nspecies_;
-    /** positions, reduced to extended domain box */
-    cache<position_array_type> position_;
-    /** minimum image vectors */
-    cache<image_array_type> image_;
-    /** velocities */
-    cache<velocity_array_type> velocity_;
-    /** particle tags */
-    cache<tag_array_type> tag_;
-    /** reverse particle tags */
-    cache<reverse_tag_array_type> reverse_tag_;
-    /** particle species */
-    cache<species_array_type> species_;
-    /** particle masses */
-    cache<mass_array_type> mass_;
-    /** total force on particles */
-    cache<force_array_type> force_;
-    /** potential energy per particle */
-    cache<en_pot_array_type> en_pot_;
-    /** potential part of stress tensor for each particle */
-    cache<stress_pot_array_type> stress_pot_;
+
+    /** map of the stored particle arrays */
+    std::unordered_map<std::string, std::shared_ptr<particle_array>> data_;
 
     /** flag that the force has to be reset to zero prior to reading */
     bool force_zero_;
@@ -405,8 +485,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_position(particle_type const& particle, iterator_type const& first)
 {
-    auto const& position = read_cache(particle.position());
-    return std::copy(position.begin(), position.end(), first);
+    return particle.template get_data<typename particle_type::position_type>("position", first);
 }
 
 /**
@@ -416,12 +495,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_position(particle_type& particle, iterator_type const& first)
 {
-    auto position = make_cache_mutable(particle.position());
-    iterator_type input = first;
-    for (auto& value : *position) {
-        value = *input++;
-    }
-    return input;
+    return particle.template set_data<typename particle_type::position_type>("position", first);
 }
 
 /**
@@ -431,8 +505,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_image(particle_type const& particle, iterator_type const& first)
 {
-    auto const& image = read_cache(particle.image());
-    return std::copy(image.begin(), image.end(), first);
+    return particle.template get_data<typename particle_type::image_type>("image", first);
 }
 
 /**
@@ -442,12 +515,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_image(particle_type& particle, iterator_type const& first)
 {
-    auto image = make_cache_mutable(particle.image());
-    iterator_type input = first;
-    for (auto& value : *image) {
-        value = *input++;
-    }
-    return input;
+    return particle.template set_data<typename particle_type::image_type>("image", first);
 }
 
 /**
@@ -457,8 +525,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_velocity(particle_type const& particle, iterator_type const& first)
 {
-    auto const& velocity = read_cache(particle.velocity());
-    return std::copy(velocity.begin(), velocity.end(), first);
+    return particle.template get_data<typename particle_type::velocity_type>("velocity", first);
 }
 
 /**
@@ -468,64 +535,47 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_velocity(particle_type& particle, iterator_type const& first)
 {
-    auto velocity = make_cache_mutable(particle.velocity());
-    iterator_type input = first;
-    for (auto& value : *velocity) {
-        value = *input++;
-    }
-    return input;
+    return particle.template set_data<typename particle_type::velocity_type>("velocity", first);
 }
 
 /**
- * Copy particle tags to given array.
+ * Copy particle IDs to given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-get_tag(particle_type const& particle, iterator_type const& first)
+get_id(particle_type const& particle, iterator_type const& first)
 {
-    auto const& tag = read_cache(particle.tag());
-    return std::copy(tag.begin(), tag.end(), first);
+    return particle.template get_data<typename particle_type::id_type>("id", first);
 }
 
 /**
- * Copy particle tags from given array.
+ * Copy particle IDs from given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-set_tag(particle_type& particle, iterator_type const& first)
+set_id(particle_type& particle, iterator_type const& first)
 {
-    auto tag = make_cache_mutable(particle.tag());
-    iterator_type input = first;
-    for (auto& value : *tag) {
-        value = *input++;
-    }
-    return input;
+    return particle.template set_data<typename particle_type::id_type>("id", first);
 }
 
 /**
- * Copy particle reverse tags to given array.
+ * Copy particle reverse IDs to given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-get_reverse_tag(particle_type const& particle, iterator_type const& first)
+get_reverse_id(particle_type const& particle, iterator_type const& first)
 {
-    auto const& reverse_tag = read_cache(particle.reverse_tag());
-    return std::copy(reverse_tag.begin(), reverse_tag.end(), first);
+    return particle.template get_data<typename particle_type::reverse_id_type>("reverse_id", first);
 }
 
 /**
- * Copy particle reverse tags from given array.
+ * Copy particle reverse IDs from given array.
  */
 template <typename particle_type, typename iterator_type>
 inline iterator_type
-set_reverse_tag(particle_type& particle, iterator_type const& first)
+set_reverse_id(particle_type& particle, iterator_type const& first)
 {
-    auto reverse_tag = make_cache_mutable(particle.reverse_tag());
-    iterator_type input = first;
-    for (auto& value : *reverse_tag) {
-        value = *input++;
-    }
-    return input;
+    return particle.template set_data<typename particle_type::reverse_id_type>("reverse_id", first);
 }
 
 /**
@@ -535,8 +585,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_species(particle_type const& particle, iterator_type const& first)
 {
-    auto const& species = read_cache(particle.species());
-    return std::copy(species.begin(), species.end(), first);
+    return particle.template get_data<typename particle_type::species_type>("species", first);
 }
 
 /**
@@ -546,12 +595,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_species(particle_type& particle, iterator_type const& first)
 {
-    auto species = make_cache_mutable(particle.species());
-    iterator_type input = first;
-    for (auto& value : *species) {
-        value = *input++;
-    }
-    return input;
+    return particle.template set_data<typename particle_type::species_type>("species", first);
 }
 
 /**
@@ -561,8 +605,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_mass(particle_type const& particle, iterator_type const& first)
 {
-    auto const& mass = read_cache(particle.mass());
-    return std::copy(mass.begin(), mass.end(), first);
+    return particle.template get_data<typename particle_type::mass_type>("mass", first);
 }
 
 /**
@@ -572,12 +615,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_mass(particle_type& particle, iterator_type const& first)
 {
-    auto mass = make_cache_mutable(particle.mass());
-    iterator_type input = first;
-    for (auto& value : *mass) {
-        value = *input++;
-    }
-    return input;
+    return particle.template set_data<typename particle_type::mass_type>("mass", first);
 }
 
 /**
@@ -587,7 +625,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_force(particle_type& particle, iterator_type const& first)
 {
-    return std::copy(particle.force()->begin(), particle.force()->end(), first);
+    return particle.template get_data<typename particle_type::force_type>("force", first);
 }
 
 /**
@@ -597,7 +635,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_potential_energy(particle_type& particle, iterator_type const& first)
 {
-    return std::copy(particle.potential_energy()->begin(), particle.potential_energy()->end(), first);
+    return particle.template get_data<typename particle_type::en_pot_type>("potential_energy", first);
 }
 
 /**
@@ -607,9 +645,8 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_stress_pot(particle_type& particle, iterator_type const& first)
 {
-    return std::copy(particle.stress_pot()->begin(), particle.stress_pot()->end(), first);
+    return particle.template get_data<typename particle_type::stress_pot_type>("potential_stress_tensor", first);
 }
-
 
 } // namespace host
 } // namespace mdsim

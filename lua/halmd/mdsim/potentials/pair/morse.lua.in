@@ -6,17 +6,18 @@
 -- This file is part of HALMD.
 --
 -- HALMD is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- GNU Lesser General Public License for more details.
 --
--- You should have received a copy of the GNU General Public License
--- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
 --
 
 local device            = require("halmd.utility.device")
@@ -24,6 +25,7 @@ local log               = require("halmd.io.log")
 local numeric           = require("halmd.numeric")
 local utility           = require("halmd.utility")
 local module            = require("halmd.utility.module")
+local adapters          = require("halmd.mdsim.potentials.pair.adapters")
 
 ---
 -- Morse potential
@@ -44,8 +46,14 @@ local module            = require("halmd.utility.module")
 local morse = {
     host = assert(libhalmd.mdsim.host.potentials.pair.morse)
 }
+local force_shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.force_shifted) }
+local smooth_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.smooth_r4) }
+local shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.shifted) }
 if device.gpu then
     morse.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.morse)
+    force_shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.force_shifted)
+    smooth_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
+    shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
 end
 
 ---
@@ -57,7 +65,6 @@ end
 -- :param table args.epsilon: matrix with elements :math:`\epsilon_{ij}` (*default:* ``1``)
 -- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (*default:* ``1``)
 -- :param table args.minimum: Minimum/equilibrium distance :math:`r_\text{min}` in units of :math:`\sigma_{ij}`
--- :param table args.cutoff: matrix with elements :math:`r_{\text{c}, ij}`
 -- :param number args.species: number of particle species *(optional)*
 -- :param string args.memory: select memory location *(optional)*
 -- :param string args.label: instance label *(optional)*
@@ -72,10 +79,6 @@ end
 -- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
 -- not specified, the memory location is selected according to the compute
 -- device.
---
--- .. note::
---
---    The cutoff is only relevant with :class:`halmd.mdsim.forces.pair_trunc`.
 --
 -- .. attribute:: epsilon
 --
@@ -105,6 +108,35 @@ end
 --
 --    Device where the particle memory resides.
 --
+-- .. method:: truncate(args)
+--
+--    Truncate potential.
+--    See :ref:`pair_potential_truncations` for available truncations.
+--
+--    :param table args: keyword argument
+--    :param string args[1]: name of truncation type
+--    :param table cutoff: matrix with elements :math:`r_{\text{c}, ij}`
+--    :param any args.*: additional arguments depend on the truncation type
+--    :returns: truncated potential
+--
+--    Example::
+--
+--      potential = potential:truncate({"smooth_r4", cutoff = 5, h = 0.05})
+--
+-- .. method:: modify(args)
+--
+--    Apply potential modification.
+--    See :ref:`pair_potential_modifications` for available modifications.
+--
+--    :param table args: keyword argument
+--    :param string args[1]: name of modification type
+--    :param any args.*: additional arguments depend on the modification type
+--    :returns: modified potential
+--
+--    Example::
+--
+--      potential = potential:modify({"hard_core", radius = 0.5})
+--
 local M = module(function(args)
     local epsilon = args and args.epsilon or 1
     if type(epsilon) ~= "table" and type(epsilon) ~= "number" then
@@ -118,10 +150,6 @@ local M = module(function(args)
     if type(sigma) ~= "table" and type(sigma) ~= "number" then
         error("bad argument 'sigma'", 2)
     end
-    local cutoff = utility.assert_kwarg(args, "cutoff")
-    if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
-        error("bad argument 'cutoff'", 2)
-    end
 
     local memory = args and args.memory or (device.gpu and "gpu" or "host")
 
@@ -132,14 +160,10 @@ local M = module(function(args)
     -- derive number of species from parameter matrices
     local species = args and args.species
         or (type(epsilon) == "table" and #epsilon) or (type(sigma) == "table" and #sigma)
-        or (type(minimum) == "table" and #minimum)
-        or (type(cutoff) == "table" and #cutoff) or 1
+        or (type(minimum) == "table" and #minimum) or 1
     utility.assert_type(species, "number")
 
     -- promote scalars to matrices
-    if type(cutoff) == "number" then
-        cutoff = numeric.scalar_matrix(species, species, cutoff)
-    end
     if type(epsilon) == "number" then
         epsilon = numeric.scalar_matrix(species, species, epsilon)
     end
@@ -154,12 +178,15 @@ local M = module(function(args)
     if not morse[memory] then
         error(("unsupported memory type '%s'"):format(memory), 2)
     end
-    local self = morse[memory](cutoff, epsilon, sigma, minimum, logger)
+    local self = morse[memory](epsilon, sigma, minimum, logger)
 
     -- add description for profiler
     self.description = property(function()
         return "Morse potential" .. label
     end)
+
+    -- store number of species
+    self.species = property(function(self) return species end)
 
     -- store memory location
     self.memory = property(function(self) return memory end)
@@ -168,6 +195,9 @@ local M = module(function(args)
     self.logger = property(function()
         return logger
     end)
+
+    self.truncate = adapters.truncate
+    self.modify = adapters.modify
 
     return self
 end)

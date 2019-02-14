@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/config.hpp>
@@ -81,7 +82,7 @@ struct lattice
     unsigned npart;
     float density;
     float lattice_constant;
-    fixed_vector<double, dimension> slab;
+    typename modules_type::slab_type slab;
 
     shared_ptr<box_type> box;
     shared_ptr<particle_type> particle;
@@ -272,6 +273,7 @@ lattice<modules_type>::lattice()
 template <int dimension, typename float_type>
 struct host_modules
 {
+    typedef fixed_vector<float_type, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
@@ -280,17 +282,27 @@ struct host_modules
     static bool const gpu = false;
 };
 
+#ifndef USE_HOST_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE( ssf_host_2d ) {
     lattice<host_modules<2, double> >().test();
 }
 BOOST_AUTO_TEST_CASE( ssf_host_3d ) {
     lattice<host_modules<3, double> >().test();
 }
+#else
+BOOST_AUTO_TEST_CASE( ssf_host_2d ) {
+    lattice<host_modules<2, float> >().test();
+}
+BOOST_AUTO_TEST_CASE( ssf_host_3d ) {
+    lattice<host_modules<3, float> >().test();
+}
+#endif
 
 #ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>
 struct gpu_modules
 {
+    typedef fixed_vector<double, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
@@ -299,10 +311,20 @@ struct gpu_modules
     static bool const gpu = true;
 };
 
-BOOST_FIXTURE_TEST_CASE( ssf_gpu_2d, device ) {
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_dsfloat_2d, device ) {
+    lattice<gpu_modules<2, dsfloat> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_dsfloat_3d, device ) {
+    lattice<gpu_modules<3, dsfloat> >().test();
+}
+# endif
+# ifdef USE_GPU_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_float_2d, device ) {
     lattice<gpu_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( ssf_gpu_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_float_3d, device ) {
     lattice<gpu_modules<3, float> >().test();
 }
+# endif
 #endif // HALMD_WITH_GPU

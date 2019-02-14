@@ -5,20 +5,19 @@
 -- This file is part of HALMD.
 --
 -- HALMD is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
+-- GNU Lesser General Public License for more details.
 --
--- You should have received a copy of the GNU General Public License
--- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
 --
-
-local halmd = require("halmd")
 
 -- grab modules
 local log = halmd.io.log
@@ -78,7 +77,6 @@ local function restore(args)
     end
 
     -- truncated Lennard-Jones potential
-    -- FIXME move cutoff to pair_trunc
     local potential = mdsim.potentials.pair.lennard_jones({
         epsilon = {
             {1  , 1.5} -- AA, AB
@@ -88,8 +86,7 @@ local function restore(args)
             {1  , 0.8 } -- AA, AB
           , {0.8, 0.88} -- BA, BB
         }
-      , cutoff = 2.5
-    })
+    }):truncate({"smooth_r4", cutoff = 2.5, h = 0.005})
 
     -- create binning modules explicitly and therefore only once for each particle instance
     local binning = {
@@ -106,7 +103,6 @@ local function restore(args)
     }
     -- define interaction forces with smoothly truncated potential
     local force = {}
-    local trunc = mdsim.forces.trunc.local_r4({h = 0.005})
     for label1, p1 in pairs(particle) do
         for label2, p2 in pairs(particle) do
             local neighbour = mdsim.neighbour({
@@ -115,10 +111,10 @@ local function restore(args)
               , r_cut = potential.r_cut
               , binning = { binning[label1], binning[label2] }
             })
-            force[label1 .. label2] = mdsim.forces.pair_trunc({
+            force[label1 .. label2] = mdsim.forces.pair({
                 box = box
               , particle = { p1, p2 }
-              , potential = potential, trunc = trunc
+              , potential = potential
               , label = label1 .. label2 -- FIXME do not infer logger from potential
               , neighbour = neighbour
             })
@@ -266,24 +262,16 @@ local function production(box, particle, args)
     halmd.utility.profiler:profile()
 end
 
+function main(args)
+    -- restore simulation and run production
+    production(restore(args))
+end
+
 --
 -- Parse command-line arguments.
 --
-local function parse_args()
-    local parser = halmd.utility.program_options.argument_parser()
-
+function define_args(parser)
     parser:add_argument("output,o", {type = "string", default = "two_particles", help = "prefix of output files"})
-
-    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
-        local level = {
-            -- console, file
-            {"warning", "info" },
-            {"info"   , "info" },
-            {"debug"  , "debug"},
-            {"trace"  , "trace"},
-        }
-        args[key] = level[value] or level[#level]
-    end, default = 1, help = "increase logging verbosity"})
 
     parser:add_argument("input", {type = "string", required = true, action = function(args, key, value)
         if not readers.h5md.check(value) then
@@ -305,18 +293,4 @@ local function parse_args()
     local wavevector = parser:add_argument_group("wavevector", {help = "wavevector shells in reciprocal space"})
     observables.utility.wavevector.add_options(wavevector, {tolerance = 0.01, max_count = 7})
     observables.utility.semilog_grid.add_options(wavevector, {maximum = 25, decimation = 0})
-
-    return parser:parse_args()
 end
-
-local args = parse_args()
-
--- log to console
-halmd.io.log.open_console({severity = args.verbose[1]})
--- log to file
-halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
--- log version
-halmd.utility.version.prologue()
-
--- restore simulation and run production
-production(restore(args))

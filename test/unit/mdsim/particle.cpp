@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/config.hpp>
@@ -334,74 +335,74 @@ static void test_velocity(particle_type& particle)
 }
 
 /**
- * Test initialisation, getter and setter of particle tags.
+ * Test initialisation, getter and setter of particle ids.
  */
 template <typename particle_type>
-static void test_tag(particle_type& particle)
+static void test_id(particle_type& particle)
 {
-    typedef typename particle_type::tag_type tag_type;
+    typedef typename particle_type::id_type id_type;
     particle_type const& const_particle = particle;
 
-    // check that tags default to ascending sequence of integers
-    std::vector<tag_type> tag(particle.nparticle());
+    // check that ids default to ascending sequence of integers
+    std::vector<id_type> id(particle.nparticle());
     BOOST_CHECK(
-        get_tag(const_particle, tag.begin()) == tag.end()
+        get_id(const_particle, id.begin()) == id.end()
     );
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        tag.begin()
-      , tag.end()
-      , boost::counting_iterator<tag_type>(0)
-      , boost::counting_iterator<tag_type>(particle.nparticle())
+        id.begin()
+      , id.end()
+      , boost::counting_iterator<id_type>(0)
+      , boost::counting_iterator<id_type>(particle.nparticle())
     );
 
-    // reverse order of particle tags
+    // reverse order of particle ids
     BOOST_CHECK(
-        set_tag(particle, tag.rbegin()) == tag.rend()
+        set_id(particle, id.rbegin()) == id.rend()
     );
     BOOST_CHECK(
-        get_tag(const_particle, tag.begin()) == tag.end()
+        get_id(const_particle, id.begin()) == id.end()
     );
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        tag.rbegin()
-      , tag.rend()
-      , boost::counting_iterator<tag_type>(0)
-      , boost::counting_iterator<tag_type>(particle.nparticle())
+        id.rbegin()
+      , id.rend()
+      , boost::counting_iterator<id_type>(0)
+      , boost::counting_iterator<id_type>(particle.nparticle())
     );
 }
 
 /**
- * Test initialisation, getter and setter of particle reverse tags.
+ * Test initialisation, getter and setter of particle reverse ids.
  */
 template <typename particle_type>
-static void test_reverse_tag(particle_type& particle)
+static void test_reverse_id(particle_type& particle)
 {
-    typedef typename particle_type::reverse_tag_type reverse_tag_type;
+    typedef typename particle_type::reverse_id_type reverse_id_type;
     particle_type const& const_particle = particle;
 
-    // check that reverse tags default to ascending sequence of integers
-    std::vector<reverse_tag_type> reverse_tag(particle.nparticle());
+    // check that reverse ids default to ascending sequence of integers
+    std::vector<reverse_id_type> reverse_id(particle.nparticle());
     BOOST_CHECK(
-        get_reverse_tag(const_particle, reverse_tag.begin()) == reverse_tag.end()
+        get_reverse_id(const_particle, reverse_id.begin()) == reverse_id.end()
     );
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        reverse_tag.begin()
-      , reverse_tag.end()
-      , boost::counting_iterator<reverse_tag_type>(0)
-      , boost::counting_iterator<reverse_tag_type>(particle.nparticle())
+        reverse_id.begin()
+      , reverse_id.end()
+      , boost::counting_iterator<reverse_id_type>(0)
+      , boost::counting_iterator<reverse_id_type>(particle.nparticle())
     );
 
-    // reverse order of reverse particle tags
+    // reverse order of reverse particle ids
     BOOST_CHECK(
-        set_reverse_tag(particle, reverse_tag.rbegin()) == reverse_tag.rend()
+        set_reverse_id(particle, reverse_id.rbegin()) == reverse_id.rend()
     );
     BOOST_CHECK(
-        get_reverse_tag(const_particle, reverse_tag.begin()) == reverse_tag.end()
+        get_reverse_id(const_particle, reverse_id.begin()) == reverse_id.end()
     );
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        reverse_tag.rbegin()
-      , reverse_tag.rend()
-      , boost::counting_iterator<reverse_tag_type>(0)
-      , boost::counting_iterator<reverse_tag_type>(particle.nparticle())
+        reverse_id.rbegin()
+      , reverse_id.rend()
+      , boost::counting_iterator<reverse_id_type>(0)
+      , boost::counting_iterator<reverse_id_type>(particle.nparticle())
     );
 }
 
@@ -681,17 +682,17 @@ test_suite_host(std::size_t nparticle, unsigned int nspecies, boost::unit_test::
     };
     ts->add(BOOST_TEST_CASE( velocity ));
 
-    auto tag = [=]() {
+    auto id = [=]() {
         particle_type particle(nparticle, nspecies);
-        test_tag(particle);
+        test_id(particle);
     };
-    ts->add(BOOST_TEST_CASE( tag ));
+    ts->add(BOOST_TEST_CASE( id ));
 
-    auto reverse_tag = [=]() {
+    auto reverse_id = [=]() {
         particle_type particle(nparticle, nspecies);
-        test_reverse_tag(particle);
+        test_reverse_id(particle);
     };
-    ts->add(BOOST_TEST_CASE( reverse_tag ));
+    ts->add(BOOST_TEST_CASE( reverse_id ));
 
     auto species = [=]() {
         particle_type particle(nparticle, nspecies);
@@ -750,19 +751,19 @@ test_suite_gpu(std::size_t nparticle, unsigned int nspecies, boost::unit_test::t
     };
     ts->add(BOOST_TEST_CASE( velocity ));
 
-    auto tag = [=]() {
+    auto id = [=]() {
         set_cuda_device device;
         particle_type particle(nparticle, nspecies);
-        test_tag(particle);
+        test_id(particle);
     };
-    ts->add(BOOST_TEST_CASE( tag ));
+    ts->add(BOOST_TEST_CASE( id ));
 
-    auto reverse_tag = [=]() {
+    auto reverse_id = [=]() {
         set_cuda_device device;
         particle_type particle(nparticle, nspecies);
-        test_reverse_tag(particle);
+        test_reverse_id(particle);
     };
-    ts->add(BOOST_TEST_CASE( reverse_tag ));
+    ts->add(BOOST_TEST_CASE( reverse_id ));
 
     auto species = [=]() {
         set_cuda_device device;
@@ -821,8 +822,29 @@ HALMD_TEST_INIT( particle )
     test_suite* ts_gpu_two = BOOST_TEST_SUITE( "two" );
     ts_gpu->add(ts_gpu_two);
 
+# ifdef USE_GPU_SINGLE_PRECISION
+    test_suite* ts_gpu_two_float = BOOST_TEST_SUITE( "float" );
+    ts_gpu_two->add(ts_gpu_two_float);
+# endif
+
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    test_suite* ts_gpu_two_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
+    ts_gpu_two->add(ts_gpu_two_dsfloat);
+# endif
+
     test_suite* ts_gpu_three = BOOST_TEST_SUITE( "three" );
     ts_gpu->add(ts_gpu_three);
+
+# ifdef USE_GPU_SINGLE_PRECISION
+    test_suite* ts_gpu_three_float = BOOST_TEST_SUITE( "float" );
+    ts_gpu_three->add(ts_gpu_three_float);
+# endif
+
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    test_suite* ts_gpu_three_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
+    ts_gpu_three->add(ts_gpu_three_dsfloat);
+# endif
+
 #endif
 
     unsigned int const nspecies = 1;
@@ -836,8 +858,14 @@ HALMD_TEST_INIT( particle )
         test_suite_host<halmd::mdsim::host::particle<2, double> >(nparticle, nspecies, ts_host_two);
 #endif
 #ifdef HALMD_WITH_GPU
-        test_suite_gpu<halmd::mdsim::gpu::particle<3, float> >(nparticle, nspecies, ts_gpu_three);
-        test_suite_gpu<halmd::mdsim::gpu::particle<2, float> >(nparticle, nspecies, ts_gpu_two);
+# ifdef USE_GPU_SINGLE_PRECISION
+        test_suite_gpu<halmd::mdsim::gpu::particle<3, float> >(nparticle, nspecies, ts_gpu_three_float);
+        test_suite_gpu<halmd::mdsim::gpu::particle<2, float> >(nparticle, nspecies, ts_gpu_two_float);
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+        test_suite_gpu<halmd::mdsim::gpu::particle<3, halmd::dsfloat> >(nparticle, nspecies, ts_gpu_three_dsfloat);
+        test_suite_gpu<halmd::mdsim::gpu::particle<2, halmd::dsfloat> >(nparticle, nspecies, ts_gpu_two_dsfloat);
+# endif
 #endif
     }
 }

@@ -6,17 +6,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_GPU_BINNING_HPP
@@ -47,7 +48,7 @@ class binning
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
+    typedef boost::numeric::ublas::matrix<float> matrix_type;
     typedef mdsim::box<dimension> box_type;
 
     typedef cuda::vector<unsigned int> array_type;
@@ -66,7 +67,7 @@ public:
     );
 
     //! returns neighbour list skin in MD units
-    float_type r_skin() const
+    float r_skin() const
     {
         return r_skin_;
     }
@@ -109,8 +110,6 @@ public:
     cache<array_type> const& g_cell();
 
 private:
-    typedef typename particle_type::position_array_type position_array_type;
-
     /** update cell lists */
     void update();
     /** set number of placeholders per cell and reallocate memory */
@@ -122,9 +121,9 @@ private:
     std::shared_ptr<logger> logger_;
 
     /** neighbour list skin in MD units */
-    float_type r_skin_;
+    float r_skin_;
     /** maximum cutoff */
-    float_type r_cut_max_;
+    float r_cut_max_;
     /** CUDA device properties */
     cuda::device::properties device_properties_;
 

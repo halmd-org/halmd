@@ -13,7 +13,7 @@ proceeding, be aware of the section :ref:`automatic`.
    When installing third-party packages, it is advisable to put them into
    separate directories. If you install software only for yourself, use package
    directories of the form ``~/opt/PKGNAME-PKGVERSION``, for example
-   ``~/opt/boost-1.47.0`` or ``~/opt/Sphinx-1.0.4``. If you install software
+   ``~/opt/boost-1.57.0`` or ``~/opt/Sphinx-1.2.3``. If you install software
    system-wide as the root user, use ``/opt/PKGNAME-PKGVERSION``.
    This simple scheme allows you to have multiple versions of a package, or
    remove a package without impacting others.
@@ -24,13 +24,13 @@ For example, if Boost and Lua are installed in your home directory,
 CUDA is installed system-wide, and the HALMD source is in ``~/projects/halmd``,
 the initial cmake command might look like this ::
 
-   CMAKE_PREFIX_PATH=~/opt/boost_1_47_0:/opt/cuda-3.1:~/opt/lua-5.1.4 cmake ~/projects/halmd
+   CMAKE_PREFIX_PATH=~/opt/boost_1_57_0:/opt/cuda-5.5:~/opt/lua-5.2.3 cmake ~/projects/halmd
 
-Instead of setting CMAKE_PREFIX_PATH manually, you would include the package directories in your ~/.bashrc (or your favourite shell’s equivalent) ::
+Instead of setting CMAKE_PREFIX_PATH manually, you would include the package directories in your ~/.bashrc (or your favourite shell’s equivalent)::
 
-   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_47_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export CMAKE_PREFIX_PATH="/opt/cuda-3.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export CMAKE_PREFIX_PATH="${HOME}/opt/lua-5.1.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_57_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="/opt/cuda-5.5${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/lua-5.2.3${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 GNU/Linux
 ---------
@@ -38,27 +38,17 @@ GNU/Linux
 CMake
 ^^^^^
 
-The build process of HALMD depends on CMake, a cross-platform, open-source build system.
+The build process of HALMD depends on `CMake`_, a cross-platform, open-source build system.
 
-Get the latest `CMake source package`_, currently `CMake 2.8.5`_.
+Get the latest `CMake`_, currently `CMake 3.5.2`_.
 
-Get the latest `CMake-CUDA`_ patch, currently `CMake-CUDA 2.8.5-0`_.
+.. _CMake: http://www.cmake.org
 
-.. _CMake source package: http://cmake.org/cmake/resources/software.html
+.. _CMake 3.5.2: https://cmake.org/files/v3.5/cmake-3.5.2.tar.gz
 
-.. _CMake 2.8.5: http://www.cmake.org/files/v2.8/cmake-2.8.5.tar.gz
+Extract the CMake source package, and prepare the CMake build with ::
 
-.. _CMake-CUDA: http://software.colberg.org/projects/cmake-cuda
-
-.. _CMake-CUDA 2.8.5-0: http://sourceforge.net/projects/halmd/files/patches/cmake-cuda-2.8.5-0-gda84f60.patch
-
-Extract the CMake source package, and apply the patches in the CMake source directory with ::
-
-   patch -p1 < ../cmake-cuda-2.8.5-0-gda84f60.patch
-
-Prepare the CMake build with ::
-
-   ./configure --prefix=$HOME/opt/cmake-2.8.5
+   ./configure --prefix=$HOME/opt/cmake
 
 Compile CMake with ::
 
@@ -70,45 +60,26 @@ Install CMake into your packages directory::
 
 Include CMake in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/opt/cmake-2.8.5/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/opt/cmake-2.8.5/man${MANPATH+:$MANPATH}"
+   export PATH="${HOME}/opt/cmake/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/opt/cmake/man${MANPATH+:$MANPATH}"
 
 
 Boost C++ libraries
 ^^^^^^^^^^^^^^^^^^^
 
-Get the latest `Boost source package`_, currently `Boost 1.47.0`_.
+Get the latest `Boost source package`_, currently `Boost 1.61.0`_ (1.55.0
+is the minimum required version).
 
 .. _Boost source package: http://www.boost.org/users/download
-.. _Boost 1.47.0: http://sourceforge.net/projects/boost/files/boost/1.47.0/boost_1_47_0.tar.bz2
+.. _Boost 1.61.0: http://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.bz2
 
-Get the latest `Boost.Log source package`_ from the upstream repository.
-
-.. note::
-
-   The `Boost.Log`_ library is a proposed extension to the Boost C++ libraries.
-   As a result of the `formal review of Boost.Log`_ in March 2010, the library has
-   been accepted subject to several conditions. It is not shipped yet with
-   upstream Boost.
-
-.. _Boost.Log source package: http://boost-log.svn.sourceforge.net/viewvc/boost-log/trunk/boost-log/?view=tar
-.. _Boost.Log: http://boost-log.sourceforge.net/
-.. _formal review of Boost.Log: http://lists.boost.org/boost-announce/2010/03/0256.php
-
-We will build Boost and Boost.Log in a single step, therefore extract both
-source packages and copy the Boost.Log headers and library sources to the
-Boost source directory using ::
-
-   cp -r boost-log/boost/log boost_1_47_0/boost/
-   cp -r boost-log/libs/log boost_1_47_0/libs/
-
-In the Boost source directory, bootstrap the build with ::
+To build Boost, extract the source package and bootstrap the build with ::
 
    ./bootstrap.sh
 
 Compile Boost using ::
 
-   ./bjam cxxflags=-fPIC
+   ./bjam cxxflags="-fPIC -std=c++11"
 
 This compiles both dynamic and static libraries.
 
@@ -126,29 +97,23 @@ This compiles both dynamic and static libraries.
 
 Install the Boost libraries into your packages directory::
 
-   ./bjam cxxflags=-fPIC install --prefix=$HOME/opt/boost_1_47_0
+   ./bjam cxxflags="-fPIC -std=c++11" install --prefix=$HOME/opt/boost_1_61_0
 
 Include Boost in your shell environment, by adding to ~/.bashrc::
 
-   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_47_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export LD_LIBRARY_PATH="${HOME}/opt/boost_1_47_0/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_61_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export LD_LIBRARY_PATH="${HOME}/opt/boost_1_61_0/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
 
 
 Lua interpreter
 ^^^^^^^^^^^^^^^
 
-Get the latest Lua source package from the `Lua download`_ page, currently `Lua 5.1.4`_.
-
-Get the `Lua 5.1.4-2 patch`_ fixing several bugs.
+Get the latest Lua source package from the `Lua download`_ page, currently `Lua 5.2.4`_.
 
 .. _Lua download: http://www.lua.org/download.html
-.. _Lua 5.1.4: http://www.lua.org/ftp/lua-5.1.4.tar.gz
-.. _Lua 5.1.4-2 patch: http://www.lua.org/ftp/patch-lua-5.1.4-2
+.. _Lua 5.2.4: http://www.lua.org/ftp/lua-5.2.4.tar.gz
 
-Extract the Lua source package, and apply the patch in the Lua source directory with ::
-
-   cd lua-5.1.4/src
-   patch < ../../patch-lua-5.1.4-2
+Extract the Lua source package.
 
 The recommended way of embedding the Lua intepreter in an executable is to link
 the Lua library statically, which is the default mode of compilation.
@@ -163,26 +128,26 @@ On **64-bit platforms**, include the ``-fPIC`` flag using ::
 
 Install the Lua library into your packages directory::
 
-   make install INSTALL_TOP=~/opt/lua-5.1.4
+   make install INSTALL_TOP=~/opt/lua-5.2.4
 
 Include Lua in your shell environment, by adding to ~/.bashrc::
 
-   export CMAKE_PREFIX_PATH="${HOME}/opt/lua-5.1.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export PATH="${HOME}/opt/lua-5.1.4/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/opt/lua-5.1.4/man${MANPATH+:$MANPATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/lua-5.2.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export PATH="${HOME}/opt/lua-5.2.4/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/opt/lua-5.2.4/man${MANPATH+:$MANPATH}"
 
 
 HDF5 library
 ^^^^^^^^^^^^
 
-Get the latest `HDF5 source package`_, currently `HDF5 1.8.6`_.
+Get the latest `HDF5 source package`_, currently `HDF5 1.10.0-patch1`_.
 
 .. _HDF5 source package: http://www.hdfgroup.org/HDF5/release/obtain5.html#obtain
-.. _HDF5 1.8.6: http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.6.tar.gz
+.. _HDF5 1.10.0-patch1: http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.0-patch1/src/hdf5-1.10.0-patch1.tar.bz2
 
 Prepare a statically linked build of the HDF5 C and C++ library with ::
 
-   CFLAGS=-fPIC CXXFLAGS=-fPIC ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/opt/hdf5-1.8.6
+   CFLAGS=-fPIC CXXFLAGS=-fPIC ./configure --enable-cxx --enable-static --prefix=$HOME/opt/hdf5-1.10.0-patch1
 
 .. note:: Compiling HDF5 with C++ support disables multi-threading.
 
@@ -196,37 +161,37 @@ Install the HDF5 libraries into your packages directory::
 
 Include HDF5 in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/opt/hdf5-1.8.6/bin${PATH+:$PATH}"
-   export CMAKE_PREFIX_PATH="${HOME}/opt/hdf5-1.8.6${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export PATH="${HOME}/opt/hdf5-1.10.0-patch1/bin${PATH+:$PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/hdf5-1.10.0-patch1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 
 Sphinx documentation generator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Get the latest `Sphinx source package`_, currently `Sphinx 1.0.7`_.
+Get the latest `Sphinx source package`_, currently `Sphinx 1.2.3`_.
 
 .. _Sphinx source package: http://pypi.python.org/pypi/Sphinx
-.. _Sphinx 1.0.7: http://pypi.python.org/packages/source/S/Sphinx/Sphinx-1.0.7.tar.gz
+.. _Sphinx 1.2.3: http://pypi.python.org/packages/source/S/Sphinx/Sphinx-1.2.3.tar.gz
 
 Query your Python version ::
 
    python -V
 
-Create a package directory for Sphinx using the Python major and minor version ::
+Create a package directory for Sphinx using the Python major and minor version (here 2.7) ::
 
-   mkdir -p $HOME/opt/Sphinx-1.0.7/lib/python2.5/site-packages
+   mkdir -p $HOME/opt/Sphinx-1.2.3/lib/python2.7/site-packages
 
 Add the package directory to the PYTHON_PATH environment variable ::
 
-   export PYTHONPATH="${HOME}/opt/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
+   export PYTHONPATH="${HOME}/opt/Sphinx-1.2.3/lib/python2.7/site-packages${PYTHONPATH+:$PYTHONPATH}"
 
 Install Sphinx into your packages directory ::
 
-   python setup.py install --prefix=$HOME/opt/Sphinx-1.0.7
+   python setup.py install --prefix=$HOME/opt/Sphinx-1.2.3
 
 Include Sphinx in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/opt/Sphinx-1.0.7/bin${PATH+:$PATH}"
-   export PYTHONPATH="${HOME}/opt/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
+   export PATH="${HOME}/opt/Sphinx-1.2.3/bin${PATH+:$PATH}"
+   export PYTHONPATH="${HOME}/opt/Sphinx-1.2.3/lib/python2.7/site-packages${PYTHONPATH+:$PYTHONPATH}"
 
 

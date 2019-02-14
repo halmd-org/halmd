@@ -6,17 +6,29 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
     # HALMD requires a C++11 compiler, e.g. GCC 4.7. Until major GNU/Linux
     # distributions have upgraded their stable releases to default to GCC 4.7,
     # we also support GCC 4.6 in experimental C++0x mode.
+    # Remove -DNDEBUG from RelWithDebInfo to enable assert() and LOG_DEBUG/LOG_TRACE.
     if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.7")
       set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
     else()
       set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++0x -pedantic")
     endif()
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
-    set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+    # Clang versions >= 3.9.1 issue warnings if a template specialization is
+    # declared, but not defined in a compilation unit.
+    # HALMD regularly uses explicit template specializations in specific compilation
+    # units. This paradigm conforms to the C++ standards and is intended,
+    # therefore the warnings are disabled.
+    if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "3.9.1")
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic -Wno-undefined-var-template")
+    else()
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+    endif()
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
     # clang doesn't print colored diagnostics when invoked from Ninja
     if (UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
       set(CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT} -fcolor-diagnostics")
@@ -26,6 +38,7 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
 
     set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall")
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
 
@@ -60,8 +73,16 @@ if(DEFINED CMAKE_CUDA_COMPILER_ID)
     # We will raise the default compute version later to enable native double
     # precision, as an alternative to double-single precision, and when all
     # kernels are optimised for Fermi GPUs.
+    #
+    # CUDA versions starting from 6.5 do not support comute version 1.2 anymore,
+    # so in that case the default compute version is raised to 2.0 regardless.
 
-    set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12,sm_13,sm_20")
+    if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 6.5)
+      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12")
+    else()
+      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_20 -code=compute_20")
+    endif()
+
 
   else()
     message(WARNING "Unsupported CUDA compiler: ${CMAKE_CUDA_COMPILER_ID}")

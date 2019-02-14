@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #ifndef HALMD_MDSIM_HOST_VELOCITY_HPP
@@ -35,8 +36,8 @@ template <typename particle_type>
 inline void rescale_velocity(particle_type& particle, double factor)
 {
     auto velocity = make_cache_mutable(particle.velocity());
-    for (auto& v : *velocity) {
-        v *= factor;
+    for (unsigned int i = 0; i < particle.nparticle(); i++) {
+        (*velocity)[i] *= factor;
     }
 }
 
@@ -59,8 +60,8 @@ template <typename particle_type>
 inline void shift_velocity(particle_type& particle, fixed_vector<double, particle_type::velocity_type::static_size> const& delta)
 {
     auto velocity = make_cache_mutable(particle.velocity());
-    for (auto& v : *velocity) {
-        v += delta;
+    for (unsigned int i = 0; i < particle.nparticle(); i++) {
+        (*velocity)[i] += delta;
     }
 }
 
@@ -83,9 +84,9 @@ template <typename particle_type>
 inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double, particle_type::velocity_type::static_size> const& delta, double factor)
 {
     auto velocity = make_cache_mutable(particle.velocity());
-    for (auto& v : *velocity) {
-        v += delta;
-        v *= factor;
+    for (unsigned int i = 0; i < particle.nparticle(); i++) {
+        (*velocity)[i] += delta;
+        (*velocity)[i] *= factor;
     }
 }
 

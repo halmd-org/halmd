@@ -1,5 +1,10 @@
 # Generate documentation in HTML and PDF format using Sphinx.
 
+option(HALMD_GENERATE_DOC "Set to OFF to skip documentation generation even if the documentation tools are found." ON)
+if(NOT HALMD_GENERATE_DOC)
+  return()
+endif(NOT HALMD_GENERATE_DOC)
+
 set(GENERATE_DOC TRUE)
 
 # We use the Sphinx documentation generator to render HTML and manual
@@ -8,7 +13,11 @@ find_package(Sphinx QUIET)
 if(NOT SPHINX_FOUND)
   message(WARNING "Unable to find Sphinx documentation generator")
   set(GENERATE_DOC FALSE)
-endif(NOT SPHINX_FOUND)
+endif()
+if(${SPHINX_VERSION_STRING} VERSION_LESS "1.4.0")
+  message(WARNING "Version 1.4 or later of Sphinx documentation generator required")
+  set(GENERATE_DOC FALSE)
+endif()
 
 # Sphinx uses latex and dvipng to render LaTeX formulas.
 find_package(LATEX QUIET)
@@ -149,8 +158,9 @@ add_custom_command(OUTPUT pdf
 )
 
 add_custom_command(OUTPUT pdf/halmd.pdf
-  COMMAND make -C pdf LATEXOPTS=-interaction=${HALMD_DOC_LATEX_MODE}
+  COMMAND make LATEXOPTS=-interaction=${HALMD_DOC_LATEX_MODE}
   DEPENDS pdf
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/pdf"
   COMMENT "Build HALMD PDF documentation"
 )
 

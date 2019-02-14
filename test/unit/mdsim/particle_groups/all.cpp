@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/config.hpp>
@@ -39,18 +40,19 @@
 #include <boost/iterator/counting_iterator.hpp>
 
 #include <algorithm>
+#include <numeric>
 
 /**
- * Returns randomly shuffled particle tags.
+ * Returns randomly shuffled particle ids.
  */
 template <typename size_type>
 static std::vector<size_type>
-make_random_tag(size_type nparticle)
+make_random_id(size_type nparticle)
 {
-    std::vector<size_type> tag(nparticle);
-    std::iota(tag.begin(), tag.end(), 0);
-    std::random_shuffle(tag.begin(), tag.end());
-    return std::move(tag);
+    std::vector<size_type> id(nparticle);
+    std::iota(id.begin(), id.end(), 0);
+    std::random_shuffle(id.begin(), id.end());
+    return std::move(id);
 }
 
 /**
@@ -84,13 +86,13 @@ test_ordered(
 
     halmd::accumulator<double> elapsed;
     for (size_type i = 0; i < repeat; ++i) {
-        std::vector<size_type> reverse_tag = make_random_tag(nparticle);
+        std::vector<size_type> reverse_id = make_random_id(nparticle);
 
         BOOST_CHECK( size_cache == group->size() );
         BOOST_CHECK( ordered_cache == group->ordered() );
-        BOOST_CHECK( set_reverse_tag(
+        BOOST_CHECK( set_reverse_id(
             *particle
-          , reverse_tag.begin()) == reverse_tag.end()
+          , reverse_id.begin()) == reverse_id.end()
         );
         {
             halmd::scoped_timer<halmd::timer> t(elapsed);
@@ -107,8 +109,8 @@ test_ordered(
         BOOST_CHECK_EQUAL_COLLECTIONS(
             ordered.begin()
           , ordered.end()
-          , reverse_tag.begin()
-          , reverse_tag.end()
+          , reverse_id.begin()
+          , reverse_id.end()
         );
     }
     BOOST_TEST_MESSAGE( "  " << mean(elapsed) * 1e3 << " ± " << error_of_mean(elapsed) * 1e3 << " ms per iteration" );
@@ -144,13 +146,13 @@ test_unordered(
 
     halmd::accumulator<double> elapsed;
     for (size_type i = 0; i < repeat; ++i) {
-        std::vector<size_type> reverse_tag = make_random_tag(nparticle);
+        std::vector<size_type> reverse_id = make_random_id(nparticle);
 
         BOOST_CHECK( size_cache == group->size() );
         BOOST_CHECK( unordered_cache == group->unordered() );
-        BOOST_CHECK( set_reverse_tag(
+        BOOST_CHECK( set_reverse_id(
             *particle
-          , reverse_tag.begin()) == reverse_tag.end()
+          , reverse_id.begin()) == reverse_id.end()
         );
         {
             halmd::scoped_timer<halmd::timer> t(elapsed);
@@ -193,7 +195,37 @@ struct test_suite_gpu
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::particle_group particle_group_type;
     typedef halmd::mdsim::gpu::particle_groups::all<particle_type> all_type;
+    static void add_test(
+        boost::unit_test::test_suite *suite
+      , unsigned int nparticle
+      , unsigned int nspecies
+      , unsigned int repeat
+    );
 };
+
+template<int dimension, typename float_type>
+void test_suite_gpu<dimension, float_type>::add_test(
+    boost::unit_test::test_suite *suite
+  , unsigned int nparticle
+  , unsigned int nspecies
+  , unsigned int repeat
+)
+{
+    typedef test_suite_gpu<dimension, float_type> test_suite_type;
+
+    auto ordered = [=]() {
+        set_cuda_device device;
+        test_ordered<test_suite_type>(nparticle, nspecies, repeat);
+    };
+    suite->add(BOOST_TEST_CASE( ordered ));
+
+    auto unordered = [=]() {
+        set_cuda_device device;
+        test_unordered<test_suite_type>(nparticle, nspecies, repeat);
+    };
+    suite->add(BOOST_TEST_CASE( unordered ));
+}
+
 #endif
 
 /**
@@ -234,20 +266,12 @@ HALMD_TEST_INIT( all )
             typedef test_suite_host<2, double> test_suite_type;
 #endif
             auto ordered = [=]() {
-                test_ordered<test_suite_type>(
-                    nparticle
-                  , nspecies
-                  , repeat
-                );
+                test_ordered<test_suite_type>(nparticle, nspecies, repeat);
             };
             ts_host_two->add(BOOST_TEST_CASE( ordered ));
 
             auto unordered = [=]() {
-                test_unordered<test_suite_type>(
-                    nparticle
-                  , nspecies
-                  , repeat
-                );
+                test_unordered<test_suite_type>(nparticle, nspecies, repeat);
             };
             ts_host_two->add(BOOST_TEST_CASE( unordered ));
         }
@@ -258,69 +282,25 @@ HALMD_TEST_INIT( all )
             typedef test_suite_host<3, double> test_suite_type;
 #endif
             auto ordered = [=]() {
-                test_ordered<test_suite_type>(
-                    nparticle
-                  , nspecies
-                  , repeat
-                );
+                test_ordered<test_suite_type>(nparticle, nspecies, repeat);
             };
             ts_host_three->add(BOOST_TEST_CASE( ordered ));
 
             auto unordered = [=]() {
-                test_unordered<test_suite_type>(
-                    nparticle
-                  , nspecies
-                  , repeat
-                );
+                test_unordered<test_suite_type>(nparticle, nspecies, repeat);
             };
             ts_host_three->add(BOOST_TEST_CASE( unordered ));
         }
 #ifdef HALMD_WITH_GPU
         {
-            typedef test_suite_gpu<2, float> test_suite_type;
-
-            auto ordered = [=]() {
-                set_cuda_device device;
-                test_ordered<test_suite_type>(
-                    nparticle
-                  , nspecies
-                  , repeat
-                );
-            };
-            ts_gpu_two->add(BOOST_TEST_CASE( ordered ));
-
-            auto unordered = [=]() {
-                set_cuda_device device;
-                test_unordered<test_suite_type>(
-                    nparticle
-                  , nspecies
-                  , repeat
-                );
-            };
-            ts_gpu_two->add(BOOST_TEST_CASE( unordered ));
-        }
-        {
-            typedef test_suite_gpu<3, float> test_suite_type;
-
-            auto ordered = [=]() {
-                set_cuda_device device;
-                test_ordered<test_suite_type>(
-                    nparticle
-                  , nspecies
-                  , repeat
-                );
-            };
-            ts_gpu_three->add(BOOST_TEST_CASE( ordered ));
-
-            auto unordered = [=]() {
-                set_cuda_device device;
-                test_unordered<test_suite_type>(
-                    nparticle
-                  , nspecies
-                  , repeat
-                );
-            };
-            ts_gpu_three->add(BOOST_TEST_CASE( unordered ));
+# ifdef USE_GPU_SINGLE_PRECISION
+            test_suite_gpu<2, float>::add_test(ts_gpu_two, nparticle, nspecies, repeat);
+            test_suite_gpu<3, float>::add_test(ts_gpu_three, nparticle, nspecies, repeat);
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+            test_suite_gpu<2, halmd::dsfloat>::add_test(ts_gpu_two, nparticle, nspecies, repeat);
+            test_suite_gpu<3, halmd::dsfloat>::add_test(ts_gpu_three, nparticle, nspecies, repeat);
+# endif
         }
 #endif
     }

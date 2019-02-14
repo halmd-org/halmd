@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #define BOOST_TEST_MODULE pick_lattice_points
@@ -55,7 +56,7 @@ void pick_lattice_points()
     multimap<typename vector<double>::const_iterator, vector_type> lattice_points;
 
     // call with empty list of radii
-    BOOST_MESSAGE("test empty range");
+    BOOST_TEST_MESSAGE("test empty range");
     vector<double> empty_range;
     pick_lattice_points_from_shell(
         empty_range.begin(), empty_range.end()
@@ -65,7 +66,7 @@ void pick_lattice_points()
     BOOST_CHECK_EQUAL(lattice_points.size(), 0u);
 
     // call with zero box size
-    BOOST_MESSAGE("test zero box size");
+    BOOST_TEST_MESSAGE("test zero box size");
     pick_lattice_points_from_shell(
         radii.begin(), radii.end()
       , inserter(lattice_points, lattice_points.begin())
@@ -74,7 +75,7 @@ void pick_lattice_points()
     BOOST_CHECK_EQUAL(lattice_points.size(), 0u);
 
     // call with zero tolerance
-    BOOST_MESSAGE("test zero tolerance");
+    BOOST_TEST_MESSAGE("test zero tolerance");
     pick_lattice_points_from_shell(
         radii.begin(), radii.end()
       , inserter(lattice_points, lattice_points.begin())
@@ -84,7 +85,7 @@ void pick_lattice_points()
     lattice_points.clear();
 
     // call with zero max_count
-    BOOST_MESSAGE("test zero max_count");
+    BOOST_TEST_MESSAGE("test zero max_count");
     pick_lattice_points_from_shell(
         radii.begin(), radii.end()
       , inserter(lattice_points, lattice_points.begin())
@@ -93,7 +94,7 @@ void pick_lattice_points()
     BOOST_CHECK_EQUAL(lattice_points.size(), 0u);
 
     // construct lattice points
-    BOOST_MESSAGE("construct lattice points");
+    BOOST_TEST_MESSAGE("construct lattice points");
     pick_lattice_points_from_shell(
         radii.begin(), radii.end()
       , inserter(lattice_points, lattice_points.begin())

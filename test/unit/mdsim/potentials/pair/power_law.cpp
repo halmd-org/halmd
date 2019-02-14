@@ -4,17 +4,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/config.hpp>
@@ -30,15 +31,18 @@
 #include <numeric> // std::accumulate
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/host/potentials/pair/truncations/shifted.hpp>
 #include <halmd/mdsim/host/potentials/pair/power_law.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/truncations/shifted.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/power_law.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
 #endif
 #include <test/tools/ctest.hpp>
+#include <test/tools/dsfloat.hpp>
 
 using namespace boost;
 using namespace halmd;
@@ -55,7 +59,13 @@ using namespace std;
 
 BOOST_AUTO_TEST_CASE( power_law_host )
 {
-    typedef mdsim::host::potentials::pair::power_law<double> potential_type;
+#ifndef USE_HOST_SINGLE_PRECISION
+    typedef double float_type;
+#else
+    typedef float float_type;
+#endif
+    typedef mdsim::host::potentials::pair::power_law<float_type> base_potential_type;
+    typedef mdsim::host::potentials::pair::truncations::shifted<base_potential_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
     typedef potential_type::uint_matrix_type uint_matrix_type;
 
@@ -101,8 +111,8 @@ BOOST_AUTO_TEST_CASE( power_law_host )
     BOOST_CHECK(index(1, 1) == index_array(1, 1));
 
     // evaluate some points of potential and force
-    typedef boost::array<double, 3> array_type;
-    double const eps = numeric_limits<double>::epsilon();
+    typedef boost::array<float_type, 3> array_type;
+    float_type const eps = numeric_limits<float_type>::epsilon();
 
     // expected results (r, fval, en_pot) for ε=1, σ=1, n=12, rc=5σ
     boost::array<array_type, 5> results_aa = {{
@@ -114,11 +124,11 @@ BOOST_AUTO_TEST_CASE( power_law_host )
     }};
 
     BOOST_FOREACH (array_type const& a, results_aa) {
-        double rr = std::pow(a[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(a[0], 2);
+        float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 0, 0);  // interaction AA
 
-        double tolerance = (1 + index_array(0, 0) / 2) * eps;
+        float_type tolerance = (1 + index_array(0, 0) / 2) * eps;
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
     };
@@ -134,11 +144,11 @@ BOOST_AUTO_TEST_CASE( power_law_host )
 
 
     BOOST_FOREACH (array_type const& a, results_ab) {
-        double rr = std::pow(a[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(a[0], 2);
+        float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 0, 1);  // interaction AB
 
-        double tolerance = (1 + index_array(0, 1) / 2) * eps;
+        float_type tolerance = (1 + index_array(0, 1) / 2) * eps;
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
     };
@@ -154,11 +164,11 @@ BOOST_AUTO_TEST_CASE( power_law_host )
 
 
     BOOST_FOREACH (array_type const& a, results_bb) {
-        double rr = std::pow(a[0], 2);
-        double fval, en_pot;
+        float_type rr = std::pow(a[0], 2);
+        float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 1, 1);  // interaction BB
 
-        double tolerance = (1 + index_array(1, 1) / 2) * eps;
+        float_type tolerance = (1 + index_array(1, 1) / 2) * eps;
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
     };
@@ -173,8 +183,14 @@ struct power_law
 
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::gpu::potentials::pair::power_law<float_type> potential_type;
-    typedef mdsim::host::potentials::pair::power_law<double> host_potential_type;
+    typedef mdsim::gpu::potentials::pair::power_law<float> base_potential_type;
+    typedef mdsim::gpu::potentials::pair::truncations::shifted<base_potential_type> potential_type;
+#ifndef USE_HOST_SINGLE_PRECISION
+    typedef mdsim::host::potentials::pair::power_law<double> base_host_potential_type;
+#else
+    typedef mdsim::host::potentials::pair::power_law<float> base_host_potential_type;
+#endif
+    typedef mdsim::host::potentials::pair::truncations::shifted<base_host_potential_type> host_potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;
 
@@ -230,15 +246,15 @@ void power_law<float_type>::test()
         en_pot_ /= 2;
 
         // estimated upper bound on floating-point error for power function
-        float_type const eps = numeric_limits<float_type>::epsilon();
+        float_type const eps = numeric_limits<float>::epsilon();
         unsigned int index = host_potential->index()(type1, type2);
         float_type tolerance = index * eps;
 
         // check both absolute and relative error
-        BOOST_CHECK_SMALL(norm_inf(fval * r - f), max(norm_inf(fval * r), float_type(1)) * tolerance);
+        BOOST_CHECK_SMALL(float_type(norm_inf(fval * r - f)), max(float_type(norm_inf(fval * r)), float_type(1)) * tolerance);
 
         // the prefactor is not justified, it is needed for absolute differences on the order 1e-18
-        BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 5 * tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 6 * tolerance);
     }
 }
 
@@ -292,7 +308,14 @@ power_law<float_type>::power_law()
     particle->on_force([=](){force->apply();});
 }
 
-BOOST_FIXTURE_TEST_CASE( power_law_gpu, device ) {
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( power_law_gpu_dsfloat, device ) {
+    power_law<dsfloat>().test();
+}
+# endif
+# ifdef USE_GPU_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( power_law_gpu_float, device ) {
     power_law<float>().test();
 }
+# endif
 #endif // HALMD_WITH_GPU
