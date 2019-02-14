@@ -53,9 +53,9 @@ region<dimension, float_type, geometry_type>::region(
     try {
         auto mask = make_cache_mutable(mask_);
         auto selection = make_cache_mutable(selection_);
-        mask->reserve(particle_->dim.threads());
+        mask->reserve(particle_->dim().threads());
         mask->resize(particle_->nparticle());
-        selection->reserve(particle_->dim.threads());
+        selection->reserve(particle_->dim().threads());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to allocate global device memory");
@@ -95,11 +95,11 @@ void region<dimension, float_type, geometry_type>::update_mask_()
         auto const& kernel = region_wrapper<dimension, geometry_type>::kernel;
         // calculate "bin", ie. inside/outside the region
         cuda::memset(*mask, 0xFF);
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        cuda::configure(particle_->dim().grid, particle_->dim().block);
         kernel.compute_mask(
-            &*position.begin()
+            position.data()
           , particle_->nparticle()
-          , &*mask->begin()
+          , mask->data()
           , *geometry_
           , geometry_selection_ == excluded ? halmd::mdsim::gpu::excluded : halmd::mdsim::gpu::included
           , static_cast<position_type>(box_->length())
@@ -123,9 +123,9 @@ void region<dimension, float_type, geometry_type>::update_selection_()
 
         auto const& kernel = region_wrapper<dimension, geometry_type>::kernel;
         unsigned int size = kernel.copy_selection(
-            &*position.begin()
+            position.data()
           , nparticle
-          , &*selection->begin()
+          , selection->data()
           , *geometry_
           , geometry_selection_ == excluded ? halmd::mdsim::gpu::excluded : halmd::mdsim::gpu::included
         );

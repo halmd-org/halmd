@@ -64,7 +64,7 @@ HALMD_GPU_ENABLED bool cuboid<dimension, float_type>::operator()(vector_type con
     vector_type const dr = r - origin_;
 
     for (int i = 0; i < dimension; ++i) {
-        if (dr[i] < 0 || dr[i] > edge_length_[i]) {
+        if (dr[i] < float_type(0) || dr[i] > edge_length_[i]) {
             inside = false;
         }
     }
