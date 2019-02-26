@@ -19,6 +19,7 @@
  */
 
 #include <halmd/mdsim/geometries/cuboid.hpp>
+#include <halmd/mdsim/geometries/sphere.hpp>
 #include <halmd/mdsim/host/region.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -144,9 +145,14 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_region(lua_State* L)
 #ifndef USE_HOST_SINGLE_PRECISION
     region<3, double, mdsim::geometries::cuboid<3, double>>::luaopen(L);
     region<2, double, mdsim::geometries::cuboid<2, double>>::luaopen(L);
+    region<3, double, mdsim::geometries::sphere<3, double>>::luaopen(L);
+    region<2, double, mdsim::geometries::sphere<2, double>>::luaopen(L);
 #else
     region<3, float, mdsim::geometries::cuboid<3, float>>::luaopen(L);
     region<2, float, mdsim::geometries::cuboid<2, float>>::luaopen(L);
+    region<3, float, mdsim::geometries::sphere<3, float>>::luaopen(L);
+    region<2, float, mdsim::geometries::sphere<2, float>>::luaopen(L);
+    
 #endif
     return 0;
 }

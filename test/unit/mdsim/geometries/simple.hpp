@@ -26,7 +26,7 @@
 
 /**
  * excluded positions if any coordinate is larger
- * than the origin
+ * than the lowest corner
  */
 template<int dimension, typename float_type>
 class simple_geometry
@@ -34,18 +34,18 @@ class simple_geometry
 public:
     typedef halmd::fixed_vector<float_type, dimension> vector_type;
 #ifndef __CUDACC__
-    simple_geometry(vector_type origin) : origin_(origin) {}
+    simple_geometry(vector_type lowest_corner) : lowest_corner_(lowest_corner) {}
 #endif
     HALMD_GPU_ENABLED bool operator()(vector_type const& r) const
     {
         for (int i = 0; i < dimension; ++i) {
-            if (r[i] > origin_[i])
+            if (r[i] > lowest_corner_[i])
                 return false;
         }
         return true;
     }
 private:
-    vector_type origin_;
+    vector_type lowest_corner_;
 };
 
 #endif /* ! TEST_UNIT_MDSIM_GEOMETRY_SIMPLE_HPP */

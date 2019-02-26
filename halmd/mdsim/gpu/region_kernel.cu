@@ -22,6 +22,7 @@
 
 #include <halmd/algorithm/gpu/copy_if_kernel.cuh>
 #include <halmd/mdsim/geometries/cuboid.hpp>
+#include <halmd/mdsim/geometries/sphere.hpp>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/region_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
@@ -116,8 +117,18 @@ region_wrapper<dimension, geometry_type>::kernel = {
   , region_kernel::copy_selection<geometry_type>
 };
 
+#ifdef USE_GPU_SINGLE_PRECISION
 template class region_wrapper<3, halmd::mdsim::geometries::cuboid<3, float> >;
 template class region_wrapper<2, halmd::mdsim::geometries::cuboid<2, float> >;
+template class region_wrapper<3, halmd::mdsim::geometries::sphere<3, float> >;
+template class region_wrapper<2, halmd::mdsim::geometries::sphere<2, float> >;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class region_wrapper<3, halmd::mdsim::geometries::cuboid<3, float> >;
+template class region_wrapper<2, halmd::mdsim::geometries::cuboid<2, float> >;
+template class region_wrapper<3, halmd::mdsim::geometries::sphere<3, float> >;
+template class region_wrapper<2, halmd::mdsim::geometries::sphere<2, float> >;
+#endif
 
 } // namespace gpu
 } // namespace mdsim

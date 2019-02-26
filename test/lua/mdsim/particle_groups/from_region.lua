@@ -48,17 +48,17 @@ local function setup(args)
       sort:order()
     end
 
-    local origin = {}
+    local lowest_corner = {}
     for i = 1, dimension do
-        origin[i] = 0
+        lowest_corner[i] = 0
         length[i] = length[i]/2
     end
-    local geometry = mdsim.geometries.cuboid({origin = origin, length = length})
+    local geometry = mdsim.geometries.cuboid({lowest_corner = lowest_corner, length = length})
     local region = {}
     region["included"] = mdsim.region({particle = particle, label = "upper quadrant (included)", geometry = geometry, selection = "included", box = box})
     region["excluded"] = mdsim.region({particle = particle, label = "upper quadrant (excluded)", geometry = geometry, selection = "excluded", box = box})
 
-    return box, particle, region, {origin = origin, length = length},  args
+    return box, particle, region, {lowest_corner = lowest_corner, length = length},  args
 end
 
 local function test(box, particle, region, cuboid, args)
@@ -80,7 +80,7 @@ local function test(box, particle, region, cuboid, args)
     for i = 1, group_included.size do
         local p = positions_inc[i]
         for d = 1, dimension do
-            local l = p[d] - cuboid.origin[d]
+            local l = p[d] - cuboid.lowest_corner[d]
             assert(l < cuboid.length[d] and l > 0)
         end
     end
@@ -89,7 +89,7 @@ local function test(box, particle, region, cuboid, args)
         local p = positions_exc[i]
         local outside = false
         for d = 1, dimension do
-            local l = p[d] - cuboid.origin[d]
+            local l = p[d] - cuboid.lowest_corner[d]
             if l > cuboid.length[d] or l < 0 then
                 outside = true
             end

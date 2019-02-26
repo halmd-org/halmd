@@ -39,7 +39,7 @@ public:
     typedef fixed_vector<float_type, dimension> vector_type;
 
 #ifndef __CUDACC__
-    cuboid(vector_type origin, vector_type length);
+    cuboid(vector_type lowest_corner, vector_type length);
 
     /**
      * Bind class to Lua
@@ -53,7 +53,7 @@ public:
     HALMD_GPU_ENABLED bool operator()(vector_type const& r) const;
 
 private:
-    vector_type origin_;
+    vector_type lowest_corner_;
     vector_type edge_length_;
 };
 
@@ -61,7 +61,7 @@ template<int dimension, typename float_type>
 HALMD_GPU_ENABLED bool cuboid<dimension, float_type>::operator()(vector_type const& r) const
 {
     bool inside = true;
-    vector_type const dr = r - origin_;
+    vector_type const dr = r - lowest_corner_;
 
     for (int i = 0; i < dimension; ++i) {
         if (dr[i] < float_type(0) || dr[i] > edge_length_[i]) {

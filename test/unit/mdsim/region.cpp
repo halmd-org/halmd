@@ -234,7 +234,7 @@ HALMD_TEST_INIT( region )
     }
     {
         int constexpr dimension = 3;
-        typedef halmd::dsfloat float_type;
+        typedef halmd::dsfloat float_type; // FIXME
         typedef simple_geometry<dimension, float> geometry_type;
         typedef geometry_type::vector_type vector_type;
         typedef halmd::mdsim::gpu::region<dimension, float_type, geometry_type> region_type;

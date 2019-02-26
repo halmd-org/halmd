@@ -58,13 +58,13 @@ function main(args)
     particle.data["species"] = species
 
     -- select particles from upper right quadrant of the box
-    local origin = {}
+    local lowest_corner = {}
     for i = 1, dimension do
-        origin[i] = 0
+        lowest_corner[i] = 0
         length[i] = length[i]/2
     end
-    local geometry = mdsim.geometries.cuboid({origin = origin, length = length})
-    local region = mdsim.region({particle = particle, label = "upper quadrant", geometry = geometry, box = box})
+    local geometry = mdsim.geometries.cuboid({lowest_corner = lowest_corner, length = length})
+    local region = mdsim.region({particle = particle, label = "upper quadrant", geometry = geometry, selection = "included", box = box})
 
     -- set initial particle positions
     local lattice = mdsim.positions.lattice({box = box, particle = particle})

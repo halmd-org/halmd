@@ -36,7 +36,7 @@ local mdsim   = {
 --
 --    -- construct particle instance for given simulation domain
 --    local system = halmd.mdsim.particle({particles = 10000})
---    local geometry = halmd.mdsim.geometries.cuboid({origin = {0,0,0}, length = {1, 1, 1}})
+--    local geometry = halmd.mdsim.geometries.cuboid({lowest_corner = {0,0,0}, length = {1, 1, 1}})
 --    local region = halmd.mdsim.region({particle = system, label = "subbox", geometry = geometry, selection = "included", box = box})
 --
 --    -- select particles from within this sub-box / region

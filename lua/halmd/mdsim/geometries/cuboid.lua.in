@@ -38,7 +38,7 @@ local cuboid = {
 -- Construct cuboid geometry instance.
 --
 -- :param table args: keyword arguments
--- :param table args.origin: cuboid origin (ie. the lower left corner of the cuboid)
+-- :param table args.lowest_corner: cuboid_lowest_corner (ie. the lower left corner of the cuboid)
 -- :param table args.length: cuboid edge lengths
 -- :param string args.precision: floating point number precision *(optional)*
 --
@@ -55,7 +55,7 @@ local cuboid = {
 --
 local M = module(function(args)
     utility.assert_type(args, "table")
-    local origin = utility.assert_type(utility.assert_kwarg(args, "origin"), "table")
+    local lowest_corner = utility.assert_type(utility.assert_kwarg(args, "lowest_corner"), "table")
     local length = utility.assert_type(utility.assert_kwarg(args, "length"), "table")
     local precision = args.precision or (device.gpu and "single" or "double")
 
@@ -63,11 +63,11 @@ local M = module(function(args)
          error("Unsupported precision", 2)
     end
 
-    if #origin ~= #length  then
-        error("'origin' and 'length' vector have mismatching dimensions", 2)
+    if #lowest_corner ~= #length  then
+        error("'lowest_corner' and 'length' vector have mismatching dimensions", 2)
     end
     -- construct instance
-    local self = cuboid[precision](origin, length)
+    local self = cuboid[precision](lowest_corner, length)
 
     return self
 end)
