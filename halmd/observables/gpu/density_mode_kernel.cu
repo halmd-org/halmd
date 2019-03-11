@@ -26,7 +26,7 @@
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
-#define MAX_BLOCK_SIZE 512
+#define MAX_BLOCK_SIZE 1024
 
 namespace halmd {
 namespace observables {
@@ -115,7 +115,8 @@ __global__ void compute(
         __syncthreads();
 
         // accumulate results within block
-        if (TDIM == 512) sum_reduce<256>(sin_, cos_);
+        if (TDIM == MAX_BLOCK_SIZE) sum_reduce<512>(sin_, cos_);
+        else if (TDIM == 512) sum_reduce<256>(sin_, cos_);
         else if (TDIM == 256) sum_reduce<128>(sin_, cos_);
         else if (TDIM == 128) sum_reduce<64>(sin_, cos_);
         else if (TDIM == 64) sum_reduce<32>(sin_, cos_);
@@ -155,7 +156,8 @@ __global__ void finalise(
         __syncthreads();
 
         // accumulate results within block
-        if (TDIM == 512) sum_reduce<256>(s_sum, c_sum);
+        if (TDIM == MAX_BLOCK_SIZE) sum_reduce<512>(s_sum, c_sum);
+        else if (TDIM == 512) sum_reduce<256>(s_sum, c_sum);
         else if (TDIM == 256) sum_reduce<128>(s_sum, c_sum);
         else if (TDIM == 128) sum_reduce<64>(s_sum, c_sum);
         else if (TDIM == 64) sum_reduce<32>(s_sum, c_sum);
