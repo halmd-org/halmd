@@ -20,7 +20,7 @@
 
 #include <halmd/config.hpp>
 
-#define BOOST_TEST_MODULE binning
+#define BOOST_TEST_MODULE region
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
@@ -193,11 +193,11 @@ HALMD_TEST_INIT( region )
         };
         ts_host_three->add(BOOST_TEST_CASE( uniform_density ));
     }
-#ifdef HALMD_WITH_GPU
+#if defined(HALMD_WITH_GPU) && defined(USE_GPU_DOUBLE_SINGLE_PRECISION)
     {
         int constexpr dimension = 2;
-        typedef float float_type;
-        typedef simple_geometry<dimension, float_type> geometry_type;
+        typedef halmd::dsfloat float_type;
+        typedef simple_geometry<dimension, float> geometry_type;   // FIXME use float_type?
         typedef geometry_type::vector_type vector_type;
         typedef halmd::mdsim::gpu::region<dimension, float_type, geometry_type> region_type;
         typedef halmd::fixed_vector<size_t, dimension> shape_type;
@@ -234,8 +234,8 @@ HALMD_TEST_INIT( region )
     }
     {
         int constexpr dimension = 3;
-        typedef float float_type;
-        typedef simple_geometry<dimension, float_type> geometry_type;
+        typedef halmd::dsfloat float_type;
+        typedef simple_geometry<dimension, float> geometry_type;
         typedef geometry_type::vector_type vector_type;
         typedef halmd::mdsim::gpu::region<dimension, float_type, geometry_type> region_type;
         typedef halmd::fixed_vector<size_t, dimension> shape_type;
