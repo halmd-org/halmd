@@ -18,14 +18,12 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = require("halmd")
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 local writers = halmd.io.writers
 
-halmd.io.log.open_console()
 
-local function setup(args)
+function setup(args)
     local dimension = args.dimension      -- dimension of space
     local np = args.particles             -- number of particles
 
@@ -55,13 +53,14 @@ local function setup(args)
     end
     local geometry = mdsim.geometries.cuboid({lowest_corner = lowest_corner, length = length})
     local region = {}
+    print(class_info(particle).name)
     region["included"] = mdsim.region({particle = particle, label = "upper quadrant (included)", geometry = geometry, selection = "included", box = box})
     region["excluded"] = mdsim.region({particle = particle, label = "upper quadrant (excluded)", geometry = geometry, selection = "excluded", box = box})
 
     return box, particle, region, {lowest_corner = lowest_corner, length = length},  args
 end
 
-local function test(box, particle, region, cuboid, args)
+function test(box, particle, region, cuboid, args)
     -- construct included/excluded particle groups
     local group_included = mdsim.particle_groups.from_region({particle = particle, region = region["included"], label = "included"})
     local group_excluded = mdsim.particle_groups.from_region({particle = particle, region = region["excluded"], label = "excluded"})
@@ -76,7 +75,7 @@ local function test(box, particle, region, cuboid, args)
 
     -- for included/excluded make sure that the particles have been sorted
     -- into the respecting group correctly
-    local positions_inc = particle_inc:get_position()
+    local positions_inc = particle_inc.data.position
     for i = 1, group_included.size do
         local p = positions_inc[i]
         for d = 1, dimension do
@@ -84,7 +83,7 @@ local function test(box, particle, region, cuboid, args)
             assert(l < cuboid.length[d] and l > 0)
         end
     end
-    local positions_exc = particle_exc:get_position()
+    local positions_exc = particle_exc.data.position
     for i = 1, group_excluded.size do
         local p = positions_exc[i]
         local outside = false
@@ -106,16 +105,6 @@ local function parse_args()
 
     parser:add_argument("output,o",
         {type = "string", default = "from_region_test", help = "prefix of output files"})
-    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
-        local level = {
-            -- console, file
-            {"warning", "info" },
-            {"info"   , "info" },
-            {"debug"  , "debug"},
-            {"trace"  , "trace"},
-        }
-        args[key] = level[value] or level[#level]
-    end, default = 1, help = "increase logging verbosity"})
 
     parser:add_argument("particles", {type = "number", default = 10000, help = "number of particles"})
     parser:add_argument("dimension", {type = "number", default = 3, help = "dimension of space"})
@@ -123,17 +112,11 @@ local function parse_args()
     return parser:parse_args()
 end
 
-local args = parse_args()
-
--- log to console
-halmd.io.log.open_console({severity = args.verbose[1]})
--- log to file
-halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
--- log version
-halmd.utility.version.prologue()
 
 -- set up system and perform test
-test(setup(args))
-
--- log profiler results
-halmd.utility.profiler:profile()
+function main()
+    
+    local args = parse_args()
+   
+    test(setup(args))
+end
