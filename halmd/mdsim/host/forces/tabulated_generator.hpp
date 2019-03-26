@@ -214,7 +214,7 @@ tabulated_generator<dimension, float_type, potential_type>::compute()
                   continue;
 
               float_type fval, pot;
-              boost::tie(fval, pot) = (*potential_)(rr, a, b);
+              std::tie(fval, pot) = (*potential_)(rr, a, b);
               en_pot += pot;
               // The potential functor returns the force, but we need the first
               // derivative of the potential, therefore apply minus sign
@@ -224,7 +224,7 @@ tabulated_generator<dimension, float_type, potential_type>::compute()
               if (dimension > 1) {
                   float_type second_derivative, third_derivative;
 
-                  boost::tie(second_derivative, third_derivative) = potential_->derivatives(rr, a, b);
+                  std::tie(second_derivative, third_derivative) = potential_->derivatives(rr, a, b);
                   // d²/dxdy
                   sec_der[0] += second_derivative * r[0] * r[1];
                   if (dimension > 2) {

@@ -67,7 +67,7 @@ public:
 
     /** compute second and third derivatives
      */
-    boost::tuple<float_type, float_type> derivatives(float_type rr, unsigned a, unsigned b) const
+    std::tuple<float_type, float_type> derivatives(float_type rr, unsigned a, unsigned b) const
     {
         float_type sigma2 = sigma2_(a, b);
         float_type rri = 1 / rr;
@@ -78,7 +78,7 @@ public:
 
         float_type second_der = 672 * eps_sigma6_r10i * (sigma6_r6i - 6.0/21.0);
         float_type third_der = 10752 * eps_sigma6_r10i * rri * (5.0/28.0 - sigma6_r6i);
-        return boost::make_tuple(second_der, third_der);
+        return std::make_tuple(second_der, third_der);
     }
 
     matrix_type const& epsilon() const
