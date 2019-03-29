@@ -139,7 +139,7 @@ local function equilibrate(box, particle, args)
     local steps = math.ceil(args.time / timestep) -- number of integration steps
 
     -- H5MD file writer
-    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = true})
 
     -- sample macroscopic state variables for all particles.
     -- FIXME provide user-defined thermodynamic variables and

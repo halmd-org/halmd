@@ -137,7 +137,7 @@ local function production(box, particle, args)
     end
 
     -- H5MD file writer
-    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = true})
 
     -- set up wavevector grid compatible with the periodic simulation box
     -- if the computation of structural information is requested
