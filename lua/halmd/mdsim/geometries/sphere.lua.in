@@ -25,7 +25,8 @@ local module  = require("halmd.utility.module")
 -- Sphere
 -- ======
 --
--- Selects particles that are inside or outside a specified sphere domain of the system.
+-- Defines a spherical domain and a predicate whether a given position is
+-- inside or outside of the domain.
 --
 
 local sphere = {
@@ -37,14 +38,13 @@ local sphere = {
 -- Construct sphere geometry instance.
 --
 -- :param table args: keyword arguments
--- :param table args.center: sphere center 
+-- :param table args.center: sphere center
 -- :param number args.radius: sphere radius
 -- :param string args.precision: floating point number precision *(optional)*
 --
---
---    The supported values for ``precision`` are "single" and "double". If ``precision``
---    is not specified, the precision is selected according to the
---    compute device.
+--    The supported values for ``precision`` are "single" and "double". If
+--    ``precision`` is not specified, the precision is selected according to
+--    the compute device.
 --
 -- .. note::
 --

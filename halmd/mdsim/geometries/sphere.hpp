@@ -22,11 +22,10 @@
 #define HALMD_MDSIM_GEOMETRIES_SPHERE_HPP
 
 #include <halmd/config.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
-// #include <halmd/numeric/blas/blas1.hpp>
 
 #ifndef __CUDACC__
-# include <halmd/io/logger.hpp>  // FIXME remove if not needed
 # include <lua.hpp>
 #endif
 
@@ -57,6 +56,7 @@ public:
 private:
     vector_type center_;
     float_type radius_;
+    float_type radius2_;
 };
 
 template<int dimension, typename float_type>
@@ -65,27 +65,9 @@ HALMD_GPU_ENABLED bool sphere<dimension, float_type>::operator()(vector_type con
     bool inside = true;
     vector_type const dr = r - center_;
 
-#ifndef __CUDACC__
-    LOG_TRACE("geometry: dr = " << dr);
-#endif
-    
-    float_type sum=0;
-    float_type r2= radius_*radius_;
-
-    for (int i = 0; i < dimension; ++i) {
-	sum+=dr[i]*dr[i];
-        }
-    if ( sum > r2) {
-	inside = false;
+    if (inner_prod(dr, dr) > radius2_) {
+        inside = false;
     }
-   /* if ( inner_prod(dr, dr) > r2 ) {
-	inside = false;
-	}*/
-   /*for (int i = 0; i < dimension; ++i) {
-        if ( abs(dr[i]) > radius_) {
-            inside = false;
-        }
-    }*/
 
     return inside;
 }
@@ -95,3 +77,4 @@ HALMD_GPU_ENABLED bool sphere<dimension, float_type>::operator()(vector_type con
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GEOMETRIES_SPHERE_HPP */
+

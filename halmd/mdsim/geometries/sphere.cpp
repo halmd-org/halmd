@@ -33,6 +33,7 @@ template <int dimension, typename float_type>
 sphere<dimension, float_type>::sphere(vector_type center, float_type radius)
   : center_(center)
   , radius_(radius)
+  , radius2_(radius_ * radius_)
 {
     LOG("geometry: sphere of radius " << radius_ << " at " << center_);
 }
