@@ -1,0 +1,10 @@
+This version has been built successfully …
+
+ … with the following combination of libraries and compilers:
+
+CMake 2.8.12 with CUDA patch
+GCC 4.8.5
+CUDA 8.0 for compute capability 5.0
+Boost C++ 1.55.0
+HDF5 1.8.13
+LuaJIT 2.0.5 (Lua 5.1)
