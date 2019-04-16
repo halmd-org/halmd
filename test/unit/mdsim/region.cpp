@@ -30,7 +30,7 @@
 #include <boost/iterator/transform_iterator.hpp>
 #include <cmath>
 
-#include <halmd/mdsim/host/region.cpp> // include definition file in order to generate template instatiations of region with 'simple' geometry
+#include <halmd/mdsim/host/region.cpp> // include definition file in order to generate template instantiations of region with 'simple' geometry
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
@@ -45,8 +45,12 @@
  * Test particle regions.
  */
 template <typename region_type, typename geometry_type>
-static void
-test_region(region_type& region, geometry_type& geometry, typename region_type::particle_type const& particle, typename region_type::box_type const& box)
+static void test_region(
+    region_type& region
+  , geometry_type& geometry
+  , typename region_type::particle_type const& particle
+  , typename region_type::box_type const& box
+)
 {
     typedef typename region_type::vector_type vector_type;
     typedef typename region_type::size_type size_type;
@@ -161,7 +165,11 @@ HALMD_TEST_INIT( region )
 
     {
         int constexpr dimension = 2;
+#ifndef USE_HOST_SINGLE_PRECISION
         typedef double float_type;
+#else
+        typedef float float_type;
+#endif
         typedef simple_geometry<dimension, float_type> geometry_type;
         typedef geometry_type::vector_type vector_type;
         typedef halmd::mdsim::host::region<dimension, float_type, geometry_type> region_type;
@@ -178,7 +186,11 @@ HALMD_TEST_INIT( region )
     }
     {
         int constexpr dimension = 3;
+#ifndef USE_HOST_SINGLE_PRECISION
         typedef double float_type;
+#else
+        typedef float float_type;
+#endif
         typedef simple_geometry<dimension, float_type> geometry_type;
         typedef geometry_type::vector_type vector_type;
         typedef halmd::mdsim::host::region<dimension, float_type, geometry_type> region_type;
@@ -193,11 +205,15 @@ HALMD_TEST_INIT( region )
         };
         ts_host_three->add(BOOST_TEST_CASE( uniform_density ));
     }
-#if defined(HALMD_WITH_GPU) && defined(USE_GPU_DOUBLE_SINGLE_PRECISION)
+#ifdef HALMD_WITH_GPU
     {
         int constexpr dimension = 2;
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
         typedef halmd::dsfloat float_type;
-        typedef simple_geometry<dimension, float> geometry_type;   // FIXME use float_type?
+#else
+        typedef float float_type;
+#endif
+        typedef simple_geometry<dimension, float> geometry_type;
         typedef geometry_type::vector_type vector_type;
         typedef halmd::mdsim::gpu::region<dimension, float_type, geometry_type> region_type;
         typedef halmd::fixed_vector<size_t, dimension> shape_type;
@@ -234,7 +250,11 @@ HALMD_TEST_INIT( region )
     }
     {
         int constexpr dimension = 3;
-        typedef halmd::dsfloat float_type; // FIXME
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+        typedef halmd::dsfloat float_type;
+#else
+        typedef float float_type;
+#endif
         typedef simple_geometry<dimension, float> geometry_type;
         typedef geometry_type::vector_type vector_type;
         typedef halmd::mdsim::gpu::region<dimension, float_type, geometry_type> region_type;
@@ -270,5 +290,5 @@ HALMD_TEST_INIT( region )
         };
         ts_gpu_three->add(BOOST_TEST_CASE( uniform_density_all_included ));
     }
-#endif
+#endif  // HALMD_WITH_GPU
 }

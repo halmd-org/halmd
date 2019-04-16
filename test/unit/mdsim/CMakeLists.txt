@@ -171,12 +171,10 @@ add_test(unit/mdsim/region/host/3d
   test_unit_mdsim_region --run_test=host/three --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
-    add_test(unit/mdsim/region/gpu/2d
-      test_unit_mdsim_region --run_test=gpu/two --log_level=test_suite
-    )
-    add_test(unit/mdsim/region/gpu/3d
-      test_unit_mdsim_region --run_test=gpu/three --log_level=test_suite
-    )
-  endif()
+  add_test(unit/mdsim/region/gpu/2d
+    test_unit_mdsim_region --run_test=gpu/two --log_level=test_suite
+  )
+  add_test(unit/mdsim/region/gpu/3d
+    test_unit_mdsim_region --run_test=gpu/three --log_level=test_suite
+  )
 endif()

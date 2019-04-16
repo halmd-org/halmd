@@ -117,18 +117,10 @@ region_wrapper<dimension, geometry_type>::kernel = {
   , region_kernel::copy_selection<geometry_type>
 };
 
-#ifdef USE_GPU_SINGLE_PRECISION
 template class region_wrapper<3, halmd::mdsim::geometries::cuboid<3, float> >;
 template class region_wrapper<2, halmd::mdsim::geometries::cuboid<2, float> >;
 template class region_wrapper<3, halmd::mdsim::geometries::sphere<3, float> >;
 template class region_wrapper<2, halmd::mdsim::geometries::sphere<2, float> >;
-#endif
-#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-template class region_wrapper<3, halmd::mdsim::geometries::cuboid<3, float> >;
-template class region_wrapper<2, halmd::mdsim::geometries::cuboid<2, float> >;
-template class region_wrapper<3, halmd::mdsim::geometries::sphere<3, float> >;
-template class region_wrapper<2, halmd::mdsim::geometries::sphere<2, float> >;
-#endif
 
 } // namespace gpu
 } // namespace mdsim
