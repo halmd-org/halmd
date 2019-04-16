@@ -122,14 +122,21 @@ local M = module(function(args)
 
     -- capture C++ method to_particle
     local to_particle = assert(self.to_particle)
+
     -- forward Lua method to_particle
     self.to_particle = function(self, args)
         -- construct particle instance, if none given
-        local particle_dst = args and args.particle
-        local label = (args and args.label) or self.label
-        particle_dst = particle_dst or mdsim.particle({dimension = particle.dimension, particles = self.size, species = particle.nspecies, label = label, memory = particle.memory})
-        to_particle(self, particle, particle_dst)
-        return particle_dst
+        local particle_dest = (args and args.particle) or mdsim.particle({
+            dimension = particle.dimension
+          , particles = self.size
+          , species = particle.nspecies
+          , label = (args and args.label) or self.label
+          , memory = particle.memory
+        })
+
+        to_particle(self, particle, particle_dest)
+
+        return particle_dest
     end
 
     -- attach particle instance as read-only property

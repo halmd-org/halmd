@@ -132,7 +132,6 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle_groups_from_region(lua_Sta
     from_region<particle<3, dsfloat>>::luaopen(L);
     from_region<particle<2, dsfloat>>::luaopen(L);
 #endif
-
     return 0;
 }
 

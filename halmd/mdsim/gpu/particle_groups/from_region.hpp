@@ -37,7 +37,7 @@ namespace gpu {
 namespace particle_groups {
 
 /**
- * Select particles of a given particle instance by simulation box region
+ * Select particles of a given particle instance according to a region in space
  */
 template <typename particle_type>
 class from_region
