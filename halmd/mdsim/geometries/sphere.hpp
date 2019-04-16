@@ -41,7 +41,7 @@ public:
 
 #ifndef __CUDACC__
    
-    sphere(vector_type center, float_type radius);
+    sphere(vector_type centre, float_type radius);
     /**
      * Bind class to Lua
      */
@@ -54,7 +54,7 @@ public:
     HALMD_GPU_ENABLED bool operator()(vector_type const& r) const;
 
 private:
-    vector_type center_;
+    vector_type centre_;
     float_type radius_;
     float_type radius2_;
 };
@@ -63,7 +63,7 @@ template<int dimension, typename float_type>
 HALMD_GPU_ENABLED bool sphere<dimension, float_type>::operator()(vector_type const& r) const
 {
     bool inside = true;
-    vector_type const dr = r - center_;
+    vector_type const dr = r - centre_;
 
     if (inner_prod(dr, dr) > radius2_) {
         inside = false;

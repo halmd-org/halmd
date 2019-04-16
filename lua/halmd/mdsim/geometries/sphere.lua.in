@@ -38,7 +38,7 @@ local sphere = {
 -- Construct sphere geometry instance.
 --
 -- :param table args: keyword arguments
--- :param table args.center: sphere center
+-- :param table args.centre: sphere centre
 -- :param number args.radius: sphere radius
 -- :param string args.precision: floating point precision *(optional)*
 --
@@ -52,9 +52,9 @@ local sphere = {
 --    i.e. it does not test whether the geometry is placed outside the simulation
 --    domain.
 --
--- .. attribute:: center
+-- .. attribute:: centre
 --
---    Coordinates of sphere center.
+--    Coordinates of sphere centre.
 --
 -- .. attribute:: radius
 --
@@ -62,7 +62,7 @@ local sphere = {
 --
 local M = module(function(args)
     utility.assert_type(args, "table")
-    local center = utility.assert_type(utility.assert_kwarg(args, "center"), "table")
+    local centre = utility.assert_type(utility.assert_kwarg(args, "centre"), "table")
     local radius = utility.assert_type(utility.assert_kwarg(args, "radius"), "number")
     local precision = args.precision or (device.gpu and "single" or "double")
 
@@ -71,10 +71,10 @@ local M = module(function(args)
     end
 
     -- construct instance
-    local self = sphere[precision](center, radius)
+    local self = sphere[precision](centre, radius)
 
-    -- attach coordinates of sphere center as read-only property
-    self.center = property(function(self) return center end)
+    -- attach coordinates of sphere centre as read-only property
+    self.centre = property(function(self) return centre end)
 
     -- attach sphere radius as read-only property
     self.radius = property(function(self) return radius end)
