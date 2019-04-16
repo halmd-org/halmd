@@ -26,7 +26,8 @@ local module  = require("halmd.utility.module")
 -- Cuboid
 -- ======
 --
--- Selects particles that are inside or outside a specified cuboid domain of the system.
+-- Defines a cuboid domain in space and a predicate whether a given position is
+-- inside or outside of the domain.
 --
 
 local cuboid = {
@@ -38,14 +39,16 @@ local cuboid = {
 -- Construct cuboid geometry instance.
 --
 -- :param table args: keyword arguments
--- :param table args.lowest_corner: cuboid_lowest_corner (ie. the lower left corner of the cuboid)
+-- :param table args.lowest_corner: coordinates of the lower left corner
 -- :param table args.length: cuboid edge lengths
--- :param string args.precision: floating point number precision *(optional)*
+-- :param string args.precision: floating point precision *(optional)*
 --
+--    The ``lowest_corner`` specifies the coordinates of the lower left corner
+--    of the cuboid, i.e., the minimal coordinates.
 --
---    The supported values for ``precision`` are "single" and "double". If ``precision``
---    is not specified, the precision is selected according to the
---    compute device.
+--    The supported values for ``precision`` are ``single`` and ``double``. If
+--    ``precision`` is not specified, the precision is selected according to
+--    the compute device: ``single`` for GPU computing and ``@HALMD_HOST_PRECISION@`` otherwise.
 --
 -- .. note::
 --
@@ -53,21 +56,35 @@ local cuboid = {
 --    i.e. it does not test whether the geometry is placed outside the simulation
 --    domain.
 --
+-- .. attribute:: lowest_corner
+--
+--    Coordinates of lower left corner.
+--
+-- .. attribute:: length
+--
+--    Edge lengths of cuboid.
+--
 local M = module(function(args)
     utility.assert_type(args, "table")
     local lowest_corner = utility.assert_type(utility.assert_kwarg(args, "lowest_corner"), "table")
     local length = utility.assert_type(utility.assert_kwarg(args, "length"), "table")
-    local precision = args.precision or (device.gpu and "single" or "double")
+    local precision = args.precision or (device.gpu and "single" or "@HALMD_HOST_PRECISION@")
 
     if not cuboid[precision] then
          error("Unsupported precision", 2)
     end
 
     if #lowest_corner ~= #length  then
-        error("'lowest_corner' and 'length' vector have mismatching dimensions", 2)
+        error("'lowest_corner' and 'length' vectors have mismatching dimensions", 2)
     end
     -- construct instance
     local self = cuboid[precision](lowest_corner, length)
+
+    -- attach lowest corner as read-only property
+    self.lowest_corner = property(function(self) return lowest_corner end)
+
+    -- attach edge lengths as read-only property
+    self.length = property(function(self) return length end)
 
     return self
 end)

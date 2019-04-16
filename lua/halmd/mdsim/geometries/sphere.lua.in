@@ -40,17 +40,25 @@ local sphere = {
 -- :param table args: keyword arguments
 -- :param table args.center: sphere center
 -- :param number args.radius: sphere radius
--- :param string args.precision: floating point number precision *(optional)*
+-- :param string args.precision: floating point precision *(optional)*
 --
---    The supported values for ``precision`` are "single" and "double". If
+--    The supported values for ``precision`` are ``single`` and ``double``. If
 --    ``precision`` is not specified, the precision is selected according to
---    the compute device.
+--    the compute device: ``single`` for GPU computing and ``@HALMD_HOST_PRECISION@`` otherwise.
 --
 -- .. note::
 --
 --    This module does not perform a validation of the meaningfulness of the domain,
 --    i.e. it does not test whether the geometry is placed outside the simulation
 --    domain.
+--
+-- .. attribute:: center
+--
+--    Coordinates of sphere center.
+--
+-- .. attribute:: radius
+--
+--    Sphere radius.
 --
 local M = module(function(args)
     utility.assert_type(args, "table")
@@ -64,6 +72,12 @@ local M = module(function(args)
 
     -- construct instance
     local self = sphere[precision](center, radius)
+
+    -- attach coordinates of sphere center as read-only property
+    self.center = property(function(self) return center end)
+
+    -- attach sphere radius as read-only property
+    self.radius = property(function(self) return radius end)
 
     return self
 end)
