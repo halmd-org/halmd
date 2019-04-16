@@ -78,7 +78,7 @@ void lattice<dimension, float_type>::set()
 }
 
 /**
- * Place particles on a face-centered cubic (fcc) lattice
+ * Place particles on a face-centreed cubic (fcc) lattice
  *
  * The task is to determine the minimum lattice distance of an fcc lattice
  * that fits into a rectangular parallelepiped (the simulation box) and has

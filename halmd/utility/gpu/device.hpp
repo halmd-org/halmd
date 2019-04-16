@@ -56,6 +56,10 @@ public:
     static std::string cuda_runtime_version();
     //! validate CUDA execution configuration
     static cuda::config const& validate(cuda::config const& dim);
+
+    static void* allocate(std::size_t bytes);
+    static void deallocate(void* ptr);
+    static void deallocate_all();
 };
 
 } // namespace halmd

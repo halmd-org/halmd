@@ -25,17 +25,11 @@
 
 #include <boost/utility.hpp>
 #include <cstddef>
-#include <cub/util_allocator.cuh>
 #include <cuda_wrapper/error.hpp>
 
+#include <halmd/utility/gpu/device.hpp>
+
 namespace halmd {
-namespace detail {
-
-// the actual allocator for the device array, handling
-// the allocations of the memory chunks and reusing allocated memory
-extern cub::CachingDeviceAllocator caching_allocator_;
-
-} // namespace detail
 
 /**
  * Uninitialised cached GPU memory array.
@@ -185,15 +179,13 @@ private:
     /** allocate uninitialised storage */
     static pointer allocate(size_type size)
     {
-        void* p;
-        CUDA_CALL(detail::caching_allocator_.DeviceAllocate(&p, size * sizeof(T)));
-        return static_cast<pointer>(p);
+        return static_cast<pointer>(device::allocate(size * sizeof(T)));
     }
 
     /** deallocate storage */
     static void deallocate(pointer p)
     {
-        CUDA_CALL(detail::caching_allocator_.DeviceFree(reinterpret_cast<void *>(p)));
+        device::deallocate(reinterpret_cast<void *>(p));
     }
 
     /** number of array elements memory reserved for */

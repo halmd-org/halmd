@@ -18,7 +18,11 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/utility/gpu/caching_array.cuh>
+#include <cub/util_allocator.cuh>
+#include <cuda_wrapper/device.hpp>
+#include <cuda_wrapper/error.hpp>
+
+#include <halmd/utility/gpu/device.hpp>
 
 namespace halmd {
 namespace detail {
@@ -27,11 +31,25 @@ namespace detail {
 // determines whether this is a object in global scope or not (it is)
 // and then will skip a call to CachingDeviceAllocator::FreeAllCached()
 // in the d'tor
-// This allocator will be instatiated during the nvcc host pass only
-// (a call from device code would fail anyways)
-#ifndef __CUDA_ARCH__
 cub::CachingDeviceAllocator caching_allocator_(true);
-#endif
 
 } // namespace detail
+
+void* device::allocate(size_t bytes)
+{
+    void* ptr;
+    CUDA_CALL(detail::caching_allocator_.DeviceAllocate(&ptr, bytes, cuda::device::get()));
+    return ptr;
+}
+
+void device::deallocate(void* ptr)
+{
+    CUDA_CALL(detail::caching_allocator_.DeviceFree(ptr, cuda::device::get()));
+}
+
+void device::deallocate_all()
+{
+    CUDA_CALL(detail::caching_allocator_.FreeAllCached());
+}
+
 } // namespace halmd

@@ -56,6 +56,16 @@ function main(args)
         for i = 1, nparticle do table.insert(species, s) end
     end
     particle.data["species"] = species
+
+    -- select particles from upper right quadrant of the box
+    local lowest_corner = {}
+    for i = 1, dimension do
+        lowest_corner[i] = 0
+        length[i] = length[i]/2
+    end
+    local geometry = mdsim.geometries.cuboid({lowest_corner = lowest_corner, length = length})
+    local region = mdsim.region({particle = particle, label = "upper quadrant", geometry = geometry, selection = "included", box = box})
+
     -- set initial particle positions
     local lattice = mdsim.positions.lattice({box = box, particle = particle})
     lattice:set()
@@ -87,6 +97,16 @@ function main(args)
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
+    local group_included = mdsim.particle_groups.from_region({particle = particle, region = region, selection = "included", label = "included"})
+
+    local msv_local = observables.thermodynamics({box = box, group = group_included})
+    observables.sampler:on_sample(
+        function()
+            halmd.io.log.info("particles in region: %d, temp: %f", group_included.size, msv_local:temperature())
+        end
+      , 200
+      , 0
+    )
 
     -- sample phase space
     local phase_space = observables.phase_space({box = box, group = particle_group})

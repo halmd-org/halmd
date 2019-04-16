@@ -1,0 +1,150 @@
+--
+-- Copyright © 2014-2015 Nicolas Höft
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+local log     = require("halmd.io.log")
+local module  = require("halmd.utility.module")
+local utility = require("halmd.utility")
+local mdsim   = {
+    particle = require("halmd.mdsim.particle")
+}
+
+---
+-- From Region
+-- ===========
+--
+-- A particle group represents a subset of particles, which is defined
+-- by an instance of particle together with a region in the simulation domain.
+--
+-- Example::
+--
+--    -- construct particle instance for given simulation domain
+--    local system = halmd.mdsim.particle({particles = 10000})
+--    local geometry = halmd.mdsim.geometries.cuboid({lowest_corner = {0,0,0}, length = {1, 1, 1}})
+--    local region = halmd.mdsim.region({particle = system, label = "subbox", geometry = geometry, selection = "included", box = box})
+--
+--    -- select particles from within this sub-box / region
+--    local group_cuboid = halmd.mdsim.particle_groups.from_region({region = region, label = ""})
+--
+
+-- grab C++ wrappers
+local from_region = assert(libhalmd.mdsim.particle_groups.from_region)
+
+---
+-- Construct particle group from region.
+--
+-- :param table args: keyword arguments
+-- :param args.region: instance of :class:`halmd.mdsim.region`
+-- :param string args.label: group label *(defaults to region label)*
+--
+-- .. attribute:: particle
+--
+--    Instance of :class:`halmd.mdsim.particle`
+--
+-- .. attribute:: region
+--
+--    Instance of :class:`halmd.mdsim.region`
+--
+-- .. attribute:: size
+--
+--    Number of particles in group.
+--
+-- .. method:: to_particle(args)
+--
+--    :param table args: keyword argruments
+--    :param args.particle: instance of :class:`halmd.mdsim.particle` *(optional)*
+--    :param args.label: label of the new particle instance *(optional)*
+--    :returns: instance of :class:`halmd.mdsim.particle` with data from the particle group
+--
+--    Copy the particle group to a new particle instance. If no parameters given,
+--    a suitable particle instance will be constructed.
+--
+--    .. note::
+--
+--       Only positions, mass, species and velocity are copied to the particle instance.
+--       Other data (e.g. id, force) will not be copied.
+--
+--    If ``args.particle`` is present, the particle group will be copied into the given
+--    particle instance. Otherwise a new suitable particle instance with the label
+--    `args.label` will be created. If ``args.label`` is not given, it defaults to
+--    the group label. ``species`` of the new particle instance will be initialized with
+--    ``particle.species``.
+--
+--    .. note::
+--
+--       ``args.particle`` must reside in the same memory as the group and the number of
+--       particles must be equal to ``size``.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect region module from profiler.
+--
+local M = module(function(args)
+    utility.assert_type(args, "table")
+    local region = utility.assert_kwarg(args, "region")
+    local label = utility.assert_type(args.label or assert(region.label), "string")
+
+    local particle = assert(region.particle)
+
+    local logger = log.logger({prefix = ("from_region (%s)"):format(label)})
+
+    -- construct particle group from tag range
+    local self = from_region(particle, region, logger)
+
+    -- capture C++ method to_particle
+    local to_particle = assert(self.to_particle)
+
+    -- forward Lua method to_particle
+    self.to_particle = function(self, args)
+        -- construct particle instance, if none given
+        local particle_dest = (args and args.particle) or mdsim.particle({
+            dimension = particle.dimension
+          , particles = self.size
+          , species = particle.nspecies
+          , label = (args and args.label) or self.label
+          , memory = particle.memory
+        })
+
+        to_particle(self, particle, particle_dest)
+
+        return particle_dest
+    end
+
+    -- attach particle instance as read-only property
+    self.particle = property(function(self)
+        return particle
+    end)
+
+    -- attach region instance as read-only property
+    self.region = property(function(self)
+        return region
+    end)
+
+    -- attach label as read-only property
+    self.label = property(function(self)
+        return label
+    end)
+
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "from_region module")
+
+    return self
+end)
+
+return M

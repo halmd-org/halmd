@@ -80,10 +80,10 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::get_gaussian_impl(int t
  *
  * The particle velocities need to fullfill two constraints:
  *
- *  1. center of mass velocity shall be zero
+ *  1. centre of mass velocity shall be zero
  *  2. temperature of the distribution shall equal exactly the given value
  *
- * The above order is chosen as shifting the center of mass velocity
+ * The above order is chosen as shifting the centre of mass velocity
  * means altering the first moment of the velocity distribution, which
  * in consequence affects the second moment, i.e. the temperature.
  *
@@ -114,7 +114,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     );
     cuda::thread::synchronize();
 
-    // set center of mass velocity to zero and
+    // set centre of mass velocity to zero and
     // rescale velocities to accurate temperature
     cuda::configure(particle_->dim().grid, particle_->dim().block,
       g_mv2_.size() * (2 + dimension) * sizeof(dsfloat));

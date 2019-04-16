@@ -57,7 +57,7 @@ __global__ void map(
     //
     // Therefore, we use a simple cubic lattice of predefined dimensions
     // according to the number of cells at the deepest recursion level,
-    // and round the particle position to the nearest center of a cell.
+    // and round the particle position to the nearest centre of a cell.
     //
 
     unsigned int type;

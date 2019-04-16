@@ -56,7 +56,7 @@ box<dimension>::box(matrix_type const& edges)
 
 template <int dimension>
 typename box<dimension>::vector_type
-box<dimension>::origin() const
+box<dimension>::lowest_corner() const
 {
     return -length_half_;
 }
@@ -69,10 +69,10 @@ double box<dimension>::volume() const
 
 template <typename box_type>
 static std::function<typename box_type::vector_type ()>
-wrap_origin(std::shared_ptr<box_type const> self)
+wrap_lowest_corner(std::shared_ptr<box_type const> self)
 {
     return [=]() {
-        return self->origin();
+        return self->lowest_corner();
     };
 }
 
@@ -123,7 +123,7 @@ void box<dimension>::luaopen(lua_State* L)
             class_<box, std::shared_ptr<box> >(class_name.c_str())
                 .def(constructor<matrix_type const&>())
                 .property("edges", &wrap_edges<box>)
-                .property("origin", &wrap_origin<box>)
+                .property("lowest_corner", &wrap_lowest_corner<box>)
                 .property("length", &box::length)
                 .property("volume", &box::volume)
                 .scope
