@@ -46,6 +46,11 @@ local clock = assert(libhalmd.mdsim.clock)
 --
 --    Integration time step in MD units.
 --
+-- .. method:: advance()
+--
+--    Manually advance the clock by one step. The method should be used with
+--    care by experienced users only.
+--
 -- .. method:: set_timestep(timestep)
 --
 --    Define integration time step.
