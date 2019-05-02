@@ -127,7 +127,7 @@ function main(args)
     end
 
     local accumulator = observables.utility.accumulator({
-         aquire = msv.internal_energy
+         acquire = msv.internal_energy
        , every = 10
        , desc = "Averaged internal energy"
        , aux_enable = {particle}

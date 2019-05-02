@@ -142,7 +142,7 @@ function main(args)
         if average and average > 0 then
             halmd.io.log.warning("Averaging of static structure factors not yet supported")
 --            local total_ssf = observables.utility.accumulator({
---                aquire = ssf.acquire, every = interval, desc = "ssf"
+--                acquire = ssf.acquire, every = interval, desc = "ssf"
 --            })
 --            total_ssf:writer({
 --                file = file

@@ -79,7 +79,7 @@ function main(args)
     end
 
     local internal_energy = observables.utility.accumulator({
-        aquire = msv.internal_energy
+        acquire = msv.internal_energy
       , every = 500
       , start = math.floor(equi_steps / 2)
       , desc = "averaged internal energy"
@@ -124,7 +124,7 @@ function main(args)
     internal_energy:disconnect()
 
     local temperature = observables.utility.accumulator({
-        aquire = msv.temperature
+        acquire = msv.temperature
       , every = 200
       , desc = "averaged temperature"
       , aux_enable = {particle}
