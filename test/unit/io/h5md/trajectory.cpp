@@ -165,7 +165,7 @@ void h5md(std::vector<unsigned int> const& ntypes)
     // simulate an integration step for the very first particle
     clock->set_timestep(1 / 6.);
     clock->advance();
-    double_position_sample[0]->data()[0] += 1; // FIXME double_velocity_sample[0]->data()[0];
+    double_position_sample[0]->data()[0] += clock->timestep() * double_vector_type(.5);  // fixed velocity
 
     // deconstruct the file module before writing
     // the HDF5 library will keep the file open as long as groups
