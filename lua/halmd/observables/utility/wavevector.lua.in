@@ -107,7 +107,7 @@ local wavevector = assert(libhalmd.observables.utility.wavevector)
 local M = module(function(args)
     local box = utility.assert_kwarg(args, "box")
     local wavenumber = utility.assert_type(utility.assert_kwarg(args, "wavenumber"), "table")
-    local dense = utility.assert_type(not (args.dense == nil) and args.dense, "boolean")  -- default: false
+    local dense = utility.assert_type(args.dense or false, "boolean")
 
     -- provide default value: {1, …, 1}
     local dimension = box.dimension
