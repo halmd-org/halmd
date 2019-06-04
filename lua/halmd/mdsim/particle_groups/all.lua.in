@@ -1,5 +1,5 @@
 --
--- Copyright © 2012-2014 Felix Höfling
+-- Copyright © 2012-2019 Felix Höfling
 -- Copyright © 2012      Peter Colberg
 --
 -- This file is part of HALMD.
@@ -49,6 +49,11 @@ local all = assert(libhalmd.mdsim.particle_groups.all)
 -- :param string args.label: group label (defaults to :attr:`halmd.mdsim.particle.label`)
 -- :param boolean args.global: particle group comprises the whole simulation
 --                             world (*default:* ``true``)
+-- :param boolean args.fluctuating: the number or identity of selected particles
+--                                  can vary as the simulation progresses (*default:* ``false``)
+--
+-- The flags ``global`` and ``fluctuating`` are used, e.g., for the output of
+-- thermodynamic quantities via :mod:`halmd.observables.thermodynamics`.
 --
 -- .. attribute:: label
 --
@@ -66,10 +71,15 @@ local all = assert(libhalmd.mdsim.particle_groups.all)
 --
 --    The value of ``args.global`` passed upon construction.
 --
+-- .. attribute:: fluctuating
+--
+--    The value of ``args.fluctuating`` passed upon construction.
+--
 local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
     local label = utility.assert_type(args.label or assert(particle.label), "string")
     local global = utility.assert_type(args.global == nil and true or args.global, "boolean")
+    local fluctuating = utility.assert_type(args.fluctuating or false, "boolean")
 
     -- construct particle group
     local self = all(particle)
@@ -87,6 +97,11 @@ local M = module(function(args)
     -- attach global property
     self.global = property(function(self)
         return global
+    end)
+
+    -- attach fluctuating property
+    self.fluctuating = property(function(self)
+        return fluctuating
     end)
 
     return self

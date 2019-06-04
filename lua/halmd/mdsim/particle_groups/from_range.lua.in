@@ -1,5 +1,5 @@
 --
--- Copyright © 2012-2014 Felix Höfling
+-- Copyright © 2012-2019 Felix Höfling
 -- Copyright © 2015      Nicolas Höft
 -- Copyright © 2012      Peter Colberg
 --
@@ -56,10 +56,15 @@ local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 -- :param string args.label: group label
 -- :param boolean args.global: particle group can comprise the whole simulation
 --                             world (*default:* ``false``)
+-- :param boolean args.fluctuating: the number or identity of selected particles
+--                                  can vary as the simulation progresses (*default:* ``false``)
 --
 -- .. note::
 --
 --    Particle IDs are 1-based, i.e. the first particle has ID 1.
+--
+-- The flags ``global`` and ``fluctuating`` are used, e.g., for the output of
+-- thermodynamic quantities via :mod:`halmd.observables.thermodynamics`.
 --
 -- .. attribute:: label
 --
@@ -78,6 +83,10 @@ local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 --    True if the particle group comprises the whole simulation world. This
 --    requires that ``args.global`` was set to true upon construction and
 --    that ``size`` equals the number of particles in ``particle``.
+--
+-- .. attribute:: fluctuating
+--
+--    The value of ``args.fluctuating`` passed upon construction.
 --
 -- .. method:: to_particle(args)
 --
@@ -110,6 +119,7 @@ local M = module(function(args)
     local range = utility.assert_kwarg(args, "range")
     local label = utility.assert_type(args.label or assert(particle.label), "string")
     local global = utility.assert_type(args.global or false, "boolean")
+    local fluctuating = utility.assert_type(args.fluctuating or false, "boolean")
 
     if type(range) ~= "table" or #range ~= 2 then
         error("invalid argument 'range'", 2)
@@ -152,6 +162,11 @@ local M = module(function(args)
     -- attach global property
     self.global = property(function(self)
         return global and (self.size == particle.nparticle)
+    end)
+
+    -- attach fluctuating property
+    self.fluctuating = property(function(self)
+        return fluctuating
     end)
 
     return self
