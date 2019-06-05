@@ -18,8 +18,8 @@ A detailed step-by-step guide for manual installation is given in section
 Build environment
 -----------------
 
-* a :ref:`C++ compiler <supported_compilers>` with sufficient C++11 support,
-  e.g., GCC ≥ 4.6
+* a :ref:`C++ compiler <supported_compilers>` with C++11 support,
+  e.g., GCC ≥ 4.7
 
   HALMD makes extensive use of C++11 features. Instructions for a
   semi-automated build of GCC are given in :ref:`automatic`.
