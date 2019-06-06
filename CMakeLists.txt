@@ -75,12 +75,15 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     if(COMMAND cuda_add_library)
       # original CMake
 
+      #
+      # default CUDA flags are duplicated here from cmake/platform.cmake (used by CMake with native CUDA support)
+      #
       if(CUDA_VERSION VERSION_LESS 6.5)
         set(HALMD_GPU_ARCH "120") # sane default value
-        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12" CACHE STRING "Flags used by the compiler during all build types")
+        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_12 -code=compute_12" CACHE STRING "Flags used by the compiler during all build types")
       else()
-        set(HALMD_GPU_ARCH "210") # sane default value
-        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch=compute_20 -code=compute_20 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true" CACHE STRING "Flags used by the compiler during all build types")
+        set(HALMD_GPU_ARCH "350") # sane default value
+        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_35 -code=compute_35,sm_35 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true" CACHE STRING "Flags used by the compiler during all build types")
       endif()
 
       string(REPLACE " " ";" __NVCC_ARGS "${CMAKE_CUDA_FLAGS}")

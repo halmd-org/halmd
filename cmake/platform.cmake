@@ -73,10 +73,13 @@ if(DEFINED CMAKE_CUDA_COMPILER_ID)
     # and 2.0 was deprecated in CUDA 9.0, so in these cases the default compute
     # version is raised to 3.5 (Kepler) regardless.
 
+    #
+    # the following flags must be duplicated in /CMakeLists.txt for CMake without native CUDA support
+    #
     if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 6.5)
-      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12")
+      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_12 -code=compute_12")
     else()
-      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -std=c++11 -Xptxas -v -arch=compute_35 -code=compute_35,sm_35 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true")
+      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_35 -code=compute_35,sm_35 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true")
     endif()
 
   else()

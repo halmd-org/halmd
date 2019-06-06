@@ -97,7 +97,7 @@ function main(args)
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
-    local group_included = mdsim.particle_groups.from_region({particle = particle, region = region, selection = "included", label = "included"})
+    local group_included = mdsim.particle_groups.from_region({particle = particle, region = region, selection = "included", label = region.label})
 
     local msv_local = observables.thermodynamics({box = box, group = group_included})
     observables.sampler:on_sample(
@@ -124,6 +124,7 @@ function main(args)
     if interval > 0 then
         msv = observables.thermodynamics({box = box, group = particle_group})
         msv:writer({file = file, every = interval})
+        msv_local:writer({file = file, every = interval})
     end
 
     local accumulator = observables.utility.accumulator({
