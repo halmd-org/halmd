@@ -9,6 +9,7 @@ halmd_add_modules(
   libhalmd_mdsim_clock
 )
 
+add_subdirectory(forces)
 add_subdirectory(geometries)
 add_subdirectory(host)
 

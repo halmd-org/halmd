@@ -210,9 +210,6 @@ tabulated_generator<dimension, float_type, potential_type>::compute()
               box_->reduce_periodic(r);
 
               float_type rr = inner_prod(r, r);
-              // truncate potential at cutoff length
-              if (rr >= potential_->rr_cut(a, b))
-                  continue;
 
               float_type fval, pot;
               std::tie(fval, pot) = (*potential_)(rr, a, b);
