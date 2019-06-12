@@ -21,6 +21,7 @@
 local halmd = require("halmd")
 
 -- grab modules
+local device = halmd.utility.device
 local log = halmd.io.log
 local mdsim = halmd.mdsim
 local numeric = halmd.numeric
@@ -114,11 +115,11 @@ function main()
 
 --PARAMETERS
     local box = mdsim.box({length = {10, 10, 10}})
-    local nparticles = 1000
+    local nparticles = device.gpu and 10000 or 100
     local nknots = {101, 101, 101} --with 0.1 spacing
     local sigma = 1
     local temperature = 1
-    local steps = 100000
+    local steps = device.gpu and 10000 or 100
     local timestep = 1e-1
     local amplitude = 1.5
     local period = 2.5
@@ -128,12 +129,12 @@ function main()
 
 --Initial Configuration
     local configuration = generate_configuration({particles = {nparticles}, sigma = sigma, box = box})
-    particle:set_position(configuration.positions)
+    particle.data["position"] = configuration.positions
 
 --Initial Species
     local species = {}
     for i = 1, nparticles do table.insert(species, 0) end
-    particle:set_species(species)
+    particle.data["species"] = species
 
 --Initial Velocities
     local boltzmann = mdsim.velocities.boltzmann({particle = particle, temperature = temperature})
@@ -166,7 +167,7 @@ function main()
 
 --INTERPOLATION
     local interpolation = mdsim.forces.interpolation.cubic_hermite({box = box, nknots = nknots, precision = "double"})
-    local virial_interpolation = mdsim.forces.interpolation.linear({box = box, nknots = nknots, precision = "single"})
+    local virial_interpolation = mdsim.forces.interpolation.linear({box = box, nknots = nknots, precision = particle.precision})
 
 --FORCE IMPLEMENTATION
     local tabulated_forces = mdsim.forces.tabulated_external({particle = particle, box = box, interpolation = interpolation, virial_interpolation = virial_interpolation})
@@ -177,7 +178,7 @@ function main()
 
 --WRITER
     -- H5MD file writer
-    local file = halmd.io.writers.h5md({path = ("results.h5")})
+    local file = halmd.io.writers.h5md({path = "tabulated_external.h5", overwrite = true})
 
     -- select all particles
     local particle_group = halmd.mdsim.particle_groups.all({particle = particle})
@@ -192,7 +193,7 @@ function main()
     local msv = halmd.observables.thermodynamics({box = box, group = particle_group})
     msv:writer({file = file, every = 100})
 
-    local accumulator = halmd.observables.utility.accumulator({aquire = msv.internal_energy, every = 1, desc = "Averaged internal energy", aux_enable = {particle}})
+    local accumulator = halmd.observables.utility.accumulator({acquire = msv.internal_energy, every = 1, desc = "Averaged internal energy", aux_enable = {particle}})
     accumulator:writer({file = file, location = {"observables", "averaged_internal_energy"}, every = 1, reset = true})
 
 --RUN
