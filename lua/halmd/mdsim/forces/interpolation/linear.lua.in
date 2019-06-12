@@ -98,7 +98,7 @@ local M = module(function(args)
     local nknots = utility.assert_type(utility.assert_kwarg(args, "nknots"), "table")
 
     local length = args.length or utility.assert_kwarg(args, "box").length
-    local origin = args.origin or utility.assert_kwarg(args, "box").origin()
+    local origin = args.origin or utility.assert_kwarg(args, "box"):origin()
 
     if not linear[precision] then
         error("Unsupported precision", 2)
