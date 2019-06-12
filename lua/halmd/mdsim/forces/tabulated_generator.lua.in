@@ -33,7 +33,7 @@ local profiler = require("halmd.utility.profiler")
 -- For the given potential, the first species (``0``) always corresponds to
 -- the test particle that can move freely in space.
 -- All other species in ``particle`` can be used to distinguish different
--- particles. The ``particle`` io instance must only contain particles that
+-- particles. The ``particle`` is instance must only contain particles that
 -- form the external tabulated potential.
 --
 --
