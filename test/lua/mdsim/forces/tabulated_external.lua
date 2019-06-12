@@ -167,7 +167,7 @@ function main()
 
 --INTERPOLATION
     local interpolation = mdsim.forces.interpolation.cubic_hermite({box = box, nknots = nknots, precision = "double"})
-    local virial_interpolation = mdsim.forces.interpolation.linear({box = box, nknots = nknots, precision = particle.precision})
+    local virial_interpolation = mdsim.forces.interpolation.linear({box = box, nknots = nknots, precision = "single"})
 
 --FORCE IMPLEMENTATION
     local tabulated_forces = mdsim.forces.tabulated_external({particle = particle, box = box, interpolation = interpolation, virial_interpolation = virial_interpolation})

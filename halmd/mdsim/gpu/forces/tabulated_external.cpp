@@ -327,19 +327,28 @@ void tabulated_external<dimension, float_type, force_interpolation_type>::luaope
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_forces_tabulated_external(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     tabulated_external<2, float, cubic_hermite<2, float> >::luaopen(L);
     tabulated_external<3, float, cubic_hermite<3, float> >::luaopen(L);
-    tabulated_external<2, float, cubic_hermite<2, double> >::luaopen(L);
-    tabulated_external<3, float, cubic_hermite<3, double> >::luaopen(L);
+#endif
+
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    tabulated_external<2, dsfloat, cubic_hermite<2, float> >::luaopen(L);
+    tabulated_external<3, dsfloat, cubic_hermite<3, float> >::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class tabulated_external<2, float, cubic_hermite<2, float> >;
 template class tabulated_external<3, float, cubic_hermite<3, float> >;
-template class tabulated_external<2, float, cubic_hermite<2, double> >;
-template class tabulated_external<3, float, cubic_hermite<3, double> >;
+#endif
 
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class tabulated_external<2, dsfloat, cubic_hermite<2, float> >;
+template class tabulated_external<3, dsfloat, cubic_hermite<3, float> >;
+#endif
 } // namespace forces
 } // namespace gpu
 } // namespace mdsim

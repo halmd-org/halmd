@@ -131,8 +131,6 @@ using namespace halmd::mdsim::forces::interpolation;
 // explicit instantiation
 template class tabulated_external_wrapper<3, cubic_hermite<3, float>, linear<3, float> >;
 template class tabulated_external_wrapper<2, cubic_hermite<2, float>, linear<2, float> >;
-template class tabulated_external_wrapper<3, cubic_hermite<3, double>, linear<3, float> >;
-template class tabulated_external_wrapper<2, cubic_hermite<2, double>, linear<2, float> >;
 
 } // namespace forces
 } // namespace gpu

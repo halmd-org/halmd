@@ -45,13 +45,13 @@ template <int dimension, typename float_type, typename force_interpolation_type>
 class tabulated_external
 {
 public:
-    typedef float_type coefficient_value_type;
+    typedef float coefficient_value_type;
     typedef cuda::vector<coefficient_value_type> coefficient_array_type;
 
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
     typedef typename particle_type::position_type position_type;
-    typedef typename mdsim::forces::interpolation::linear<dimension, float_type> virial_interpolation_type;
+    typedef typename mdsim::forces::interpolation::linear<dimension, float> virial_interpolation_type;
     typedef logger logger_type;
 
     tabulated_external(
