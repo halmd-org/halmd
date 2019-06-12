@@ -20,6 +20,7 @@
 
 #include <halmd/mdsim/gpu/forces/tabulated_external.hpp>
 #include <halmd/mdsim/forces/interpolation/cubic_hermite.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <luaponte/out_value_policy.hpp>
 
@@ -92,9 +93,9 @@ inline void tabulated_external<dimension, float_type, force_interpolation_type>:
 
     scoped_timer_type timer(runtime_.compute);
 
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    configure_kernel(gpu_wrapper::kernel.compute, particle_->dim(), true);
     gpu_wrapper::kernel.compute(
-        &*position.begin()
+        position.data()
       , &*force->begin()
       , nullptr
       , nullptr
@@ -121,9 +122,9 @@ inline void tabulated_external<dimension, float_type, force_interpolation_type>:
 
     scoped_timer_type timer(runtime_.compute);
 
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    configure_kernel(gpu_wrapper::kernel.compute, particle_->dim(), true);
     gpu_wrapper::kernel.compute_aux(
-        &*position.begin()
+        position.data()
       , &*force->begin()
       , &*en_pot->begin()
       , &*stress_pot->begin()
