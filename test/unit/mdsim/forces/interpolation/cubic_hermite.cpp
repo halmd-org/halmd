@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE( cubic_hermite )
     }
     box = std::make_shared<box_type>(edges);
 
-    interpolation_type hermite_3d(box->length(), box->origin(), ngrid_points);
+    interpolation_type hermite_3d(box->length(), box->lowest_corner(), ngrid_points);
     vector_type grid_basis = hermite_3d.grid_basis();
     size_type total_grid_points = hermite_3d.total_knots();
 
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE( cubic_hermite )
 
         int const cidx = interpolation_type::coefficients_per_knot * halmd::multi_index_to_offset(nb_idx, ngrid_points);
         // shift the neighbour position into the box
-        nb_pos += box->origin();
+        nb_pos += box->lowest_corner();
 
         std::vector<float_type> c = fn.coefficients(nb_pos);
         for (unsigned int j = 0; j < interpolation_type::coefficients_per_knot; ++j) {

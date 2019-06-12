@@ -68,7 +68,7 @@ public:
 #ifndef __CUDACC__
     linear(
         vector_type length
-      , vector_type origin
+      , vector_type lowest_corner
       , index_type nknots
     );
 
@@ -109,8 +109,8 @@ private:
 
     /** number of grid points in each spatial direction */
     index_type nknots_;
-    /** origin of the box */
-    vector_type origin_;
+    /** lowest corner of the box */
+    vector_type lowest_corner_;
     /** distances between nodes */
     vector_type grid_basis_;
     /** edge length of the domain */
@@ -174,7 +174,7 @@ linear<dimension, float_type>::operator()(
         // of a different type than the float_type used in the interpolation functor
         // e.g. position_type is of type fixed_vector<float> while the interpolation uses
         // fixed_vector<double>
-        float_type r_ = static_cast<float_type>(r[d]) - origin_[d];
+        float_type r_ = static_cast<float_type>(r[d]) - lowest_corner_[d];
         // If the particle is outside the unit cell of the grid, shift it back into it.
         // This allows having multiple, periodic grid boxes.
         r_ -= cell_length_[d] * static_cast<unsigned int>(r_ / cell_length_[d]);

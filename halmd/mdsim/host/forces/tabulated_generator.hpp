@@ -205,8 +205,8 @@ tabulated_generator<dimension, float_type, potential_type>::compute()
               species_type const b = species[i];
               // particle distance vector
               // in contrast to the interpolation box, the simulation box does not
-              // start at zero-origin, so shift the position of the particle accordingly
-              position_type r = r1 - (position[i] - box_->origin());
+              // start at zero-lowest_corner, so shift the position of the particle accordingly
+              position_type r = r1 - (position[i] - box_->lowest_corner());
               box_->reduce_periodic(r);
 
               float_type rr = inner_prod(r, r);

@@ -62,15 +62,15 @@ local linear = {
 -- :param table args: keyword arguments
 -- :param args.box: instance of :mod:`halmd.mdsim.box`
 -- :param table args.length: length of the (optional, defaults to ``box.length``)
--- :param table args.origin: distance of the box to the origin (optional, defaults to ``box.origin``)
+-- :param table args.lowest_corner: distance of the box to the lowest corner (optional, defaults to ``box.lowest_corner``)
 -- :param number args.nknots: number of knots in each dimension, including
 -- :type args.nknots: number table
 -- :param string args.precision: floating point number precision
 -- :returns: instance of cubic hermite interpolation scheme
 --
--- If ``box`` is not given, the arguments ``length`` and ``origin`` have to be supplied. This
+-- If ``box`` is not given, the arguments ``length`` and ``lowest_corner`` have to be supplied. This
 -- enables the possibility to have a smaller "unit cell" of the interpolation area,
--- while the simulation box may be multiples of this unit cell. ``length`` and ``origin`` both
+-- while the simulation box may be multiples of this unit cell. ``length`` and ``lowest_corner`` both
 -- precede ``box``.
 --
 -- The linear interpolator supports "single" and "double" as floating point number precision.
@@ -98,13 +98,13 @@ local M = module(function(args)
     local nknots = utility.assert_type(utility.assert_kwarg(args, "nknots"), "table")
 
     local length = args.length or utility.assert_kwarg(args, "box").length
-    local origin = args.origin or utility.assert_kwarg(args, "box"):origin()
+    local lowest_corner = args.lowest_corner or utility.assert_kwarg(args, "box"):lowest_corner()
 
     if not linear[precision] then
         error("Unsupported precision", 2)
     end
 
-    local self = linear[precision](length, origin, nknots)
+    local self = linear[precision](length, lowest_corner, nknots)
 
     self.log = function(self, logger)
         if not logger then

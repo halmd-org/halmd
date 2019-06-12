@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE( linear )
     }
     box = std::make_shared<box_type>(edges);
 
-    interpolation_type interpolation_(box->length(), box->origin(), ngrid_points);
+    interpolation_type interpolation_(box->length(), box->lowest_corner(), ngrid_points);
     vector_type grid_basis = interpolation_.grid_basis();
     size_type total_grid_points = interpolation_.total_knots();
 
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE( linear )
 
         int const cidx = interpolation_type::coefficients_per_knot * halmd::multi_index_to_offset(nb_idx, ngrid_points);
         // shift the neighbour position into the box
-        nb_pos += box->origin();
+        nb_pos += box->lowest_corner();
 
         std::vector<float_type> c = fn.coefficients(nb_pos);
         for (unsigned int j = 0; j < interpolation_type::coefficients_per_knot; ++j) {

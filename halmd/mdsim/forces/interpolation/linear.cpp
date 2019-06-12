@@ -32,11 +32,11 @@ namespace interpolation {
 template <int dimension, typename float_type>
 linear<dimension, float_type>::linear(
     vector_type length
-  , vector_type origin
+  , vector_type lowest_corner
   , index_type nknots
 )
   : nknots_(nknots)
-  , origin_(origin)
+  , lowest_corner_(lowest_corner)
   , cell_length_(length)
 {
     for (int d = 0; d < dimension; ++d) {
