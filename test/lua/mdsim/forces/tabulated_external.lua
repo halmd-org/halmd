@@ -18,8 +18,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local halmd = require("halmd")
-
 -- grab modules
 local device = halmd.utility.device
 local log = halmd.io.log
@@ -166,7 +164,7 @@ function main()
      end
 
 --INTERPOLATION
-    local interpolation = mdsim.forces.interpolation.cubic_hermite({box = box, nknots = nknots, precision = "double"})
+    local interpolation = mdsim.forces.interpolation.cubic_hermite({box = box, nknots = nknots, precision = "single"})
     local virial_interpolation = mdsim.forces.interpolation.linear({box = box, nknots = nknots, precision = "single"})
 
 --FORCE IMPLEMENTATION
@@ -187,14 +185,11 @@ function main()
     local phase_space = halmd.observables.phase_space({box = box, group = particle_group})
 
     -- write trajectory of particle groups to H5MD file
-    phase_space:writer({file = file, fields = {"position", "velocity", "species", "mass"}, every = 1})
+    phase_space:writer({file = file, fields = {"position", "species"}, every = 100})
 
     -- Sample macroscopic state variables
     local msv = halmd.observables.thermodynamics({box = box, group = particle_group})
     msv:writer({file = file, every = 100})
-
-    local accumulator = halmd.observables.utility.accumulator({acquire = msv.internal_energy, every = 1, desc = "Averaged internal energy", aux_enable = {particle}})
-    accumulator:writer({file = file, location = {"observables", "averaged_internal_energy"}, every = 1, reset = true})
 
 --RUN
     -- sample initial state
@@ -210,5 +205,3 @@ function main()
 
     halmd.utility.profiler:profile()
 end
-
-main()
