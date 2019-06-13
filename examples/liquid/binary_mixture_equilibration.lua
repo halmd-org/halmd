@@ -61,7 +61,7 @@ function main(args)
             table.insert(species, s)
         end
         local label = string.char(string.byte("A") + s)
-        groups[label] = mdsim.particle_groups.from_range({
+        groups[label] = mdsim.particle_groups.id_range({
             particle = particle
           , range = {offset + 1, offset + nparticle}
           , label = label

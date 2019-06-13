@@ -70,10 +70,10 @@ function setup(args)
 
     -- construct included/excluded particle groups, label is inherited from 'region'
     local group = {}
-    group["included"] = mdsim.particle_groups.from_region({
+    group["included"] = mdsim.particle_groups.region({
         particle = particle, region = region["included"]
     })
-    group["excluded"] = mdsim.particle_groups.from_region({
+    group["excluded"] = mdsim.particle_groups.region({
         particle = particle, region = region["excluded"]
     })
 
@@ -121,7 +121,7 @@ end
 local function parse_args()
     local parser = halmd.utility.program_options.argument_parser()
 
-    parser:add_argument("output,o", {type = "string", default = "from_region_test", help = "prefix of output files"})
+    parser:add_argument("output,o", {type = "string", default = "region_test", help = "prefix of output files"})
 
     parser:add_argument("particles", {type = "number", default = 10000, help = "number of particles"})
     parser:add_argument("dimension", {type = "number", default = 3, help = "dimension of space"})

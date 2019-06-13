@@ -20,22 +20,21 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/algorithm/gpu/radix_sort.hpp>
-#include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/gpu/particle_groups/from_range.hpp>
+#include <halmd/algorithm/host/radix_sort.hpp>
+#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/particle_groups/id_range.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
-
+#include <algorithm>
 #include <stdexcept>
 
 namespace halmd {
 namespace mdsim {
-namespace gpu {
+namespace host {
 namespace particle_groups {
 
 template <typename particle_type>
-from_range<particle_type>::from_range(
+id_range<particle_type>::id_range(
     std::shared_ptr<particle_type const> particle
   , range_type const& range
   , std::shared_ptr<logger> logger
@@ -50,8 +49,8 @@ from_range<particle_type>::from_range(
 }
 
 template <typename particle_type>
-typename from_range<particle_type>::range_type const&
-from_range<particle_type>::check_range(range_type const& range)
+typename id_range<particle_type>::range_type const&
+id_range<particle_type>::check_range(range_type const& range)
 {
     if (range.second <= range.first) {
         throw std::invalid_argument("particle_group: inverse ID ranges not allowed");
@@ -63,15 +62,15 @@ from_range<particle_type>::check_range(range_type const& range)
 }
 
 template <typename particle_type>
-cache<typename from_range<particle_type>::array_type> const&
-from_range<particle_type>::ordered()
+cache<typename id_range<particle_type>::array_type> const&
+id_range<particle_type>::ordered()
 {
     cache<array_type> const& reverse_id_cache = particle_->reverse_id();
     if (ordered_cache_ != reverse_id_cache) {
         LOG_TRACE("ordered sequence of particle indices");
         array_type const& reverse_id = read_cache(reverse_id_cache);
         auto ordered = make_cache_mutable(ordered_);
-        cuda::copy(
+        std::copy(
             reverse_id.begin() + range_.first
           , reverse_id.begin() + range_.second
           , ordered->begin()
@@ -82,15 +81,15 @@ from_range<particle_type>::ordered()
 }
 
 template <typename particle_type>
-cache<typename from_range<particle_type>::array_type> const&
-from_range<particle_type>::unordered()
+cache<typename id_range<particle_type>::array_type> const&
+id_range<particle_type>::unordered()
 {
     cache<array_type> const& reverse_id_cache = particle_->reverse_id();
     if (unordered_cache_ != reverse_id_cache) {
         LOG_TRACE("unordered sequence of particle indices");
         array_type const& reverse_id = read_cache(reverse_id_cache);
         auto unordered = make_cache_mutable(unordered_);
-        cuda::copy(
+        std::copy(
             reverse_id.begin() + range_.first
           , reverse_id.begin() + range_.second
           , unordered->begin()
@@ -105,8 +104,8 @@ from_range<particle_type>::unordered()
 }
 
 template <typename particle_type>
-cache<typename from_range<particle_type>::size_type> const&
-from_range<particle_type>::size()
+cache<typename id_range<particle_type>::size_type> const&
+id_range<particle_type>::size()
 {
     return size_;
 }
@@ -116,14 +115,14 @@ from_range<particle_type>::size()
  * converting from a 1-based particle ID range to a 0-based range.
  */
 template <typename particle_type>
-static std::shared_ptr<from_range<particle_type> >
-wrap_from_range(
+static std::shared_ptr<id_range<particle_type> >
+wrap_id_range(
     std::shared_ptr<particle_type const> particle
-  , typename from_range<particle_type>::range_type const& range
+  , typename id_range<particle_type>::range_type const& range
   , std::shared_ptr<logger> logger
 )
 {
-    return std::make_shared<from_range<particle_type> >(
+    return std::make_shared<id_range<particle_type> >(
         particle
       , std::make_pair(range.first - 1, range.second)
       , logger
@@ -137,8 +136,9 @@ wrap_to_particle(std::shared_ptr<particle_group_type> self, std::shared_ptr<part
     particle_group_to_particle(*particle_src, *self, *particle_dst);
 }
 
+
 template <typename particle_type>
-void from_range<particle_type>::luaopen(lua_State* L)
+void id_range<particle_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -147,39 +147,37 @@ void from_range<particle_type>::luaopen(lua_State* L)
         [
             namespace_("particle_groups")
             [
-                class_<from_range, particle_group>()
-                   .def("to_particle", &wrap_to_particle<from_range<particle_type>, particle_type>)
+                class_<id_range, particle_group>()
+                   .def("to_particle", &wrap_to_particle<id_range<particle_type>, particle_type>)
 
-              , def("from_range", &wrap_from_range<particle_type>)
+              , def("id_range", &wrap_id_range<particle_type>)
             ]
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle_groups_from_range(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_particle_groups_id_range(lua_State* L)
 {
-#ifdef USE_GPU_SINGLE_PRECISION
-    from_range<particle<3, float>>::luaopen(L);
-    from_range<particle<2, float>>::luaopen(L);
-#endif
-#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-    from_range<particle<3, dsfloat>>::luaopen(L);
-    from_range<particle<2, dsfloat>>::luaopen(L);
+#ifndef USE_HOST_SINGLE_PRECISION
+    id_range<particle<3, double>>::luaopen(L);
+    id_range<particle<2, double>>::luaopen(L);
+#else
+    id_range<particle<3, float>>::luaopen(L);
+    id_range<particle<2, float>>::luaopen(L);
 #endif
     return 0;
 }
 
 // explicit instantiation
-#ifdef USE_GPU_SINGLE_PRECISION
-template class from_range<particle<3, float>>;
-template class from_range<particle<2, float>>;
-#endif
-#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-template class from_range<particle<3, dsfloat>>;
-template class from_range<particle<2, dsfloat>>;
+#ifndef USE_HOST_SINGLE_PRECISION
+template class id_range<particle<3, double>>;
+template class id_range<particle<2, double>>;
+#else
+template class id_range<particle<3, float>>;
+template class id_range<particle<2, float>>;
 #endif
 
 } // namespace particle_groups
-} // namespace gpu
+} // namespace host
 } // namespace mdsim
 } // namespace halmd

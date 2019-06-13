@@ -1,10 +1,10 @@
 halmd_add_modules(
-  libhalmd_mdsim_host_particle_groups_from_range
   libhalmd_mdsim_host_particle_groups_all
-  libhalmd_mdsim_host_particle_groups_from_region
+  libhalmd_mdsim_host_particle_groups_id_range
+  libhalmd_mdsim_host_particle_groups_region
 )
 halmd_add_library(halmd_mdsim_host_particle_groups
-  from_range.cpp
   all.cpp
-  from_region.cpp
+  id_range.cpp
+  region.cpp
 )

@@ -28,7 +28,7 @@ local mdsim   = {
 }
 
 ---
--- From Range
+-- ID Range
 -- ==========
 --
 -- A particle group represents a subset of particles, which is defined
@@ -40,12 +40,12 @@ local mdsim   = {
 --    local system = halmd.mdsim.particle({particles = 10000, species = 2})
 --
 --    -- select each species, assuming particles of a species have contiguous IDs
---    local group_A = halmd.mdsim.particle_groups.from_range({particle = system, range = {1, 5000}, label = "A"})
---    local group_B = halmd.mdsim.particle_groups.from_range({particle = system, range = {5001, 10000}, label = "B"})
+--    local group_A = halmd.mdsim.particle_groups.id_range({particle = system, range = {1, 5000}, label = "A"})
+--    local group_B = halmd.mdsim.particle_groups.id_range({particle = system, range = {5001, 10000}, label = "B"})
 --
 
 -- grab C++ wrappers
-local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
+local id_range = assert(libhalmd.mdsim.particle_groups.id_range)
 
 ---
 -- Construct particle group from ID range.
@@ -128,7 +128,7 @@ local M = module(function(args)
     local logger = log.logger({prefix = ("group (%s)"):format(label)})
 
     -- construct particle group from ID range
-    local self = from_range(particle, range, logger)
+    local self = id_range(particle, range, logger)
 
     -- capture C++ method to_particle
     local to_particle = assert(self.to_particle)

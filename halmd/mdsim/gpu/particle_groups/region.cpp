@@ -20,7 +20,7 @@
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/gpu/particle_groups/from_region.hpp>
+#include <halmd/mdsim/gpu/particle_groups/region.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
@@ -33,7 +33,7 @@ namespace gpu {
 namespace particle_groups {
 
 template <typename particle_type>
-from_region<particle_type>::from_region(
+region<particle_type>::region(
     std::shared_ptr<particle_type const> particle
   , std::shared_ptr<region_type> region
   , std::shared_ptr<logger> logger
@@ -45,8 +45,8 @@ from_region<particle_type>::from_region(
 }
 
 template <typename particle_type>
-cache<typename from_region<particle_type>::array_type> const&
-from_region<particle_type>::ordered()
+cache<typename region<particle_type>::array_type> const&
+region<particle_type>::ordered()
 {
     auto const& selection = region_->selection();
     if (selection != ordered_cache_) {
@@ -61,8 +61,8 @@ from_region<particle_type>::ordered()
 }
 
 template <typename particle_type>
-cache<typename from_region<particle_type>::array_type> const&
-from_region<particle_type>::unordered()
+cache<typename region<particle_type>::array_type> const&
+region<particle_type>::unordered()
 {
     auto const& selection = region_->selection();
     if (selection != unordered_cache_) {
@@ -84,8 +84,8 @@ from_region<particle_type>::unordered()
 }
 
 template <typename particle_type>
-cache<typename from_region<particle_type>::size_type> const&
-from_region<particle_type>::size()
+cache<typename region<particle_type>::size_type> const&
+region<particle_type>::size()
 {
     auto size = make_cache_mutable(size_);
     *size = region_->size();
@@ -100,7 +100,7 @@ wrap_to_particle(std::shared_ptr<particle_group_type> self, std::shared_ptr<part
 }
 
 template <typename particle_type>
-void from_region<particle_type>::luaopen(lua_State* L)
+void region<particle_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -109,10 +109,10 @@ void from_region<particle_type>::luaopen(lua_State* L)
         [
             namespace_("particle_groups")
             [
-                class_<from_region, particle_group>()
-                    .def("to_particle", &wrap_to_particle<from_region<particle_type>, particle_type>)
+                class_<region, particle_group>()
+                    .def("to_particle", &wrap_to_particle<region<particle_type>, particle_type>)
 
-              , def("from_region", &std::make_shared<from_region<particle_type>
+              , def("region", &std::make_shared<region<particle_type>
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<region_type>
                   , std::shared_ptr<logger>
@@ -122,27 +122,27 @@ void from_region<particle_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle_groups_from_region(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle_groups_region(lua_State* L)
 {
 #ifdef USE_GPU_SINGLE_PRECISION
-    from_region<particle<3, float>>::luaopen(L);
-    from_region<particle<2, float>>::luaopen(L);
+    region<particle<3, float>>::luaopen(L);
+    region<particle<2, float>>::luaopen(L);
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-    from_region<particle<3, dsfloat>>::luaopen(L);
-    from_region<particle<2, dsfloat>>::luaopen(L);
+    region<particle<3, dsfloat>>::luaopen(L);
+    region<particle<2, dsfloat>>::luaopen(L);
 #endif
     return 0;
 }
 
 // explicit instantiation
 #ifdef USE_GPU_SINGLE_PRECISION
-template class from_region<particle<3, float>>;
-template class from_region<particle<2, float>>;
+template class region<particle<3, float>>;
+template class region<particle<2, float>>;
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-template class from_region<particle<3, dsfloat>>;
-template class from_region<particle<2, dsfloat>>;
+template class region<particle<3, dsfloat>>;
+template class region<particle<2, dsfloat>>;
 #endif
 
 } // namespace particle_groups

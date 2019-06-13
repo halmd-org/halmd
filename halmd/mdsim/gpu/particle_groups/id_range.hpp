@@ -1,5 +1,6 @@
 /*
- * Copyright © 2014-2015 Nicolas Höft
+ * Copyright © 2012 Peter Colberg
+ * Copyright © 2012 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -18,41 +19,41 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_PARTICLE_GROUPS_FROM_REGION_HPP
-#define HALMD_MDSIM_HOST_PARTICLE_GROUPS_FROM_REGION_HPP
+#ifndef HALMD_MDSIM_GPU_PARTICLE_GROUPS_ID_RANGE_HPP
+#define HALMD_MDSIM_GPU_PARTICLE_GROUPS_ID_RANGE_HPP
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/particle_group.hpp>
-#include <halmd/mdsim/host/region.hpp>
+#include <halmd/mdsim/gpu/particle_group.hpp>
 #include <halmd/utility/raw_array.hpp>
 
 #include <lua.hpp>
 
 #include <memory>
+#include <utility>
 
 namespace halmd {
 namespace mdsim {
-namespace host {
+namespace gpu {
 namespace particle_groups {
 
 /**
- * Select particles of a given particle instance by simulation box region
+ * Select particles of a given particle instance by a contiguous range of particle IDs.
  */
 template <typename particle_type>
-class from_region
+class id_range
   : public particle_group
 {
 public:
     typedef typename particle_group::array_type array_type;
     typedef typename particle_group::size_type size_type;
-    typedef halmd::mdsim::host::region_base region_type;
+    typedef std::pair<size_type, size_type> range_type;
 
     /**
-     * Select by region
+     * Select by ID range [begin, end).
      */
-    from_region(
+    id_range(
         std::shared_ptr<particle_type const> particle
-      , std::shared_ptr<region_type> region
+      , range_type const& range
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -77,10 +78,13 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    /** validate ID range */
+    range_type const& check_range(range_type const&);
+
     /** particle instance */
     std::shared_ptr<particle_type const> const particle_;
-    /** particle region */
-    std::shared_ptr<region_type> const region_;
+    /** particle ID range */
+    range_type const range_;
     /** module logger */
     std::shared_ptr<logger> logger_;
     /** ordered sequence of particle indices */
@@ -89,15 +93,15 @@ private:
     cache<array_type> unordered_;
     /** number of particles */
     cache<size_type> size_;
-    /** cache observer of region mask */
+    /** cache observer of particle reverse IDs */
     cache<> ordered_cache_;
-    /** cache observer of region mask */
+    /** cache observer of particle reverse IDs */
     cache<> unordered_cache_;
 };
 
 } // namespace particle_groups
-} // namespace host
+} // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_PARTICLE_GROUPS_FROM_REGION_HPP */
+#endif /* ! HALMD_MDSIM_GPU_PARTICLE_GROUPS_ID_RANGE_HPP */

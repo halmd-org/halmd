@@ -74,7 +74,7 @@ function main(args)
     -- setup and sample each particle group separately
     local offset = 0
     for label, sample in utility.sorted(samples) do
-        local group = mdsim.particle_groups.from_range({
+        local group = mdsim.particle_groups.id_range({
             particle = particle
           , range = {offset + 1, offset + sample.nparticle}
           , label = label

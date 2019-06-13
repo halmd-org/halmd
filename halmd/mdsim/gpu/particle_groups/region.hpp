@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_PARTICLE_GROUPS_FROM_REGION_HPP
-#define HALMD_MDSIM_GPU_PARTICLE_GROUPS_FROM_REGION_HPP
+#ifndef HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_HPP
+#define HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_HPP
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle_group.hpp>
@@ -40,7 +40,7 @@ namespace particle_groups {
  * Select particles of a given particle instance according to a region in space
  */
 template <typename particle_type>
-class from_region
+class region
   : public particle_group
 {
 public:
@@ -51,7 +51,7 @@ public:
     /**
      * Select by region
      */
-    from_region(
+    region(
         std::shared_ptr<particle_type const> particle
       , std::shared_ptr<region_type> region
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
@@ -101,4 +101,4 @@ private:
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_PARTICLE_GROUPS_FROM_RANGE_HPP */
+#endif /* ! HALMD_MDSIM_GPU_PARTICLE_GROUPS_RANGE_HPP */

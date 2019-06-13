@@ -43,10 +43,10 @@ from_region<particle_type>::from_region(
 }
 
 template <typename particle_type>
-cache<typename from_region<particle_type>::array_type> const&
-from_region<particle_type>::ordered()
+cache<typename species<particle_type>::array_type> const&
+species<particle_type>::ordered()
 {
-    auto const& selection_cache = region_->selection();
+    auto const& selection_cache = species_->selection();
     if (selection_cache != ordered_cache_) {
         auto ordered = make_cache_mutable(ordered_);
         ordered->clear(); // avoid copying the elements upon resize()
@@ -59,10 +59,10 @@ from_region<particle_type>::ordered()
 }
 
 template <typename particle_type>
-cache<typename from_region<particle_type>::array_type> const&
-from_region<particle_type>::unordered()
+cache<typename species<particle_type>::array_type> const&
+species<particle_type>::unordered()
 {
-    auto const& selection_cache = region_->selection();
+    auto const& selection_cache = species_->selection();
     if (selection_cache != unordered_cache_) {
         auto unordered = make_cache_mutable(unordered_);
         LOG_TRACE("unordered sequence of particle indices");
@@ -84,10 +84,10 @@ from_region<particle_type>::unordered()
 
 template <typename particle_type>
 cache<typename from_region<particle_type>::size_type> const&
-from_region<particle_type>::size()
+species<particle_type>::size()
 {
     auto size = make_cache_mutable(size_);
-    *size = region_->size();
+    *size = species_->size();
     return size_;
 }
 
@@ -111,9 +111,10 @@ void from_region<particle_type>::luaopen(lua_State* L)
                 class_<from_region, particle_group>()
                     .def("to_particle", &wrap_to_particle<from_region<particle_type>, particle_type>)
 
-              , def("from_region", &std::make_shared<from_region<particle_type>
+              , def("species", &std::make_shared<species<particle_type>
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<region_type>
+                  , std::shared_ptr<species_type>
                   , std::shared_ptr<logger>
                   >)
             ]
@@ -124,11 +125,11 @@ void from_region<particle_type>::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_mdsim_host_particle_groups_from_region(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
-    from_region<particle<3, double>>::luaopen(L);
-    from_region<particle<2, double>>::luaopen(L);
+    species<particle<3, double>>::luaopen(L);
+    species<particle<2, double>>::luaopen(L);
 #else
-    from_region<particle<3, float>>::luaopen(L);
-    from_region<particle<2, float>>::luaopen(L);
+    species<particle<3, float>>::luaopen(L);
+    species<particle<2, float>>::luaopen(L);
 #endif
     return 0;
 }

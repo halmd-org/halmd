@@ -19,8 +19,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_PARTICLE_GROUPS_FROM_RANGE_HPP
-#define HALMD_MDSIM_HOST_PARTICLE_GROUPS_FROM_RANGE_HPP
+#ifndef HALMD_MDSIM_HOST_PARTICLE_GROUPS_ID_RANGE_HPP
+#define HALMD_MDSIM_HOST_PARTICLE_GROUPS_ID_RANGE_HPP
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle_group.hpp>
@@ -39,7 +39,7 @@ namespace particle_groups {
  * Select particles of a given particle instance by a contiguous range of particle IDs.
  */
 template <typename particle_type>
-class from_range
+class id_range
   : public particle_group
 {
 public:
@@ -50,7 +50,7 @@ public:
     /**
      * Select by ID range [begin, end).
      */
-    from_range(
+    id_range(
         std::shared_ptr<particle_type const> particle
       , range_type const& range
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
@@ -103,4 +103,4 @@ private:
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_PARTICLE_GROUPS_FROM_RANGE_HPP */
+#endif /* ! HALMD_MDSIM_HOST_PARTICLE_GROUPS_ID_RANGE_HPP */

@@ -100,7 +100,7 @@ function main(args)
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
-    local group_included = mdsim.particle_groups.from_region({particle = particle, region = region, selection = "included", label = region.label})
+    local group_included = mdsim.particle_groups.region({particle = particle, region = region, selection = "included", label = region.label})
 
     local msv_local = observables.thermodynamics({box = box, group = group_included})
 
