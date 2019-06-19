@@ -72,7 +72,7 @@ local tabulated_external = assert(libhalmd.mdsim.forces.tabulated_external)
 --
 --    The argument ``location`` specifies a path in a structured file format
 --    like H5MD given as a table of strings. If omitted it defaults to
---    ``{"parameters"}``.
+--    ``{"parameters/halmd"}``.
 --
 -- .. method:: disconnect()
 --
@@ -96,14 +96,14 @@ local M = module(function(args)
     self.read_coefficients = function(self, args)
         local file = utility.assert_kwarg(args, "file")
         local location = utility.assert_type(
-            args.location or {"parameters"}
+            args.location or {"parameters/halmd"}
           , "table")
         local reader = file:reader({location = location, mode = "truncate"})
         local array, array_to_sample = assert(self.coefficients)(self)
-        reader:on_read(array, {"tabulated_coefficients"})
+        reader:on_read(array, {"potential_coefficients"})
         reader:on_append_read(array_to_sample)
         local virial, virial_to_sample = assert(self.virial_coefficients)(self)
-        reader:on_read(virial, {"virial_coefficients"})
+        reader:on_read(virial, {"potential_virial_coefficients"})
         reader:on_append_read(virial_to_sample)
         reader:read()
     end
