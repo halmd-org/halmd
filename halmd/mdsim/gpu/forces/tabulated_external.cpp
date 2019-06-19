@@ -181,16 +181,16 @@ wrap_set_coefficients(std::shared_ptr<force_type> self, std::vector<typename for
 }
 
 template<typename force_type>
-static std::function<std::vector<typename force_type::coefficient_value_type> const& ()>
+static std::function<std::vector<typename force_type::coefficient_value_type> ()>
 wrap_get_coefficients(std::shared_ptr<force_type> self)
 {
-    return [=]() -> std::vector<typename force_type::coefficient_value_type> const& {
+    return [=]() -> std::vector<typename force_type::coefficient_value_type> {
         std::vector<typename force_type::coefficient_value_type> output;
         {
             output.reserve(self->ncoefficients());
         }
         get_coefficients(*self, std::back_inserter(output));
-        return std::move(output);
+        return output;
     };
 }
 
@@ -256,16 +256,16 @@ wrap_set_virial_coefficients(std::shared_ptr<tabulated_type> self, std::vector<t
 
 
 template<typename tabulated_type>
-static std::function<std::vector<typename tabulated_type::coefficient_value_type> const& ()>
+static std::function<std::vector<typename tabulated_type::coefficient_value_type> ()>
 wrap_get_virial_coefficients(std::shared_ptr<tabulated_type> self)
 {
-    return [=]() -> std::vector<typename tabulated_type::coefficient_value_type> const& {
+    return [=]() -> std::vector<typename tabulated_type::coefficient_value_type> {
         std::vector<typename tabulated_type::coefficient_value_type> output;
         {
             output.reserve(self->ncoefficients());
         }
         get_virial_coefficients(*self, std::back_inserter(output));
-        return std::move(output);
+        return output;
     };
 }
 
