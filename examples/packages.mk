@@ -37,6 +37,7 @@ CTEST     = ctest
 GIT       = git
 GUNZIP    = gzip -d
 MKDIR     = mkdir -p
+LN        = ln -sf
 OPENSSL   = openssl
 PATCH     = patch
 RM        = rm -rf
@@ -806,10 +807,9 @@ env-clang:
 
 GMP_VERSION = 6.1.2
 GMP_TARBALL = gmp-$(GMP_VERSION).tar.bz2
-GMP_TARBALL_URL = http://ftp.gnu.org/gnu/gmp/$(GMP_TARBALL)
+GMP_TARBALL_URL = ftp://ftp.gnu.org/gnu/gmp/$(GMP_TARBALL)
 GMP_TARBALL_SHA256 = 5275bb04f4863a13516b2f39392ac5e272f5e1bb8057b18aec1c9b79d73d8fb2
 GMP_BUILD_DIR = gmp-$(GMP_VERSION)
-GMP_INSTALL_DIR = $(CURDIR)/.gmp-$(GMP_VERSION)
 
 .fetch-gmp-$(GMP_VERSION):
 	@$(RM) $(GMP_TARBALL)
@@ -826,44 +826,23 @@ fetch-gmp: .fetch-gmp-$(GMP_VERSION)
 
 extract-gmp: .extract-gmp-$(GMP_VERSION)
 
-.configure-gmp-$(GMP_VERSION): .extract-gmp-$(GMP_VERSION)
-	cd $(GMP_BUILD_DIR) && CFLAGS=-fPIC ./configure --prefix=$(GMP_INSTALL_DIR) --libdir=$(GMP_INSTALL_DIR)/lib --enable-cxx --disable-shared
-	@$(TOUCH) $@
-
-configure-gmp: .configure-gmp-$(GMP_VERSION)
-
-.build-gmp-$(GMP_VERSION): .configure-gmp-$(GMP_VERSION)
-	cd $(GMP_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
-	@$(TOUCH) $@
-
-build-gmp: .build-gmp-$(GMP_VERSION)
-
-.install-gmp-$(GMP_VERSION): .build-gmp-$(GMP_VERSION)
-	cd $(GMP_BUILD_DIR) && $(MAKE) install
-	@$(TOUCH) $@
-
 clean-gmp:
-	@$(RM) .build-gmp-$(GMP_VERSION)
-	@$(RM) .configure-gmp-$(GMP_VERSION)
 	@$(RM) .extract-gmp-$(GMP_VERSION)
 	$(RM) $(GMP_BUILD_DIR)
 
 distclean-gmp: clean-gmp
 	@$(RM) .fetch-gmp-$(GMP_VERSION)
-	@$(RM) .install-gmp-$(GMP_VERSION)
 	$(RM) $(GMP_TARBALL)
-	$(RM) $(GMP_INSTALL_DIR)
 
 ##
 ## MPFR (Multiple-precision floating-point computations with correct rounding)
 ##
 
-MPFR_VERSION = 3.1.2
+MPFR_VERSION = 3.1.4
 MPFR_TARBALL = mpfr-$(MPFR_VERSION).tar.bz2
-MPFR_TARBALL_URL = http://www.mpfr.org/mpfr-$(MPFR_VERSION)/$(MPFR_TARBALL)
-MPFR_TARBALL_SHA256 = 79c73f60af010a30a5c27a955a1d2d01ba095b72537dab0ecaad57f5a7bb1b6b
+MPFR_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(MPFR_TARBALL)
+MPFR_TARBALL_SHA256 = d3103a80cdad2407ed581f3618c4bed04e0c92d1cf771a65ead662cc397f7775
 MPFR_BUILD_DIR = mpfr-$(MPFR_VERSION)
-MPFR_INSTALL_DIR = $(CURDIR)/.mpfr-$(MPFR_VERSION)
 
 .fetch-mpfr-$(MPFR_VERSION):
 	@$(RM) $(MPFR_TARBALL)
@@ -880,33 +859,13 @@ fetch-mpfr: .fetch-mpfr-$(MPFR_VERSION)
 
 extract-mpfr: .extract-mpfr-$(MPFR_VERSION)
 
-.configure-mpfr-$(MPFR_VERSION): .extract-mpfr-$(MPFR_VERSION) .install-gmp-$(GMP_VERSION)
-	cd $(MPFR_BUILD_DIR) && ./configure --prefix=$(MPFR_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --disable-shared
-	@$(TOUCH) $@
-
-configure-mpfr: .configure-mpfr-$(MPFR_VERSION)
-
-.build-mpfr-$(MPFR_VERSION): .configure-mpfr-$(MPFR_VERSION)
-	cd $(MPFR_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
-	@$(TOUCH) $@
-
-build-mpfr: .build-mpfr-$(MPFR_VERSION)
-
-.install-mpfr-$(MPFR_VERSION): .build-mpfr-$(MPFR_VERSION)
-	cd $(MPFR_BUILD_DIR) && $(MAKE) install
-	@$(TOUCH) $@
-
 clean-mpfr:
-	@$(RM) .build-mpfr-$(MPFR_VERSION)
-	@$(RM) .configure-mpfr-$(MPFR_VERSION)
 	@$(RM) .extract-mpfr-$(MPFR_VERSION)
 	$(RM) $(MPFR_BUILD_DIR)
 
 distclean-mpfr: clean-mpfr
 	@$(RM) .fetch-mpfr-$(MPFR_VERSION)
-	@$(RM) .install-mpfr-$(MPFR_VERSION)
 	$(RM) $(MPFR_TARBALL)
-	$(RM) $(MPFR_INSTALL_DIR)
 
 ##
 ## MPC (arithmetic of complex numbers with arbitrarily high precision and correct rounding)
@@ -914,10 +873,9 @@ distclean-mpfr: clean-mpfr
 
 MPC_VERSION = 1.0.3
 MPC_TARBALL = mpc-$(MPC_VERSION).tar.gz
-MPC_TARBALL_URL = http://www.multiprecision.org/mpc/download/$(MPC_TARBALL)
+MPC_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(MPC_TARBALL)
 MPC_TARBALL_SHA256 = 617decc6ea09889fb08ede330917a00b16809b8db88c29c31bfbb49cbf88ecc3
 MPC_BUILD_DIR = mpc-$(MPC_VERSION)
-MPC_INSTALL_DIR = $(CURDIR)/.mpc-$(MPC_VERSION)
 
 .fetch-mpc-$(MPC_VERSION):
 	@$(RM) $(MPC_TARBALL)
@@ -934,33 +892,13 @@ fetch-mpc: .fetch-mpc-$(MPC_VERSION)
 
 extract-mpc: .extract-mpc-$(MPC_VERSION)
 
-.configure-mpc-$(MPC_VERSION): .extract-mpc-$(MPC_VERSION) .install-gmp-$(GMP_VERSION) .install-mpfr-$(MPFR_VERSION)
-	cd $(MPC_BUILD_DIR) && ./configure --prefix=$(MPC_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --with-mpfr=$(MPFR_INSTALL_DIR) --disable-shared
-	@$(TOUCH) $@
-
-configure-mpc: .configure-mpc-$(MPC_VERSION)
-
-.build-mpc-$(MPC_VERSION): .configure-mpc-$(MPC_VERSION)
-	cd $(MPC_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
-	@$(TOUCH) $@
-
-build-mpc: .build-mpc-$(MPC_VERSION)
-
-.install-mpc-$(MPC_VERSION): .build-mpc-$(MPC_VERSION)
-	cd $(MPC_BUILD_DIR) && $(MAKE) install
-	@$(TOUCH) $@
-
 clean-mpc:
-	@$(RM) .build-mpc-$(MPC_VERSION)
-	@$(RM) .configure-mpc-$(MPC_VERSION)
 	@$(RM) .extract-mpc-$(MPC_VERSION)
 	$(RM) $(MPC_BUILD_DIR)
 
 distclean-mpc: clean-mpc
 	@$(RM) .fetch-mpc-$(MPC_VERSION)
-	@$(RM) .install-mpc-$(MPC_VERSION)
 	$(RM) $(MPC_TARBALL)
-	$(RM) $(MPC_INSTALL_DIR)
 
 ##
 ## ISL (Integer Set Library)
@@ -971,7 +909,6 @@ ISL_TARBALL = isl-$(ISL_VERSION).tar.bz2
 ISL_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(ISL_TARBALL)
 ISL_TARBALL_SHA256 = 412538bb65c799ac98e17e8cfcdacbb257a57362acfaaff254b0fcae970126d2
 ISL_BUILD_DIR = isl-$(ISL_VERSION)
-ISL_INSTALL_DIR = $(CURDIR)/.isl-$(ISL_VERSION)
 
 .fetch-isl-$(ISL_VERSION):
 	@$(RM) $(ISL_TARBALL)
@@ -988,42 +925,22 @@ fetch-isl: .fetch-isl-$(ISL_VERSION)
 
 extract-isl: .extract-isl-$(ISL_VERSION)
 
-.configure-isl-$(ISL_VERSION): .extract-isl-$(ISL_VERSION) .install-gmp-$(GMP_VERSION)
-	cd $(ISL_BUILD_DIR) && LDFLAGS="-L$(GMP_INSTALL_DIR)/lib" ./configure --prefix=$(ISL_INSTALL_DIR) --libdir=$(ISL_INSTALL_DIR)/lib --with-gmp-prefix=$(GMP_INSTALL_DIR) --disable-shared
-	@$(TOUCH) $@
-
-configure-isl: .configure-isl-$(ISL_VERSION)
-
-.build-isl-$(ISL_VERSION): .configure-isl-$(ISL_VERSION)
-	cd $(ISL_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
-	@$(TOUCH) $@
-
-build-isl: .build-isl-$(ISL_VERSION)
-
-.install-isl-$(ISL_VERSION): .build-isl-$(ISL_VERSION)
-	cd $(ISL_BUILD_DIR) && $(MAKE) install
-	@$(TOUCH) $@
-
 clean-isl:
-	@$(RM) .build-isl-$(ISL_VERSION)
-	@$(RM) .configure-isl-$(ISL_VERSION)
 	@$(RM) .extract-isl-$(ISL_VERSION)
 	$(RM) $(ISL_BUILD_DIR)
 
 distclean-isl: clean-isl
 	@$(RM) .fetch-isl-$(ISL_VERSION)
-	@$(RM) .install-isl-$(ISL_VERSION)
 	$(RM) $(ISL_TARBALL)
-	$(RM) $(ISL_INSTALL_DIR)
 
 ##
 ## GCC (GNU Compiler Collection)
 ##
 
-GCC_VERSION = 6.3.0
-GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
+GCC_VERSION = 6.5.0
+GCC_TARBALL = gcc-$(GCC_VERSION).tar.xz
 GCC_TARBALL_URL = http://ftp.gwdg.de/pub/misc/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
-GCC_TARBALL_SHA256 = f06ae7f3f790fbf0f018f6d40e844451e6bc3b7bc96e128e63b09825c1f8b29f
+GCC_TARBALL_SHA256 = 7ef1796ce497e89479183702635b14bb7a46b53249209a5e0f999bebf4740945
 GCC_BUILD_DIR = gcc-$(GCC_VERSION)
 GCC_BUILD_FLAGS = --enable-cxx-flags=-fPIC --enable-languages=c,c++,fortran,lto --disable-multilib
 GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
@@ -1036,18 +953,19 @@ GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
 
 fetch-gcc: .fetch-gcc-$(GCC_VERSION) .fetch-gmp-$(GMP_VERSION) .fetch-mpfr-$(MPFR_VERSION) .fetch-mpc-$(MPC_VERSION) .fetch-isl-$(ISL_VERSION)
 
-.extract-gcc-$(GCC_VERSION): .fetch-gcc-$(GCC_VERSION) .extract-gmp-$(GMP_VERSION) .extract-mpfr-$(MPFR_VERSION) .extract-mpc-$(MPC_VERSION)
+.extract-gcc-$(GCC_VERSION): .fetch-gcc-$(GCC_VERSION) .extract-gmp-$(GMP_VERSION) .extract-mpfr-$(MPFR_VERSION) .extract-mpc-$(MPC_VERSION) .extract-isl-$(ISL_VERSION)
 	$(RM) $(GCC_BUILD_DIR)
-	$(TAR) -xjf $(GCC_TARBALL)
-	$(CP) $(GMP_BUILD_DIR) $(GCC_BUILD_DIR)/gmp
-	$(CP) $(MPFR_BUILD_DIR) $(GCC_BUILD_DIR)/mpfr
-	$(CP) $(MPC_BUILD_DIR) $(GCC_BUILD_DIR)/mpc
+	$(TAR) -xJf $(GCC_TARBALL)
+	$(LN) ../$(GMP_BUILD_DIR) $(GCC_BUILD_DIR)/gmp
+	$(LN) ../$(MPFR_BUILD_DIR) $(GCC_BUILD_DIR)/mpfr
+	$(LN) ../$(MPC_BUILD_DIR) $(GCC_BUILD_DIR)/mpc
+	$(LN) ../$(ISL_BUILD_DIR) $(GCC_BUILD_DIR)/isl
 	@$(TOUCH) $@
 
 extract-gcc: .extract-gcc-$(GCC_VERSION)
 
-.configure-gcc-$(GCC_VERSION): .extract-gcc-$(GCC_VERSION) .install-isl-$(ISL_VERSION)
-	cd $(GCC_BUILD_DIR) && ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --with-isl=$(ISL_INSTALL_DIR) --enable-build-with-cxx $(GCC_BUILD_FLAGS)
+.configure-gcc-$(GCC_VERSION): .extract-gcc-$(GCC_VERSION)
+	cd $(GCC_BUILD_DIR) && ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --enable-build-with-cxx $(GCC_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 configure-gcc: .configure-gcc-$(GCC_VERSION)
@@ -1060,7 +978,6 @@ build-gcc: .build-gcc-$(GCC_VERSION)
 
 install-gcc: .build-gcc-$(GCC_VERSION)
 	cd $(GCC_BUILD_DIR) && $(MAKE) install
-	cd $(GMP_INSTALL_DIR) && $(CP) include `$(GCC_INSTALL_DIR)/bin/gcc -print-file-name=plugin`
 
 clean-gcc: clean-gmp clean-mpfr clean-mpc clean-isl
 	@$(RM) .build-gcc-$(GCC_VERSION)
