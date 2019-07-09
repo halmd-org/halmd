@@ -65,11 +65,14 @@ template <typename particle_type>
 cache<typename id_range<particle_type>::array_type> const&
 id_range<particle_type>::ordered()
 {
-    cache<array_type> const& reverse_id_cache = particle_->reverse_id();
+    auto const& reverse_id_cache = particle_->reverse_id();
+
     if (ordered_cache_ != reverse_id_cache) {
         LOG_TRACE("ordered sequence of particle indices");
-        array_type const& reverse_id = read_cache(reverse_id_cache);
+
+        auto const& reverse_id = read_cache(reverse_id_cache);
         auto ordered = make_cache_mutable(ordered_);
+
         std::copy(
             reverse_id.begin() + range_.first
           , reverse_id.begin() + range_.second
@@ -84,10 +87,10 @@ template <typename particle_type>
 cache<typename id_range<particle_type>::array_type> const&
 id_range<particle_type>::unordered()
 {
-    cache<array_type> const& reverse_id_cache = particle_->reverse_id();
+    auto const& reverse_id_cache = particle_->reverse_id();
     if (unordered_cache_ != reverse_id_cache) {
         LOG_TRACE("unordered sequence of particle indices");
-        array_type const& reverse_id = read_cache(reverse_id_cache);
+        auto const& reverse_id = read_cache(reverse_id_cache);
         auto unordered = make_cache_mutable(unordered_);
         std::copy(
             reverse_id.begin() + range_.first

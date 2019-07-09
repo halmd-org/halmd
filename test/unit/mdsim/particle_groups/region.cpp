@@ -17,7 +17,7 @@
  * Public License along with this program. If not, see
  * <http://www.gnu.org/licenses/>.
  */
-
+//TODO: This test should be modified according to combination of region and from_region
 #include <halmd/config.hpp>
 
 #define BOOST_TEST_MODULE region
@@ -30,12 +30,12 @@
 #include <boost/iterator/transform_iterator.hpp>
 #include <cmath>
 
-#include <halmd/mdsim/host/region.cpp> // include definition file in order to generate template instantiations of region with 'simple' geometry
+#include <halmd/mdsim/host/particle_groups/region.cpp> // include definition file in order to generate template instantiations of region with 'simple' geometry
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
 #ifdef HALMD_WITH_GPU
-# include <halmd/mdsim/gpu/region.cpp>
+# include <halmd/mdsim/gpu/particle_groups/region.cpp>
 # include <test/tools/cuda.hpp>
 #endif
 
@@ -44,17 +44,22 @@
 /**
  * Test particle regions.
  */
-template <typename region_type, typename geometry_type>
+//template <typename region_type, typename geometry_type>
+template <int dimension, typename float_type, typename geometry_type>
 static void test_region(
-    region_type& region
+    //region_type& region
   , geometry_type& geometry
-  , typename region_type::particle_type const& particle
-  , typename region_type::box_type const& box
+  //, typename region_type::particle_type const& particle
+  , particle_type const& particle
+  //, typename region_type::box_type const& box
+  , box_type const& box
+  , geometry_selection geometry_sel
 )
 {
-    typedef typename region_type::vector_type vector_type;
-    typedef typename region_type::size_type size_type;
-
+    //typedef typename region_type::vector_type vector_type;
+    //typedef typename region_type::size_type size_type;
+    typedef typename particle_groups::array_type vector_type;
+    typedef typename particle_groups::size_type size_type;
     // get particle positions
     std::vector<vector_type> position;
     position.reserve(particle.nparticle());

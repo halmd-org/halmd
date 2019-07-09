@@ -1,5 +1,6 @@
 --
 -- Copyright © 2019      Felix Höfling
+-- Copyright © 2019 Roya Ebrahimi Viand
 -- Copyright © 2014-2015 Nicolas Höft
 --
 -- This file is part of HALMD.
@@ -26,9 +27,17 @@ local mdsim   = {
     particle = require("halmd.mdsim.particle")
 }
 
+-- grab C++ wrappers
+local region = assert(libhalmd.mdsim.particle_groups.region)
+
+local geometry_selection = {
+    excluded = 1
+  , included = 2
+}
+
 ---
--- From Region
--- ===========
+-- Region
+-- ======
 --
 -- A particle group represents a subset of particles, which is defined
 -- by an instance of particle together with a region in the simulation domain.
@@ -38,20 +47,19 @@ local mdsim   = {
 --    -- construct particle instance for given simulation domain
 --    local system = halmd.mdsim.particle({particles = 10000})
 --    local geometry = halmd.mdsim.geometries.cuboid({lowest_corner = {0,0,0}, length = {1, 1, 1}})
---    local region = halmd.mdsim.region({particle = system, label = "subbox", geometry = geometry, selection = "included", box = box})
 --
 --    -- select particles from within this sub-box / region
---    local group_cuboid = halmd.mdsim.particle_groups.region({region = region, label = ""})
+--    local group_cuboid = halmd.mdsim.particle_groups.region({particle = system, label = "subbox", geometry = geometry, selection = "included", box = box})
 --
-
--- grab C++ wrappers
-local region = assert(libhalmd.mdsim.particle_groups.region)
 
 ---
 -- Construct particle group from region.
 --
 -- :param table args: keyword arguments
--- :param args.region: instance of :class:`halmd.mdsim.region`
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :class:`halmd.mdsim.box`
+-- :param table args.geometry: geometry of the region, instance of :mod:`halmd.mdsim.geometries`
+-- :param string args.selection: select particles within or outside the geometry. Allowed values are ``included`` and ``excluded``.
 -- :param string args.label: group label *(defaults to region label)*
 -- :param boolean args.global: particle group can comprise the whole simulation
 --                             world (*default:* ``false``)
@@ -65,13 +73,13 @@ local region = assert(libhalmd.mdsim.particle_groups.region)
 --
 --    Instance of :class:`halmd.mdsim.particle`
 --
--- .. attribute:: region
---
---    Instance of :class:`halmd.mdsim.region`
---
 -- .. attribute:: size
 --
 --    Number of particles in group.
+--
+-- .. attribute:: label
+--
+--    Instance label.
 --
 -- .. attribute:: global
 --
@@ -115,17 +123,27 @@ local region = assert(libhalmd.mdsim.particle_groups.region)
 --
 local M = module(function(args)
     utility.assert_type(args, "table")
-    local region_ = utility.assert_kwarg(args, "region")
-    local label = utility.assert_type(args.label or assert(region_.label), "string")
+    local particle = utility.assert_kwarg(args, "particle")
+    local box = utility.assert_kwarg(args, "box")
+    local geometry = utility.assert_kwarg(args, "geometry")
+    local selection = utility.assert_type(utility.assert_kwarg(args, "selection"), "string")
+    local label = utility.assert_type(utility.assert_kwarg(args, "label"), "string")
     local global = utility.assert_type(args.global or false, "boolean")
     local fluctuating = utility.assert_type(args.fluctuating == nil and true or args.fluctuating, "boolean")
 
-    local particle = assert(region_.particle)
+    if not geometry_selection[selection] then
+        error(("unsupported geometry selection '%s'"):format(selection), 2)
+    end
 
     local logger = log.logger({prefix = ("region (%s)"):format(label)})
 
     -- construct particle group from region in space
-    local self = region(particle, region_, logger)
+    local self = region(particle, box, geometry, geometry_selection[selection], logger)
+
+    -- store label as Lua property
+    self.label = property(function(self)
+        return label
+    end)
 
     -- capture C++ method to_particle
     local to_particle = assert(self.to_particle)
@@ -149,11 +167,6 @@ local M = module(function(args)
     -- attach particle instance as read-only property
     self.particle = property(function(self)
         return particle
-    end)
-
-    -- attach region instance as read-only property
-    self.region = property(function(self)
-        return region
     end)
 
     -- attach label as read-only property

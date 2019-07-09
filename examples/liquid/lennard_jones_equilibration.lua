@@ -64,7 +64,6 @@ function main(args)
         length[i] = length[i]/2
     end
     local geometry = mdsim.geometries.cuboid({lowest_corner = lowest_corner, length = length})
-    local region = mdsim.region({particle = particle, label = "upper quadrant", geometry = geometry, selection = "included", box = box})
 
     -- set initial particle positions
     local lattice = mdsim.positions.lattice({box = box, particle = particle})
@@ -100,7 +99,10 @@ function main(args)
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
-    local group_included = mdsim.particle_groups.region({particle = particle, region = region, selection = "included", label = region.label})
+    local group_included = mdsim.particle_groups.region({particle = particle, box = box
+      , geometry = geometry, selection = "included"
+      , label = "upper quadrant"
+    })
 
     local msv_local = observables.thermodynamics({box = box, group = group_included})
 

@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_REGION_KERNEL_CUH
-#define HALMD_MDSIM_GPU_REGION_KERNEL_CUH
+#ifndef HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_KERNEL_CUH
+#define HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_KERNEL_CUH
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
@@ -47,4 +47,4 @@ private:
 
 };
 
-#endif /* ! HALMD_MDSIM_GPU_REGION_KERNEL_CUH */
+#endif /* ! HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_KERNEL_CUH */

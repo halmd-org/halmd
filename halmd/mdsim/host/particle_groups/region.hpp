@@ -23,8 +23,8 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle_group.hpp>
-#include <halmd/mdsim/host/region.hpp>
-#include <halmd/utility/raw_array.hpp>
+#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/box.hpp>
 
 #include <lua.hpp>
 
@@ -38,23 +38,44 @@ namespace particle_groups {
 /**
  * Select particles of a given particle instance by simulation box region
  */
-template <typename particle_type>
+template <int dimension, typename float_type, typename geometry_type>
 class region
   : public particle_group
 {
 public:
     typedef typename particle_group::array_type array_type;
     typedef typename particle_group::size_type size_type;
-    typedef halmd::mdsim::host::region_base region_type;
+    typedef host::particle<dimension, float_type> particle_type;
+    typedef typename particle_type::vector_type vector_type;
+    typedef mdsim::box<dimension> box_type;
+
+    enum geometry_selection {
+        excluded = 1
+      , included = 2
+    };
 
     /**
      * Select by region
      */
     region(
         std::shared_ptr<particle_type const> particle
-      , std::shared_ptr<region_type> region
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<geometry_type const> geometry
+      , geometry_selection geometry_sel
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
+
+    /*
+     * Returns particle indices that are within the defined region of the
+     * simulation box
+     */
+    cache<array_type> const& selection();
+
+    /*
+     * Returns boolean mask for each particle whether it is within the defined
+     * region of the simulation box
+     */
+    cache<array_type> const& mask();
 
     /**
      * Returns ordered sequence of particle indices.
@@ -77,13 +98,32 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::position_type position_type;
+
+    void update_();
     /** particle instance */
-    std::shared_ptr<particle_type const> const particle_;
-    /** particle region */
-    std::shared_ptr<region_type> const region_;
+    std::shared_ptr<particle_type const> particle_;
+    //! simulation box
+    std::shared_ptr<box_type const> box_;
     /** module logger */
     std::shared_ptr<logger> logger_;
+    //! region the particles are sorted by
+    std::shared_ptr<geometry_type const> geometry_;
+    /** cache observer of position updates for mask */
+    cache<> mask_cache_;
+    geometry_selection geometry_selection_;
+    /*
+     * mask for particles that determines whether they are in-/outside the region,
+     * each element has the value 0 or 1, where 0 means outside
+     * the region and 1 included in region.
+     * This mask is ordered by particle id.
+     */
+    cache<array_type> mask_;
+    /** particle indices of particles in the region */
+    cache<array_type> selection_;
     /** ordered sequence of particle indices */
+
     cache<array_type> ordered_;
     /** unordered sequence of particle indices */
     cache<array_type> unordered_;
@@ -93,6 +133,19 @@ private:
     cache<> ordered_cache_;
     /** cache observer of region mask */
     cache<> unordered_cache_;
+    /** cache observer of size */
+    cache<> size_cache_;
+
+    typedef utility::profiler::scoped_timer_type scoped_timer_type;
+    typedef utility::profiler::accumulator_type accumulator_type;
+
+    struct runtime
+    {
+        accumulator_type update_mask;
+        accumulator_type update_selection;
+    };
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace particle_groups

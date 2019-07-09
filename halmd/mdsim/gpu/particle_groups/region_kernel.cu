@@ -1,4 +1,4 @@
-/*
+/* Copyright © 2019 Roya Ebrahimi Viand
  * Copyright © 2014-2015 Nicolas Höft
  *
  * This file is part of HALMD.
@@ -24,12 +24,14 @@
 #include <halmd/mdsim/geometries/cuboid.hpp>
 #include <halmd/mdsim/geometries/sphere.hpp>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
-#include <halmd/mdsim/gpu/region_kernel.hpp>
+#include <halmd/mdsim/gpu/particle_groups/region_kernel.hpp>
+#include <halmd/mdsim/gpu/particle_groups/region_kernel.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
+namespace particle_groups{
 namespace region_kernel {
 
 template <typename vector_type, typename geometry_type>
@@ -63,7 +65,8 @@ __global__ void compute_mask(
 template<typename geometry_type>
 struct geometry_predicate
 {
-    typedef typename geometry_type::vector_type vector_type;
+    enum { dimension = geometry_type::vector_type::static_size };
+    typedef fixed_vector<float, dimension> vector_type;
 
     geometry_predicate(float4 const* position, geometry_type const& geometry, geometry_selection sel)
       : position_(position)
@@ -122,6 +125,7 @@ template class region_wrapper<2, halmd::mdsim::geometries::cuboid<2, float> >;
 template class region_wrapper<3, halmd::mdsim::geometries::sphere<3, float> >;
 template class region_wrapper<2, halmd::mdsim::geometries::sphere<2, float> >;
 
+} // namespace particle_groups
 } // namespace gpu
 } // namespace mdsim
 

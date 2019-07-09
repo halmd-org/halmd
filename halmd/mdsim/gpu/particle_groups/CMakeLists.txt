@@ -7,4 +7,5 @@ halmd_add_library(halmd_mdsim_gpu_particle_groups
   all.cpp
   id_range.cpp
   region.cpp
+  region_kernel.cu
 )
