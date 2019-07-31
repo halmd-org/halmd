@@ -105,7 +105,19 @@ local function generate_configuration(args)
     return {positions = obstacles, excluded_volume = excluded}
 end
 
+function write_coefficients(file, tabulated_force)
+    local writer = file:writer({location = {"parameters/halmd", "AdResS"}, mode = "truncate"})
+    writer:on_write(assert(tabulated_force.get_coefficients), {"potential_coefficients"})
+    writer:on_write(assert(tabulated_force.get_virial_coefficients), {"potential_virial_coefficients"})
+    writer:write()
+end
 
+--function test_read_coefficients(path)
+--    local interpolation = mdsim.forces.interpolation.cubic_hermite({box = box, nknots = nknots, precision = "double"})
+--    local tabulated_force = mdsim.forces.tabulated({particle = particle_test, box = box, interpolation = interpolation})
+--    local file = readers.h5md({path = path})
+--    tabulated_force:read_coefficients({file = file, location = {"parameters/halmd", "AdResS"}})
+--end
 -------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------
 
@@ -150,7 +162,7 @@ function main()
          local j = (i-1)/8 + 1
          local residue = j-math.floor(j/nknots[1])*nknots[1]
          if residue == 0 then
-            residue = 1
+            residue = nknots[1]
          end
 
          coefficients[i]   = amplitude*potential( T_1 * dx * ( residue - 1 ) )
@@ -168,15 +180,18 @@ function main()
     local virial_interpolation = mdsim.forces.interpolation.linear({box = box, nknots = nknots, precision = "single"})
 
 --FORCE IMPLEMENTATION
-    local tabulated_forces = mdsim.forces.tabulated_external({particle = particle, box = box, interpolation = interpolation, virial_interpolation = virial_interpolation})
+    local tabulated_force = mdsim.forces.tabulated_external({particle = particle, box = box, interpolation = interpolation, virial_interpolation = virial_interpolation})
 
     --Reading Coefficients
     --local file = halmd.io.readers.h5md({path = "coefficients.h5"})
-    tabulated_forces:set_coefficients(coefficients)
+    tabulated_force:set_coefficients(coefficients)
 
 --WRITER
     -- H5MD file writer
     local file = halmd.io.writers.h5md({path = "tabulated_external.h5", overwrite = true})
+
+    -- write potential coefficients
+    write_coefficients(file, tabulated_force)
 
     -- select all particles
     local particle_group = halmd.mdsim.particle_groups.all({particle = particle})
@@ -185,7 +200,7 @@ function main()
     local phase_space = halmd.observables.phase_space({box = box, group = particle_group})
 
     -- write trajectory of particle groups to H5MD file
-    phase_space:writer({file = file, fields = {"position", "species"}, every = 100})
+    phase_space:writer({file = file, fields = {"position", "velocity", "mass", "species"}, every = 100})
 
     -- Sample macroscopic state variables
     local msv = halmd.observables.thermodynamics({box = box, group = particle_group})
