@@ -50,8 +50,8 @@ __global__ void compute_mask(
         return;
 
     vector_type r;
-    unsigned int type;
-    tie(r, type) <<= g_r[i];
+    unsigned int species;
+    tie(r, species) <<= g_r[i];
 
     // enforce periodic boundary conditions
     box_kernel::reduce_periodic(r, box_length);
@@ -77,8 +77,8 @@ struct geometry_predicate
     HALMD_GPU_ENABLED bool operator()(int const& i) const
     {
         vector_type r;
-        unsigned int type;
-        tie(r, type) <<= position_[i];
+        unsigned int species;
+        tie(r, species) <<= position_[i];
         bool in_geometry = geometry_(r);
         if (selection_ == excluded)
             return !in_geometry;

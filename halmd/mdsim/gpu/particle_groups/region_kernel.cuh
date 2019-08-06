@@ -36,8 +36,8 @@ struct geometry_predicate
     HALMD_GPU_ENABLED bool operator()(int i)
     {
         vector_type r;
-        unsigned int type;
-        tie(r, type) <<= position_[i];
+        unsigned int species;
+        tie(r, species) <<= position_[i];
         return geometry_(r);
     }
 

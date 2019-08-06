@@ -100,8 +100,8 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    typedef typename particle_type::position_array_type position_array_type;//**
-    typedef typename particle_type::position_type position_type;//**
+    typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::position_type position_type;
 
     void update_mask_();
     void update_selection_();
