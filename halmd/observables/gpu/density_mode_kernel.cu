@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Felix Höfling
+ * Copyright © 2008-2019  Felix Höfling
  * Copyright © 2015       Nicolas Höft
  * Copyright © 2008-2011  Peter Colberg
  *
@@ -60,8 +60,21 @@ sum_reduce(T* a, T* b)
         a[TID] += a[TID + threads];
         b[TID] += b[TID + threads];
     }
+
     if (threads >= warpSize) {
         __syncthreads();
+    }
+    else {
+        // on hardware of compute capability ≥ 7.0 (Volta),
+        // warps are no longer guaranteed to be executed in lock-step
+#if CUDART_VERSION >= 9000
+        // select warp lanes with TID < threads,
+        // fix compilation of operator<< for large values of 'threads'
+        unsigned mask = (1U << (threads & (warpSize - 1))) - 1;
+        __syncwarp(mask);
+#else
+        __syncthreads();    // only needed if the _hardware_ is Volta or later
+#endif
     }
 
     // recursion ends by calling sum_reduce<0>
@@ -115,7 +128,7 @@ __global__ void compute(
         __syncthreads();
 
         // accumulate results within block
-        if (TDIM == MAX_BLOCK_SIZE) sum_reduce<512>(sin_, cos_);
+        if (TDIM == 1024) sum_reduce<512>(sin_, cos_);
         else if (TDIM == 512) sum_reduce<256>(sin_, cos_);
         else if (TDIM == 256) sum_reduce<128>(sin_, cos_);
         else if (TDIM == 128) sum_reduce<64>(sin_, cos_);
@@ -128,7 +141,7 @@ __global__ void compute(
             g_sin_block[i * BDIM + BID] = sin_[0];
             g_cos_block[i * BDIM + BID] = cos_[0];
         }
-        __syncthreads();
+        __syncthreads();    // FIXME needed here? would __syncwarp() be sufficient?
     }
 }
 
@@ -156,7 +169,7 @@ __global__ void finalise(
         __syncthreads();
 
         // accumulate results within block
-        if (TDIM == MAX_BLOCK_SIZE) sum_reduce<512>(s_sum, c_sum);
+        if (TDIM == 1024) sum_reduce<512>(s_sum, c_sum);
         else if (TDIM == 512) sum_reduce<256>(s_sum, c_sum);
         else if (TDIM == 256) sum_reduce<128>(s_sum, c_sum);
         else if (TDIM == 128) sum_reduce<64>(s_sum, c_sum);
@@ -170,6 +183,7 @@ __global__ void finalise(
             g_sin[i] = s_sum[0];
             g_cos[i] = c_sum[0];
         }
+        __syncthreads();    // FIXME needed here?
     }
 }
 
