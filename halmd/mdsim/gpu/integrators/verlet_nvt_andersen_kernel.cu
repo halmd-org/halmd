@@ -137,7 +137,7 @@ __global__ void finalize(
 #ifdef USE_ORIGINAL_ANDERSEN_THERMOSTAT
         if (uniform(rng, state) > coll_prob) {
 #else
-        if (__all(uniform(rng, state) > q)) {
+        if (__all(uniform(rng, state) > q)) {       // FIXME replace by __all_sync() for CUDA SDK ≥ 9.0
 #endif
             // read force from global device memory
             fixed_vector<float, dimension> f = g_force[i];
