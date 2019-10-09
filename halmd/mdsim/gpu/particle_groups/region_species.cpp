@@ -87,11 +87,11 @@ void region_species<dimension, float_type, geometry_type>::update_mask_()
 {
     cache<position_array_type> const& position_cache = particle_->position();
     if (position_cache != mask_cache_) {
-        LOG_TRACE("update selection mask");
-        scoped_timer_type timer(runtime_.update_mask);
-
         position_array_type const& position = read_cache(particle_->position());
         auto mask = make_cache_mutable(mask_);
+
+        LOG_TRACE("update selection mask for region and species");
+        scoped_timer_type timer(runtime_.update_mask);
 
         auto const& kernel = region_species_wrapper<dimension, geometry_type>::kernel;
         // calculate "bin", ie. inside/outside the region
@@ -118,13 +118,16 @@ void region_species<dimension, float_type, geometry_type>::update_selection_()
     cache<position_array_type> const& position_cache = particle_->position();
 
     if(position_cache != selection_cache_) {
-        LOG_TRACE("update particle selection");
-        scoped_timer_type timer(runtime_.update_selection);
-
         unsigned int nparticle = particle_->nparticle();
         auto const& position = read_cache(particle_->position());
 
+        LOG_TRACE("update particle selection for region and species");
+        scoped_timer_type timer(runtime_.update_selection);
+
         auto selection = make_cache_mutable(selection_);
+
+        // allocate memory for maximum selection (i.e., all particles)
+        selection->resize(nparticle);
 
         auto const& kernel = region_species_wrapper<dimension, geometry_type>::kernel;
         unsigned int size = kernel.copy_selection(
@@ -135,6 +138,7 @@ void region_species<dimension, float_type, geometry_type>::update_selection_()
           , geometry_selection_ == excluded ? particle_groups::excluded : particle_groups::included
           , species_
         );
+        // shrink array to actual size of selection
         selection->resize(size);
 
         selection_cache_ = position_cache;
@@ -143,14 +147,23 @@ void region_species<dimension, float_type, geometry_type>::update_selection_()
 
 template <int dimension, typename float_type, typename geometry_type>
 cache<typename region_species<dimension, float_type, geometry_type>::array_type> const&
-region_species<dimension, float_type, geometry_type>::ordered()
+region_species<dimension, float_type, geometry_type>::ordered()  // ID order
 {
     auto const& s = selection();
     if (s != ordered_cache_) {
+//        auto const& id = read_cache(particle_->id());
+
+        LOG_WARNING("sorting selection of particle indices not yet implemented");
+//        LOG_TRACE("sorting selection of particle indices");
+        scoped_timer_type timer(runtime_.sort_selection);
+
         auto ordered = make_cache_mutable(ordered_);
-        LOG_TRACE("ordered sequence of particle indices");
         ordered->resize(s->size());
         cuda::copy(s->begin(), s->end(), ordered->begin());
+
+        // TODO: bring selection in ID order, sort 'ordered' by key 'id'
+        // 1) copy IDs of the selection, 2) perform in-place sort
+        // radix_sort(key.begin(), key.end(), ordered->begin());
 
         ordered_cache_ = s;
     }
@@ -159,25 +172,9 @@ region_species<dimension, float_type, geometry_type>::ordered()
 
 template <int dimension, typename float_type, typename geometry_type>
 cache<typename region_species<dimension, float_type, geometry_type>::array_type> const&
-region_species<dimension, float_type, geometry_type>::unordered()
+region_species<dimension, float_type, geometry_type>::unordered()  // memory order
 {
-    auto const& s = selection();
-    if (s != unordered_cache_) {
-        auto unordered = make_cache_mutable(unordered_);
-        LOG_TRACE("unordered sequence of particle indices");
-
-        unordered->resize(s->size());
-        cuda::copy(s->begin(), s->end(), unordered->begin());
-
-        // TODO: is radix sort required here?
-        radix_sort(
-            unordered->begin()
-          , unordered->end()
-        );
-
-        unordered_cache_ = s;
-    }
-    return unordered_;
+    return selection();
 }
 
 template <int dimension, typename float_type, typename geometry_type>
@@ -219,6 +216,7 @@ void region_species<dimension, float_type, geometry_type>::luaopen(lua_State* L)
                         class_<runtime>("runtime")
                             .def_readonly("update_mask", &runtime::update_mask)
                             .def_readonly("update_selection", &runtime::update_selection)
+                            .def_readonly("sort_selection", &runtime::sort_selection)
                     ]
                     .def_readonly("runtime", &region_species::runtime_)
                     .def("to_particle", &wrap_to_particle<region_species<dimension, float_type, geometry_type>, particle_type>)

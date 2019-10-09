@@ -56,11 +56,10 @@ void region<dimension, float_type, geometry_type>::update_()
 {
     cache<position_array_type> const& position_cache = particle_->position();
     if (position_cache != mask_cache_) {
-        LOG_TRACE("update region");
+        auto const& position = read_cache(particle_->position());
 
+        LOG_TRACE("update selection mask for region");
         scoped_timer_type timer(runtime_.update_mask);
-
-        position_array_type const& position = read_cache(particle_->position());
 
         auto mask = make_cache_mutable(mask_);
         auto selection = make_cache_mutable(selection_);
@@ -98,14 +97,24 @@ region<dimension, float_type, geometry_type>::mask()
 
 template <int dimension, typename float_type, typename geometry_type>
 cache<typename region<dimension, float_type, geometry_type>::array_type> const&
-region<dimension, float_type, geometry_type>::ordered()
+region<dimension, float_type, geometry_type>::ordered() // ID order
 {
     auto const& selection_cache = selection();
     if (selection_cache != ordered_cache_) {
+//        auto const& id = read_cache(particle_->id());
+
+        LOG_WARNING("sorting selection of particle indices not yet implemented");
+//        LOG_TRACE("sorting selection of particle indices");
+        scoped_timer_type timer(runtime_.sort_selection);
+
         auto ordered = make_cache_mutable(ordered_);
         ordered->clear(); // avoid copying the elements upon resize()
         ordered->resize(selection_cache->size());
         std::copy(selection_cache->begin(), selection_cache->end(), ordered->begin());
+
+        // TODO: bring selection in ID order, sort 'ordered' by key 'id'
+        // 1) copy IDs of the selection, 2) perform in-place sort
+        // radix_sort(key.begin(), key.end(), ordered->begin());
 
         ordered_cache_ = selection_cache;
     }
@@ -114,27 +123,10 @@ region<dimension, float_type, geometry_type>::ordered()
 
 template <int dimension, typename float_type, typename geometry_type>
 cache<typename region<dimension, float_type, geometry_type>::array_type> const&
-region<dimension, float_type, geometry_type>::unordered()
+region<dimension, float_type, geometry_type>::unordered() // memory order
 {
-    auto const& selection_cache = selection();
-    if (selection_cache != unordered_cache_) {
-        auto unordered = make_cache_mutable(unordered_);
-        LOG_TRACE("unordered sequence of particle indices");
-
-        unordered->clear(); // avoid copying the elements upon resize()
-        unordered->resize(selection_cache->size());
-            std::copy(selection_cache->begin(), selection_cache->end(), unordered->begin());
-
-            // TODO: is radix sort required here?
-            radix_sort(
-                unordered->begin()
-              , unordered->end()
-            );
-
-            unordered_cache_ = selection_cache;
-        }
-        return unordered_;
-    }
+    return selection();
+}
 
 template <int dimension, typename float_type, typename geometry_type>
 cache<typename region<dimension, float_type, geometry_type>::size_type> const&
@@ -175,6 +167,7 @@ void region<dimension, float_type, geometry_type>::luaopen(lua_State* L)
                         class_<runtime>("runtime")
                             .def_readonly("update_mask", &runtime::update_mask)
                             .def_readonly("update_selection", &runtime::update_selection)
+                            .def_readonly("sort_selection", &runtime::sort_selection)
                     ]
                     .def_readonly("runtime", &region::runtime_)
                     .def("to_particle", &wrap_to_particle<region<dimension, float_type, geometry_type>, particle_type>)

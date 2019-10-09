@@ -118,14 +118,10 @@ private:
 
     /** ordered sequence of particle indices */
     cache<array_type> ordered_;
-    /** unordered sequence of particle indices */
-    cache<array_type> unordered_;
     /** number of particles in region */
     cache<size_type> size_;
     /** cache observer of region mask */
     cache<> ordered_cache_;
-    /** cache observer of region mask */
-    cache<> unordered_cache_;
     /** cache observer of size */
     cache<> size_cache_;
 
@@ -149,6 +145,7 @@ private:
     {
         accumulator_type update_mask;
         accumulator_type update_selection;
+        accumulator_type sort_selection;
     };
 
     /** profiling runtime accumulators */

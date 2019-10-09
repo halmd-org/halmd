@@ -193,6 +193,7 @@ local M = module(function(args)
     local runtime = assert(self.runtime)
     table.insert(conn, profiler:on_profile(runtime.update_mask, ("update particle mask of %s"):format(desc)))
     table.insert(conn, profiler:on_profile(runtime.update_selection, ("update selection by %s"):format(desc)))
+    table.insert(conn, profiler:on_profile(runtime.sort_selection, ("sorting indices of selection by %s"):format(desc)))
 
     return self
 end)
