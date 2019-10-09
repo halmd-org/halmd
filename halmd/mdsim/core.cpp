@@ -31,12 +31,35 @@ void core::mdstep()
 {
     scoped_timer_type timer(runtime_.mdstep);
 
-    on_prepend_integrate_();
-    on_integrate_();
-    on_append_integrate_();
-    on_prepend_finalize_();
-    on_finalize_();
-    on_append_finalize_();
+    {
+        scoped_timer_type timer(runtime_.on_prepend_integrate);
+        on_prepend_integrate_();
+    }
+
+    {
+        scoped_timer_type timer(runtime_.on_integrate);
+        on_integrate_();
+    }
+
+    {
+        scoped_timer_type timer(runtime_.on_append_integrate);
+        on_append_integrate_();
+    }
+
+    {
+        scoped_timer_type timer(runtime_.on_prepend_finalize);
+        on_prepend_finalize_();
+    }
+
+    {
+        scoped_timer_type timer(runtime_.on_finalize);
+        on_finalize_();
+    }
+
+    {
+        scoped_timer_type timer(runtime_.on_append_finalize);
+        on_append_finalize_();
+    }
 }
 
 void core::luaopen(lua_State* L)
@@ -59,6 +82,12 @@ void core::luaopen(lua_State* L)
                 [
                     class_<runtime>("runtime")
                         .def_readonly("mdstep", &runtime::mdstep)
+                        .def_readonly("on_prepend_integrate", &runtime::on_prepend_integrate)
+                        .def_readonly("on_integrate", &runtime::on_integrate)
+                        .def_readonly("on_append_integrate", &runtime::on_append_integrate)
+                        .def_readonly("on_prepend_finalize", &runtime::on_prepend_finalize)
+                        .def_readonly("on_finalize", &runtime::on_finalize)
+                        .def_readonly("on_append_finalize", &runtime::on_append_finalize)
                 ]
                 .def_readonly("runtime", &core::runtime_)
         ]

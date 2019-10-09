@@ -63,16 +63,15 @@ void verlet<dimension, float_type>::set_timestep(double timestep)
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
-    LOG_TRACE("update positions and velocities");
-
     force_array_type const& force = read_cache(particle_->force());
+
+    LOG_TRACE("update positions and velocities: first leapfrog half-step");
+    scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the force!
     auto position = make_cache_mutable(particle_->position());
     auto velocity = make_cache_mutable(particle_->velocity());
     auto image = make_cache_mutable(particle_->image());
-
-    scoped_timer_type timer(runtime_.integrate);
 
     try {
         configure_kernel(wrapper_->integrate, particle_->dim(), true);
@@ -98,14 +97,13 @@ void verlet<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::finalize()
 {
-    LOG_TRACE("update velocities");
-
     force_array_type const& force = read_cache(particle_->force());
+
+    LOG_TRACE("update velocities: second leapfrog half-step");
+    scoped_timer_type timer(runtime_.finalize);
 
     // invalidate the particle caches after accessing the force!
     auto velocity = make_cache_mutable(particle_->velocity());
-
-    scoped_timer_type timer(runtime_.finalize);
 
     try {
         configure_kernel(wrapper_->finalize, particle_->dim(), true);

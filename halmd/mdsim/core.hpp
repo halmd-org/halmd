@@ -77,7 +77,13 @@ private:
     struct runtime
     {
         accumulator_type mdstep;
-    };
+        accumulator_type on_prepend_integrate;
+        accumulator_type on_integrate;
+        accumulator_type on_append_integrate;
+        accumulator_type on_prepend_finalize;
+        accumulator_type on_finalize;
+        accumulator_type on_append_finalize;
+   };
 
     signal_type on_prepend_integrate_;
     signal_type on_integrate_;

@@ -77,5 +77,11 @@ local self = core()
 
 -- connect runtime accumulators to profiler
 profiler:on_profile(self.runtime.mdstep, "MD integration step")
+profiler:on_profile(self.runtime.on_prepend_integrate, "functions prepended to integrate() stage")
+profiler:on_profile(self.runtime.on_integrate, "integrate() stage of integrators")
+profiler:on_profile(self.runtime.on_append_integrate, "functions appended to integrate() stage")
+profiler:on_profile(self.runtime.on_prepend_finalize, "functions prepended to final stage")
+profiler:on_profile(self.runtime.on_finalize, "final stage of integrators")
+profiler:on_profile(self.runtime.on_append_finalize, "functions appended to final stage")
 
 return self
