@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE( linear )
         index_type ridx = halmd::offset_to_multi_index(i, max_points_vec);
 
         for (int d = 0; d < dimension; ++d) {
-            r[d] = (ridx[d]) * box->length()[d] / max_points_vec[d] - box->length()[d]/2;
+            r[d] = ridx[d] * box->length()[d] / (max_points_vec[d] - 1) - box->length()[d] / 2;
         }
         if(old_ridx[dimension-1] != ridx[dimension-1] && dimension > 1)
             std::cout << "\n";
