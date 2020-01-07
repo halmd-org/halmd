@@ -33,7 +33,7 @@ namespace observables {
 
 /**
  * compute thermodynamic state variables such as pressure,
- * temperature, potential energy, total energy
+ * temperature, potential energy, total energy, heat flux
  *
  * potential energy and the potential part of the stress tensor
  * are computed and stored by the force modules
@@ -73,6 +73,8 @@ public:
     virtual double virial() = 0;
     /** (symmetric) stress tensor */
     virtual stress_tensor_type const& stress_tensor() = 0;
+    /** mean heat flux per particle */
+    virtual vector_type const& heat_flux() = 0;
 
     // compute derived quantities on the fly
 
@@ -81,7 +83,7 @@ public:
     {
         return density() * (temp() + virial() / dimension);
     }
-
+    
     /** system temperature */
     double temp() { return 2 * en_kin() / dimension; }
     /** number density */
