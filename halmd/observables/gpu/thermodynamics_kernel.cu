@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016      Felix Höfling
+ * Copyright © 2020      Roya Ebrahimi Viand
  * Copyright © 2013-2015 Nicolas Höft
  * Copyright © 2012      Peter Colberg
  *
@@ -140,6 +140,27 @@ __device__ void stress_tensor<dimension, float_type>::operator()(size_type i)
 }
 
 template <int dimension, typename float_type>
+__device__ void heat_flux<dimension, float_type>::operator()(size_type i)
+{
+    fixed_vector<float, dimension> v;
+    typedef fixed_vector<float, dimension> stress_pot_diagonal;
+    float mass;
+    float vrl = 0;
+    stress_pot_diagonal s;
+
+    tie(v, mass) <<= tex1Dfetch(velocity_, i);
+    float p_e = tex1Dfetch(gpu::en_pot_, i);
+    s = mdsim::read_stress_tensor_diagonal<stress_pot_diagonal>(stress_pot_, i, stride_);
+    // add trace of the potential part of the stress tensor
+    for (int j = 0; j < dimension; ++j) {
+        vrl += s[j];
+    }
+
+    hf_ += (p_e + 0.5 * mass *inner_prod(v, v) + vrl) * v;
+
+}
+
+template <int dimension, typename float_type>
 cuda::texture<float4> const
 kinetic_energy<dimension, float_type>::texture_ = velocity_;
 
@@ -179,6 +200,18 @@ template <int dimension, typename float_type>
 cuda::texture<float4> const
 stress_tensor<dimension, float_type>::velocity_texture_ = velocity_;
 
+template <int dimension, typename float_type>
+cuda::texture<float4> const
+heat_flux<dimension, float_type>::texture_ = velocity_;
+
+template <int dimension,typename float_type>
+cuda::texture<float> const
+heat_flux<dimension, float_type>::potential_texture_ = gpu::en_pot_;
+
+template <int dimension, typename float_type>
+cuda::texture<float> const
+heat_flux<dimension, float_type>::stress_pot_texture_ = stress_pot_;
+
 template class observables::gpu::kinetic_energy<3, dsfloat>;
 template class observables::gpu::kinetic_energy<2, dsfloat>;
 template class observables::gpu::total_force<3, dsfloat>;
@@ -192,6 +225,8 @@ template class observables::gpu::virial<3, dsfloat>;
 template class observables::gpu::virial<2, dsfloat>;
 template class observables::gpu::stress_tensor<3, dsfloat>;
 template class observables::gpu::stress_tensor<2, dsfloat>;
+template class observables::gpu::heat_flux<3, dsfloat>;
+template class observables::gpu::heat_flux<2, dsfloat>;
 
 } // namespace gpu
 } // namespace observables
@@ -209,5 +244,7 @@ template class reduction_kernel<observables::gpu::virial<3, dsfloat> >;
 template class reduction_kernel<observables::gpu::virial<2, dsfloat> >;
 template class reduction_kernel<observables::gpu::stress_tensor<3, dsfloat> >;
 template class reduction_kernel<observables::gpu::stress_tensor<2, dsfloat> >;
+template class reduction_kernel<observables::gpu::heat_flux<3, dsfloat> >;
+template class reduction_kernel<observables::gpu::heat_flux<2, dsfloat> >;
 
 } // namespace halmd

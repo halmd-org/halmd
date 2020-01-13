@@ -1,5 +1,6 @@
 /*
- * Copyright © 2012-2016 Felix Höfling
+ * Copyright © 2020      Roya Ebrahimi Viand
+ * Copyright © 2012-2013 Felix Höfling
  * Copyright © 2013-2015 Nicolas Höft
  * Copyright © 2012      Peter Colberg
  *

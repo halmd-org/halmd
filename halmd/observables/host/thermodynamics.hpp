@@ -172,7 +172,7 @@ private:
     /** cache observers of mean stress tensor elements per particle */
     std::tuple<cache<>, cache<>, cache<>> stress_tensor_cache_;
     /** cache observers of mean heat flux per particle */
-    std::tuple<cache<>, cache<>, cache<>> heat_flux_cache_;
+    std::tuple<cache<>, cache<>, cache<>, cache<>, cache<>> heat_flux_cache_;
 
     typedef halmd::utility::profiler::accumulator_type accumulator_type;
     typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
