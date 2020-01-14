@@ -79,7 +79,7 @@ To build Boost, extract the source package and bootstrap the build with ::
 
 Compile Boost using ::
 
-   ./bjam cxxflags="-fPIC -std=c++11"
+   ./b2 cxxflags="-fPIC -std=c++11"
 
 This compiles both dynamic and static libraries.
 
@@ -97,7 +97,7 @@ This compiles both dynamic and static libraries.
 
 Install the Boost libraries into your packages directory::
 
-   ./bjam cxxflags="-fPIC -std=c++11" install --prefix=$HOME/opt/boost_1_61_0
+   ./b2 cxxflags="-fPIC -std=c++11" install --prefix=$HOME/opt/boost_1_61_0
 
 Include Boost in your shell environment, by adding to ~/.bashrc::
 
