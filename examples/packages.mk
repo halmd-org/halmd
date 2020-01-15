@@ -269,13 +269,13 @@ distclean-luatrace: clean-luatrace
 ## Boost C++ libraries with C++11 ABI
 ##
 
-BOOST_VERSION = 1.65.1
-BOOST_RELEASE = 1_65_1
+BOOST_VERSION = 1.72.0
+BOOST_RELEASE = 1_72_0
 BOOST_ABI = c++11
 BOOST_TOOLSET = gcc
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
-BOOST_TARBALL_SHA256 = 9807a5d16566c57fd74fb522764e0b134a8bbe6b6e8967b83afefd30dcd3be81
+BOOST_TARBALL_SHA256 = 59c9b274bc451cf91a9ba1dd2c7fdcaf5d60b1b3aa83f2c9fa143417cc660722
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)-$(BOOST_ABI)
 BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged toolset=$(BOOST_TOOLSET) cxxflags="-fPIC -std=$(BOOST_ABI)" dll-path=$(BOOST_INSTALL_DIR)/lib
@@ -308,13 +308,13 @@ extract-boost: .extract-boost-$(BOOST_VERSION)
 configure-boost: .configure-boost-$(BOOST_VERSION)
 
 .build-boost-$(BOOST_VERSION): .configure-boost-$(BOOST_VERSION)
-	cd $(BOOST_BUILD_DIR) && ./bjam $(BOOST_BUILD_FLAGS) $(PARALLEL_BUILD_FLAGS)
+	cd $(BOOST_BUILD_DIR) && ./b2 $(BOOST_BUILD_FLAGS) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-boost: .build-boost-$(BOOST_VERSION)
 
 install-boost: .build-boost-$(BOOST_VERSION)
-	cd $(BOOST_BUILD_DIR) && ./bjam $(BOOST_BUILD_FLAGS) install --prefix=$(BOOST_INSTALL_DIR)
+	cd $(BOOST_BUILD_DIR) && ./b2 $(BOOST_BUILD_FLAGS) install --prefix=$(BOOST_INSTALL_DIR)
 
 clean-boost:
 	$(RM) $(BOOST_BUILD_DIR)
