@@ -131,7 +131,7 @@ protected:
     double tolerance_;
     /** maximum number of wavevectors per wavenumber */
     double max_count_;
-    /** list of wavevectors grouped by their magnitude in ascending order */
+    /** list of wavevectors grouped by their magnitude in the order of 'wavenumber' */
     wavevector_array_type wavevector_;
     /** list of wavevector shells */
     shell_array_type shell_;
