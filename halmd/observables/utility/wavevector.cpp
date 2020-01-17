@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011-2013  Felix Höfling
+ * Copyright © 2011-2020 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -101,6 +101,8 @@ wavevector<dimension>::wavevector(
             discarded.push_back(q_it);
         }
     }
+    // remove discarded wavenumbers in reverse order
+    reverse(begin(discarded), end(discarded));
     for (auto q_it : discarded) {
         wavenumber_.erase(q_it);
     }
