@@ -24,7 +24,6 @@
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
 #include <boost/multi_array.hpp>
-#include <boost/test/unit_test.hpp>
 #include <iterator> // std::back_inserter
 
 #include <halmd/algorithm/multi_range.hpp>
