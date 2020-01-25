@@ -20,6 +20,8 @@
 
 #define BOOST_TEST_MODULE iota
 #include <boost/test/unit_test.hpp>
+#include <boost/test/data/test_case.hpp>
+#include <boost/test/data/monomorphic.hpp>
 
 #include <halmd/algorithm/gpu/iota.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -28,34 +30,40 @@
 #define HALMD_TEST_NO_LOGGING
 #include <test/tools/ctest.hpp>
 #include <test/tools/cuda.hpp>
-#include <test/tools/init.hpp>
 
 #include <boost/iterator/counting_iterator.hpp>
 
 #include <algorithm>
 
 /**
- * Test halmd::iota on GPU.
+ * Data-driven test case registration.
  */
-template <typename size_type>
-static void test_iota(
-    size_type count
-  , size_type value
-  , size_type repeat
+using namespace boost::unit_test;
+BOOST_DATA_TEST_CASE(
+    test_iota
+    , data::make<unsigned int>({1000000, 100000, 10000, 1024, 1000, 512, 100, 10, 2, 1}) *
+        data::make<unsigned int>({0, 42})
+    , count, value
 )
 {
+    unsigned int const repeat = std::max(100 / count, 10u);
+    set_cuda_device device;
+
+    /**
+     * Test halmd::iota on GPU.
+     */
     BOOST_TEST_MESSAGE( "  " << count << " elements with first value " << value );
     BOOST_TEST_MESSAGE( "  " << repeat << " iterations" );
 
     halmd::accumulator<double> elapsed;
-    for (size_type i = 0; i < repeat; ++i) {
-        cuda::vector<size_type> g_output(count);
+    for (unsigned int i = 0; i < repeat; ++i) {
+        cuda::vector<unsigned int> g_output(count);
         cuda::memset(g_output.begin(), g_output.end(), 0);
         {
             halmd::scoped_timer<halmd::timer> t(elapsed);
             halmd::iota(g_output.begin(), g_output.end(), value);
         }
-        cuda::host::vector<size_type> h_output(count);
+        cuda::host::vector<unsigned int> h_output(count);
         BOOST_CHECK( cuda::copy(
             g_output.begin()
           , g_output.end()
@@ -69,27 +77,4 @@ static void test_iota(
         );
     }
     BOOST_TEST_MESSAGE( "  " << mean(elapsed) * 1e3 << " ± " << error_of_mean(elapsed) * 1e3 << " ms per iteration" );
-}
-
-/**
- * Manually register parametrised test cases.
- */
-HALMD_TEST_INIT( iota )
-{
-    using namespace boost::unit_test;
-
-    for (unsigned int count : {1000000, 100000, 10000, 1024, 1000, 512, 100, 10, 2, 1}) {
-        test_suite* ts = BOOST_TEST_SUITE( std::to_string(count) );
-        framework::master_test_suite().add(ts);
-
-        unsigned int const repeat = std::max(100 / count, 10u);
-
-        for (unsigned int value : {0, 42}) {
-            auto iota = [=]() {
-                set_cuda_device device;
-                test_iota(count, value, repeat);
-            };
-            ts->add(BOOST_TEST_CASE( iota ));
-        }
-    }
 }

@@ -23,6 +23,8 @@
 
 #define BOOST_TEST_MODULE binning
 #include <boost/test/unit_test.hpp>
+#include <boost/test/data/test_case.hpp>
+#include <boost/test/data/monomorphic.hpp>
 
 #include <algorithm>
 #include <boost/numeric/ublas/banded.hpp>
@@ -35,7 +37,6 @@
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <test/tools/ctest.hpp>
-#include <test/tools/init.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/binning.hpp>
 # include <test/tools/cuda.hpp>
@@ -250,141 +251,88 @@ test_non_uniform_density(typename binning_type::cell_size_type const& shape, flo
 }
 
 /**
- * Manual test case registration.
+ * Data-driven test case registration.
  */
-HALMD_TEST_INIT( binning )
-{
-    using namespace boost::unit_test;
+using namespace boost::unit_test;
+float cell_length = 2;
+auto dataset = data::make<unsigned int>({1, 2, 4, 8}) * data::make<float>({0., 0.25, 0.5, 0.75, 1.});
 
-    test_suite* ts_host = BOOST_TEST_SUITE( "host" );
-    framework::master_test_suite().add(ts_host);
-
-    test_suite* ts_host_two = BOOST_TEST_SUITE( "two" );
-    ts_host->add(ts_host_two);
-
-    test_suite* ts_host_three = BOOST_TEST_SUITE( "three" );
-    ts_host->add(ts_host_three);
-
-#ifdef HALMD_WITH_GPU
-    test_suite* ts_gpu = BOOST_TEST_SUITE( "gpu" );
-    framework::master_test_suite().add(ts_gpu);
-
-    test_suite* ts_gpu_two = BOOST_TEST_SUITE( "two" );
-    ts_gpu->add(ts_gpu_two);
-
-# ifdef USE_GPU_SINGLE_PRECISION
-    test_suite* ts_gpu_two_float = BOOST_TEST_SUITE( "float" );
-    ts_gpu_two->add(ts_gpu_two_float);
-# endif
-
-# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-    test_suite* ts_gpu_two_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
-    ts_gpu_two->add(ts_gpu_two_dsfloat);
-# endif
-
-    test_suite* ts_gpu_three = BOOST_TEST_SUITE( "three" );
-    ts_gpu->add(ts_gpu_three);
-
-# ifdef USE_GPU_SINGLE_PRECISION
-    test_suite* ts_gpu_three_float = BOOST_TEST_SUITE( "float" );
-    ts_gpu_three->add(ts_gpu_three_float);
-# endif
-
-# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-    test_suite* ts_gpu_three_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
-    ts_gpu_three->add(ts_gpu_three_dsfloat);
-# endif
-#endif
-
-    // lower bound on edge length of cells
-    float cell_length = 2;
-
-    for (unsigned int unit : {1, 2, 4, 8}) {
-        for (float compression : {0., 0.25, 0.5, 0.75, 1.}) {
-            {
+BOOST_AUTO_TEST_SUITE( host )
+    BOOST_DATA_TEST_CASE( two, dataset, unit, compression ) {
 #ifdef USE_HOST_SINGLE_PRECISION
-                typedef halmd::mdsim::host::binning<2, float> binning_type;
+        typedef halmd::mdsim::host::binning<2, float> binning_type;
 #else
-                typedef halmd::mdsim::host::binning<2, double> binning_type;
+        typedef halmd::mdsim::host::binning<2, double> binning_type;
 #endif
-                auto non_uniform_density = [=]() {
-                    test_non_uniform_density<binning_type>(
-                        {2 * unit, 3 * unit} // non-square box with coprime edge lengths
-                      , cell_length
-                      , compression
-                    );
-                };
-                ts_host_two->add(BOOST_TEST_CASE( non_uniform_density ));
-            }
-            {
-#ifdef USE_HOST_SINGLE_PRECISION
-                typedef halmd::mdsim::host::binning<3, float> binning_type;
-#else
-                typedef halmd::mdsim::host::binning<3, double> binning_type;
-#endif
-                auto non_uniform_density = [=]() {
-                    test_non_uniform_density<binning_type>(
-                        {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
-                      , cell_length
-                      , compression
-                    );
-                };
-                ts_host_three->add(BOOST_TEST_CASE( non_uniform_density ));
-            }
-#ifdef HALMD_WITH_GPU
-# ifdef USE_GPU_SINGLE_PRECISION
-            {
-                typedef halmd::mdsim::gpu::binning<2, float> binning_type;
-                auto non_uniform_density = [=]() {
-                    set_cuda_device device;
-                    test_non_uniform_density<binning_type>(
-                        {2 * unit, 3 * unit} // non-square box with coprime edge lengths
-                      , cell_length
-                      , compression
-                    );
-                };
-                ts_gpu_two_float->add(BOOST_TEST_CASE( non_uniform_density ));
-            }
-            {
-                typedef halmd::mdsim::gpu::binning<3, float> binning_type;
-                auto non_uniform_density = [=]() {
-                    set_cuda_device device;
-                    test_non_uniform_density<binning_type>(
-                        {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
-                      , cell_length
-                      , compression
-                    );
-                };
-                ts_gpu_three_float->add(BOOST_TEST_CASE( non_uniform_density ));
-            }
-# endif
-# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-            {
-                typedef halmd::mdsim::gpu::binning<2, halmd::dsfloat> binning_type;
-                auto non_uniform_density = [=]() {
-                    set_cuda_device device;
-                    test_non_uniform_density<binning_type>(
-                        {2 * unit, 3 * unit} // non-square box with coprime edge lengths
-                      , cell_length
-                      , compression
-                    );
-                };
-                ts_gpu_two_dsfloat->add(BOOST_TEST_CASE( non_uniform_density ));
-            }
-            {
-                typedef halmd::mdsim::gpu::binning<3, halmd::dsfloat> binning_type;
-                auto non_uniform_density = [=]() {
-                    set_cuda_device device;
-                    test_non_uniform_density<binning_type>(
-                        {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
-                      , cell_length
-                      , compression
-                    );
-                };
-                ts_gpu_three_dsfloat->add(BOOST_TEST_CASE( non_uniform_density ));
-            }
-# endif
-#endif
-        }
+        test_non_uniform_density<binning_type>(
+            {2 * unit, 3 * unit} // non-square box with coprime edge lengths
+          , cell_length
+          , compression
+        );
     }
-}
+    BOOST_DATA_TEST_CASE( three, dataset, unit, compression ) {
+#ifdef USE_HOST_SINGLE_PRECISION
+        typedef halmd::mdsim::host::binning<3, float> binning_type;
+#else
+        typedef halmd::mdsim::host::binning<3, double> binning_type;
+#endif
+        test_non_uniform_density<binning_type>(
+            {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
+          , cell_length
+          , compression
+        );
+    }
+BOOST_AUTO_TEST_SUITE_END()
+
+#ifdef HALMD_WITH_GPU
+BOOST_AUTO_TEST_SUITE( gpu )
+    BOOST_AUTO_TEST_SUITE( two )
+# ifdef USE_GPU_SINGLE_PRECISION
+        BOOST_DATA_TEST_CASE( float, dataset, unit, compression ) {
+            typedef halmd::mdsim::gpu::binning<2, float> binning_type;
+            //set_cuda_device device;
+            test_non_uniform_density<binning_type>(
+                {2 * unit, 3 * unit} // non-square box with coprime edge lengths
+              , cell_length
+              , compression
+            );
+        }
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+        BOOST_DATA_TEST_CASE( dsfloat, dataset, unit, compression) {
+            typedef halmd::mdsim::gpu::binning<2, halmd::dsfloat> binning_type;
+            //set_cuda_device device;
+            test_non_uniform_density<binning_type>(
+                {2 * unit, 3 * unit} // non-square box with coprime edge lengths
+              , cell_length
+              , compression
+            );
+        }
+# endif
+    BOOST_AUTO_TEST_SUITE_END()
+    BOOST_AUTO_TEST_SUITE( three )
+# ifdef USE_GPU_SINGLE_PRECISION
+        BOOST_DATA_TEST_CASE( float, dataset, unit, compression ) {
+            typedef halmd::mdsim::gpu::binning<3, float> binning_type;
+            //set_cuda_device device;
+            test_non_uniform_density<binning_type>(
+                {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
+              , cell_length
+              , compression
+            );
+        }
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+        BOOST_DATA_TEST_CASE( dsfloat, dataset, unit, compression) {
+            typedef halmd::mdsim::gpu::binning<3, halmd::dsfloat> binning_type;
+            //set_cuda_device device;
+            test_non_uniform_density<binning_type>(
+                {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
+              , cell_length
+              , compression
+            );
+        }
+# endif
+    BOOST_AUTO_TEST_SUITE_END()
+#endif
+BOOST_AUTO_TEST_SUITE_END()
