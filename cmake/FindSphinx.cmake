@@ -28,12 +28,12 @@ find_program(SPHINX_EXECUTABLE NAMES sphinx-build
 )
 
 if(SPHINX_EXECUTABLE)
-   execute_process (COMMAND "${SPHINX_EXECUTABLE}" -h
+   execute_process (COMMAND "${SPHINX_EXECUTABLE}" --version
                     OUTPUT_VARIABLE _SPHINX_VERSION
                     ERROR_VARIABLE  _SPHINX_VERSION
    )
 
-   if (_SPHINX_VERSION MATCHES "Sphinx v([0-9]+(\\.[0-9]+)+)")
+   if (_SPHINX_VERSION MATCHES "sphinx-build\\)? ([0-9]+(\\.[0-9]+)+)")
      set (SPHINX_VERSION_STRING "${CMAKE_MATCH_1}")
   endif()
 endif ()
