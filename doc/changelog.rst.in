@@ -3,6 +3,11 @@
 Changelog
 *********
 
+**Breaking changes**
+
+* increase minimal required version of the Boost C++ library to 1.59.0 *(Felix Höfling)*
+
+
 Version 1.0-alpha6
 ==================
 
