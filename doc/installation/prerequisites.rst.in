@@ -19,17 +19,17 @@ Build environment
 -----------------
 
 * a :ref:`C++ compiler <supported_compilers>` with C++11 support,
-  e.g., GCC ≥ 4.7
+  builds have been tested with GCC and Clang
 
   HALMD makes extensive use of C++11 features. Instructions for a
   semi-automated build of GCC are given in :ref:`automatic`.
 
-* `CMake <http://www.cmake.org/>`_ ≥ 2.8.12
+* `CMake <http://www.cmake.org/>`_ ≥ 2.8.12, latest version tested: 3.11.1
 
   The build process of HALMD depends on CMake, a cross-platform, open-source
   build system.
 
-* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 5.0
+* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 5.0, latest version tested: 8.5
 
   Please refer to the installation instructions shipped with the toolkit. The
   toolkit is not needed for builds without GPU acceleration.
@@ -38,7 +38,7 @@ Build environment
 Third-party libraries
 ---------------------
 
-* `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.55.0
+* `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.55.0, latest version tested: 1.72.0
 
   The C++ part of HALMD uses libraries in the Boost C++ collection.
 
@@ -62,7 +62,7 @@ Third-party libraries
   language. The fast and lightweight Lua interpreter is embedded in the HALMD
   executable.
 
-* `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ ≥ 1.8
+* `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ ≥ 1.8.13, latest version tested: 1.10.1
 
   "HDF5 is a data model, library, and file format for storing and managing
   data. It supports an unlimited variety of datatypes, and is designed for
@@ -75,7 +75,7 @@ Documentation
 Documentation is generated **optionally** in HTML and PDF format if these
 prerequisites are met:
 
-* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ ≥ 1.4
+* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ ≥ 1.4, latest version tested: 1.6.3
 
   "Sphinx is a tool that makes it easy to create intelligent and beautiful
   documentation."
