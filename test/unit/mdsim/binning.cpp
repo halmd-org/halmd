@@ -1,5 +1,6 @@
 /*
  * Copyright © 2014 Felix Höfling
+ * Copyright © 2020 Jaslo Ziska
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.

@@ -1,5 +1,6 @@
 /*
  * Copyright © 2012 Peter Colberg
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -35,10 +36,11 @@
 
 #include <algorithm>
 
+using namespace boost::unit_test;
+
 /**
  * Data-driven test case registration.
  */
-using namespace boost::unit_test;
 BOOST_DATA_TEST_CASE(
     test_iota
     , data::make<unsigned int>({1000000, 100000, 10000, 1024, 1000, 512, 100, 10, 2, 1}) *

@@ -1,5 +1,6 @@
 /*
  * Copyright © 2011  Peter Colberg
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
