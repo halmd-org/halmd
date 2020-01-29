@@ -334,5 +334,5 @@ BOOST_AUTO_TEST_SUITE( gpu )
         }
 # endif
     BOOST_AUTO_TEST_SUITE_END()
-#endif
 BOOST_AUTO_TEST_SUITE_END()
+#endif
