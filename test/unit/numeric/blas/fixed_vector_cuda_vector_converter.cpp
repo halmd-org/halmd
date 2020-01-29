@@ -20,7 +20,6 @@
 
 #define BOOST_TEST_MODULE fixed_vector_cuda_vector_converter
 #include <boost/test/unit_test.hpp>
-#include <boost/test/test_case_template.hpp>
 #include <boost/mpl/push_back.hpp>
 #include <boost/mpl/vector.hpp>
 #include <limits>
