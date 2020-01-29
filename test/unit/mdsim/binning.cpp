@@ -288,7 +288,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE( gpu )
     BOOST_AUTO_TEST_SUITE( two )
 # ifdef USE_GPU_SINGLE_PRECISION
-        BOOST_DATA_TEST_CASE( float, dataset, unit, compression ) {
+        BOOST_DATA_TEST_CASE( type_float, dataset, unit, compression ) {
             typedef halmd::mdsim::gpu::binning<2, float> binning_type;
             //set_cuda_device device;
             test_non_uniform_density<binning_type>(
@@ -299,7 +299,7 @@ BOOST_AUTO_TEST_SUITE( gpu )
         }
 # endif
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-        BOOST_DATA_TEST_CASE( dsfloat, dataset, unit, compression) {
+        BOOST_DATA_TEST_CASE( type_dsfloat, dataset, unit, compression) {
             typedef halmd::mdsim::gpu::binning<2, halmd::dsfloat> binning_type;
             //set_cuda_device device;
             test_non_uniform_density<binning_type>(
@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_SUITE( gpu )
     BOOST_AUTO_TEST_SUITE_END()
     BOOST_AUTO_TEST_SUITE( three )
 # ifdef USE_GPU_SINGLE_PRECISION
-        BOOST_DATA_TEST_CASE( float, dataset, unit, compression ) {
+        BOOST_DATA_TEST_CASE( type_float, dataset, unit, compression ) {
             typedef halmd::mdsim::gpu::binning<3, float> binning_type;
             //set_cuda_device device;
             test_non_uniform_density<binning_type>(
@@ -323,7 +323,7 @@ BOOST_AUTO_TEST_SUITE( gpu )
         }
 # endif
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-        BOOST_DATA_TEST_CASE( dsfloat, dataset, unit, compression) {
+        BOOST_DATA_TEST_CASE( type_dsfloat, dataset, unit, compression) {
             typedef halmd::mdsim::gpu::binning<3, halmd::dsfloat> binning_type;
             //set_cuda_device device;
             test_non_uniform_density<binning_type>(

@@ -795,30 +795,30 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE( gpu )
     BOOST_AUTO_TEST_SUITE( two )
 # ifdef USE_GPU_SINGLE_PRECISION
-        BOOST_AUTO_TEST_SUITE( float )
+        BOOST_AUTO_TEST_SUITE( type_float )
             typedef halmd::mdsim::gpu::particle<2, float> particle_type;
-	    TEST_SUITE_GPU(particle_type, dataset, nspecies)
+        TEST_SUITE_GPU(particle_type, dataset, nspecies)
         BOOST_AUTO_TEST_SUITE_END()
 # endif
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-        BOOST_AUTO_TEST_SUITE( dsfloat )
+        BOOST_AUTO_TEST_SUITE( type_dsfloat )
             typedef halmd::mdsim::gpu::particle<2, halmd::dsfloat> particle_type;
-	    TEST_SUITE_GPU(particle_type, dataset, nspecies)
+        TEST_SUITE_GPU(particle_type, dataset, nspecies)
         BOOST_AUTO_TEST_SUITE_END()
 # endif
     BOOST_AUTO_TEST_SUITE_END()
 
     BOOST_AUTO_TEST_SUITE( three )
 # ifdef USE_GPU_SINGLE_PRECISION
-        BOOST_AUTO_TEST_SUITE( float )
+        BOOST_AUTO_TEST_SUITE( type_float )
             typedef halmd::mdsim::gpu::particle<3, float> particle_type;
-	    TEST_SUITE_GPU(particle_type, dataset, nspecies)
+        TEST_SUITE_GPU(particle_type, dataset, nspecies)
         BOOST_AUTO_TEST_SUITE_END()
 # endif
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-        BOOST_AUTO_TEST_SUITE( dsfloat )
+        BOOST_AUTO_TEST_SUITE( type_dsfloat )
             typedef halmd::mdsim::gpu::particle<3, halmd::dsfloat> particle_type;
-	    TEST_SUITE_GPU(particle_type, dataset, nspecies)
+        TEST_SUITE_GPU(particle_type, dataset, nspecies)
         BOOST_AUTO_TEST_SUITE_END()
 # endif
     BOOST_AUTO_TEST_SUITE_END()

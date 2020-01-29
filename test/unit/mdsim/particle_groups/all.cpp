@@ -242,7 +242,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE( gpu )
     BOOST_AUTO_TEST_SUITE( two )
 # ifdef USE_GPU_SINGLE_PRECISION
-        BOOST_AUTO_TEST_SUITE( float )
+        BOOST_AUTO_TEST_SUITE( type_float )
             typedef test_suite_gpu<2, float> test_suite_type;
 
             BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
@@ -256,7 +256,7 @@ BOOST_AUTO_TEST_SUITE( gpu )
         BOOST_AUTO_TEST_SUITE_END()
 # endif
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-        BOOST_AUTO_TEST_SUITE( dsfloat )
+        BOOST_AUTO_TEST_SUITE( type_dsfloat )
             typedef test_suite_gpu<2, halmd::dsfloat> test_suite_type;
 
             BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
@@ -273,7 +273,7 @@ BOOST_AUTO_TEST_SUITE( gpu )
 
     BOOST_AUTO_TEST_SUITE( three )
 # ifdef USE_GPU_SINGLE_PRECISION
-        BOOST_AUTO_TEST_SUITE( float )
+        BOOST_AUTO_TEST_SUITE( type_float )
             typedef test_suite_gpu<3, float> test_suite_type;
 
             BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
@@ -287,7 +287,7 @@ BOOST_AUTO_TEST_SUITE( gpu )
         BOOST_AUTO_TEST_SUITE_END()
 # endif
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-        BOOST_AUTO_TEST_SUITE( dsfloat )
+        BOOST_AUTO_TEST_SUITE( type_dsfloat )
             typedef test_suite_gpu<3, halmd::dsfloat> test_suite_type;
 
             BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
