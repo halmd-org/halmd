@@ -30,18 +30,18 @@ add_test(unit/mdsim/binning/host/3d
 if(HALMD_WITH_GPU)
   if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
     halmd_add_gpu_test(unit/mdsim/binning/gpu/float/2d
-      test_unit_mdsim_binning --run_test=gpu/two/float --log_level=test_suite
+      test_unit_mdsim_binning --run_test=gpu/two/type_float --log_level=test_suite
     )
     halmd_add_gpu_test(unit/mdsim/binning/gpu/float/3d
-      test_unit_mdsim_binning --run_test=gpu/three/float --log_level=test_suite
+      test_unit_mdsim_binning --run_test=gpu/three/type_float --log_level=test_suite
     )
   endif()
   if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
     halmd_add_gpu_test(unit/mdsim/binning/gpu/dsfloat/2d
-      test_unit_mdsim_binning --run_test=gpu/two/dsfloat --log_level=test_suite
+      test_unit_mdsim_binning --run_test=gpu/two/type_dsfloat --log_level=test_suite
     )
     halmd_add_gpu_test(unit/mdsim/binning/gpu/dsfloat/3d
-      test_unit_mdsim_binning --run_test=gpu/three/dsfloat --log_level=test_suite
+      test_unit_mdsim_binning --run_test=gpu/three/type_dsfloat --log_level=test_suite
     )
   endif()
 endif()
