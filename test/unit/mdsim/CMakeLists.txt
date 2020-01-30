@@ -124,18 +124,18 @@ add_test(unit/mdsim/particle/host/3d
 if(HALMD_WITH_GPU)
   if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
     halmd_add_gpu_test(unit/mdsim/particle/gpu/float/2d
-      test_unit_mdsim_particle --run_test=gpu/two/float --log_level=test_suite
+      test_unit_mdsim_particle --run_test=gpu/two/type_float --log_level=test_suite
     )
     halmd_add_gpu_test(unit/mdsim/particle/gpu/float/3d
-      test_unit_mdsim_particle --run_test=gpu/three/float --log_level=test_suite
+      test_unit_mdsim_particle --run_test=gpu/three/type_float --log_level=test_suite
     )
   endif()
   if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
     halmd_add_gpu_test(unit/mdsim/particle/gpu/dsfloat/2d
-      test_unit_mdsim_particle --run_test=gpu/two/dsfloat --log_level=test_suite
+      test_unit_mdsim_particle --run_test=gpu/two/type_dsfloat --log_level=test_suite
     )
     halmd_add_gpu_test(unit/mdsim/particle/gpu/dsfloat/3d
-      test_unit_mdsim_particle --run_test=gpu/three/dsfloat --log_level=test_suite
+      test_unit_mdsim_particle --run_test=gpu/three/type_dsfloat --log_level=test_suite
     )
   endif()
 endif()
