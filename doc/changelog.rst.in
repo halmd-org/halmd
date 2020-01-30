@@ -23,9 +23,9 @@ Version 1.0-alpha6
 
 **Bug fixes**
 
-* remove velocity rescaling from ``halmd.mdsim.velocities.boltzmann``,
+* remove velocity rescaling from :mod:`halmd.mdsim.velocities.boltzmann`,
   shifting of the velocities to zero centre of mass is retained. This fixes
-  also the integrator ``halmd.mdsim.integrators.verlet_nvt_boltzmann``,
+  also the integrator :mod:`halmd.mdsim.integrators.verlet_nvt_boltzmann`,
   which now samples correctly from a Maxwell-Boltzmann distribution (except for
   the mentioned constraint). *(Felix Höfling, Daniel Kirchner*)
 
@@ -37,12 +37,12 @@ Version 1.0-alpha6
 
 **Improvements**
 
-* more flexible interfaces of ``halmd.mdsim.particle`` and
-  ``halmd.observables.phase_space`` using string-based identifiers of data
+* more flexible interfaces of :mod:`halmd.mdsim.particle` and
+  :mod:`halmd.observables.phase_space` using string-based identifiers of data
   arrays *(Daniel Kirchner)*
 
 * specify floating-point precision in the simulation script (see construction
-  of ``halmd.mdsim.particle``). Use CMake flags to control for which precisions
+  of :mod:`halmd.mdsim.particle`). Use CMake flags to control for which precisions
   GPU and host backends are built.  *(Daniel Kirchner)*
 
 * overwrite output files only if forced to do so, add command line flag
@@ -50,7 +50,7 @@ Version 1.0-alpha6
 
 **Internal changes**
 
-* switch to extensible and generic data arrays in ``halmd.mdsim.particle``,
+* switch to extensible and generic data arrays in :mod:`halmd.mdsim.particle`,
   unified implementation of single and mixed precision arrays *(Daniel Kirchner)*
 
 
@@ -77,7 +77,7 @@ Version 1.0-alpha5
   potentials *(Felix Höfling)*
 
 * add function ``to_particle()`` to particle groups, which convert the selected
-  particles to an instance of ``halmd.mdsim.particle`` *(Nicolas Höft)*
+  particles to an instance of :mod:`halmd.mdsim.particle` *(Nicolas Höft)*
 
 **Improvements**
 
@@ -112,7 +112,7 @@ Version 1.0-alpha4
 
 **New features**
 
-* add function ``halmd.random.shuffle()``, which allows one, e.g., to setup
+* add function :meth:`halmd.random.shuffle`, which allows one, e.g., to setup
   well-stirred fluid mixtures *(Felix Höfling)*
 
 **Improvements**
