@@ -68,3 +68,7 @@ if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
 else()
   set(HALMD_DEFAULT_GPU_PRECISION "single")
 endif()
+
+message(STATUS "Floating-point precision of host backend: ${HALMD_HOST_PRECISION}")
+message(STATUS "Default floating-point precision of GPU backend: ${HALMD_DEFAULT_GPU_PRECISION}")
+

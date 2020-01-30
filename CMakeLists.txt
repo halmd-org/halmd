@@ -289,6 +289,9 @@ else()
 
   project(HALMD NONE) # no compiler languages
 
+  # Set HALMD build variant flags
+  include(${CMAKE_SOURCE_DIR}/cmake/variant.cmake)
+
   add_subdirectory(doc)
   add_subdirectory(lua)
 
