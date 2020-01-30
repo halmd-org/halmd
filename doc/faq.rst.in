@@ -1,3 +1,5 @@
+.. _faq:
+
 FAQ
 ***
 
@@ -26,3 +28,10 @@ I have obtained new scientific insight. How shall I give credit to your work?**
   C++11. This can be achieved by building Boost C++ with the GCC option
   ``--std=c++11``.
 
+**Configuring emits a warning on missing Boost C++ dependencies, e.g.,
+`Imported targets not available for Boost version 106500'**
+
+  The CMake version used needs to be newer than the employed Boost C++ release.
+  It is a good idea to stick with the combination shipped by your Linux
+  distribution. For details check the `CMake Boost compatibility table
+  <https://gist.github.com/Levitanious/d3756fd1634c7be58c51add9466bbe2e>`_.

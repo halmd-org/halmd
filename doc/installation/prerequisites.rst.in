@@ -44,6 +44,10 @@ Third-party libraries
 
   .. note::
 
+    The the release of the Boost C++ library must not be newer than the CMake
+    release used. Otherwise, indirect library dependencies may not be resolved
+    properly, see :ref:`faq`.
+
     On older distributions based on GCC 4, the shipped Boost C++ Libraries can
     not be used due to an ABI incompatibility (C++98 vs. C++11). For
     instructions how to build Boost C++ with the C++11 ABI, see
