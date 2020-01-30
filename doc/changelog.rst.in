@@ -3,9 +3,68 @@
 Changelog
 *********
 
+Snapshot (master branch)
+========================
+
 **Breaking changes**
 
-* increase minimal required version of the Boost C++ library to 1.59.0 *(Felix Höfling)*
+* fix misspelled keyword ``acquire`` in Lua API, it was ``aquire`` before.
+  *(Felix Höfling)*
+
+* increase minimal required version of the Boost C++ library to 1.58.0 *(Felix
+  Höfling, Jaslo Ziska)*
+
+**Bug fixes**
+
+* correctly support GPUs of compute capability ≥ 7.0 (Volta). Since the Volta
+  architecture, Nvidia dropped the CUDA paradigm of executing threads within a
+  warp in lock-step fashion, which led to wrong results in some algorithms.
+  *(Felix Höfling)*
+
+* fix wrong output of particle data to a file, which happened if several
+  :mod:`phase space <halmd.observables.phase_space>` samplers, e.g., for
+  different groups, were operating on the same :mod:`particle
+  <halmd.mdsim.particle>` instance. *(Roya Ebrahimi Viand)*
+
+* fix wrong output of wavenumbers to a file in case of discarded values, e.g.,
+  if a non-cubic box and a wavevector filter were passed to
+  :mod:`halmd.observables.utility.wavevector` *(Felix Höfling)*
+
+* various small fixes in example scripts, corrected and more robust unit tests *(Felix Höfling)*
+
+**New features**
+
+* select particles in a region of the simulation box through the new particle
+  group :mod:`from_region <halmd.mdsim.particle_groups.from_region>`. The
+  selection can be inside or outside of a cuboid or a sphere. *(Nicolas Höft, Roya
+  Ebrahimi Viand)*
+
+* support fluctuating particle number in file writer of
+  :mod:`halmd.observables.thermodynamics`. It needs the new property
+  ``fluctuating`` of the :mod:`particle group <halmd.mdsim.particle_group>` to be
+  set. *(Felix Höfling)*
+
+* wavevectors can be restricted to an axis or plane aligned with the coordinate
+  frame, using the new ``filter`` keyword of
+  :mod:`halmd.observables.utility.wavevector`. In addition, a ``dense`` grid of
+  wavevectors can be generated from the reciprocal lattice. *(Felix Höfling)*
+
+**Improvements**
+
+* simple substitution of environment variables in filename pattern using a new
+  argument parser action from :mod:`halmd.utility.program_options` *(Felix
+  Höfling)*
+
+* usage documentation: add :ref:`tutorial <tutorial>` on diffusion in a simple
+  liquid *(Jake Atwell)*
+
+* developer's guide: describe :ref:`programme flow <structure>`, data
+  dependencies between modules, and the signal/slot mechanism *(Felix Höfling)*
+
+* :mod:`halmd.mdsim.clock` can be advanced explicitly in the simulation script
+  (for experienced users only) *(Felix Höfling)*
+
+* support Boost C++ library up to version 1.72.0 *(Jaslo Ziska)*
 
 
 Version 1.0-alpha6
@@ -15,7 +74,7 @@ Version 1.0-alpha6
 
 * simplifications of the simulation script: essential setup (e.g. logger) is no
   longer the user's responsibility, merely routines ``main()`` and optionally
-  ``define_args()`` are needed, provide argument parser actions  *(Daniel
+  ``define_args()`` are needed. Provide argument parser actions  *(Daniel
   Kirchner)*
 
 * pair potentials are truncated or modified by generic potential adapters
