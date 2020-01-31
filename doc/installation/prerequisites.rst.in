@@ -38,7 +38,8 @@ Build environment
 Third-party libraries
 ---------------------
 
-* `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.59.0, latest version tested: 1.72.0
+* `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.55.0 (some unit tests will be disabled in
+  Boost versions less than 1.59.0), latest version tested: 1.72.0
 
   The C++ part of HALMD uses libraries in the Boost C++ collection.
 

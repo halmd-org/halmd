@@ -54,26 +54,30 @@ set_property(TEST unit/utility/signal
   PROPERTY TIMEOUT 5
 )
 
-add_executable(test_unit_utility_posix_signal
-  posix_signal.cpp
-)
-target_link_libraries(test_unit_utility_posix_signal
-  halmd_utility
-  ${HALMD_TEST_LIBRARIES}
-)
-add_test(unit/utility/posix_signal
-  test_unit_utility_posix_signal --log_level=test_suite
-)
+if (${Boost_VERSION} GREATER_EQUAL 1.59.0)
+  add_executable(test_unit_utility_posix_signal
+    posix_signal.cpp
+  )
+  target_link_libraries(test_unit_utility_posix_signal
+    halmd_utility
+    ${HALMD_TEST_LIBRARIES}
+  )
+  add_test(unit/utility/posix_signal
+    test_unit_utility_posix_signal --log_level=test_suite
+  )
+endif()
 
-add_executable(test_unit_utility_raw_array
-  raw_array.cpp
-)
-target_link_libraries(test_unit_utility_raw_array
-  ${HALMD_TEST_LIBRARIES}
-)
-add_test(unit/utility/raw_array
-  test_unit_utility_raw_array --log_level=test_suite
-)
+if (${Boost_VERSION} GREATER_EQUAL 1.59.0)
+  add_executable(test_unit_utility_raw_array
+    raw_array.cpp
+  )
+  target_link_libraries(test_unit_utility_raw_array
+    ${HALMD_TEST_LIBRARIES}
+  )
+  add_test(unit/utility/raw_array
+    test_unit_utility_raw_array --log_level=test_suite
+  )
+endif()
 
 add_subdirectory(lua)
 if(HALMD_WITH_GPU)

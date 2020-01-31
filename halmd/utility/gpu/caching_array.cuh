@@ -23,7 +23,13 @@
 #ifndef HALMD_UTILITLY_GPU_CACHING_ARRAY
 #define HALMD_UTILITLY_GPU_CACHING_ARRAY
 
-#include <boost/core/noncopyable.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION <= 105500
+# include <boost/utility.hpp>
+#else
+# include <boost/core/noncopyable.hpp>
+#endif
+
 #include <cstddef>
 #include <cuda_wrapper/error.hpp>
 

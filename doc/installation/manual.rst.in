@@ -67,8 +67,8 @@ Include CMake in your shell environment, by adding to ~/.bashrc::
 Boost C++ libraries
 ^^^^^^^^^^^^^^^^^^^
 
-Get the latest `Boost source package`_, currently `Boost 1.72.0`_ (1.59.0
-is the minimum required version).
+Get the latest `Boost source package`_, currently `Boost 1.72.0`_ (1.55.0
+is the minimum required version, some unit tests will be disabled in Boost versions less than 1.59.0).
 
 .. _Boost source package: https://www.boost.org/users/download
 .. _Boost 1.72.0: https://dl.bintray.com/boostorg/release/1.72.0/source/1.72.0/boost_1_72_0.tar.bz2

@@ -1,4 +1,4 @@
-if(HALMD_WITH_GPU)
+if(HALMD_WITH_GPU AND ${Boost_VERSION} GREATER_EQUAL 1.59.0)
   add_executable(test_unit_algorithm_iota
     iota.cpp
   )
@@ -11,16 +11,18 @@ if(HALMD_WITH_GPU)
   )
 endif()
 
-add_executable(test_unit_algorithm_multi_range
-  multi_range.cpp
-)
-target_link_libraries(test_unit_algorithm_multi_range
-  ${HALMD_COMMON_LIBRARIES}
-  ${HALMD_TEST_LIBRARIES}
-)
-add_test(unit/algorithm/multi_range
-  test_unit_algorithm_multi_range --log_level=test_suite
-)
+if (${Boost_VERSION} GREATER_EQUAL 1.59.0)
+  add_executable(test_unit_algorithm_multi_range
+    multi_range.cpp
+  )
+  target_link_libraries(test_unit_algorithm_multi_range
+    ${HALMD_COMMON_LIBRARIES}
+    ${HALMD_TEST_LIBRARIES}
+  )
+  add_test(unit/algorithm/multi_range
+    test_unit_algorithm_multi_range --log_level=test_suite
+  )
+endif()
 
 add_executable(test_unit_algorithm_permute
   permute.cpp
