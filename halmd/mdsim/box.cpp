@@ -89,7 +89,7 @@ wrap_edges(std::shared_ptr<box_type const> self)
                 output[i][j] = input(i, j);
             }
         }
-        return std::move(output);
+        return output;
     };
 }
 

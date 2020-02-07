@@ -54,7 +54,7 @@ make_random_id(size_type nparticle)
     std::vector<size_type> id(nparticle);
     std::iota(id.begin(), id.end(), 0);
     std::random_shuffle(id.begin(), id.end());
-    return std::move(id);
+    return id;
 }
 
 /**
