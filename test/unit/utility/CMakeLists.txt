@@ -54,7 +54,7 @@ set_property(TEST unit/utility/signal
   PROPERTY TIMEOUT 5
 )
 
-if (${Boost_VERSION} GREATER_EQUAL 1.59.0)
+if (NOT ${Boost_VERSION} LESS 1.59.0)
   add_executable(test_unit_utility_posix_signal
     posix_signal.cpp
   )
@@ -67,7 +67,7 @@ if (${Boost_VERSION} GREATER_EQUAL 1.59.0)
   )
 endif()
 
-if (${Boost_VERSION} GREATER_EQUAL 1.59.0)
+if (NOT ${Boost_VERSION} LESS 1.59.0)
   add_executable(test_unit_utility_raw_array
     raw_array.cpp
   )

@@ -3,11 +3,11 @@ add_subdirectory(integrators)
 add_subdirectory(positions)
 add_subdirectory(potentials)
 add_subdirectory(velocities)
-if (${Boost_VERSION} GREATER_EQUAL 1.59.0)
+if (NOT ${Boost_VERSION} LESS 1.59.0)
   add_subdirectory(particle_groups)
 endif()
 
-if (${Boost_VERSION} GREATER_EQUAL 1.59.0)
+if (NOT ${Boost_VERSION} LESS 1.59.0)
   add_executable(test_unit_mdsim_binning
     binning.cpp
   )
@@ -104,7 +104,7 @@ add_test(unit/mdsim/clock
 )
 
 # module particle
-if (${Boost_VERSION} GREATER_EQUAL 1.59.0)
+if (NOT ${Boost_VERSION} LESS 1.59.0)
   add_executable(test_unit_mdsim_particle
     particle.cpp
   )
