@@ -67,6 +67,9 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     enable_language(C)
   endif()
 
+  # FindCUDA uses the static cuda runtime by default, we need to set this variable before find_package is called
+  set(CUDA_USE_STATIC_CUDA_RUNTIME OFF CACHE BOOL "Use the static version of the CUDA runtime library if available")
+
   # By default, enable GPU support only if CUDA is available.
   # If HALMD_WITH_GPU is explicitly set to TRUE, require CUDA.
   if(NOT DEFINED HALMD_WITH_GPU)
@@ -114,6 +117,11 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
       # output information about CUDA Compiler
       message(STATUS "The CUDA compiler identification is NVCC ${CUDA_VERSION}")
+
+      # warn user about static linking when using CUDA 9.2 because of a bug
+      if(${CUDA_USE_STATIC_CUDA_RUNTIME} AND ${CUDA_VERSION} VERSION_EQUAL 9.2)
+        message(WARNING "Static linking of the CUDA runtime library may lead to kernel launch failures")
+      endif()
     else()
       # CMake with CUDA patch by Peter Colberg
 
@@ -157,6 +165,8 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     set(Boost_USE_STATIC_LIBS TRUE)
     set(HDF5_USE_STATIC_LIBS TRUE)
     set(LUA_USE_STATIC_LIBS TRUE)
+
+    message(STATUS "For static linking of the CUDA runtime library specifically set CUDA_USE_STATIC_CUDA_RUNTIME to ON")
   endif()
 
   # define BOOST_LOG_DYN_LINK in case of dynamic linkage
