@@ -67,10 +67,10 @@ env: env-cmake env-lua env-luajit env-boost env-hdf5 env-git env-python-sphinx e
 ## CMake
 ##
 
-CMAKE_VERSION = 3.11.1
+CMAKE_VERSION = 3.16.4
 CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
-CMAKE_TARBALL_URL = https://cmake.org/files/v3.11/$(CMAKE_TARBALL)
-CMAKE_TARBALL_SHA256 = 57bebc6ca4d1d42c6385249d148d9216087e0fda57a47dc5c858790a70217d0c
+CMAKE_TARBALL_URL = https://cmake.org/files/v3.16/$(CMAKE_TARBALL)
+CMAKE_TARBALL_SHA256 = 9bcc8c114d9da603af9512083ed7d4a39911d16105466beba165ba8fe939ac2c
 CMAKE_SOURCE_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_BUILD_DIR = $(CMAKE_SOURCE_DIR)/build
 CMAKE_CONFIGURE_FLAGS = --sphinx-man
@@ -1120,11 +1120,11 @@ env-nvcuda-tools:
 ##
 ## Ninja - a small build system with a focus on speed
 ##
-NINJA_VERSION = 1.8.2
+NINJA_VERSION = 1.10.0
 NINJA_TARBALL = ninja-$(NINJA_VERSION).tar.gz
 NINJA_TARBALL_REMOTE = v$(NINJA_VERSION).tar.gz
 NINJA_TARBALL_URL = https://github.com/ninja-build/ninja/archive/$(NINJA_TARBALL_REMOTE)
-NINJA_TARBALL_SHA256 = 86b8700c3d0880c2b44c2ff67ce42774aaf8c28cbf57725cb881569288c1c6f4
+NINJA_TARBALL_SHA256 = 3810318b08489435f8efc19c05525e80a993af5a55baa0dfeae0465a9d45f99f
 NINJA_BUILD_DIR = ninja-$(NINJA_VERSION)
 NINJA_CONFIGURE_FLAGS =
 NINJA_INSTALL_DIR = $(PREFIX)/ninja-$(NINJA_VERSION)
