@@ -63,6 +63,10 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
   project(HALMD CXX)
 
+  if(${CMAKE_VERSION} VERSION_LESS 3.4.0)
+    enable_language(C)
+  endif()
+
   # By default, enable GPU support only if CUDA is available.
   # If HALMD_WITH_GPU is explicitly set to TRUE, require CUDA.
   if(NOT DEFINED HALMD_WITH_GPU)
