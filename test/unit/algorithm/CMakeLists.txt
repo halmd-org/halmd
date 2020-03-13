@@ -1,4 +1,4 @@
-if(HALMD_WITH_GPU AND NOT ${Boost_VERSION} LESS 1.59.0)
+if(HALMD_WITH_GPU AND NOT ${Boost_VERSION} VERSION_LESS 1.59.0)
   add_executable(test_unit_algorithm_iota
     iota.cpp
   )
@@ -11,7 +11,7 @@ if(HALMD_WITH_GPU AND NOT ${Boost_VERSION} LESS 1.59.0)
   )
 endif()
 
-if (NOT ${Boost_VERSION} LESS 1.59.0)
+if (NOT ${Boost_VERSION} VERSION_LESS 1.59.0)
   add_executable(test_unit_algorithm_multi_range
     multi_range.cpp
   )
