@@ -31,6 +31,8 @@
 #include <halmd/random/gpu/random_number_generator.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
+#include <cuda.h>
+
 #if __CUDA_ARCH__ < 120
 # define USE_ORIGINAL_ANDERSEN_THERMOSTAT
 #endif
@@ -137,7 +139,11 @@ __global__ void finalize(
 #ifdef USE_ORIGINAL_ANDERSEN_THERMOSTAT
         if (uniform(rng, state) > coll_prob) {
 #else
-        if (__all(uniform(rng, state) > q)) {       // FIXME replace by __all_sync() for CUDA SDK ≥ 9.0
+# if CUDA_VERSION < 9000
+        if (__all(uniform(rng, state) > q)) {
+# else
+        if (__all_sync(FULL_MASK, uniform(rng, state) > q)) {
+# endif
 #endif
             // read force from global device memory
             fixed_vector<float, dimension> f = g_force[i];
