@@ -37,13 +37,15 @@ I have obtained new scientific insight. How shall I give credit to your work?**
   <https://gist.github.com/Levitanious/d3756fd1634c7be58c51add9466bbe2e>`_.
 
 **How to enable the static CUDA runtime library?**
+
   By default the CUDA runtime is linked dynamically and the
   ``HALMD_USE_STATIC_LIBS`` flag doesn't affect that.
 
   To use the static CUDA runtime use ``CUDA_USE_STATIC_CUDA_RUNTIME``.
 
-**Why does HALMD abort with "Program hit cudaErrorInvalidDeviceFunction (error 8) due
-to "invalid device function" on CUDA API call to cudaLaunch"?**
+**Why does HALMD abort with "Program hit cudaErrorInvalidDeviceFunction
+(error 8) due to "invalid device function" on CUDA API call to cudaLaunch"?**
+
   This error occurs when using the static CUDA runtime library together with
   CUDA 9.2. As far as we are concerned there is no way to fix this, other than
   using the shared library or another CUDA version.
