@@ -108,7 +108,7 @@ float_type max_displacement<dimension, float_type>::compute()
 
         scoped_timer_type timer(runtime_.compute);
         try {
-            cuda::configure(
+            displacement_impl_.configure(
                 dim_reduce_.grid
               , dim_reduce_.block
               , dim_reduce_.threads_per_block() * sizeof(float)
@@ -120,7 +120,7 @@ float_type max_displacement<dimension, float_type>::compute()
               , particle_->nparticle()
               , static_cast<vector_type>(box_->length())
             );
-            cuda::copy(g_rr_, h_rr_);
+            cuda::copy(g_rr_.begin(), g_rr_.end(), h_rr_.begin());
         }
         catch (cuda::error const&) {
             LOG_ERROR("failed to reduce squared particle displacements on GPU");

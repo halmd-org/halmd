@@ -54,7 +54,7 @@ struct from_particle_wrapper
 };
 
 template <int dimension>
-from_particle_wrapper<dimension> const& get_from_particle_kernel()
+from_particle_wrapper<dimension>& get_from_particle_kernel()
 {
     return from_particle_wrapper<dimension>::kernel;
 }

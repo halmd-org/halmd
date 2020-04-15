@@ -100,7 +100,7 @@ inline accumulator_type reduction<accumulator_type, max_threads>::operator()(
   , accumulator_type const& acc
 )
 {
-    cuda::configure(dim_.grid, dim_.block);
+    reduce_.configure(dim_.grid, dim_.block);
     reduce_(first, last - first, g_block_, acc);
     assert(g_block_.size() == h_block_.capacity());
     cuda::copy(g_block_.begin(), g_block_.end(), h_block_.begin());

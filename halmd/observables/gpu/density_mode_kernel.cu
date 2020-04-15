@@ -190,7 +190,7 @@ __global__ void finalise(
 } // namespace density_mode_kernel
 
 template <int dimension>
-density_mode_wrapper<dimension> const density_mode_wrapper<dimension>::kernel = {
+density_mode_wrapper<dimension> density_mode_wrapper<dimension>::kernel = {
     density_mode_kernel::wavevector<dimension>::tex_
   , density_mode_kernel::compute<fixed_vector<float, dimension> >
   , density_mode_kernel::finalise

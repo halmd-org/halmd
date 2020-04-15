@@ -146,8 +146,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     }
 
     try {
-        cuda::copy(nparticle_, get_particle_kernel<dimension, float_type>().nbox);
-        cuda::copy(nspecies_, get_particle_kernel<dimension, float_type>().ntype);
+        get_particle_kernel<dimension, float_type>().nbox.set(nparticle_);
+        get_particle_kernel<dimension, float_type>().ntype.set(nspecies_);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy particle parameters to device symbols");

@@ -70,7 +70,8 @@ from_particle<dimension, float_type>::from_particle(
             rr_cut_skin_(i, j) = std::pow(r_cut(i, j) + r_skin_, 2);
         }
     }
-    cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
+    cuda::copy(rr_cut_skin_.data().begin(), rr_cut_skin_.data().end(),
+        g_rr_cut_skin_.begin());
     LOG("neighbour list skin: " << r_skin_);
 
     set_occupancy(cell_occupancy);
@@ -143,7 +144,7 @@ void from_particle<dimension, float_type>::update()
         // build neighbour lists
         cuda::vector<int> g_overflow(1);
         cuda::host::vector<int> h_overflow(1);
-        cuda::memset(g_overflow, 0);
+        cuda::memset(g_overflow.begin(), g_overflow.end(), 0);
         get_from_particle_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
         configure_kernel(
           get_from_particle_kernel<dimension>().update
@@ -164,7 +165,7 @@ void from_particle<dimension, float_type>::update()
         , stride_
         , g_overflow
         );
-        cuda::copy(g_overflow, h_overflow);
+        cuda::copy(g_overflow.begin(), g_overflow.end(), h_overflow.begin());
         cuda::thread::synchronize();
         overcrowded = h_overflow.front() > 0;
         if (overcrowded) {

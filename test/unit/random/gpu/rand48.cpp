@@ -65,8 +65,10 @@ BOOST_AUTO_TEST_CASE( compare_variates )
     // parallel GPU rand48
     cuda::vector<uint> g_array(count);
     timer.restart();
-    cuda::configure(rng.dim.grid, rng.dim.block);
-    halmd::random::gpu::get_random_kernel<rand48::rng_type>().get(g_array, g_array.size(), rng.rng());
+    halmd::random::gpu::get_random_kernel<rand48::rng_type>().get.configure(
+        rng.dim.grid, rng.dim.block);
+    halmd::random::gpu::get_random_kernel<rand48::rng_type>().get(g_array,
+        g_array.size(), rng.rng());
     cuda::thread::synchronize();
     elapsed = timer.elapsed();
 
@@ -74,7 +76,7 @@ BOOST_AUTO_TEST_CASE( compare_variates )
                        << elapsed * 1e3 << " ms");
 
     cuda::host::vector<uint> h_array(count);
-    cuda::copy(g_array, h_array);
+    cuda::copy(g_array.begin(), g_array.end(), h_array.begin());
 
     // serial GNU C library rand48
     std::vector<uint> h_array2(count);

@@ -159,7 +159,7 @@ __global__ void add_block_sums(T const* g_in, T* g_out, T const* g_block_sum, ui
  * CUDA C++ wrapper
  */
 template <typename T>
-scan_wrapper<T> const scan_wrapper<T>::kernel = {
+scan_wrapper<T> scan_wrapper<T>::kernel = {
     scan_kernel::grid_prefix_sum
   , scan_kernel::add_block_sums
   , scan_kernel::block_prefix_sum

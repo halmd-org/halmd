@@ -47,7 +47,7 @@ void compare_scan( size_t count )
     for (uint i = 0; i < count; ++i) {
         h_array[i] = i + 1;
     }
-    cuda::copy(h_array, g_array);
+    cuda::copy(h_array.begin(), h_array.end(), g_array.begin());
 
     // parallel exclusive prefix sum
     halmd::algorithm::gpu::scan<uint> scan(count, threads);
@@ -56,7 +56,7 @@ void compare_scan( size_t count )
     scan(g_array);
     cuda::thread::synchronize();
     double elapsed = timer.elapsed();
-    cuda::copy(g_array, h_array2);
+    cuda::copy(g_array.begin(), g_array.end(), h_array2.begin());
 
     BOOST_TEST_MESSAGE("GPU time: " << std::fixed << std::setprecision(3)
                        << elapsed * 1e3 << " ms");

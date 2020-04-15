@@ -143,7 +143,7 @@ __global__ void compute(
 } // namespace pair_trunc_kernel
 
 template <int dimension, typename potential_type>
-pair_trunc_wrapper<dimension, potential_type> const
+pair_trunc_wrapper<dimension, potential_type>
 pair_trunc_wrapper<dimension, potential_type>::kernel = {
     pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>

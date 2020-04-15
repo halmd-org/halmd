@@ -405,7 +405,8 @@ public:
         auto const& group = read_cache(this->particle_group_->ordered());
         try {
             phase_space_wrapper<dimension>::kernel.r.bind(*position);
-            cuda::configure(dim_.grid, dim_.block);
+            phase_space_wrapper<dimension>::kernel.reduce_periodic.configure(
+                dim_.grid, dim_.block);
             phase_space_wrapper<dimension>::kernel.reduce_periodic(
                 &*group.begin()
               , position->data() // TODO: is this correct for dsfloats?
@@ -494,7 +495,7 @@ public:
 
             try {
                 sample_wrapper::kernel.input.bind(data);
-                cuda::configure(dim_.grid, dim_.block);
+                sample_wrapper::kernel.sample.configure(dim_.grid, dim_.block);
                 sample_wrapper::kernel.sample(
                     &*group.begin()
                   , &*sample_data.begin()
@@ -528,7 +529,7 @@ public:
         auto data = make_cache_mutable(array_->mutable_data());
         try {
             sample_wrapper::kernel.input.bind(sample->data());
-            cuda::configure(dim_.grid, dim_.block);
+            sample_wrapper::kernel.set.configure(dim_.grid, dim_.block);
             sample_wrapper::kernel.set(
                 &*group.begin()
               , data->data()
@@ -669,7 +670,8 @@ public:
                 phase_space_wrapper<dimension>::kernel.r.bind(particle_position);
                 phase_space_wrapper<dimension>::kernel.image.bind(particle_image);
 
-                cuda::configure(this->dim_.grid, this->dim_.block);
+                phase_space_wrapper<dimension>::kernel.sample_position.configure(
+                    this->dim_.grid, this->dim_.block);
                 phase_space_wrapper<dimension>::kernel.sample_position(
                     &*group.begin()
                   , this->sample_->data()
@@ -704,7 +706,8 @@ public:
         auto const& group = read_cache(this->particle_group_->ordered());
         try {
             phase_space_wrapper<dimension>::kernel.r.bind(*position);
-            cuda::configure(this->dim_.grid, this->dim_.block);
+            phase_space_wrapper<dimension>::kernel.reduce_periodic.configure(
+                this->dim_.grid, this->dim_.block);
             phase_space_wrapper<dimension>::kernel.reduce_periodic(
                 &*group.begin()
               , position->data() // TODO: is this correct for dsfloats?

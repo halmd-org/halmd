@@ -69,7 +69,7 @@ power_law<float_type>::power_law(
         p[power_law_kernel::INDEX] = index_.data()[i];
         param[i] = p;
     }
-    cuda::copy(param, g_param_);
+    cuda::copy(param.begin(), param.end(), g_param_.begin());
 }
 
 template <typename float_type>

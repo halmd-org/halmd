@@ -68,7 +68,7 @@ struct pair_trunc_wrapper
     /** positions, types */
     cuda::texture<float4> r2;
 
-    static pair_trunc_wrapper const kernel;
+    static pair_trunc_wrapper kernel;
 };
 
 } // namespace mdsim

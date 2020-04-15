@@ -59,7 +59,7 @@ struct region_wrapper
       , geometry_selection   // geometry selection
     )> copy_selection;
 
-    static region_wrapper const kernel;
+    static region_wrapper kernel;
 };
 
 } // namespace gpu

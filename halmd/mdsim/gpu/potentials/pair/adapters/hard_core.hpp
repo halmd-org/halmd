@@ -65,7 +65,7 @@ public:
             param[i] = r_core_.data()[i];
         }
 
-        cuda::copy(param, g_param_);
+        cuda::copy(param.begin(), param.end(), g_param_.begin());
     }
 
     /** bind textures before kernel invocation */

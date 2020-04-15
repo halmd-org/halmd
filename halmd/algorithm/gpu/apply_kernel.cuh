@@ -63,7 +63,7 @@ __global__ void apply(
 //
 
 template <BOOST_PP_ENUM_PARAMS(5, typename T)>
-apply_wrapper<BOOST_PP_ENUM_PARAMS(5, T)> const apply_wrapper<BOOST_PP_ENUM_PARAMS(5, T)>::kernel = {
+apply_wrapper<BOOST_PP_ENUM_PARAMS(5, T)> apply_wrapper<BOOST_PP_ENUM_PARAMS(5, T)>::kernel = {
     apply_kernel::apply<BOOST_PP_ENUM_PARAMS(5, T)>
 };
 

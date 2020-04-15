@@ -181,7 +181,7 @@ __global__ void finalize(
 } // namespace verlet_nvt_andersen_kernel
 
 template <int dimension, typename float_type, typename rng_type>
-verlet_nvt_andersen_wrapper<dimension, float_type, rng_type> const
+verlet_nvt_andersen_wrapper<dimension, float_type, rng_type>
 verlet_nvt_andersen_wrapper<dimension, float_type, rng_type>::kernel = {
     verlet_nvt_andersen_kernel::integrate<dimension, float_type, ptr_type>
   , verlet_nvt_andersen_kernel::finalize<dimension, float_type, ptr_type>

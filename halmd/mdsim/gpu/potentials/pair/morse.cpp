@@ -68,7 +68,7 @@ morse<float_type>::morse(
         p[morse_kernel::R_MIN_SIGMA] = r_min_sigma_.data()[i];
         param[i] = p;
     }
-    cuda::copy(param, g_param_);
+    cuda::copy(param.begin(), param.end(), g_param_.begin());
 }
 
 template <typename float_type>

@@ -105,7 +105,7 @@ __global__ void reduce_periodic(
 } // namespace phase_space_kernel
 
 template <int dimension>
-phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
+phase_space_wrapper<dimension> phase_space_wrapper<dimension>::kernel = {
     phase_space_kernel::r_
   , phase_space_kernel::image<dimension>::tex_
   , phase_space_kernel::sample_position<fixed_vector<float, dimension> >
@@ -166,7 +166,8 @@ __global__ void sample(
 } // namespace phase_space_sample_kernel
 
 template <typename input_data_type, typename sample_data_type>
-phase_space_sample_wrapper<input_data_type, sample_data_type> const phase_space_sample_wrapper<input_data_type, sample_data_type>::kernel = {
+phase_space_sample_wrapper<input_data_type, sample_data_type>
+phase_space_sample_wrapper<input_data_type, sample_data_type>::kernel = {
         phase_space_sample_kernel::input<sample_data_type>::tex_,
         phase_space_sample_kernel::sample<sample_data_type*, sample_data_type, sample_data_type>,
         phase_space_sample_kernel::sample<ptr_type, input_data_type, sample_data_type>

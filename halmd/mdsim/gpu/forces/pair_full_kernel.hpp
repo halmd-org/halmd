@@ -66,7 +66,7 @@ struct pair_full_wrapper
       , float
     )> compute_aux;
 
-    static pair_full_wrapper const kernel;
+    static pair_full_wrapper kernel;
 };
 
 } // namespace forces

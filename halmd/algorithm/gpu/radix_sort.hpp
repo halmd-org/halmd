@@ -70,7 +70,8 @@ public:
 
         for (unsigned int shift = 0; shift < 32; shift += RADIX) {
             // compute partial radix counts
-            cuda::configure(blocks_, threads_, shared_memory);
+            radix_sort_wrapper::kernel.histogram_key.configure(blocks_,
+                threads_, shared_memory);
             radix_sort_wrapper::kernel.histogram_key(
                 &*key.first
               , g_bucket_
@@ -80,7 +81,8 @@ public:
             // parallel prefix sum over radix counts
             scan_(g_bucket_);
             // permute array
-            cuda::configure(blocks_, threads_, shared_memory);
+            radix_sort_wrapper::kernel.permute_key.configure(blocks_, threads_,
+                shared_memory);
             radix_sort_wrapper::kernel.permute_key(
                 &*key.first
               , &*key.second
@@ -121,7 +123,8 @@ public:
 
         for (unsigned int shift = 0; shift < 32; shift += RADIX) {
             // compute partial radix counts
-            cuda::configure(blocks_, threads_, shared_memory);
+            radix_sort_wrapper::kernel.histogram_key.configure(blocks_,
+                threads_, shared_memory);
             radix_sort_wrapper::kernel.histogram_key(
                 &*key.first
               , g_bucket_
@@ -131,7 +134,8 @@ public:
             // parallel prefix sum over radix counts
             scan_(g_bucket_);
             // permute array
-            cuda::configure(blocks_, threads_, shared_memory);
+            radix_sort_wrapper::kernel.permute_key_value.configure(blocks_,
+                threads_, shared_memory);
             radix_sort_wrapper::kernel.permute_key_value(
                 &*key.first
               , &*key.second

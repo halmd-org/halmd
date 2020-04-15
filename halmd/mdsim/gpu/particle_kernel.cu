@@ -87,7 +87,7 @@ __global__ void rearrange(
 } // namespace particle_kernel
 
 template <int dimension, typename float_type>
-particle_wrapper<dimension, float_type> const particle_wrapper<dimension, float_type>::kernel = {
+particle_wrapper<dimension, float_type> particle_wrapper<dimension, float_type>::kernel = {
     particle_kernel::nbox_
   , particle_kernel::ntype_
   , particle_kernel::ntypes_
@@ -117,7 +117,7 @@ static __global__ void particle_initialize_kernel (
 }
 
 template<typename T>
-particle_initialize_wrapper<T> const particle_initialize_wrapper<T>::kernel = {
+particle_initialize_wrapper<T> particle_initialize_wrapper<T>::kernel = {
   particle_initialize_kernel<T>
 };
 
@@ -134,7 +134,7 @@ static __global__ void dsfloat_particle_initialize_kernel (
 }
 
 template<size_t N>
-dsfloat_particle_initialize_wrapper<N> const dsfloat_particle_initialize_wrapper<N>::kernel = {
+dsfloat_particle_initialize_wrapper<N> dsfloat_particle_initialize_wrapper<N>::kernel = {
   dsfloat_particle_initialize_kernel<ptr_type, type>
 };
 #endif // USE_GPU_DOUBLE_SINGLE_PRECISION

@@ -52,7 +52,7 @@ struct boltzmann_wrapper
     gaussian_impl_type gaussian_impl_256;
     gaussian_impl_type gaussian_impl_512;
     cuda::function<void (ptr_type, uint, uint, dsfloat, dsfloat_ptr<coalesced_vector_type> const, dsfloat const*, dsfloat const*, uint)> shift;
-    static boltzmann_wrapper const kernel;
+    static boltzmann_wrapper kernel;
 };
 
 } // namespace mdsim

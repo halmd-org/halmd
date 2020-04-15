@@ -63,7 +63,8 @@ BOOST_AUTO_TEST_CASE( performance )
         accumulator<double> elapsed;
 
         for (unsigned int i = 0; i < iterations; i++) {
-            cuda::configure(dim.grid, dim.block);
+            dsfloat_kernel_wrapper::kernel.test_float4_ptr.configure(dim.grid,
+                dim.block);
             {
                 scoped_timer<timer> t(elapsed);
                 dsfloat_kernel_wrapper::kernel.test_float4_ptr(data, increment);
@@ -78,7 +79,8 @@ BOOST_AUTO_TEST_CASE( performance )
         dsfloat_cuda_vector<float4> data(memsize);
 
         for (unsigned int i = 0; i < iterations; i++) {
-            cuda::configure(dim.grid, dim.block);
+            dsfloat_kernel_wrapper::kernel.test_dsfloat_ptr.configure(dim.grid,
+                dim.block);
             {
                 scoped_timer<timer> t(elapsed);
                 dsfloat_kernel_wrapper::kernel.test_dsfloat_ptr(data.data(), increment);
@@ -114,8 +116,10 @@ BOOST_AUTO_TEST_CASE( overloaded_kernel )
     cuda::copy(h_data.begin(), h_data.end(), g_data_float4.begin());
 
     // use only float4 part of high significance
-    cuda::configure(dim.grid, dim.block);
-    dsfloat_kernel_overloaded_wrapper<float>::kernel.overloaded_test(g_data_float4, increment);
+    dsfloat_kernel_overloaded_wrapper<float>::kernel.overloaded_test.configure(
+        dim.grid, dim.block);
+    dsfloat_kernel_overloaded_wrapper<float>::kernel.overloaded_test(
+        g_data_float4, increment);
     cuda::thread::synchronize();
 
     // convert float4 to fixed_vector, subtract 1 to be sensitive to the last digits
@@ -136,8 +140,10 @@ BOOST_AUTO_TEST_CASE( overloaded_kernel )
     // but the high significant float4's are important
     unsigned int N = 1 << 8;
     for (unsigned int i = 0; i < N; ++i) {
-        cuda::configure(dim.grid, dim.block);
-        dsfloat_kernel_overloaded_wrapper<dsfloat>::kernel.overloaded_test(g_data, increment / N);
+        dsfloat_kernel_overloaded_wrapper<dsfloat>::kernel.overloaded_test.configure(
+            dim.grid, dim.block);
+        dsfloat_kernel_overloaded_wrapper<dsfloat>::kernel.overloaded_test(
+            g_data, increment / N);
         cuda::thread::synchronize();
     }
 
@@ -155,4 +161,3 @@ BOOST_AUTO_TEST_CASE( overloaded_kernel )
        , result_dsfloat.begin(), result_dsfloat.end()
     );
 }
-

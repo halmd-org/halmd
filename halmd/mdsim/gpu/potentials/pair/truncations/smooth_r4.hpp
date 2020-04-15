@@ -80,15 +80,14 @@ public:
             param[i] = p;
         }
 
-        cuda::copy(param, g_param_);
+        cuda::copy(param.begin(), param.end(), g_param_.begin());
     }
 
     /** bind textures before kernel invocation */
     void bind_textures() const
     {
-        cuda::copy(rri_smooth_, smooth_r4_wrapper<parent_potential>::rri_smooth);
-        smooth_r4_wrapper<parent_potential>::param.bind(g_param_);
-        potential_type::bind_textures();
+        smooth_r4_wrapper<parent_potential>::rri_smooth.set(rri_smooth_);
+        return {potential_type::potential(), texture_};
     }
 
     matrix_type const& r_cut() const

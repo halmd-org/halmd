@@ -84,7 +84,7 @@ __global__ void gen_index(unsigned int* g_index)
 } // namespace hilbert_kernel
 
 template <int dimension>
-hilbert_wrapper<dimension> const hilbert_wrapper<dimension>::kernel = {
+hilbert_wrapper<dimension> hilbert_wrapper<dimension>::kernel = {
     hilbert_kernel::depth_
   , hilbert_kernel::map<fixed_vector<float, dimension> >
   , hilbert_kernel::gen_index

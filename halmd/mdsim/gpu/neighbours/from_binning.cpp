@@ -79,7 +79,8 @@ from_binning<dimension, float_type>::from_binning(
         }
     }
     try {
-        cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
+        cuda::copy(rr_cut_skin_.data().begin(), rr_cut_skin_.data().end(),
+                   g_rr_cut_skin_.begin());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy neighbour list parameters to device symbols");
@@ -187,8 +188,8 @@ void from_binning<dimension, float_type>::update()
         // build neighbour lists
         cuda::vector<int> g_ret(1);
         cuda::host::vector<int> h_ret(1);
-        cuda::memset(g_ret, EXIT_SUCCESS);
-        auto const* kernel = &from_binning_wrapper<dimension>::kernel;
+        cuda::memset(g_ret.begin(), g_ret.end(), EXIT_SUCCESS);
+        auto *kernel = &from_binning_wrapper<dimension>::kernel;
         if (!use_naive) {
             // update the cell list of binning1 here, as the naive implementation
             // does not need it and calling binning1_->g_cell() may trigger
@@ -212,10 +213,12 @@ void from_binning<dimension, float_type>::update()
                 continue;
             }
 
-            cuda::configure(binning2_->dim_cell().grid, binning2_->dim_cell().block, smem_size);
             kernel->rr_cut_skin.bind(g_rr_cut_skin_);
             kernel->r1.bind(position1);
             kernel->r2.bind(position2);
+
+            kernel->update_neighbours.configure(binning2_->dim_cell().grid,
+                binning2_->dim_cell().block, smem_size);
             kernel->update_neighbours(
                 g_ret
               , &*g_neighbour->begin()
@@ -252,7 +255,7 @@ void from_binning<dimension, float_type>::update()
             );
         }
         cuda::thread::synchronize();
-        cuda::copy(g_ret, h_ret);
+        cuda::copy(g_ret.begin(), g_ret.end(), h_ret.begin());
         overcrowded = h_ret.front() != EXIT_SUCCESS;
         if (overcrowded) {
             LOG("overcrowded placeholders in neighbour lists update, reducing occupancy");

@@ -167,7 +167,7 @@ __global__ void shift(ptr_type g_v, uint npart, uint nplace, dsfloat temp, dsflo
 } // namespace boltzmann_kernel
 
 template <int dimension, typename float_type, typename rng_type>
-boltzmann_wrapper<dimension, float_type, rng_type> const boltzmann_wrapper<dimension, float_type, rng_type>::kernel = {
+boltzmann_wrapper<dimension, float_type, rng_type> boltzmann_wrapper<dimension, float_type, rng_type>::kernel = {
     boltzmann_kernel::gaussian<ptr_type, fixed_vector<float_type, dimension>, rng_type, 32>
   , boltzmann_kernel::gaussian<ptr_type, fixed_vector<float_type, dimension>, rng_type, 64>
   , boltzmann_kernel::gaussian<ptr_type, fixed_vector<float_type, dimension>, rng_type, 128>

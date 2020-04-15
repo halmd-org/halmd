@@ -93,10 +93,11 @@ void region<dimension, float_type, geometry_type>::update_mask_()
 
         auto mask = make_cache_mutable(mask_);
         position_array_type const& position = read_cache(particle_->position());
-        auto const& kernel = region_wrapper<dimension, geometry_type>::kernel;
+        auto& kernel = region_wrapper<dimension, geometry_type>::kernel;
         // calculate "bin", ie. inside/outside the region
-        cuda::memset(*mask, 0xFF);
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        cuda::memset((*mask).begin(), (*mask).end(), 0xFF);
+        kernel.compute_mask.configure(particle_->dim().grid,
+            particle_->dim().block);
         kernel.compute_mask(
             position.data()
           , particle_->nparticle()

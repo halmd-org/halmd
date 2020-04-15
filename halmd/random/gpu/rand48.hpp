@@ -58,21 +58,21 @@ public:
     {
         // compute leapfrog multipliers for initialization
         cuda::vector<uint48> g_A(dim.threads()), g_C(dim.threads());
-        cuda::configure(dim.grid, dim.block);
+        get_rand48_kernel().leapfrog.configure(dim.grid, dim.block);
         get_rand48_kernel().leapfrog(g_A);
 
         // compute leapfrog addends for initialization
-        cuda::copy(g_A, g_C);
+        cuda::copy(g_A.begin(), g_A.end(), g_C.begin());
         algorithm::gpu::scan<uint48> scan(g_C.size(), dim.threads_per_block());
         scan(g_C);
 
         // initialize generator with seed
         cuda::vector<uint48> g_a(1), g_c(1);
         cuda::host::vector<uint48> h_a(1), h_c(1);
-        cuda::configure(dim.grid, dim.block);
+        get_rand48_kernel().seed.configure(dim.grid, dim.block);
         get_rand48_kernel().seed(g_A, g_C, g_a, g_c, g_state_, value);
-        cuda::copy(g_a, h_a);
-        cuda::copy(g_c, h_c);
+        cuda::copy(g_a.begin(), g_a.end(), h_a.begin());
+        cuda::copy(g_c.begin(), g_c.end(), h_c.begin());
 
         // set leapfrog constants for constant device memory
         rng_.a = h_a.front();

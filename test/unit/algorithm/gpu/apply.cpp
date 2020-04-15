@@ -58,10 +58,10 @@ BOOST_AUTO_TEST_CASE( apply_square )
         h_input[i].x = 2 * i;
         h_input[i].x = 2 * i + 1;
     }
-    cuda::copy(h_input, g_input);
+    cuda::copy(h_input.begin(), h_input.end(), g_input.begin());
 
     try {
-        cuda::configure(50, 256); // 50 blocks, 256 threads
+        square::kernel.apply.configure(50, 256); // 50 blocks, 256 threads
         square::kernel.apply(g_input, g_output, size);
         cuda::thread::synchronize();
     }
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE( apply_square )
         throw;
     }
 
-    cuda::copy(g_output, h_output);
+    cuda::copy(g_output.begin(), g_output.end(), h_output.begin());
 
     for (unsigned int i = 0; i < size; ++i) {
         float result = inner_prod(static_cast<vector_type>(h_input[i]), static_cast<vector_type>(h_input[i]));
@@ -79,4 +79,3 @@ BOOST_AUTO_TEST_CASE( apply_square )
         );
     }
 }
-

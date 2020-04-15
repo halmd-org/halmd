@@ -66,7 +66,7 @@ lennard_jones<float_type>::lennard_jones(
         param[i] = p;
     }
 
-    cuda::copy(param, g_param_);
+    cuda::copy(param.begin(), param.end(), g_param_.begin());
 }
 
 template <typename float_type>

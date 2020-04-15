@@ -94,7 +94,7 @@ private:
     /** module logger */
     std::shared_ptr<logger> logger_;
     /** generate Maxwell-Boltzmann distribution */
-    gaussian_impl_type const gaussian_impl_;
+    gaussian_impl_type gaussian_impl_;
     /** temperature */
     float_type temp_;
     /** block sum of momentum */

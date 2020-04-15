@@ -56,7 +56,7 @@ hilbert<dimension, float_type>::hilbert(
     LOG("vertex recursion depth: " << depth_);
 
     try {
-        cuda::copy(depth_, wrapper_type::kernel.depth);
+        wrapper_type::kernel.depth.set(depth_);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy parameters to device");

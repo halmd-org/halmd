@@ -42,7 +42,7 @@ struct verlet_nvt_hoover_wrapper
     cuda::function <void (ptr_type, coalesced_vector_type const*, float)> finalize;
     cuda::function <void (ptr_type, float_type)> rescale;
 
-    static verlet_nvt_hoover_wrapper const kernel;
+    static verlet_nvt_hoover_wrapper kernel;
 };
 
 /**

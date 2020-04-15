@@ -88,7 +88,7 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
         p[modified_lennard_jones_kernel::INDEX_N_2] = index_n_.data()[i] / 2;
         param[i] = p;
     }
-    cuda::copy(param, g_param_);
+    cuda::copy(param.begin(), param.end(), g_param_.begin());
 }
 
 template <typename float_type>

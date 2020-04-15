@@ -43,7 +43,7 @@ struct particle_group_wrapper
     /** copy particle group data (position, species, velocities, masses) into particle instance */
     cuda::function<void (unsigned int const*, ptr_type, aligned_vector_type*, ptr_type, unsigned int)> particle_group_to_particle;
 
-    static particle_group_wrapper const kernel;
+    static particle_group_wrapper kernel;
 };
 
 } // namespace gpu

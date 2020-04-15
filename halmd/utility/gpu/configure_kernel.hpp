@@ -39,7 +39,8 @@ namespace halmd {
  *
  */
 template <typename kernel_type>
-cuda::config configure_kernel(kernel_type const& k, cuda::config const& default_dim, bool fixed_total_threads, size_t smem_per_thread = 0)
+cuda::config configure_kernel(kernel_type& k, cuda::config const& default_dim,
+    bool fixed_total_threads, size_t smem_per_thread = 0)
 {
     cuda::config dim = default_dim;
     int block_size = k.max_block_size();    // smem size needs to be considered here too
@@ -69,7 +70,7 @@ cuda::config configure_kernel(kernel_type const& k, cuda::config const& default_
     }
 
     LOG_TRACE("Configure GPU kernel for " << dim.blocks_per_grid() << " blocks of " << dim.threads_per_block() << " threads each");
-    cuda::configure(dim.grid, dim.block, smem_per_thread * dim.threads_per_block());
+    k.configure(dim.grid, dim.block, smem_per_thread * dim.threads_per_block());
 
     return dim;
 }
@@ -80,7 +81,8 @@ cuda::config configure_kernel(kernel_type const& k, cuda::config const& default_
  * @returns: configuration parameters
  */
 template <typename kernel_type>
-cuda::config configure_kernel(kernel_type const& k, size_t total_threads, size_t smem_per_thread = 0)
+cuda::config configure_kernel(kernel_type& k, size_t total_threads,
+    size_t smem_per_thread = 0)
 {
     unsigned int block_size = 32 << DEVICE_SCALE;    // default value for old CUDA versions: not too large, and not too small
     unsigned int grid_size = (total_threads + block_size - 1) / block_size;

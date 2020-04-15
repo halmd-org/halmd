@@ -111,7 +111,7 @@ unsigned int copy_selection(float4 const* g_r, unsigned int nparticle, unsigned 
 } // namespace region_kernel
 
 template<int dimension, typename geometry_type>
-region_wrapper<dimension, geometry_type> const
+region_wrapper<dimension, geometry_type>
 region_wrapper<dimension, geometry_type>::kernel = {
     region_kernel::compute_mask
   , region_kernel::copy_selection<geometry_type>

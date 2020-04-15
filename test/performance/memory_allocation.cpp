@@ -80,12 +80,12 @@ void vector(size_t size)
 
             // copy from device to host
             timer.restart();
-            cuda::copy(g_array, h_array);
+            cuda::copy(g_array.begin(), g_array.end(), h_array.begin());
             copy += timer.elapsed();
 
             // copy from host to host
             timer.restart();
-            cuda::copy(h_array, stl_array);
+            cuda::copy(h_array.begin(), h_array.end(), stl_array.begin());
             copy_stl += timer.elapsed();
         }
         alloc_device /= count;

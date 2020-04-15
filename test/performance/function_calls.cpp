@@ -266,14 +266,14 @@ BOOST_AUTO_TEST_CASE( cuda_function_1_128 )
     printer p("cuda::function (1×128)", I1E6);
     // warm up
     for (size_t i = 0; i < I1E6; ++i) {
-        cuda::configure(1, 128);
+        noop_kernel.configure(1, 128);
         noop_kernel(42.);
     }
     cuda::thread::synchronize();
     scoped_timer<timer> timer(p);
     // benchmark
     for (size_t i = 0; i < I1E6; ++i) {
-        cuda::configure(1, 128);
+        noop_kernel.configure(1, 128);
         noop_kernel(42.);
     }
     cuda::thread::synchronize();
@@ -287,14 +287,14 @@ BOOST_AUTO_TEST_CASE( cuda_function_16_512 )
     printer p("cuda::function (16×512)", I1E6);
     // warm up
     for (size_t i = 0; i < I1E6; ++i) {
-        cuda::configure(16, 512);
+        noop_kernel.configure(16, 512);
         noop_kernel(42.);
     }
     cuda::thread::synchronize();
     scoped_timer<timer> timer(p);
     // benchmark
     for (size_t i = 0; i < I1E6; ++i) {
-        cuda::configure(16, 512);
+        noop_kernel.configure(16, 512);
         noop_kernel(42.);
     }
     cuda::thread::synchronize();
@@ -308,14 +308,14 @@ BOOST_AUTO_TEST_CASE( cuda_function_16_512_synchronize )
     printer p("cuda::function (16×512) + cuda::thread::synchronize", I1E5);
     // warm up
     for (size_t i = 0; i < I1E5; ++i) {
-        cuda::configure(16, 512);
+        noop_kernel.configure(16, 512);
         noop_kernel(42.);
         cuda::thread::synchronize();
     }
     scoped_timer<timer> timer(p);
     // benchmark
     for (size_t i = 0; i < I1E5; ++i) {
-        cuda::configure(16, 512);
+        noop_kernel.configure(16, 512);
         noop_kernel(42.);
         cuda::thread::synchronize();
     }

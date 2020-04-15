@@ -151,24 +151,26 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_float_int_converter_one, pair_type, 
     }
 
     cuda::vector<float4> g_input(h_input.size());
-    cuda::copy(h_input, g_input);
+    cuda::copy(h_input.begin(), h_input.end(), g_input.begin());
     cuda::vector<float4> g_output(h_input.size());
-    cuda::memset(g_output, 0);
+    cuda::memset(g_output.begin(), g_output.end(), 0);
     cuda::vector<vector_type> g_u(h_input.size());
-    cuda::memset(g_u, 0);
+    cuda::memset(g_u.begin(), g_u.end(), 0);
     cuda::vector<scalar_type> g_v(h_input.size());
-    cuda::memset(g_v, 0);
+    cuda::memset(g_v.begin(), g_v.end(), 0);
 
-    cuda::configure(dim.grid, dim.block);
-    float_kernel<vector_type, scalar_type>::kernel.converter_one(g_input, g_output, g_u, g_v);
+    float_kernel<vector_type, scalar_type>::kernel.converter_one.configure(
+        dim.grid, dim.block);
+    float_kernel<vector_type, scalar_type>::kernel.converter_one(g_input,
+        g_output, g_u, g_v);
     cuda::thread::synchronize();
 
     cuda::host::vector<float4> h_output(h_input.size());
-    cuda::copy(g_output, h_output);
+    cuda::copy(g_output.begin(), g_output.end(), h_output.begin());
     cuda::host::vector<vector_type> h_u(h_input.size());
-    cuda::copy(g_u, h_u);
+    cuda::copy(g_u.begin(), g_u.end(), h_u.begin());
     cuda::host::vector<scalar_type> h_v(h_input.size());
-    cuda::copy(g_v, h_v);
+    cuda::copy(g_v.begin(), g_v.end(), h_v.begin());
 
     for (size_t i = 0; i < h_output.size(); ++i) {
         vector_type u;
@@ -227,24 +229,26 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_float_float_converter_one, pair_type
     }
 
     cuda::vector<float4> g_input(h_input.size());
-    cuda::copy(h_input, g_input);
+    cuda::copy(h_input.begin(), h_input.end(), g_input.begin());
     cuda::vector<float4> g_output(h_input.size());
-    cuda::memset(g_output, 0);
+    cuda::memset(g_output.begin(), g_output.end(), 0);
     cuda::vector<vector_type> g_u(h_input.size());
-    cuda::memset(g_u, 0);
+    cuda::memset(g_u.begin(), g_u.end(), 0);
     cuda::vector<scalar_type> g_v(h_input.size());
-    cuda::memset(g_v, 0);
+    cuda::memset(g_v.begin(), g_v.end(), 0);
 
-    cuda::configure(dim.grid, dim.block);
-    float_kernel<vector_type, scalar_type>::kernel.converter_one(g_input, g_output, g_u, g_v);
+    float_kernel<vector_type, scalar_type>::kernel.converter_one.configure(
+        dim.grid, dim.block);
+    float_kernel<vector_type, scalar_type>::kernel.converter_one(g_input,
+        g_output, g_u, g_v);
     cuda::thread::synchronize();
 
     cuda::host::vector<float4> h_output(h_input.size());
-    cuda::copy(g_output, h_output);
+    cuda::copy(g_output.begin(), g_output.end(), h_output.begin());
     cuda::host::vector<vector_type> h_u(h_input.size());
-    cuda::copy(g_u, h_u);
+    cuda::copy(g_u.begin(), g_u.end(), h_u.begin());
     cuda::host::vector<scalar_type> h_v(h_input.size());
-    cuda::copy(g_v, h_v);
+    cuda::copy(g_v.begin(), g_v.end(), h_v.begin());
 
     for (size_t i = 0; i < h_output.size(); ++i) {
         vector_type u;
@@ -294,58 +298,53 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_double_int_converter_two, pair_type,
     double vector_eps = epsilon<vector_value_type>()();
 
     cuda::config dim(2, 32);
-    cuda::host::vector<float4> h_input;
-    h_input.reserve(2 * dim.threads());
-    h_input.resize(dim.threads());
-    for (size_t i = 0; i < h_input.size(); ++i) {
+    cuda::host::vector<float4> h_input(2 * dim.threads());
+
+    for (size_t i = 0; i < dim.threads(); ++i) {
         vector_type u;
         for (size_t j = 0; j < vector_type::static_size; ++j) {
             u[j] = index_to_value<vector_value_type>()(i, j);
         }
         scalar_type v = index_to_value<scalar_type>()(i);
-        tie(h_input[i], h_input[i + h_input.size()]) <<= tie(u, v);
+        tie(h_input[i], h_input[i + dim.threads()]) <<= tie(u, v);
     }
 
-    for (size_t i = 0; i < h_input.size(); ++i) {
+    for (size_t i = 0; i < dim.threads(); ++i) {
         vector_type u;
         scalar_type v;
-        tie(u, v) <<= tie(h_input[i], h_input[i + h_input.size()]);
+        tie(u, v) <<= tie(h_input[i], h_input[i + dim.threads()]);
         for (size_t j = 0; j < vector_type::static_size; ++j) {
             BOOST_CHECK_CLOSE_FRACTION( double(u[j]), index_to_value<vector_value_type>()(i, j), vector_eps );
         }
         BOOST_CHECK_EQUAL( v, index_to_value<scalar_type>()(i) );
     }
 
-    cuda::vector<float4> g_input;
-    g_input.reserve(h_input.capacity());
-    g_input.resize(h_input.size());
-    cuda::copy(h_input, g_input, h_input.capacity());
-    cuda::vector<float4> g_output;
-    g_output.reserve(h_input.capacity());
-    g_output.resize(h_input.size());
-    cuda::memset(g_output, 0, g_output.capacity());
-    cuda::vector<vector_type> g_u(h_input.size());
-    cuda::memset(g_u, 0);
-    cuda::vector<scalar_type> g_v(h_input.size());
-    cuda::memset(g_v, 0);
+    cuda::vector<float4> g_input(2 * dim.threads());
+    cuda::copy(h_input.begin(), h_input.end(), g_input.begin());
+    cuda::vector<float4> g_output(2 * dim.threads());
+    cuda::memset(g_output.begin(), g_output.end(), 0);
+    cuda::vector<vector_type> g_u(dim.threads());
+    cuda::memset(g_u.begin(), g_u.end(), 0);
+    cuda::vector<scalar_type> g_v(dim.threads());
+    cuda::memset(g_v.begin(), g_v.end(), 0);
 
-    cuda::configure(dim.grid, dim.block);
-    double_kernel<vector_type, scalar_type>::kernel.converter_two(g_input, g_output, g_u, g_v);
+    double_kernel<vector_type, scalar_type>::kernel.converter_two.configure(
+        dim.grid, dim.block);
+    double_kernel<vector_type, scalar_type>::kernel.converter_two(g_input,
+        g_output, g_u, g_v);
     cuda::thread::synchronize();
 
-    cuda::host::vector<float4> h_output;
-    h_output.reserve(h_input.capacity());
-    h_output.resize(h_input.size());
-    cuda::copy(g_output, h_output, g_output.capacity());
-    cuda::host::vector<vector_type> h_u(h_input.size());
-    cuda::copy(g_u, h_u);
-    cuda::host::vector<scalar_type> h_v(h_input.size());
-    cuda::copy(g_v, h_v);
+    cuda::host::vector<float4> h_output(2 * dim.threads());
+    cuda::copy(g_output.begin(), g_output.end(), h_output.begin());
+    cuda::host::vector<vector_type> h_u(dim.threads());
+    cuda::copy(g_u.begin(), g_u.end(), h_u.begin());
+    cuda::host::vector<scalar_type> h_v(dim.threads());
+    cuda::copy(g_v.begin(), g_v.end(), h_v.begin());
 
-    for (size_t i = 0; i < h_output.size(); ++i) {
+    for (size_t i = 0; i < dim.threads(); ++i) {
         vector_type u;
         scalar_type v;
-        tie(u, v) <<= tie(h_output[i], h_output[i + h_output.size()]);
+        tie(u, v) <<= tie(h_output[i], h_output[i + dim.threads()]);
         for (size_t j = 0; j < vector_type::static_size; ++j) {
             BOOST_CHECK_CLOSE_FRACTION( double(u[j]), index_to_value<vector_value_type>()(i, j), vector_eps );
         }
@@ -387,58 +386,52 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_double_float_converter_two, pair_typ
     double scalar_eps = epsilon<scalar_type>()();
 
     cuda::config dim(2, 32);
-    cuda::host::vector<float4> h_input;
-    h_input.reserve(2 * dim.threads());
-    h_input.resize(dim.threads());
-    for (size_t i = 0; i < h_input.size(); ++i) {
+    cuda::host::vector<float4> h_input(2 * dim.threads());
+    for (size_t i = 0; i < dim.threads(); ++i) {
         vector_type u;
         for (size_t j = 0; j < vector_type::static_size; ++j) {
             u[j] = index_to_value<vector_value_type>()(i, j);
         }
         scalar_type v = index_to_value<scalar_type>()(i);
-        tie(h_input[i], h_input[i + h_input.size()]) <<= tie(u, v);
+        tie(h_input[i], h_input[i + dim.threads()]) <<= tie(u, v);
     }
 
-    for (size_t i = 0; i < h_input.size(); ++i) {
+    for (size_t i = 0; i < dim.threads(); ++i) {
         vector_type u;
         scalar_type v;
-        tie(u, v) <<= tie(h_input[i], h_input[i + h_input.size()]);
+        tie(u, v) <<= tie(h_input[i], h_input[i + dim.threads()]);
         for (size_t j = 0; j < vector_type::static_size; ++j) {
             BOOST_CHECK_CLOSE_FRACTION( double(u[j]), index_to_value<vector_value_type>()(i, j), vector_eps );
         }
         BOOST_CHECK_CLOSE_FRACTION( double(v), index_to_value<scalar_type>()(i), scalar_eps );
     }
 
-    cuda::vector<float4> g_input;
-    g_input.reserve(h_input.capacity());
-    g_input.resize(h_input.size());
-    cuda::copy(h_input, g_input, h_input.capacity());
-    cuda::vector<float4> g_output;
-    g_output.reserve(h_input.capacity());
-    g_output.resize(h_input.size());
-    cuda::memset(g_output, 0, g_output.capacity());
-    cuda::vector<vector_type> g_u(h_input.size());
-    cuda::memset(g_u, 0);
-    cuda::vector<scalar_type> g_v(h_input.size());
-    cuda::memset(g_v, 0);
+    cuda::vector<float4> g_input(2 * dim.threads());
+    cuda::copy(h_input.begin(), h_input.end(), g_input.begin());
+    cuda::vector<float4> g_output(2 * dim.threads());
+    cuda::memset(g_output.begin(), g_output.end(), 0);
+    cuda::vector<vector_type> g_u(dim.threads());
+    cuda::memset(g_u.begin(), g_u.end(), 0);
+    cuda::vector<scalar_type> g_v(dim.threads());
+    cuda::memset(g_v.begin(), g_v.end(), 0);
 
-    cuda::configure(dim.grid, dim.block);
-    double_kernel<vector_type, scalar_type>::kernel.converter_two(g_input, g_output, g_u, g_v);
+    double_kernel<vector_type, scalar_type>::kernel.converter_two.configure(
+        dim.grid, dim.block);
+    double_kernel<vector_type, scalar_type>::kernel.converter_two(g_input,
+        g_output, g_u, g_v);
     cuda::thread::synchronize();
 
-    cuda::host::vector<float4> h_output;
-    h_output.reserve(h_input.capacity());
-    h_output.resize(h_input.size());
-    cuda::copy(g_output, h_output, g_output.capacity());
-    cuda::host::vector<vector_type> h_u(h_input.size());
-    cuda::copy(g_u, h_u);
-    cuda::host::vector<scalar_type> h_v(h_input.size());
-    cuda::copy(g_v, h_v);
+    cuda::host::vector<float4> h_output(2 * dim.threads());
+    cuda::copy(g_output.begin(), g_output.end(), h_output.begin());
+    cuda::host::vector<vector_type> h_u(dim.threads());
+    cuda::copy(g_u.begin(), g_u.end(), h_u.begin());
+    cuda::host::vector<scalar_type> h_v(dim.threads());
+    cuda::copy(g_v.begin(), g_v.end(), h_v.begin());
 
-    for (size_t i = 0; i < h_output.size(); ++i) {
+    for (size_t i = 0; i < dim.threads(); ++i) {
         vector_type u;
         scalar_type v;
-        tie(u, v) <<= tie(h_output[i], h_output[i + h_output.size()]);
+        tie(u, v) <<= tie(h_output[i], h_output[i + dim.threads()]);
         for (size_t j = 0; j < vector_type::static_size; ++j) {
             BOOST_CHECK_CLOSE_FRACTION( double(u[j]), index_to_value<vector_value_type>()(i, j), vector_eps );
         }

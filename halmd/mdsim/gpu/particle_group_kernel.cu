@@ -78,7 +78,7 @@ __global__ void particle_group_to_particle(
 } // namespace particle_group_kernel
 
 template <int dimension, typename float_type>
-particle_group_wrapper<dimension, float_type> const
+particle_group_wrapper<dimension, float_type>
 particle_group_wrapper<dimension, float_type>::kernel = {
     particle_group_kernel::r_
   , particle_group_kernel::image<dimension>::tex_

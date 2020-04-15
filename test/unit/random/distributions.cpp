@@ -73,12 +73,14 @@ void test_rand48_gpu( unsigned long n )
 
         // parallel GPU rand48
         cuda::vector<float> g_array(n);
-        cuda::configure(rng.dim.grid, rng.dim.block);
-        halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform(g_array, g_array.size(), rng.rng());
+        halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform.configure(
+            rng.dim.grid, rng.dim.block);
+        halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform(
+            g_array, g_array.size(), rng.rng());
         cuda::thread::synchronize();
 
         cuda::host::vector<float> h_array(n);
-        cuda::copy(g_array, h_array);
+        cuda::copy(g_array.begin(), g_array.end(), h_array.begin());
 
         halmd::accumulator<double> a;
         for (unsigned long i=0; i < n; i++) {

@@ -42,11 +42,11 @@ struct density_mode_wrapper
     /** finalise computation by summing block sums per wavevector */
     cuda::function<void (float const*, float const*, float*, float*, int, int)> finalise;
 
-    static density_mode_wrapper const kernel;
+    static density_mode_wrapper kernel;
 };
 
 template <int dimension>
-density_mode_wrapper<dimension> const& get_density_mode_kernel()
+density_mode_wrapper<dimension>& get_density_mode_kernel()
 {
     return density_mode_wrapper<dimension>::kernel;
 }

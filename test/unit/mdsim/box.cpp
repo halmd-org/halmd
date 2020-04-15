@@ -166,20 +166,22 @@ void periodic_gpu()
 
     // allocate memory for conversion to GPU type and transfer positions to device
     std::copy(position.begin(), position.end(), h_position.begin());
-    cuda::copy(h_position, g_position);
+    cuda::copy(h_position.begin(), h_position.end(), g_position.begin());
 
     // call reduce_periodic kernel
     cuda::config config((npos + warp_size - 1) / warp_size, warp_size);
     BOOST_TEST_MESSAGE("kernel reduce_periodic: using " << config.blocks_per_grid() << " block with "
         << config.threads_per_block() << " threads"
     );
-    cuda::configure(config.grid, config.block);
-    box_kernel_wrapper<dimension, float_type>::kernel.reduce_periodic(g_position, g_reduced, length, npos);
+    box_kernel_wrapper<dimension, float_type>::kernel.reduce_periodic.configure(
+        config.grid, config.block);
+    box_kernel_wrapper<dimension, float_type>::kernel.reduce_periodic(
+        g_position, g_reduced, length, npos);
     cuda::thread::synchronize();
 
     // copy results back to host (but don't convert to vector_type)
-    cuda::copy(g_position, h_position);
-    cuda::copy(g_reduced, h_reduced);
+    cuda::copy(g_position.begin(), g_position.end(), h_position.begin());
+    cuda::copy(g_reduced.begin(), g_reduced.end(), h_reduced.begin());
 
     // perform periodic reduction and extend the reduced vector afterwards
     for (unsigned int i = 0; i < position.size(); ++i) {

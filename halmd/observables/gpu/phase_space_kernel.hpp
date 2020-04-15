@@ -45,7 +45,7 @@ struct phase_space_wrapper
     /** shift particle positions to range (-L/2, L/2) */
     cuda::function<void (unsigned int const*, float4*, coalesced_vector_type*, vector_type, unsigned int)> reduce_periodic;
 
-    static phase_space_wrapper const kernel;
+    static phase_space_wrapper kernel;
 };
 
 namespace detail {
@@ -80,11 +80,11 @@ struct phase_space_sample_wrapper
     cuda::function<void (unsigned int const*, sample_data_type*, unsigned int)> sample;
     cuda::function<void (unsigned int const*, ptr_type, unsigned int)> set;
 
-    static phase_space_sample_wrapper const kernel;
+    static phase_space_sample_wrapper kernel;
 };
 
 template <int dimension>
-phase_space_wrapper<dimension> const& get_phase_space_kernel()
+phase_space_wrapper<dimension>& get_phase_space_kernel()
 {
     return phase_space_wrapper<dimension>::kernel;
 }

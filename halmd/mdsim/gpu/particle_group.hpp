@@ -105,7 +105,7 @@ get_ordered(particle_group& group, iterator_type const& first)
     typedef particle_group::array_type array_type;
     array_type const& g_ordered = read_cache(group.ordered());
     cuda::host::vector<array_type::value_type> h_ordered(g_ordered.size());
-    cuda::copy(g_ordered, h_ordered);
+    cuda::copy(g_ordered.begin(), g_ordered.end(), h_ordered.begin());
     return std::copy(h_ordered.begin(), h_ordered.end(), first);
 }
 
@@ -119,7 +119,7 @@ get_unordered(particle_group& group, iterator_type const& first)
     typedef particle_group::array_type array_type;
     array_type const& g_unordered = read_cache(group.unordered());
     cuda::host::vector<array_type::value_type> h_unordered(g_unordered.size());
-    cuda::copy(g_unordered, h_unordered);
+    cuda::copy(g_unordered.begin(), g_unordered.end(), h_unordered.begin());
     return std::copy(h_unordered.begin(), h_unordered.end(), first);
 }
 

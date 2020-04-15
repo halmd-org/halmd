@@ -133,7 +133,7 @@ __global__ void compute(
 } // namespace pair_full_kernel
 
 template <int dimension, typename potential_type>
-pair_full_wrapper<dimension, potential_type> const
+pair_full_wrapper<dimension, potential_type>
 pair_full_wrapper<dimension, potential_type>::kernel = {
     pair_full_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_full_kernel::compute<true, fixed_vector<float, dimension>, potential_type>

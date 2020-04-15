@@ -124,7 +124,8 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize
     try {
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
-        cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
+        wrapper_type::kernel.finalize.configure(random_->rng().dim.grid,
+            random_->rng().dim.block);
         wrapper_type::kernel.finalize(
             velocity->data()
           , force.data()
