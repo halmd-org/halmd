@@ -73,9 +73,9 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   # By default, enable GPU support only if CUDA is available.
   # If HALMD_WITH_GPU is explicitly set to TRUE, require CUDA.
   if(NOT DEFINED HALMD_WITH_GPU)
-    find_package(CUDA QUIET COMPONENTS cudart)
+    find_package(CUDA QUIET COMPONENTS cuda cudart)
   elseif(HALMD_WITH_GPU)
-    find_package(CUDA QUIET REQUIRED COMPONENTS cudart)
+    find_package(CUDA QUIET REQUIRED COMPONENTS cuda cudart)
   endif()
 
   if(CUDA_FOUND)
@@ -240,6 +240,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   if(HALMD_WITH_GPU)
     list(APPEND HALMD_COMMON_LIBRARIES
       ${CUDA_LIBRARIES}
+      ${CUDA_CUDA_LIBRARY}
     )
   endif(HALMD_WITH_GPU)
   list(APPEND HALMD_COMMON_LIBRARIES
