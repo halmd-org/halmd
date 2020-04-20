@@ -32,6 +32,7 @@
 #ifdef HALMD_WITH_GPU
 # include <test/tools/cuda.hpp>
 # include <test/performance/function_calls_extern_kernel.hpp>
+# include <cuda_wrapper/cuda_wrapper.hpp>
 #endif
 
 #include <iomanip>
@@ -331,13 +332,13 @@ BOOST_AUTO_TEST_CASE( cuda_kernel_1_128 )
     for (size_t i = 0; i < I1E6; ++i) {
         launch_noop_kernel(1, 128, 42.);
     }
-    cudaThreadSynchronize();
+    cuda::thread::synchronize();
     scoped_timer<timer> timer(p);
     // benchmark
     for (size_t i = 0; i < I1E6; ++i) {
         launch_noop_kernel(1, 128, 42.);
     }
-    cudaThreadSynchronize();
+    cuda::thread::synchronize();
 }
 
 /**
@@ -350,13 +351,13 @@ BOOST_AUTO_TEST_CASE( cuda_kernel_16_512 )
     for (size_t i = 0; i < I1E6; ++i) {
         launch_noop_kernel(16, 512, 42.);
     }
-    cudaThreadSynchronize();
+    cuda::thread::synchronize();
     scoped_timer<timer> timer(p);
     // benchmark
     for (size_t i = 0; i < I1E6; ++i) {
         launch_noop_kernel(16, 512, 42.);
     }
-    cudaThreadSynchronize();
+    cuda::thread::synchronize();
 }
 
 /**
@@ -364,17 +365,17 @@ BOOST_AUTO_TEST_CASE( cuda_kernel_16_512 )
  */
 BOOST_AUTO_TEST_CASE( cuda_kernel_16_512_synchronize )
 {
-    printer p("CUDA <<< >>> (16×512) + cudaThreadSynchronize", I1E5);
+    printer p("CUDA <<< >>> (16×512) + cuda::thread::synchronize", I1E5);
     // warm up
     for (size_t i = 0; i < I1E5; ++i) {
         launch_noop_kernel(16, 512, 42.);
-        cudaThreadSynchronize();
+        cuda::thread::synchronize();
     }
     scoped_timer<timer> timer(p);
     // benchmark
     for (size_t i = 0; i < I1E5; ++i) {
         launch_noop_kernel(16, 512, 42.);
-        cudaThreadSynchronize();
+        cuda::thread::synchronize();
     }
 }
 
