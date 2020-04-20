@@ -36,6 +36,7 @@
 # include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/mdsim/gpu/box_kernel.cuh>
 # include <test/unit/mdsim/box_kernel.hpp>
+# include <test/tools/cuda.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
 #include <test/tools/ctest.hpp>
@@ -222,10 +223,10 @@ BOOST_AUTO_TEST_CASE(box_periodic_host_3d) {
 }
 
 #ifdef HALMD_WITH_GPU
-BOOST_FIXTURE_TEST_CASE(box_periodic_gpu_2d, device) {
+BOOST_FIXTURE_TEST_CASE(box_periodic_gpu_2d, set_cuda_device) {
     periodic_gpu<2, float>();
 }
-BOOST_FIXTURE_TEST_CASE(box_periodic_gpu_3d, device) {
+BOOST_FIXTURE_TEST_CASE(box_periodic_gpu_3d, set_cuda_device) {
     periodic_gpu<3, float>();
 }
 #endif

@@ -42,7 +42,7 @@ using namespace halmd;
 /**
  * Test performance of implementations: dsfloat_cuda_vector vs. float4 pointers
  */
-BOOST_AUTO_TEST_CASE( performance )
+BOOST_FIXTURE_TEST_CASE( performance, set_cuda_device )
 {
     unsigned int memsize = 1024 * 1024;
 
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE( performance )
     BOOST_CHECK_LE(mean_runtime_dsfloat_ptr, mean_runtime_float4_ptr * 1.05);
 }
 
-BOOST_AUTO_TEST_CASE( overloaded_kernel )
+BOOST_FIXTURE_TEST_CASE( overloaded_kernel, set_cuda_device )
 {
     // test parameters
     unsigned int const memsize = 256;

@@ -40,6 +40,7 @@
 # include <halmd/mdsim/gpu/potentials/pair/modified_lennard_jones.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
+# include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 #include <test/tools/dsfloat.hpp>
@@ -310,12 +311,12 @@ modified_lennard_jones<float_type>::modified_lennard_jones()
 }
 
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( modified_lennard_jones_gpu_dsfloat, device ) {
+BOOST_FIXTURE_TEST_CASE( modified_lennard_jones_gpu_dsfloat, set_cuda_device ) {
     modified_lennard_jones<dsfloat>().test();
 }
 # endif
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( modified_lennard_jones_gpu_float, device ) {
+BOOST_FIXTURE_TEST_CASE( modified_lennard_jones_gpu_float, set_cuda_device ) {
     modified_lennard_jones<float>().test();
 }
 # endif

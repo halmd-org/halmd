@@ -22,6 +22,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/mpl/push_back.hpp>
 #include <boost/mpl/vector.hpp>
+#include <boost/version.hpp>
 #include <limits>
 #include <stdint.h> // uint64_t
 
@@ -29,10 +30,17 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/numeric/cast.hpp>
 #include <test/tools/ctest.hpp>
+#include <test/tools/cuda.hpp>
 #include <test/unit/numeric/blas/fixed_vector_cuda_vector_converter_kernel.hpp>
 
 using namespace std;
 using namespace halmd;
+
+#if BOOST_VERSION < 105900
+BOOST_GLOBAL_FIXTURE(set_cuda_device);
+#else
+BOOST_TEST_GLOBAL_FIXTURE(set_cuda_device);
+#endif
 
 template <typename T>
 struct epsilon;

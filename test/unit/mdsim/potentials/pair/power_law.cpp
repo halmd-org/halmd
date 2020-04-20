@@ -40,6 +40,7 @@
 # include <halmd/mdsim/gpu/potentials/pair/power_law.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
+# include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 #include <test/tools/dsfloat.hpp>
@@ -309,12 +310,12 @@ power_law<float_type>::power_law()
 }
 
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( power_law_gpu_dsfloat, device ) {
+BOOST_FIXTURE_TEST_CASE( power_law_gpu_dsfloat, set_cuda_device ) {
     power_law<dsfloat>().test();
 }
 # endif
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( power_law_gpu_float, device ) {
+BOOST_FIXTURE_TEST_CASE( power_law_gpu_float, set_cuda_device ) {
     power_law<float>().test();
 }
 # endif

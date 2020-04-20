@@ -240,18 +240,16 @@ BOOST_AUTO_TEST_SUITE( host )
 BOOST_AUTO_TEST_SUITE_END()
 
 #ifdef HALMD_WITH_GPU
-BOOST_AUTO_TEST_SUITE( gpu )
+BOOST_FIXTURE_TEST_SUITE( gpu, set_cuda_device )
     BOOST_AUTO_TEST_SUITE( two )
 # ifdef USE_GPU_SINGLE_PRECISION
         BOOST_AUTO_TEST_SUITE( type_float )
             typedef test_suite_gpu<2, float> test_suite_type;
 
             BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
-                set_cuda_device device;
                 test_ordered<test_suite_type>(nparticle, nspecies, repeat);
             }
             BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
-                set_cuda_device device;
                 test_unordered<test_suite_type>(nparticle, nspecies, repeat);
             }
         BOOST_AUTO_TEST_SUITE_END()
@@ -261,11 +259,9 @@ BOOST_AUTO_TEST_SUITE( gpu )
             typedef test_suite_gpu<2, halmd::dsfloat> test_suite_type;
 
             BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
-                set_cuda_device device;
                 test_ordered<test_suite_type>(nparticle, nspecies, repeat);
             }
             BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
-                set_cuda_device device;
                 test_unordered<test_suite_type>(nparticle, nspecies, repeat);
             }
         BOOST_AUTO_TEST_SUITE_END()
@@ -278,11 +274,9 @@ BOOST_AUTO_TEST_SUITE( gpu )
             typedef test_suite_gpu<3, float> test_suite_type;
 
             BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
-                set_cuda_device device;
                 test_ordered<test_suite_type>(nparticle, nspecies, repeat);
             }
             BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
-                set_cuda_device device;
                 test_unordered<test_suite_type>(nparticle, nspecies, repeat);
             }
         BOOST_AUTO_TEST_SUITE_END()
@@ -292,11 +286,9 @@ BOOST_AUTO_TEST_SUITE( gpu )
             typedef test_suite_gpu<3, halmd::dsfloat> test_suite_type;
 
             BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
-                set_cuda_device device;
                 test_ordered<test_suite_type>(nparticle, nspecies, repeat);
             }
             BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
-                set_cuda_device device;
                 test_unordered<test_suite_type>(nparticle, nspecies, repeat);
             }
         BOOST_AUTO_TEST_SUITE_END()

@@ -713,52 +713,42 @@ static void test_stress_pot(particle_type& particle)
 #ifdef HALMD_WITH_GPU
 # define TEST_SUITE_GPU(particle_type, dataset, nspecies)   \
     BOOST_DATA_TEST_CASE( position, dataset, nparticle ) {  \
-        set_cuda_device device;                             \
         particle_type particle(nparticle, nspecies);        \
         test_position(particle);                            \
     }                                                       \
     BOOST_DATA_TEST_CASE( image, dataset, nparticle ) {     \
-        set_cuda_device device;                             \
         particle_type particle(nparticle, nspecies);        \
         test_image(particle);                               \
     }                                                       \
     BOOST_DATA_TEST_CASE( velocity, dataset, nparticle ) {  \
-        set_cuda_device device;                             \
         particle_type particle(nparticle, nspecies);        \
         test_velocity(particle);                            \
     }                                                       \
     BOOST_DATA_TEST_CASE( id, dataset, nparticle ) {        \
-        set_cuda_device device;                             \
         particle_type particle(nparticle, nspecies);        \
         test_id(particle);                                  \
     }                                                       \
     BOOST_DATA_TEST_CASE( reverse_id, dataset, nparticle ) {\
-        set_cuda_device device;                             \
         particle_type particle(nparticle, nspecies);        \
         test_reverse_id(particle);                          \
     }                                                       \
     BOOST_DATA_TEST_CASE( species, dataset, nparticle ) {   \
-        set_cuda_device device;                             \
         particle_type particle(nparticle, nspecies);        \
         test_species(particle);                             \
     }                                                       \
     BOOST_DATA_TEST_CASE( mass, dataset, nparticle ) {      \
-        set_cuda_device device;                             \
         particle_type particle(nparticle, nspecies);        \
         test_mass(particle);                                \
     }                                                       \
     BOOST_DATA_TEST_CASE( force, dataset, nparticle ) {     \
-        set_cuda_device device;                             \
         particle_type particle(nparticle, nspecies);        \
         test_force(particle);                               \
     }                                                       \
     BOOST_DATA_TEST_CASE( en_pot, dataset, nparticle ) {    \
-        set_cuda_device device;                             \
         particle_type particle(nparticle, nspecies);        \
         test_en_pot(particle);                              \
     }                                                       \
     BOOST_DATA_TEST_CASE( stress_pot, dataset, nparticle ) {\
-        set_cuda_device device;                             \
         particle_type particle(nparticle, nspecies);        \
         test_stress_pot(particle);                          \
     }
@@ -793,7 +783,7 @@ BOOST_AUTO_TEST_SUITE( host )
 BOOST_AUTO_TEST_SUITE_END()
 
 #ifdef HALMD_WITH_GPU
-BOOST_AUTO_TEST_SUITE( gpu )
+BOOST_FIXTURE_TEST_SUITE( gpu, set_cuda_device )
     BOOST_AUTO_TEST_SUITE( two )
 # ifdef USE_GPU_SINGLE_PRECISION
         BOOST_AUTO_TEST_SUITE( type_float )

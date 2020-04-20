@@ -43,6 +43,7 @@
 # include <halmd/observables/gpu/samples/sample.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
+# include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
@@ -347,30 +348,30 @@ struct gpu_gpu_modules
 };
 
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_float_2d, halmd::device ) {
+BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_float_2d, set_cuda_device ) {
     phase_space<gpu_host_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_float_3d, halmd::device ) {
+BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_float_3d, set_cuda_device ) {
     phase_space<gpu_host_modules<3, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_float_2d, halmd::device ) {
+BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_float_2d, set_cuda_device ) {
     phase_space<gpu_gpu_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_float_3d, halmd::device ) {
+BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_float_3d, set_cuda_device ) {
     phase_space<gpu_gpu_modules<3, float> >().test();
 }
 # endif
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_dsfloat_2d, halmd::device ) {
+BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_dsfloat_2d, set_cuda_device ) {
     phase_space<gpu_host_modules<2, halmd::dsfloat> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_dsfloat_3d, halmd::device ) {
+BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_dsfloat_3d, set_cuda_device ) {
     phase_space<gpu_host_modules<3, halmd::dsfloat> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_dsfloat_2d, halmd::device ) {
+BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_dsfloat_2d, set_cuda_device ) {
     phase_space<gpu_gpu_modules<2, halmd::dsfloat> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_dsfloat_3d, halmd::device ) {
+BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_dsfloat_3d, set_cuda_device ) {
     phase_space<gpu_gpu_modules<3, halmd::dsfloat> >().test();
 }
 # endif
