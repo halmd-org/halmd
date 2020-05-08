@@ -85,13 +85,8 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
       #
       # default CUDA flags are duplicated here from cmake/platform.cmake (used by CMake with native CUDA support)
       #
-      if(CUDA_VERSION VERSION_LESS 6.5)
-        set(HALMD_GPU_ARCH "120") # sane default value
-        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_12 -code=compute_12" CACHE STRING "Flags used by the compiler during all build types")
-      else()
-        set(HALMD_GPU_ARCH "350") # sane default value
-        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_35 -code=compute_35,sm_35 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true" CACHE STRING "Flags used by the compiler during all build types")
-      endif()
+      set(HALMD_GPU_ARCH "350") # sane default value
+      set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_35 -code=compute_35,sm_35 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true" CACHE STRING "Flags used by the compiler during all build types")
 
       string(REPLACE " " ";" __NVCC_ARGS "${CMAKE_CUDA_FLAGS}")
       if(NOT "${CUDA_HOST_COMPILER}" STREQUAL "")
@@ -126,8 +121,8 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
       # CMake with CUDA patch by Peter Colberg
 
       enable_language(CUDA)
-      if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 5.0)
-        message(SEND_ERROR "Minium required CUDA version is 5.0 (found ${CMAKE_CUDA_COMPILER_VERSION})")
+      if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 7.0)
+        message(SEND_ERROR "Minium required CUDA version is 7.0 (found ${CMAKE_CUDA_COMPILER_VERSION})")
       endif()
 
       try_compile(success "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu" OUTPUT_VARIABLE result)

@@ -29,7 +29,7 @@ Build environment
   The build process of HALMD depends on CMake, a cross-platform, open-source
   build system.
 
-* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 5.0, latest version tested: 8.5
+* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 7.0, latest version tested: 10.1
 
   Please refer to the installation instructions shipped with the toolkit. The
   toolkit is not needed for builds without GPU acceleration.
@@ -88,4 +88,3 @@ prerequisites are met:
 * LaTeX including pdflatex and dvipng
 
 * graphviz
-

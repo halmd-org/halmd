@@ -11,8 +11,7 @@ Snapshot (master branch)
 * fix misspelled keyword ``acquire`` in Lua API, it was ``aquire`` before.
   *(Felix Höfling)*
 
-* increase minimal required version of the Boost C++ library to 1.58.0 *(Felix
-  Höfling, Jaslo Ziska)*
+* increase minimal required version of the CUDA SDK to 7.0 *(Jaslo Ziska)*
 
 **Bug fixes**
 
