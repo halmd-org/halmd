@@ -28,6 +28,7 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 #include <halmd/utility/gpu/configure_kernel.hpp>
+#include <halmd/utility/gpu/device.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -58,7 +59,7 @@ binning<dimension, float_type>::binning(
   // allocate parameters
   , r_skin_(skin)
   , r_cut_max_(*std::max_element(r_cut.data().begin(), r_cut.data().end()))
-  , device_properties_(cuda::device::get())
+  , device_properties_(device::get())
 {
     LOG("initial cell occupancy: " << occupancy)
 

@@ -76,7 +76,7 @@ std::shared_ptr<particle_array_gpu<T>> particle_array_gpu<T>::cast(std::shared_p
 }
 
 cuda::config get_default_config(size_t n) {
-    cuda::device::properties prop(cuda::device::get());
+    cuda::device::properties prop(device::get());
     size_t block_size = 128;
     size_t grid_size = n / block_size;
     while (grid_size > prop.max_grid_size().x && block_size <= prop.max_threads_per_block()/2) {

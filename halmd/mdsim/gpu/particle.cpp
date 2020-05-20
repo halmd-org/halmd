@@ -66,7 +66,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
 {
     {
         // FIXME default CUDA kernel execution dimensions
-        cuda::device::properties prop(cuda::device::get());
+        cuda::device::properties prop(device::get());
         int max_block_size = prop.max_threads_per_block();
         // round up to next power of two
         --max_block_size;

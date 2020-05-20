@@ -19,7 +19,6 @@
  */
 
 #include <cub/util_allocator.cuh>
-#include <cuda_wrapper/device.hpp>
 #include <cuda_wrapper/error.hpp>
 
 #include <halmd/utility/gpu/device.hpp>
@@ -38,13 +37,13 @@ cub::CachingDeviceAllocator caching_allocator_(true);
 void* device::allocate(size_t bytes)
 {
     void* ptr;
-    CUDA_CALL(detail::caching_allocator_.DeviceAllocate(&ptr, bytes, cuda::device::get()));
+    CUDA_CALL(detail::caching_allocator_.DeviceAllocate(&ptr, bytes));
     return ptr;
 }
 
 void device::deallocate(void* ptr)
 {
-    CUDA_CALL(detail::caching_allocator_.DeviceFree(ptr, cuda::device::get()));
+    CUDA_CALL(detail::caching_allocator_.DeviceFree(ptr));
 }
 
 void device::deallocate_all()

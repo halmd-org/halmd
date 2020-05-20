@@ -44,11 +44,16 @@ namespace halmd {
  */
 class device
 {
+private:
+#ifndef __CUDACC__
+    static cuda::device device_;
+#endif
+
 public:
     static void luaopen(lua_State* L);
 
-    device();
-    ~device();
+    static void set(int num = -1);
+    static int get();
 
     static std::string nvidia_driver_version();
     static std::string compute_version();

@@ -38,10 +38,12 @@ using namespace std;
 
 namespace halmd {
 
+cuda::device device::device_;
+
 /**
  * Initialize CUDA device
  */
-device::device()
+void device::set(int num)
 {
     try {
         LOG("NVIDIA driver version: " << device::nvidia_driver_version());
@@ -52,12 +54,33 @@ device::device()
     LOG("CUDA driver version: " << device::cuda_driver_version());
     LOG("CUDA runtime version: " << device::cuda_runtime_version());
 
-    // choose first available CUDA device
+    // if no device was specified
+    if (num < 0) {
+        // if a device was already set return
+        if (device_.get() >= 0) {
+            return;
+        }
+
+        // select the first free device otherwise
+        for (int i = 0; i < cuda::device::count(); ++i) {
+            if (!cuda::device::active(i)) {
+                num = i;
+                break;
+            }
+        }
+
+        // if all devices are busy throw an error
+        if (num < 0) {
+            throw runtime_error("All devices are busy");
+        }
+    }
+
+    device_.set(num);
     cuda::thread::synchronize();
 
-    cuda::device::properties prop(cuda::device::get());
+    cuda::device::properties prop(num);
 
-    LOG("GPU: " << cuda::device::get());
+    LOG("GPU: " << num);
     LOG("GPU name: " << prop.name());
     LOG("GPU total global memory: " << prop.total_global_mem() << " bytes");
     LOG("GPU shared memory per block: " << prop.shared_mem_per_block() << " bytes");
@@ -72,21 +95,15 @@ device::device()
     LOG("CUDA compute version: " << device::compute_version());
 }
 
-/**
- * Detach CUDA runtime from CUDA device context
- *
- * This explicit clean-up is needed with CUDA < 3.0.
- */
-device::~device()
+int device::get()
 {
-    LOG_DEBUG("detach from CUDA device context");
-    cuda::thread::exit();
+    return device_.get();
 }
 
 cuda::config const& device::validate(cuda::config const& dim)
 {
     cuda::thread::synchronize();
-    cuda::device::properties prop(cuda::device::get());
+    cuda::device::properties prop(device_.get());
     unsigned int threads = dim.threads_per_block();
 
     if (threads < 1) {
@@ -178,7 +195,7 @@ static void translate_cuda_error(lua_State* L, cuda::error const& e)
 
 static int wrap_gpu(device const&)
 {
-    return cuda::device::get();
+    return device::get();
 }
 
 void device::luaopen(lua_State* L)

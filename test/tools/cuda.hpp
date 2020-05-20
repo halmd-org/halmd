@@ -40,8 +40,9 @@ struct set_cuda_device
      */
     set_cuda_device()
     {
+        halmd::device::set();
         cuda::thread::synchronize();
-        BOOST_TEST_MESSAGE( "Using CUDA device #" << cuda::device::get() );
+        BOOST_TEST_MESSAGE("Using CUDA device #" << halmd::device::get());
     }
 
     /**
@@ -51,7 +52,6 @@ struct set_cuda_device
     {
         // make sure the caching allocator frees its memory
         halmd::device::deallocate_all();
-        cuda::thread::exit();
     }
 };
 

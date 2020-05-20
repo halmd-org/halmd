@@ -25,6 +25,7 @@
 #include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
+#include <halmd/utility/gpu/device.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -71,7 +72,7 @@ from_binning<dimension, float_type>::from_binning(
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
   , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
   , preferred_algorithm_(preferred_algorithm)
-  , device_properties_(cuda::device::get())
+  , device_properties_(device::get())
 {
     for (size_t i = 0; i < r_cut.size1(); ++i) {
         for (size_t j = 0; j < r_cut.size2(); ++j) {

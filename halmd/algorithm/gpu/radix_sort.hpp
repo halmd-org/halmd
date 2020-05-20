@@ -23,6 +23,7 @@
 
 #include <halmd/algorithm/gpu/radix_sort_kernel.hpp>
 #include <halmd/algorithm/gpu/scan.hpp>
+#include <halmd/utility/gpu/device.hpp>
 
 #include <algorithm>
 #include <iterator>
@@ -160,9 +161,8 @@ private:
      */
     static unsigned int blocks(unsigned int count, unsigned int threads)
     {
-        int dev = cuda::device::get();
         unsigned int max_threads, max_blocks;
-        cuda::device::properties prop(dev);
+        cuda::device::properties prop(device::get());
         max_threads = prop.multi_processor_count() * prop.max_threads_per_block();
         max_blocks = max_threads / (threads * BUCKETS_PER_THREAD / 2);
         return std::min((count + 2 * threads - 1) / (2 * threads), max_blocks);
