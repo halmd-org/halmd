@@ -184,11 +184,24 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     id_array_type id(array_size_);
 
     configure_kernel(get_particle_kernel<dimension, float_type>().rearrange, dim_, true);
-    get_particle_kernel<dimension, float_type>().r.bind(*g_position);
-    get_particle_kernel<dimension, float_type>().image.bind(*g_image);
-    get_particle_kernel<dimension, float_type>().v.bind(*g_velocity);
-    get_particle_kernel<dimension, float_type>().id.bind(read_cache(id_));
-    get_particle_kernel<dimension, float_type>().rearrange(g_index, position, image, velocity, id, nparticle_);
+
+    cuda::texture<float4> r_tex(*g_position);
+    cuda::texture<gpu_vector_type> image_tex(*g_image);
+    cuda::texture<float4> v_tex(*g_velocity);
+    cuda::texture<unsigned int> id_tex(read_cache(id_));
+
+    get_particle_kernel<dimension, float_type>().rearrange(
+        r_tex
+      , image_tex
+      , v_tex
+      , id_tex
+      , g_index
+      , position
+      , image
+      , velocity
+      , id
+      , nparticle_
+    );
 
     position.swap(*g_position);
     image.swap(*g_image);

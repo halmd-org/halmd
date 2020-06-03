@@ -116,12 +116,12 @@ read_stress_tensor_diagonal(float const* g_stress, unsigned int stride)
  */
 template <typename stress_tensor_type>
 HALMD_GPU_ENABLED stress_tensor_type
-read_stress_tensor(texture<float> const stress_pot_texture, unsigned int i, unsigned int stride)
+read_stress_tensor(cudaTextureObject_t stress_pot_texture, unsigned int i, unsigned int stride)
 {
     stress_tensor_type v;
     enum { size = stress_tensor_type::static_size };
     for (int j = 0; j < size; ++j) {
-        v[j] = tex1Dfetch(stress_pot_texture, i + j * stride);
+        v[j] = tex1Dfetch<float>(stress_pot_texture, i + j * stride);
     }
     return v;
 }
@@ -131,7 +131,7 @@ read_stress_tensor(texture<float> const stress_pot_texture, unsigned int i, unsi
  */
 template <typename vector_type>
 HALMD_GPU_ENABLED vector_type
-read_stress_tensor_diagonal(texture<float> const stress_pot_texture, unsigned int i, unsigned int stride)
+read_stress_tensor_diagonal(cudaTextureObject_t stress_pot_texture, unsigned int i, unsigned int stride)
 {
     // as the first d(=dimension) elements are the diagonal elements,
     // read_stress_tensor() can be used for reading the diagonal

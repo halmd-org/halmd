@@ -38,17 +38,21 @@ struct particle_wrapper
 
     cuda::symbol<unsigned int> nbox;
     cuda::symbol<unsigned int> ntype;
-    cuda::texture<unsigned int> ntypes;
-    /** positions, types */
-    cuda::texture<float4> r;
-    /** minimum image vectors */
-    cuda::texture<aligned_vector_type> image;
-    /** velocities, masses */
-    cuda::texture<float4> v;
-    /** IDs */
-    cuda::texture<unsigned int> id;
+
     /** rearrange particles by a given permutation */
-    cuda::function<void (unsigned int const*, ptr_type, aligned_vector_type*, ptr_type, unsigned int*, unsigned int)> rearrange;
+    cuda::function<void (
+        cudaTextureObject_t // positions, types
+      , cudaTextureObject_t // minimum image vectors
+      , cudaTextureObject_t // velocities, masses
+      , cudaTextureObject_t // IDs
+      , unsigned int const*
+      , ptr_type
+      , aligned_vector_type*
+      , ptr_type
+      , unsigned int*
+      , unsigned int
+    )> rearrange;
+
     static particle_wrapper kernel;
 };
 

@@ -36,16 +36,12 @@ struct from_binning_wrapper
     typedef fixed_vector<float, dimension> vector_type;
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
 
-    /** (cutoff lengths + neighbour list skin)² */
-    cuda::texture<float> rr_cut_skin;
-    /** positions, IDs of particle1 */
-    cuda::texture<float4> r1;
-    /** positions, IDs of particle2 */
-    cuda::texture<float4> r2;
-
     /** update neighbour lists */
     cuda::function<void (
-        int*
+        cudaTextureObject_t // (cutoff lengths + neighbour list skin)²
+      , cudaTextureObject_t // positions, IDs of particle1
+      , cudaTextureObject_t // positions, IDs of particle2
+      , int*
       , unsigned int*
       , unsigned int
       , unsigned int
@@ -60,7 +56,9 @@ struct from_binning_wrapper
 
     /** update neighbour lists that uses a 'naive' implementation */
     cuda::function<void (
-        int*
+        cudaTextureObject_t // (cutoff lengths + neighbour list skin)²
+      , cudaTextureObject_t // positions, IDs of particle2
+      , int*
       , float4 const*
       , unsigned int
       , bool

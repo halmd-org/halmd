@@ -214,14 +214,18 @@ void from_binning<dimension, float_type>::update()
                 continue;
             }
 
-            kernel->rr_cut_skin.bind(g_rr_cut_skin_);
-            kernel->r1.bind(position1);
-            kernel->r2.bind(position2);
+            cuda::texture<float> rr_cut_skin(g_rr_cut_skin_);
+            cuda::texture<float4> r1(position1);
+            cuda::texture<float4> r2(position2);
 
             kernel->update_neighbours.configure(binning2_->dim_cell().grid,
                 binning2_->dim_cell().block, smem_size);
+
             kernel->update_neighbours(
-                g_ret
+                rr_cut_skin
+              , r1
+              , r2
+              , g_ret
               , &*g_neighbour->begin()
               , size_
               , stride_
@@ -235,11 +239,16 @@ void from_binning<dimension, float_type>::update()
             );
         }
         else {
-            configure_kernel(kernel->update_neighbours_naive, particle1_->dim(), false);
-            kernel->rr_cut_skin.bind(g_rr_cut_skin_);
-            kernel->r2.bind(position2);
+            configure_kernel(kernel->update_neighbours_naive, particle1_->dim(),
+                false);
+
+            cuda::texture<float> rr_cut_skin(g_rr_cut_skin_);
+            cuda::texture<float4> r2(position2);
+
             kernel->update_neighbours_naive(
-                g_ret
+                rr_cut_skin
+              , r2
+              , g_ret
               , position1.data()
               , particle1_->nparticle()
               , particle1_ == particle2_

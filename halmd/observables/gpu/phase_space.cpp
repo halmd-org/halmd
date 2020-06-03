@@ -404,11 +404,13 @@ public:
         auto image = make_cache_mutable(mdsim::gpu::particle_array_gpu<gpu_vector_type>::cast(image_array_->parent())->mutable_data());
         auto const& group = read_cache(this->particle_group_->ordered());
         try {
-            phase_space_wrapper<dimension>::kernel.r.bind(*position);
+            cuda::texture<float4> r(*position);
+
             phase_space_wrapper<dimension>::kernel.reduce_periodic.configure(
                 dim_.grid, dim_.block);
             phase_space_wrapper<dimension>::kernel.reduce_periodic(
-                &*group.begin()
+                r
+              , &*group.begin()
               , position->data() // TODO: is this correct for dsfloats?
               , &*image->begin()
               , static_cast<fixed_vector<scalar_type, dimension>>(box_->length())
@@ -494,10 +496,12 @@ public:
             auto& sample_data = sample_->data();
 
             try {
-                sample_wrapper::kernel.input.bind(data);
+                cuda::texture<sample_data_type> input(data);
+
                 sample_wrapper::kernel.sample.configure(dim_.grid, dim_.block);
                 sample_wrapper::kernel.sample(
-                    &*group.begin()
+                    input
+                  , &*group.begin()
                   , &*sample_data.begin()
                   , group.size()
                 );
@@ -528,10 +532,12 @@ public:
 
         auto data = make_cache_mutable(array_->mutable_data());
         try {
-            sample_wrapper::kernel.input.bind(sample->data());
+            cuda::texture<sample_data_type> input(sample->data());
+
             sample_wrapper::kernel.set.configure(dim_.grid, dim_.block);
             sample_wrapper::kernel.set(
-                &*group.begin()
+                input
+              , &*group.begin()
               , data->data()
               , group.size()
             );
@@ -612,7 +618,8 @@ public:
     typedef mdsim::gpu::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle_array_gpu<data_type> position_array_type;
-    typedef mdsim::gpu::particle_array_gpu<typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type> image_array_type;
+    typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
+    typedef mdsim::gpu::particle_array_gpu<coalesced_vector_type> image_array_type;
 
     /**
      * Creates a GPU sampler for position data.
@@ -667,13 +674,15 @@ public:
             this->sample_ = std::make_shared<sample_type>(group.size());
 
             try {
-                phase_space_wrapper<dimension>::kernel.r.bind(particle_position);
-                phase_space_wrapper<dimension>::kernel.image.bind(particle_image);
+                cuda::texture<float4> r(particle_position);
+                cuda::texture<coalesced_vector_type> image(particle_image);
 
                 phase_space_wrapper<dimension>::kernel.sample_position.configure(
                     this->dim_.grid, this->dim_.block);
                 phase_space_wrapper<dimension>::kernel.sample_position(
-                    &*group.begin()
+                    r
+                  , image
+                  , &*group.begin()
                   , this->sample_->data()
                   , static_cast<fixed_vector<float, dimension>>(box_->length())
                   , group.size()
@@ -705,11 +714,13 @@ public:
         auto image = make_cache_mutable(image_array_->mutable_data());
         auto const& group = read_cache(this->particle_group_->ordered());
         try {
-            phase_space_wrapper<dimension>::kernel.r.bind(*position);
+            cuda::texture<float4> r(*position);
+
             phase_space_wrapper<dimension>::kernel.reduce_periodic.configure(
                 this->dim_.grid, this->dim_.block);
             phase_space_wrapper<dimension>::kernel.reduce_periodic(
-                &*group.begin()
+                r
+              , &*group.begin()
               , position->data() // TODO: is this correct for dsfloats?
               , &*image->begin()
               , static_cast<fixed_vector<float, dimension>>(box_->length())

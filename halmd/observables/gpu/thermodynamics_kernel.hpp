@@ -54,7 +54,7 @@ public:
     /**
      * Initialise kinetic energy to zero.
      */
-    kinetic_energy() : mv2_(0) {}
+    kinetic_energy(cudaTextureObject_t texture) : mv2_(0), texture_(texture) {}
 
     /**
      * Accumulate kinetic energy of a particle.
@@ -77,19 +77,11 @@ public:
         return 0.5 * mv2_;
     }
 
-    /**
-     * Returns reference to texture with velocities and masses.
-     */
-    static cuda::texture<float4> const& get()
-    {
-        return texture_;
-    }
-
 private:
     /** sum over mass × square of velocity vector */
     float_type mv2_;
     /** texture with velocities and masses */
-    static cuda::texture<float4> const texture_;
+    cudaTextureObject_t texture_;
 };
 
 /**
@@ -101,16 +93,19 @@ class centre_of_mass
 private:
     typedef unsigned int size_type;
     typedef fixed_vector<float_type, dimension> vector_type;
-    typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
 public:
     /** element pointer type of input array */
     typedef zip_iterator<size_type const*, constant_iterator<fixed_vector<float, dimension> > > iterator;
+    typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
     /**
      * Initialise momentum and mass to zero.
      */
-    centre_of_mass() : mr_(0), m_(0) {}
+    centre_of_mass(cudaTextureObject_t position_texture, cudaTextureObject_t image_texture
+      , cudaTextureObject_t velocity_texture) :
+        mr_(0), m_(0), position_texture_(position_texture), image_texture_(image_texture)
+      , velocity_texture_(velocity_texture) {}
 
     /**
      * Accumulate momentum and mass of a particle.
@@ -134,41 +129,17 @@ public:
         return fixed_vector<double, dimension>(mr_ / m_);
     }
 
-    /**
-     * Returns reference to texture with positions and species.
-     */
-    static cuda::texture<float4> const& get_position()
-    {
-        return position_texture_;
-    }
-
-    /**
-     * Returns reference to texture with images.
-     */
-    static cuda::texture<coalesced_vector_type> const& get_image()
-    {
-        return image_texture_;
-    }
-
-    /**
-     * Returns reference to texture with velocities and masses.
-     */
-    static cuda::texture<float4> const& get_velocity()
-    {
-        return velocity_texture_;
-    }
-
 private:
     /** sum over momentum vector */
     vector_type mr_;
     /** sum over mass */
     float_type m_;
     /** texture with positions and species */
-    static cuda::texture<float4> const position_texture_;
+    cudaTextureObject_t position_texture_;
     /** texture with images */
-    static cuda::texture<coalesced_vector_type> const image_texture_;
+    cudaTextureObject_t image_texture_;
     /** texture with velocities and masses */
-    static cuda::texture<float4> const velocity_texture_;
+    cudaTextureObject_t velocity_texture_;
 };
 
 /**
@@ -188,7 +159,7 @@ public:
     /**
      * Initialise momentum and mass to zero.
      */
-    velocity_of_centre_of_mass() : mv_(0), m_(0) {}
+    velocity_of_centre_of_mass(cudaTextureObject_t texture) : mv_(0), m_(0), texture_(texture) {}
 
     /**
      * Accumulate momentum and mass of a particle.
@@ -214,21 +185,13 @@ public:
     }
 #endif
 
-    /**
-     * Returns reference to texture with velocities and masses.
-     */
-    static cuda::texture<float4> const& get()
-    {
-        return texture_;
-    }
-
 private:
     /** sum over momentum vector */
     vector_type mv_;
     /** sum over mass */
     float_type m_;
     /** texture with velocities and masses */
-    static cuda::texture<float4> const texture_;
+    cudaTextureObject_t texture_;
 };
 
 /**
@@ -304,7 +267,7 @@ public:
     /**
      * Initialise potential energy to zero
      */
-    potential_energy() : en_pot_(0) {}
+    potential_energy(cudaTextureObject_t texture) : en_pot_(0), texture_(texture) {}
 
     /**
      * Accumulate potential energy of a particle.
@@ -327,19 +290,11 @@ public:
         return en_pot_;
     }
 
-    /**
-     * Returns reference to texture with potential energies.
-     */
-    static cuda::texture<float> const& get()
-    {
-        return texture_;
-    }
-
 private:
     /** total potential energy */
     float_type en_pot_;
     /** texture with potential energies */
-    static cuda::texture<float> const texture_;
+    cudaTextureObject_t texture_;
 };
 
 /**
@@ -358,7 +313,7 @@ public:
     /**
      * Initialise virial sum to zero and store number of strides
      */
-    virial(unsigned int stride) : virial_(0), stride_(stride) {}
+    virial(cudaTextureObject_t texture, unsigned int stride) : virial_(0), stride_(stride), texture_(texture) {}
 
     /**
      * Accumulate stress tensor diagonal of a particle.
@@ -381,19 +336,9 @@ public:
         return virial_;
     }
 
-    /**
-     * Returns reference to texture with stress tensors.
-     */
-    static cuda::texture<float> const& get()
-    {
-        return texture_;
-    }
-
 private:
     /** total virial sum */
     float_type virial_;
-    /** texture with stress tensors */
-    static cuda::texture<float> const texture_;
     /**
      * stride of the stress tensor array in device memory
      *
@@ -402,6 +347,8 @@ private:
      * accumulation functor.
      **/
     unsigned int stride_;
+    /** texture with stress tensors */
+    cudaTextureObject_t texture_;
 };
 
 /**
@@ -421,7 +368,8 @@ public:
     /**
      * Initialise stress tensor sum to zero and store number of strides
      */
-    stress_tensor(unsigned int stride) : stride_(stride), stress_tensor_(0) {}
+    stress_tensor(cudaTextureObject_t velocity_texture, cudaTextureObject_t stress_pot_texture, unsigned int stride) :
+        stride_(stride), stress_tensor_(0), velocity_texture_(velocity_texture), stress_pot_texture_(stress_pot_texture) {}
 
     /**
      * Accumulate stress tensor diagonal of a particle.
@@ -444,27 +392,7 @@ public:
         return stress_tensor_;
     }
 
-    /**
-     * Returns reference to texture with velocities.
-     */
-    static cuda::texture<float4> const& get_velocity()
-    {
-        return velocity_texture_;
-    }
-
-    /**
-     * Returns reference to texture with potential part of stress tensors.
-     */
-    static cuda::texture<float> const& get_stress_pot()
-    {
-        return stress_pot_texture_;
-    }
-
 private:
-    /** texture with velocities */
-    static cuda::texture<float4> const velocity_texture_;
-    /** texture with stress tensors */
-    static cuda::texture<float> const stress_pot_texture_;
     /**
      * stride of the stress tensor array in device memory
      *
@@ -475,6 +403,10 @@ private:
     unsigned int stride_;
     /** sum of stress tensors */
     stress_tensor_type stress_tensor_;
+    /** texture with velocities */
+    cudaTextureObject_t velocity_texture_;
+    /** texture with stress tensors */
+    cudaTextureObject_t stress_pot_texture_;
 };
 
 } // namespace observables

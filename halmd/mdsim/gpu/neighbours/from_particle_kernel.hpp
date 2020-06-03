@@ -32,11 +32,10 @@ namespace neighbours {
 template <int dimension>
 struct from_particle_wrapper
 {
-    /** (cutoff lengths + neighbour list skin)² */
-    cuda::texture<float> rr_cut_skin;
     /** update neighbour lists */
     typedef cuda::function<void (
-      float4 const*
+        cudaTextureObject_t // (cutoff lengths + neighbour list skin)²
+      , float4 const*
       , unsigned int
       , float4 const*
       , unsigned int
@@ -48,6 +47,7 @@ struct from_particle_wrapper
       , unsigned int
       , int*
     )> update_function_type;
+
     update_function_type update;
 
     static from_particle_wrapper kernel;

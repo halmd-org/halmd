@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_GPU_PHASE_SPACE_KERNEL_CUH
-#define HALMD_OBSERVABLES_GPU_PHASE_SPACE_KERNEL_CUH
+#ifndef HALMD_OBSERVABLES_GPU_PHASE_SPACE_KERNEL_HPP
+#define HALMD_OBSERVABLES_GPU_PHASE_SPACE_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -36,14 +36,25 @@ struct phase_space_wrapper
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
-    /** positions, types */
-    cuda::texture<float4> r;
-    /** minimum image vectors */
-    cuda::texture<coalesced_vector_type> image;
     /** sample position for all particle of a single species */
-    cuda::function<void (unsigned int const*, float4*, vector_type, unsigned int)> sample_position;
+    cuda::function<void (
+        cudaTextureObject_t // positions, types
+      , cudaTextureObject_t // minimum image vectors
+      , unsigned int const*
+      , float4*
+      , vector_type
+      , unsigned int
+    )> sample_position;
+
     /** shift particle positions to range (-L/2, L/2) */
-    cuda::function<void (unsigned int const*, float4*, coalesced_vector_type*, vector_type, unsigned int)> reduce_periodic;
+    cuda::function<void (
+        cudaTextureObject_t // positions, types
+      , unsigned int const*
+      , float4*
+      , coalesced_vector_type*
+      , vector_type
+      , unsigned int
+    )> reduce_periodic;
 
     static phase_space_wrapper kernel;
 };
@@ -75,10 +86,21 @@ struct sample_ptr_type<dsfloat> : sample_ptr_type<fixed_vector<dsfloat, 1> >
 template<typename input_data_type, typename sample_data_type = input_data_type>
 struct phase_space_sample_wrapper
 {
-    cuda::texture<sample_data_type> input;
     typedef typename detail::sample_ptr_type<input_data_type>::ptr_type ptr_type;
-    cuda::function<void (unsigned int const*, sample_data_type*, unsigned int)> sample;
-    cuda::function<void (unsigned int const*, ptr_type, unsigned int)> set;
+
+    cuda::function<void (
+        cudaTextureObject_t
+      , unsigned int const*
+      , sample_data_type*
+      , unsigned int
+    )> sample;
+
+    cuda::function<void (
+        cudaTextureObject_t
+      , unsigned int const*
+      , ptr_type
+      , unsigned int
+    )> set;
 
     static phase_space_sample_wrapper kernel;
 };
@@ -93,4 +115,4 @@ phase_space_wrapper<dimension>& get_phase_space_kernel()
 } // namespace gpu
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_GPU_PHASE_SPACE_KERNEL_CUH */
+#endif /* ! HALMD_OBSERVABLES_GPU_PHASE_SPACE_KERNEL_HPP */

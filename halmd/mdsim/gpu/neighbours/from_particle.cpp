@@ -145,28 +145,33 @@ void from_particle<dimension, float_type>::update()
         cuda::vector<int> g_overflow(1);
         cuda::host::vector<int> h_overflow(1);
         cuda::memset(g_overflow.begin(), g_overflow.end(), 0);
-        get_from_particle_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
+
+        cuda::texture<float> rr_cut_skin(g_rr_cut_skin_);
+
         configure_kernel(
-          get_from_particle_kernel<dimension>().update
-        , particle1_->dim()
-        , true
-        , sizeof(unsigned int) + sizeof(vector_type)
+            get_from_particle_kernel<dimension>().update
+          , particle1_->dim()
+          , true
+          , sizeof(unsigned int) + sizeof(vector_type)
         );
         get_from_particle_kernel<dimension>().update(
-          position1.data()
-        , particle1_->nparticle()
-        , position2.data()
-        , particle2_->nparticle()
-        , particle1_->nspecies()
-        , particle2_->nspecies()
-        , static_cast<vector_type>(box_->length())
-        , &*g_neighbour->begin()
-        , size_
-        , stride_
-        , g_overflow
+            rr_cut_skin
+          , position1.data()
+          , particle1_->nparticle()
+          , position2.data()
+          , particle2_->nparticle()
+          , particle1_->nspecies()
+          , particle2_->nspecies()
+          , static_cast<vector_type>(box_->length())
+          , &*g_neighbour->begin()
+          , size_
+          , stride_
+          , g_overflow
         );
+
         cuda::copy(g_overflow.begin(), g_overflow.end(), h_overflow.begin());
         cuda::thread::synchronize();
+
         overcrowded = h_overflow.front() > 0;
         if (overcrowded) {
             LOG("failed to bin " << h_overflow.front() << " particles, reducing occupancy");

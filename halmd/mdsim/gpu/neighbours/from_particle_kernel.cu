@@ -29,12 +29,10 @@ namespace gpu {
 namespace neighbours {
 namespace from_particle_kernel {
 
-/** (cutoff lengths + neighbour list skin)² */
-texture<float> rr_cut_skin_;
-
 template <typename vector_type>
 __global__ void update(
-    float4 const* g_r1
+    cudaTextureObject_t rr_cut_skin_tex
+  , float4 const* g_r1
   , unsigned int npart1
   , float4 const* g_r2
   , unsigned int npart2
@@ -92,7 +90,8 @@ __global__ void update(
             float rr = inner_prod(dr, dr);
 
             // enforce cutoff length with neighbour list skin
-            float rr_cut_skin = tex1Dfetch(rr_cut_skin_, type1 * ntype2 + type2);
+            float rr_cut_skin = tex1Dfetch<float>(rr_cut_skin_tex, type1 * ntype2 + type2);
+
             if (rr > rr_cut_skin) { continue; }
 
             if (count < size) {
@@ -117,8 +116,7 @@ int block_size_to_smem_size(int block_size) {
 
 template <int dimension>
 from_particle_wrapper<dimension> from_particle_wrapper<dimension>::kernel = {
-    from_particle_kernel::rr_cut_skin_
-  , update_function_type(
+    update_function_type(
       from_particle_kernel::update<fixed_vector<float, dimension> >
     , from_particle_kernel::block_size_to_smem_size<fixed_vector<float, dimension> >
     )
