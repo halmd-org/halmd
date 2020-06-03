@@ -1,6 +1,7 @@
 /*
  * Copyright © 2010-2013 Felix Höfling
  * Copyright © 2008-2012 Peter Colberg
+ * Copyright © 2020      Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -56,7 +57,11 @@ public:
         std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
-    void bind_textures() const {}
+    /** return gpu potential */
+    gpu_potential_type get_gpu_potential() const
+    {
+        return gpu_potential_type();
+    }
 
     // FIXME are the following functions actually needed?
     matrix_type epsilon() const

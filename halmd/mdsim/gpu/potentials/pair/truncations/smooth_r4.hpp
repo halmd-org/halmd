@@ -1,5 +1,6 @@
 /*
  * Copyright © 2016 Daniel Kirchner
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -60,6 +61,7 @@ public:
             , en_cut_(this->size1(), this->size2())
             , rri_smooth_(std::pow(h, -2))
             , g_param_(this->size1() * this->size2())
+            , t_param_(g_param_)
     {
 
         for (size_t i = 0; i < this->size1(); ++i) {
@@ -83,11 +85,11 @@ public:
         cuda::copy(param.begin(), param.end(), g_param_.begin());
     }
 
-    /** bind textures before kernel invocation */
-    void bind_textures() const
+    /** return gpu potential with texture */
+    gpu_potential_type get_gpu_potential() const
     {
         smooth_r4_wrapper<parent_potential>::rri_smooth.set(rri_smooth_);
-        return {potential_type::potential(), texture_};
+        return gpu_potential_type(potential_type::get_gpu_potential(), t_param_);
     }
 
     matrix_type const& r_cut() const
@@ -155,7 +157,8 @@ private:
     /** smoothing length */
     float_type rri_smooth_;
     /** adapter parameters at CUDA device */
-    cuda::vector<float4> g_param_;
+    cuda::memory::device::vector<float4> g_param_;
+    cuda::texture<float4> t_param_;
 };
 
 } // namespace truncations

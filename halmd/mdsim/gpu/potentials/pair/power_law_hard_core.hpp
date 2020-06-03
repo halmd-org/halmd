@@ -1,5 +1,6 @@
 /*
  * Copyright © 2016 Daniel Kirchner
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -48,6 +49,7 @@ public:
             : power_law<float_type>(std::forward<Args>(args)...)
             , r_core_sigma_(check_shape(core, this->sigma()))
             , g_param_(this->size1() * this->size2())
+            , t_param_(g_param_)
     {
         LOG("core radius r_core/σ = " << r_core_sigma_);
 
@@ -59,11 +61,10 @@ public:
         cuda::copy(param.begin(), param.end(), g_param_.begin());
     }
 
-    /** bind textures before kernel invocation */
-    void bind_textures() const
+    /** return gpu potential with textures */
+    gpu_potential_type get_gpu_potential() const
     {
-        hard_core_wrapper<parent_potential>::param.bind(g_param_);
-        power_law<float_type>::bind_textures();
+        return gpu_potential_type(power_law<float_type>::get_gpu_potential(), t_param_);
     }
 
     matrix_type const& r_core_sigma() const
@@ -112,7 +113,8 @@ private:
     /** core radius in units of sigma */
     matrix_type r_core_sigma_;
 
-    cuda::vector<float> g_param_;
+    cuda::memory::device::vector<float> g_param_;
+    cuda::texture<float> t_param_;
 };
 
 } // namespace adapters

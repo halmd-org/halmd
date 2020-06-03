@@ -59,6 +59,7 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
   , index_n_(check_shape(index_n, epsilon))
   , sigma2_(element_prod(sigma_, sigma_))
   , g_param_(size1() * size2())
+  , t_param_(g_param_)
   , logger_(logger)
 {
     LOG("potential well depths: ε = " << epsilon_);

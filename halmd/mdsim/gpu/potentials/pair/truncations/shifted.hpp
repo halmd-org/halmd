@@ -1,5 +1,6 @@
 /*
  * Copyright © 2016 Daniel Kirchner
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -59,6 +60,7 @@ public:
             , rr_cut_(element_prod(r_cut_, r_cut_))
             , en_cut_(this->size1(), this->size2())
             , g_param_(this->size1() * this->size2())
+            , t_param_(g_param_)
     {
 
         for (size_t i = 0; i < this->size1(); ++i) {
@@ -81,11 +83,10 @@ public:
         cuda::copy(param.begin(), param.end(), g_param_.begin());
     }
 
-    /** bind textures before kernel invocation */
-    void bind_textures() const
+    /** return gpu potential with textures */
+    gpu_potential_type get_gpu_potential() const
     {
-        shifted_wrapper<parent_potential>::param.bind(g_param_);
-        potential_type::bind_textures();
+        return gpu_potential_type(potential_type::get_gpu_potential(), t_param_);
     }
 
     matrix_type const& r_cut() const
@@ -149,7 +150,8 @@ private:
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
     /** adapter parameters at CUDA device */
-    cuda::vector<float2> g_param_;
+    cuda::memory::device::vector<float2> g_param_;
+    cuda::texture<float2> t_param_;
 };
 
 } // namespace truncations

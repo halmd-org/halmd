@@ -55,6 +55,7 @@ power_law<float_type>::power_law(
   , index_(check_shape(index, epsilon))
   , sigma2_(element_prod(sigma_, sigma_))
   , g_param_(size1() * size2())
+  , t_param_(g_param_)
   , logger_(logger)
 {
     LOG("interaction strength: ε = " << epsilon_);

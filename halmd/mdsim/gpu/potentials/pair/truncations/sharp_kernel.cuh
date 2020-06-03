@@ -1,5 +1,6 @@
 /*
  * Copyright © 2016 Daniel Kirchner
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -25,7 +26,6 @@
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/truncations/sharp_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
-#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -35,63 +35,17 @@ namespace pair {
 namespace truncations {
 namespace sharp_kernel {
 
-static texture<float> param_;
-
-template<typename parent_kernel>
-class sharp
-  : public parent_kernel
+template <typename parent_kernel>
+__device__ void sharp<parent_kernel>::fetch(
+    unsigned int type1, unsigned int type2
+  , unsigned int ntype1, unsigned int ntype2
+)
 {
-public:
-    /**
-     * Construct Cutoff Adapter.
-     *
-     * Fetch cutoff parameter from texture cache for particle pair.
-     *
-     * @param type1 type of first interacting particle
-     * @param type2 type of second interacting particle
-     */
-    HALMD_GPU_ENABLED sharp(
-        unsigned int type1, unsigned int type2
-      , unsigned int ntype1, unsigned int ntype2
-    )
-      : parent_kernel(type1, type2, ntype1, ntype2)
-      , rr_cut_(tex1Dfetch(param_, type1 * ntype2 + type2))
-    {
-    }
-
-    /**
-     * Check whether particles are in interaction range.
-     *
-     * @param rr squared distance between particles
-     */
-    template <typename float_type>
-    HALMD_GPU_ENABLED bool within_range(float_type rr) const
-    {
-        return (rr < rr_cut_);
-    }
-
-    /**
-     * Compute force and potential for interaction.
-     *
-     * @param rr squared distance between particles
-     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
-     */
-    template <typename float_type>
-    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
-    {
-        return parent_kernel::operator()(rr);
-    }
-
-private:
-    /** squared cutoff radius */
-    float rr_cut_;
-};
+    parent_kernel::fetch(type1, type2, ntype1, ntype2);
+    rr_cut_ = tex1Dfetch<float>(t_param_, type1 * ntype2 + type2);
+}
 
 } // namespace sharp_kernel
-
-template<typename parent_kernel>
-cuda::texture<float> sharp_wrapper<parent_kernel>::param = sharp_kernel::param_;
-
 } // namespace truncations
 } // namespace pair
 } // namespace potentials

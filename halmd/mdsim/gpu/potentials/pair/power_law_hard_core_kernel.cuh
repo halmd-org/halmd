@@ -1,5 +1,6 @@
 /*
  * Copyright © 2016 Daniel Kirchner
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -23,6 +24,7 @@
 
 #include <halmd/mdsim/gpu/potentials/pair/adapters/hard_core_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/power_law_kernel.hpp>
+#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -40,19 +42,24 @@ class hard_core<power_law_kernel::power_law> : public power_law_kernel::power_la
 public:
     /**
      * Construct Hard Core Adapter.
-     *
+     */
+    hard_core(power_law_kernel::power_law const& parent, cudaTextureObject_t t_param) :
+        power_law_kernel::power_law(parent), t_param_(t_param) {}
+
+    /**
      * Fetch core parameter from texture cache for particle pair.
      *
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED hard_core(
+    HALMD_GPU_ENABLED void fetch(
         unsigned int type1, unsigned int type2
       , unsigned int ntype1, unsigned int ntype2
     )
-      : power_law_kernel::power_law(type1, type2, ntype1, ntype2)
-      , core_sigma_(tex1Dfetch(param_, type1 * ntype2 + type2))
-    {}
+    {
+        power_law_kernel::power_law::fetch(type1, type2, ntype1, ntype2);
+        core_sigma_ = tex1Dfetch<float>(t_param_, type1 * ntype2 + type2);
+    }
 
     /**
      * Compute force and potential for interaction.
@@ -80,6 +87,7 @@ public:
 
 private:
     float core_sigma_;
+    cudaTextureObject_t t_param_;
 };
 
 } // namespace hard_core_kernel

@@ -226,12 +226,11 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
 
     scoped_timer_type timer(runtime_.compute);
 
-    gpu_wrapper::kernel.r2.bind(position2);
-    potential_->bind_textures();
-
     configure_kernel(gpu_wrapper::kernel.compute, particle1_->dim(), true);
     gpu_wrapper::kernel.compute(
-        position1.data()
+        potential_->get_gpu_potential()
+      , cuda::texture<float4>(position2)
+      , position1.data()
       , &*force->begin()
       , &*g_neighbour.begin()
       , neighbour_->size()
@@ -261,9 +260,6 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
 
     scoped_timer_type timer(runtime_.compute_aux);
 
-    gpu_wrapper::kernel.r2.bind(position2);
-    potential_->bind_textures();
-
     float weight = aux_weight_;
     if (particle1_ == particle2_) {
         weight /= 2;
@@ -271,7 +267,9 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
 
     configure_kernel(gpu_wrapper::kernel.compute_aux, particle1_->dim(), true);
     gpu_wrapper::kernel.compute_aux(
-        position1.data()
+        potential_->get_gpu_potential()
+      , cuda::texture<float4>(position2)
+      , position1.data()
       , &*force->begin()
       , &*g_neighbour.begin()
       , neighbour_->size()

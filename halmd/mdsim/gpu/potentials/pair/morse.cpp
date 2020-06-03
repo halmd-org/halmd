@@ -53,6 +53,7 @@ morse<float_type>::morse(
   , sigma_(check_shape(sigma, epsilon))
   , r_min_sigma_(check_shape(r_min, epsilon))
   , g_param_(size1() * size2())
+  , t_param_(g_param_)
   , logger_(logger)
 {
     LOG("depth of potential well: ε = " << epsilon_);

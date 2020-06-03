@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2020       Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -21,7 +22,8 @@
 #ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_POWER_LAW_KERNEL_HPP
 #define HALMD_MDSIM_GPU_POTENTIALS_PAIR_POWER_LAW_KERNEL_HPP
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/numeric/blas/blas.hpp>
+#include <halmd/utility/tuple.hpp>
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 
 namespace halmd {
@@ -40,51 +42,13 @@ enum {
   , INDEX         /**< power law index */
 };
 
-/**
- * power law interaction potential of a pair of particles.
- *
- * @f[  U(r) = \epsilon (r/\sigma)^{-n} @f]
- */
-class power_law
-{
-public:
-    /**
-     * Construct power law potential.
-     *
-     * Fetch potential parameters from texture cache for particle pair.
-     *
-     * @param type1 type of first interacting particle
-     * @param type2 type of second interacting particle
-     */
-    HALMD_GPU_ENABLED power_law(
-            unsigned int type1, unsigned int type2
-          , unsigned int ntype1, unsigned int ntype2
-    );
-
-    /**
-     * Compute force and potential for interaction.
-     *
-     * @param rr squared distance between particles
-     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
-     *
-     * @f{eqnarray*}{
-     *   - U'(r) / r &=& n r^{-2} \epsilon (r/\sigma)^{-n} \\
-     *   U(r) &=& \epsilon (r/\sigma)^{-n}
-     * @f}
-     */
-    template <typename float_type>
-    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const;
-
-protected:
-    /** potential parameters for particle pair */
-    fixed_vector<float, 4> pair_;
-};
-
-template<typename float_type>
-HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type const& rr
-                                                                    , float_type const& sigma2
-                                                                    , float_type const& epsilon
-                                                                    , unsigned short const& n)
+template <typename float_type>
+HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(
+    float_type const& rr
+  , float_type const& sigma2
+  , float_type const& epsilon
+  , unsigned short const& n
+)
 {
     float_type rri = sigma2 / rr;
     // avoid computation of square root for even powers
@@ -99,13 +63,56 @@ HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type
     return make_tuple(fval, en_pot);
 }
 
+/**
+ * power law interaction potential of a pair of particles.
+ *
+ * @f[  U(r) = \epsilon (r/\sigma)^{-n} @f]
+ */
+class power_law
+{
+public:
+    /**
+     * Construct power law potential.
+     */
+    power_law(cudaTextureObject_t t_param) : t_param_(t_param) {}
+
+    /**
+     * Fetch potential parameters from texture cache for particle pair.
+     *
+     * @param type1 type of first interacting particle
+     * @param type2 type of second interacting particle
+     */
+    HALMD_GPU_ENABLED void fetch(
+        unsigned int type1, unsigned int type2
+      , unsigned int ntype1, unsigned int ntype2
+    );
+
+    /**
+     * Compute force and potential for interaction.
+     *
+     * @param rr squared distance between particles
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
+     *
+     * @f{eqnarray*}{
+     *   - U'(r) / r &=& n r^{-2} \epsilon (r/\sigma)^{-n} \\
+     *   U(r) &=& \epsilon (r/\sigma)^{-n}
+     * @f}
+     */
+    template <typename float_type>
+    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
+    {
+        return compute(rr, pair_[SIGMA2], pair_[EPSILON], static_cast<unsigned short>(pair_[INDEX]));
+    }
+
+protected:
+    /** potential parameters for particle pair */
+    fixed_vector<float, 4> pair_;
+    cudaTextureObject_t t_param_;
+};
+
 } // namespace power_law_kernel
 
-struct power_law_wrapper
-{
-    /** power law potential parameters */
-    static cuda::texture<float4> param;
-};
+struct power_law_wrapper {};
 
 } // namespace pair
 } // namespace potentials

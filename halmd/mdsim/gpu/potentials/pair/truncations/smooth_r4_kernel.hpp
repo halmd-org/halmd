@@ -1,6 +1,7 @@
 /*
  * Copyright © 2012 Nicolas Höft
  * Copyright © 2016 Daniel Kirchner
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -22,7 +23,8 @@
 #ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_SMOOTH_R4_KERNEL_HPP
 #define HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_SMOOTH_R4_KERNEL_HPP
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/numeric/blas/blas.hpp>
+#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -41,9 +43,53 @@ enum {
   , EN_CUT      /**< potential energy at cutoff length in MD units */
 };
 
-// forward declaration for host code
-template<typename parent_kernel>
-class smooth_r4;
+template <typename parent_kernel>
+class smooth_r4
+  : public parent_kernel
+{
+public:
+    /**
+     * Construct Smoothing Function.
+     */
+    smooth_r4(parent_kernel const& parent, cudaTextureObject_t t_param) :
+        parent_kernel(parent), t_param_(t_param) {}
+
+    /**
+     * Check whether particles are in interaction range.
+     *
+     * @param rr squared distance between particles
+     */
+    template <typename float_type>
+    HALMD_GPU_ENABLED bool within_range(float_type rr) const
+    {
+        return (rr < pair_[RR_CUT]);
+    }
+
+    /**
+     * Fetch potential parameters from texture cache for particle pair.
+     *
+     * @param type1 type of first interacting particle
+     * @param type2 type of second interacting particle
+     */
+    HALMD_GPU_ENABLED void fetch(
+        unsigned int type1, unsigned int type2
+      , unsigned int ntype1, unsigned int ntype2
+    );
+
+    /**
+     * Compute force and potential for interaction.
+     *
+     * @param rr squared distance between particles
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
+     */
+    template <typename float_type>
+    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const;
+
+private:
+    /** adapter parameters for particle pair */
+    fixed_vector<float, 3> pair_;
+    cudaTextureObject_t t_param_;
+};
 
 } // namespace smooth_r4_kernel
 
@@ -51,7 +97,6 @@ template<typename parent_kernel>
 struct smooth_r4_wrapper
 {
     static cuda::symbol<float> rri_smooth;
-    static cuda::texture<float4> param;
 };
 
 } // namespace truncations

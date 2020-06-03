@@ -215,11 +215,10 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
 
     scoped_timer_type timer(runtime_.compute);
 
-    potential_->bind_textures();
-
     configure_kernel(gpu_wrapper::kernel.compute, particle1_->dim(), true);
     gpu_wrapper::kernel.compute(
-        position1.data()
+        potential_->get_gpu_potential()
+      , position1.data()
       , position2.data()
       , particle2_->nparticle()
       , &*force->begin()
@@ -247,8 +246,6 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
 
     scoped_timer_type timer(runtime_.compute_aux);
 
-    potential_->bind_textures();
-
     float weight = aux_weight_;
     if (particle1_ == particle2_) {
         weight /= 2;
@@ -256,7 +253,8 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
 
     configure_kernel(gpu_wrapper::kernel.compute_aux, particle1_->dim(), true);
     gpu_wrapper::kernel.compute_aux(
-        position1.data()
+        potential_->get_gpu_potential()
+      , position1.data()
       , position2.data()
       , particle2_->nparticle()
       , &*force->begin()

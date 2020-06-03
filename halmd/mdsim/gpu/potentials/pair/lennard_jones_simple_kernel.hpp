@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2020       Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -21,7 +22,7 @@
 #ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_LENNARD_JONES_SIMPLE_KERNEL_HPP
 #define HALMD_MDSIM_GPU_POTENTIALS_PAIR_LENNARD_JONES_SIMPLE_KERNEL_HPP
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -29,9 +30,6 @@ namespace gpu {
 namespace potentials {
 namespace pair {
 namespace lennard_jones_simple_kernel {
-
-// forward declaration for host code
-class lennard_jones_simple;
 
 template <typename float_type>
 HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type rr)
@@ -46,6 +44,34 @@ HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type
 
     return make_tuple(fval, en_pot);
 }
+
+/**
+ * Lennard-Jones interaction for a simple fluid of a single species.
+ */
+class lennard_jones_simple
+{
+public:
+    /**
+     * @param type1 type of first interacting particle
+     * @param type2 type of second interacting particle
+     */
+    HALMD_GPU_ENABLED void fetch(
+        unsigned int type1, unsigned int type2
+      , unsigned int ntype1, unsigned int ntype2
+    ) {}
+
+    /**
+     * Compute force and potential for interaction.
+     *
+     * @param rr squared distance between particles
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
+     */
+    template <typename float_type>
+    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
+    {
+        return lennard_jones_simple_kernel::compute(rr);
+    }
+};
 
 } // namespace lennard_jones_kernel
 } // namespace pair

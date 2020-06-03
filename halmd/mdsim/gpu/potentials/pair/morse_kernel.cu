@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2020       Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -23,7 +24,6 @@
 #include <halmd/mdsim/gpu/potentials/pair/morse_kernel.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/truncations/truncations.cuh>
 #include <halmd/numeric/blas/blas.hpp>
-#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -32,50 +32,16 @@ namespace potentials {
 namespace pair {
 namespace morse_kernel {
 
-/** array of potential parameters for all combinations of particle types */
-static texture<float4> param_;
-
-/**
- * Morse potential for the interaction of a pair of particles.
- */
-class morse
+__device__ void morse::fetch(
+    unsigned int type1, unsigned int type2
+  , unsigned int ntype1, unsigned int ntype2
+)
 {
-public:
-    /**
-     * Construct Morse's pair interaction potential.
-     *
-     * Fetch potential parameters from texture cache for particle pair.
-     *
-     * @param type1 type of first interacting particle
-     * @param type2 type of second interacting particle
-     */
-    HALMD_GPU_ENABLED morse(
-        unsigned int type1, unsigned int type2
-      , unsigned int ntype1, unsigned int ntype2
-    )
-      : pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
-    {}
-
-    /**
-     * Compute force and potential for interaction.
-     *
-     * @param rr squared distance between particles
-     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
-     */
-    template <typename float_type>
-    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
-    {
-        return morse_kernel::compute(rr, pair_[SIGMA], pair_[EPSILON], pair_[R_MIN_SIGMA]);
-    }
-
-private:
-    /** potential parameters for particle pair */
-    fixed_vector<float, 4> pair_;
-};
+    pair_ = tex1Dfetch<float4>(t_param_, type1 * ntype2 + type2);
+}
 
 } // namespace morse_kernel
 
-cuda::texture<float4> morse_wrapper::param = morse_kernel::param_;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(morse_kernel::morse);
 
 } // namespace pair

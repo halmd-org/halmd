@@ -36,20 +36,19 @@ namespace gpu {
 namespace forces {
 namespace pair_trunc_kernel {
 
-/** positions, types */
-static texture<float4> r2_;
-
 /**
  * Compute pair forces, potential energy, and stress tensor for all particles
  */
 template <
-    bool do_aux               //< compute auxiliary variables in addition to force
+    bool do_aux             //< compute auxiliary variables in addition to force
   , typename vector_type
   , typename potential_type
   , typename gpu_vector_type
 >
 __global__ void compute(
-    float4 const* g_r1
+    potential_type potential
+  , cudaTextureObject_t r2_tex
+  , float4 const* g_r1
   , gpu_vector_type* g_f
   , unsigned int const* g_neighbour
   , unsigned int neighbour_size
@@ -95,9 +94,9 @@ __global__ void compute(
         // load particle
         unsigned int type2;
         vector_type r2;
-        tie(r2, type2) <<= tex1Dfetch(r2_, j);
-        // pair potential
-        potential_type const potential(type1, type2, ntype1, ntype2);
+        tie(r2, type2) <<= tex1Dfetch<float4>(r2_tex, j);
+        // fetch pair potential
+        potential.fetch(type1, type2, ntype1, ntype2);
 
         // particle distance vector
         vector_type r = r1 - r2;
@@ -147,7 +146,6 @@ pair_trunc_wrapper<dimension, potential_type>
 pair_trunc_wrapper<dimension, potential_type>::kernel = {
     pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
-  , pair_trunc_kernel::r2_
 };
 
 } // namespace mdsim

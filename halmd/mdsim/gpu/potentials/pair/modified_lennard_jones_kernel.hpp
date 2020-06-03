@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2020       Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -21,8 +22,9 @@
 #ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_MODIFIED_LENNARD_JONES_KERNEL_HPP
 #define HALMD_MDSIM_GPU_POTENTIALS_PAIR_MODIFIED_LENNARD_JONES_KERNEL_HPP
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
+#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -41,34 +43,75 @@ enum {
   , INDEX_N_2  /**< half-value of index of attraction */
 };
 
-// forward declaration for host code
-class modified_lennard_jones;
-
 template<typename float_type>
-HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type const& rr
-                                                                    , float_type const& sigma2
-                                                                    , float_type const& epsilon
-                                                                    , unsigned short const& m_2
-                                                                    , unsigned short const& n_2)
+HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(
+    float_type const& rr
+  , float_type const& sigma2
+  , float_type const& epsilon
+  , unsigned short const& m_2
+  , unsigned short const& n_2)
 {
-        float_type rri = sigma2 / rr;
-        float_type rni = halmd::pow(rri, n_2);
-        float_type rmni = (m_2 - n_2 == n_2) ? rni : halmd::pow(rri, m_2 - n_2);
-        float_type eps_rni = epsilon * rni;
-        float_type fval = 8 * rri * eps_rni * (m_2 * rmni - n_2) / sigma2;
-        float_type en_pot = 4 * eps_rni * (rmni - 1);
+    float_type rri = sigma2 / rr;
+    float_type rni = halmd::pow(rri, n_2);
+    float_type rmni = (m_2 - n_2 == n_2) ? rni : halmd::pow(rri, m_2 - n_2);
+    float_type eps_rni = epsilon * rni;
+    float_type fval = 8 * rri * eps_rni * (m_2 * rmni - n_2) / sigma2;
+    float_type en_pot = 4 * eps_rni * (rmni - 1);
 
-        return make_tuple(fval, en_pot);
-
+    return make_tuple(fval, en_pot);
 }
+
+/**
+ *
+ */
+class modified_lennard_jones
+{
+public:
+    /**
+     * Construct Lennard-Jones pair interaction potential.
+     */
+    modified_lennard_jones(cudaTextureObject_t t_param) : t_param_(t_param) {}
+
+    /**
+     * Fetch potential parameters from texture cache for particle pair.
+     *
+     * @param type1 type of first interacting particle
+     * @param type2 type of second interacting particle
+     */
+    HALMD_GPU_ENABLED void fetch(
+        unsigned int type1, unsigned int type2
+      , unsigned int ntype1, unsigned int ntype2
+    );
+
+    /**
+     * Compute force and potential for interaction.
+     *
+     * @param rr squared distance between particles
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
+     *
+     * @f{eqnarray*}{
+     *   - U'(r) / r &=& 4 r^{-2} \epsilon (\sigma/r)^{n} \left[ m (\sigma/r)^{m-n} - n \right] \\
+     *   U(r) &=& 4 \epsilon (\sigma/r)^{n} \left[ (\sigma/r)^{m-n} - 1 \right]
+     * @f}
+     */
+    template <typename float_type>
+    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
+    {
+        return compute(rr, pair_[SIGMA2], pair_[EPSILON]
+          , static_cast<unsigned short>(pair_[INDEX_M_2])
+          , static_cast<unsigned short>(pair_[INDEX_N_2])
+        );
+    }
+
+private:
+    /** potential parameters for particle pair */
+    fixed_vector<float, 4> pair_;
+    cudaTextureObject_t t_param_;
+};
 
 } // namespace modified_lennard_jones_kernel
 
-struct modified_lennard_jones_wrapper
-{
-    /** Lennard-Jones potential parameters */
-    static cuda::texture<float4> param;
-};
+struct modified_lennard_jones_wrapper {};
 
 } // namespace pair
 } // namespace potentials

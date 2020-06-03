@@ -22,48 +22,12 @@
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/pair/lennard_jones_simple_kernel.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/truncations/truncations.cuh>
-#include <halmd/numeric/blas/blas.hpp>
-#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace lennard_jones_simple_kernel {
-
-/**
- * Lennard-Jones interaction for a simple fluid of a single species.
- */
-class lennard_jones_simple
-{
-public:
-    /**
-     * Construct Lennard-Jones pair interaction potential.
-     *
-     * @param type1 type of first interacting particle
-     * @param type2 type of second interacting particle
-     */
-    HALMD_GPU_ENABLED lennard_jones_simple(
-        unsigned int type1, unsigned int type2
-      , unsigned int ntype1, unsigned int ntype2
-    )
-    {}
-
-    /**
-     * Compute force and potential for interaction.
-     *
-     * @param rr squared distance between particles
-     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
-     */
-    template <typename float_type>
-    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
-    {
-        return lennard_jones_simple_kernel::compute(rr);
-    }
-};
-
-} // namespace lennard_jones_simple_kernel
 
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(lennard_jones_simple_kernel::lennard_jones_simple);
 

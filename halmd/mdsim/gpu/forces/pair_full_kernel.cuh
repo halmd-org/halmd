@@ -47,7 +47,8 @@ template <
   , typename gpu_vector_type
 >
 __global__ void compute(
-    float4 const* g_r1
+    potential_type potential
+  , float4 const* g_r1
   , float4 const* g_r2
   , unsigned int npart2
   , gpu_vector_type* g_f
@@ -87,7 +88,7 @@ __global__ void compute(
         vector_type r2;
         tie(r2, type2) <<= g_r2[j];
         // pair potential
-        potential_type const potential(type1, type2, ntype1, ntype2);
+        potential.fetch(type1, type2, ntype1, ntype2);
 
         // particle distance vector
         vector_type r = r1 - r2;
