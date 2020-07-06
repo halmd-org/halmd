@@ -28,6 +28,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/forces/external_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
@@ -118,17 +119,18 @@ private:
     /** cache observer of auxiliary variables */
     cache<> aux_cache_;
 
+    /** store signal connections */
+    signal_type on_prepend_apply_;
+    signal_type on_append_apply_;
+
+    typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {
-        utility::profiler::accumulator_type compute;
-        utility::profiler::accumulator_type compute_aux;
+        accumulator_type compute;
+        accumulator_type compute_aux;
     };
-
-    /** store signal connections */
-    signal_type on_prepend_apply_;
-    signal_type on_append_apply_;
 
     /** profiling runtime accumulators */
     runtime runtime_;
@@ -146,7 +148,7 @@ external<dimension, float_type, potential_type>::external(
   , box_(box)
   , logger_(logger)
 {
-    if (potential_->epsilon().size2() < particle_->nspecies()) {
+    if (potential_->size() < particle_->nspecies()) {
         throw std::invalid_argument("size of potential coefficients less than number of particle species");
     }
 }
@@ -200,9 +202,9 @@ inline void external<dimension, float_type, potential_type>::compute_()
 
     potential_->bind_textures();
 
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    configure_kernel(gpu_wrapper::kernel.compute, particle_->dim(), true);
     gpu_wrapper::kernel.compute(
-        &*position.begin()
+        position.data()
       , &*force->begin()
       , nullptr
       , nullptr
@@ -226,9 +228,9 @@ inline void external<dimension, float_type, potential_type>::compute_aux_()
 
     potential_->bind_textures();
 
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    configure_kernel(gpu_wrapper::kernel.compute_aux, particle_->dim(), true);
     gpu_wrapper::kernel.compute_aux(
-        &*position.begin()
+        position.data()
       , &*force->begin()
       , &*en_pot->begin()
       , &*stress_pot->begin()

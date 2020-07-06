@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE( planar_wall_host )
 
     for (unsigned int species = 0; species < nspecies; ++species) {
         for (vector_type const& r : positions) {
-            BOOST_MESSAGE("test particle of species " << species << " at " << r);
+            BOOST_TEST_MESSAGE("test particle of species " << species << " at " << r);
 
             // compute force and potential energy using the planar_wall module
             vector_type force;
@@ -246,7 +246,7 @@ void planar_wall<float_type>::test()
         // reference values from host module
         typedef typename host_potential_type::vector_type host_vector_type;
         host_vector_type r = static_cast<host_vector_type>(positions[i]);
-        BOOST_MESSAGE("test particle #" << i+1 << " of species " << species[i] << " at " << r);
+        BOOST_TEST_MESSAGE("test particle #" << i+1 << " of species " << species[i] << " at " << r);
 
         host_vector_type force2;
         float_type en_pot2;
