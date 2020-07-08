@@ -169,7 +169,7 @@ end
 --
 function define_args(parser)
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
-        default = "lennard_jones_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+        default = "lennard_jones_equilibration_rc{cutoff:g}_rho{density:g}_T{temperature:.2f}_%Y%m%d_%H%M%S", help = "basename of output files"})
     parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("random-seed", {type = "integer", action = parser.action.random_seed,

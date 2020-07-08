@@ -208,7 +208,7 @@ end
 --
 function define_args(parser)
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
-        default = "lennard_jones_%Y%m%d_%H%M%S", help = "prefix of output files"})
+        default = "lennard_jones_rc{cutoff:g}_%Y%m%d_%H%M%S", help = "basename of output files"})
     parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("input", {type = "string", required = true, action = function(args, key, value)

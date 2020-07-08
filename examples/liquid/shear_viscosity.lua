@@ -189,7 +189,7 @@ end
 function define_args(parser)
 
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
-        default = "shear_viscosity_%Y%m%d", help = "prefix of output files"})
+        default = "shear_viscosity_%Y%m%d", help = "basename of output files"})
     parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("density", {type = "number", default = 0.8442, help = "particle number density"})
