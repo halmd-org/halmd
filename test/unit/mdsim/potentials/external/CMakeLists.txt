@@ -19,8 +19,15 @@ if(${HALMD_WITH_external_planar_wall})
     test_unit_mdsim_potentials_external_planar_wall --run_test=planar_wall_host --log_level=test_suite
   )
   if(HALMD_WITH_GPU)
-    add_test(unit/mdsim/potentials/external/planar_wall/gpu
-      test_unit_mdsim_potentials_external_planar_wall --run_test=planar_wall_gpu --log_level=test_suite
-    )
+    if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+      add_test(unit/mdsim/potentials/external/planar_wall/gpu/float
+        test_unit_mdsim_potentials_external_planar_wall --run_test=planar_wall_gpu_float --log_level=test_suite
+      )
+    endif()
+    if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+      add_test(unit/mdsim/potentials/external/planar_wall/gpu/dsfloat
+        test_unit_mdsim_potentials_external_planar_wall --run_test=planar_wall_gpu_dsfloat --log_level=test_suite
+      )
+    endif()
   endif()
 endif()

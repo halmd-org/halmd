@@ -39,6 +39,7 @@
 # include <halmd/utility/gpu/device.hpp>
 #endif
 #include <test/tools/ctest.hpp>
+#include <test/tools/dsfloat.hpp>
 
 using namespace halmd;
 
@@ -98,11 +99,11 @@ std::vector<vector_type> make_positions()
     return positions;
 }
 
-// test in three dimensions only
 template <typename float_type>
-std::shared_ptr<mdsim::host::potentials::external::planar_wall<3, float_type>> make_host_potential()
+std::shared_ptr<mdsim::host::potentials::external::planar_wall<3, float_type>>
+make_host_potential()
 {
-    typedef mdsim::host::potentials::external::planar_wall<3, float_type> potential_type;
+    typedef typename mdsim::host::potentials::external::planar_wall<3, float_type> potential_type;
     typedef typename potential_type::vector_type vector_type;
 
     // define interaction parameters
@@ -151,8 +152,14 @@ std::shared_ptr<mdsim::host::potentials::external::planar_wall<3, float_type>> m
 
 BOOST_AUTO_TEST_CASE( planar_wall_host )
 {
-    // construct host module with fixed parameters
-    auto potential = make_host_potential<double>();
+#ifndef USE_HOST_SINGLE_PRECISION
+    typedef double float_type;
+#else
+    typedef float float_type;
+#endif
+
+    // construct host module with fixed parameters, test in three dimensions only
+    auto potential = make_host_potential<float_type>();
     unsigned int nwall = potential->epsilon().size1();
     unsigned int nspecies = potential->epsilon().size2();
 
@@ -166,15 +173,15 @@ BOOST_AUTO_TEST_CASE( planar_wall_host )
 
             // compute force and potential energy using the planar_wall module
             vector_type force;
-            double en_pot;
+            float_type en_pot;
             std::tie(force, en_pot) = (*potential)(r, species);  // particle species A
 
             // compute reference values: sum up contributions from each wall
             vector_type force2 = 0;
-            double en_pot2 = 0;
+            float_type en_pot2 = 0;
             for (unsigned int i = 0; i < nwall; ++i) {
                 vector_type f;
-                double en;
+                float_type en;
                 std::tie(f, en) = compute_wall(
                     r, potential->surface_normal()(i), potential->offset()(i)
                   , potential->epsilon()(i, species), potential->sigma()(i, species), potential->wetting()(i, species)
@@ -185,7 +192,7 @@ BOOST_AUTO_TEST_CASE( planar_wall_host )
             }
 
             // compare output from planar_wall module with reference
-            const double tolerance = 5 * std::numeric_limits<double>::epsilon();
+            const float_type tolerance = 5 * std::numeric_limits<float_type>::epsilon();
             for (unsigned int i = 0; i < force.size(); ++i) {
                 BOOST_CHECK_CLOSE_FRACTION(force[i], force2[i], tolerance);
             }
@@ -203,8 +210,12 @@ struct planar_wall
 
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::gpu::potentials::external::planar_wall<dimension, float_type> potential_type;
+    typedef mdsim::gpu::potentials::external::planar_wall<dimension, float> potential_type;
+#ifndef USE_HOST_SINGLE_PRECISION
     typedef mdsim::host::potentials::external::planar_wall<dimension, double> host_potential_type;
+#else
+    typedef mdsim::host::potentials::external::planar_wall<dimension, float> host_potential_type;
+#endif
     typedef mdsim::gpu::forces::external<dimension, float_type, potential_type> force_type;
 
     typedef typename particle_type::vector_type vector_type;
@@ -240,7 +251,9 @@ void planar_wall<float_type>::test()
 
     std::vector<vector_type> f_list(particle->nparticle());
     BOOST_CHECK( get_force(*particle, f_list.begin()) == f_list.end() );
-    const float_type tolerance = 10 * std::numeric_limits<float_type>::epsilon();
+
+    // on the GPU, the potential is always evaluated in single precision
+    const float_type tolerance = 10 * std::numeric_limits<float>::epsilon();
 
     for (unsigned int i = 0; i < positions.size(); ++i) {
         // reference values from host module
@@ -275,7 +288,11 @@ planar_wall<float_type>::planar_wall()
     }
 
     // create host module for reference
+#ifndef USE_HOST_SINGLE_PRECISION
     host_potential = make_host_potential<double>();
+#else
+    host_potential = make_host_potential<float>();
+#endif
 
     // create modules
     particle = std::make_shared<particle_type>(positions.size(), host_potential->epsilon().size2()); // 2nd argument: #species
@@ -306,7 +323,15 @@ planar_wall<float_type>::planar_wall()
     particle->on_force([=](){force->apply();});
 }
 
-BOOST_FIXTURE_TEST_CASE( planar_wall_gpu, device ) {
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( planar_wall_gpu_dsfloat, device ) {
+    planar_wall<dsfloat>().test();
+}
+#endif
+# ifdef USE_GPU_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( planar_wall_gpu_float, device ) {
     planar_wall<float>().test();
 }
+#endif
+
 #endif // HALMD_WITH_GPU
