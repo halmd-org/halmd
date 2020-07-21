@@ -24,11 +24,11 @@ local log = halmd.io.log
 
 function string_interp()
     local input = "{name:s} is {val:7.2f}%"
-    local output = input:interp({name = "concentration", val = 56.2795})
+    local output = input:interp({name = "concentration_NOx", val = 56.2795})
 
     log.info("formatting string: %s", input)
     log.info("interpolated string: %s", output)
-    assert(output == "concentration is   56.28%")
+    assert(output == "concentration_NOx is   56.28%")
 end
 
 function main()
