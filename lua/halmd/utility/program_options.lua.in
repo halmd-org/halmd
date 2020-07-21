@@ -610,7 +610,7 @@ end
 --
 function argument_parser.action.substitute_environment(args, key, value)
     -- substitute environment variables, enclosed by % characters
-    args[key] = value:gsub("%%(%w+)%%", os.getenv)
+    args[key] = value:gsub("%%([%w_]+)%%", os.getenv)
 end
 
 ---
