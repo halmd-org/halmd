@@ -110,7 +110,7 @@ end
 -- --> "concentration is   56.28%"
 --
 function M.interp(s, t)
-  return (s:gsub('%{(%a%w*)(:[-0-9%.]*[cdeEfgGiouxXsq])%}',  -- FIXME make match of second group optional
+  return (s:gsub('%{([%a_][%w_]*)(:[-0-9%.]*[cdeEfgGiouxXsq])%}',  -- FIXME make match of second group optional
              function(k, fmt)
                  fmt = fmt and fmt:sub(2) or "s" -- default format: "s"
                  return t[k] and ("%"..fmt):format(t[k]) or '%('..k..')'..fmt
