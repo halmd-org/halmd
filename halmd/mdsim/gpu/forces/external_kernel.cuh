@@ -47,7 +47,8 @@ template <
   , typename gpu_vector_type
 >
 __global__ void compute(
-    float4 const* g_r
+    potential_type potential
+  , float4 const* g_r
   , gpu_vector_type* g_f
   , float* g_en_pot
   , float* g_stress_pot
@@ -68,8 +69,8 @@ __global__ void compute(
     // enforce periodic boundary conditions
     box_kernel::reduce_periodic(r, box_length);
 
-    // construct pair potential
-    potential_type const potential(species);
+    // fetch potential
+    potential.fetch(species);
 
     // evaluate force acting on this particle
     // and contribution to potential energy
@@ -104,7 +105,7 @@ __global__ void compute(
 } // namespace external_kernel
 
 template <int dimension, typename potential_type>
-external_wrapper<dimension, potential_type> const
+external_wrapper<dimension, potential_type>
 external_wrapper<dimension, potential_type>::kernel = {
     external_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , external_kernel::compute<true, fixed_vector<float, dimension>, potential_type>

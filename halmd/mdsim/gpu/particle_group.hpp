@@ -210,8 +210,8 @@ get_total_force(particle_type& particle, particle_group& group)
 
     group_array_type const& unordered = read_cache(group.unordered());
 
-    accumulator_type::get().bind(*particle.force());
-    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())();
+    cuda::texture<typename accumulator_type::gpu_force_type> texture(*particle.force());
+    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(texture))();
 }
 
 /**

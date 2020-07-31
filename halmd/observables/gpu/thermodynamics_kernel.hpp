@@ -203,16 +203,16 @@ class total_force
 private:
     typedef unsigned int size_type;
     typedef fixed_vector<float_type, dimension> vector_type;
-    typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type gpu_force_type;
 
 public:
     /** element pointer type of input array */
     typedef size_type const* iterator;
+    typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type gpu_force_type;
 
     /**
      * Initialise force to zero.
      */
-    total_force() : force_(0) {}
+    total_force(cudaTextureObject_t texture) : force_(0), texture_(texture) {}
 
     /**
      * Add force of particle i.
@@ -237,19 +237,11 @@ public:
     }
 #endif
 
-    /**
-     * Returns reference to texture with forces.
-     */
-    static cuda::texture<gpu_force_type> const& get()
-    {
-        return texture_;
-    }
-
 private:
     /** total force */
     vector_type force_;
     /** texture with forces */
-    static cuda::texture<gpu_force_type> const texture_;
+    cudaTextureObject_t texture_;
 };
 
 /**

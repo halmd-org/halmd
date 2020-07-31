@@ -43,7 +43,8 @@ __device__ void kinetic_energy<dimension, float_type>::operator()(size_type i)
 template <int dimension, typename float_type>
 __device__ void total_force<dimension, float_type>::operator()(size_type i)
 {
-    fixed_vector<float, dimension> f = tex1Dfetch(force<dimension>::tex_, i);
+    fixed_vector<float, dimension> f =
+        tex1Dfetch<gpu_force_type>(texture_, i);
     force_ += f;
 }
 

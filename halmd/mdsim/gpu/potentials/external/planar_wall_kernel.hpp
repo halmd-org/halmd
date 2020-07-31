@@ -1,6 +1,7 @@
 /*
  * Copyright © 2014-2015 Sutapa Roy
  * Copyright © 2014-2015 Felix Höfling
+ * Copyright © 2020      Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -22,6 +23,8 @@
 #ifndef HALMD_MDSIM_GPU_POTENTIALS_EXTERNAL_PLANAR_WALL_KERNEL_HPP
 #define HALMD_MDSIM_GPU_POTENTIALS_EXTERNAL_PLANAR_WALL_KERNEL_HPP
 
+#include <halmd/utility/tuple.hpp>
+
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd {
@@ -41,17 +44,49 @@ enum {
   , CUTOFF      /* cutoff distance */
 };
 
-// forward declaration for host code
+/**
+ * planar_wall external potential
+ */
 template <int dimension>
-class planar_wall;
+class planar_wall
+{
+public:
+    typedef fixed_vector<float, dimension> vector_type;
+
+    /**
+     * Construct planar_wall potential.
+     */
+    HALMD_GPU_ENABLED planar_wall(cudaTextureObject_t t_param_geometry, cudaTextureObject_t t_param_potential)
+      : t_param_geometry_(t_param_geometry), t_param_potential_(t_param_potential)
+    {}
+
+    HALMD_GPU_ENABLED void fetch(unsigned int species);
+
+     /**
+     * Compute force and potential energy due to planar_wall walls.
+     * Form of the potential is given here:
+     * u_i(d)=epsilon_i*[(2/15)*(sigma_i/d)**9-wetting_i*(sigma_i/d)**3].
+     */
+    HALMD_GPU_ENABLED tuple<vector_type, float> operator()(vector_type const& r) const;
+
+
+private:
+    /** species of interacting particle */
+    unsigned int species_;
+    cudaTextureObject_t t_param_geometry_;
+    cudaTextureObject_t t_param_potential_;
+};
+
+template <int dimension>
+HALMD_GPU_ENABLED void planar_wall<dimension>::fetch(unsigned int species)
+{
+    species_ = species;
+}
 
 } // namespace planar_wall_kernel
 
 struct planar_wall_wrapper
 {
-    /** potential parameters */
-    static cuda::texture<float4> param_geometry;
-    static cuda::texture<float4> param_potential;
     static cuda::symbol<float> smoothing;
     static cuda::symbol<int> nwall;
 };

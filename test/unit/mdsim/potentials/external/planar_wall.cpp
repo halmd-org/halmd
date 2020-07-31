@@ -36,7 +36,7 @@
 # include <halmd/mdsim/gpu/forces/external.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/potentials/external/planar_wall.hpp>
-# include <halmd/utility/gpu/device.hpp>
+# include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 #include <test/tools/dsfloat.hpp>
@@ -324,12 +324,12 @@ planar_wall<float_type>::planar_wall()
 }
 
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( planar_wall_gpu_dsfloat, device ) {
+BOOST_FIXTURE_TEST_CASE( planar_wall_gpu_dsfloat, set_cuda_device ) {
     planar_wall<dsfloat>().test();
 }
 #endif
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( planar_wall_gpu_float, device ) {
+BOOST_FIXTURE_TEST_CASE( planar_wall_gpu_float, set_cuda_device ) {
     planar_wall<float>().test();
 }
 #endif

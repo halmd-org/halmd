@@ -200,11 +200,10 @@ inline void external<dimension, float_type, potential_type>::compute_()
 
     scoped_timer_type timer(runtime_.compute);
 
-    potential_->bind_textures();
-
     configure_kernel(gpu_wrapper::kernel.compute, particle_->dim(), true);
     gpu_wrapper::kernel.compute(
-        position.data()
+        potential_->get_gpu_potential()
+      , position.data()
       , &*force->begin()
       , nullptr
       , nullptr
@@ -226,11 +225,10 @@ inline void external<dimension, float_type, potential_type>::compute_aux_()
 
     scoped_timer_type timer(runtime_.compute_aux);
 
-    potential_->bind_textures();
-
     configure_kernel(gpu_wrapper::kernel.compute_aux, particle_->dim(), true);
     gpu_wrapper::kernel.compute_aux(
-        position.data()
+        potential_->get_gpu_potential()
+      , position.data()
       , &*force->begin()
       , &*en_pot->begin()
       , &*stress_pot->begin()
