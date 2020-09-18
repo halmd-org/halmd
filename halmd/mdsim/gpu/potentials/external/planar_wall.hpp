@@ -131,8 +131,8 @@ private:
     float_type smoothing_;
 
     /** potential parameters at CUDA device */
-    cuda::vector<float4> g_param_geometry_;
-    cuda::vector<float4> g_param_potential_;
+    cuda::memory::device::vector<float4> g_param_geometry_;
+    cuda::memory::device::vector<float4> g_param_potential_;
 
     /** array of geometry parameters for all walls */
     cuda::texture<float4> t_param_geometry_;

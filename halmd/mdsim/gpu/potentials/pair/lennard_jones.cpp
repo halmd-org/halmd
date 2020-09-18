@@ -59,7 +59,7 @@ lennard_jones<float_type>::lennard_jones(
     LOG("potential well depths: ε = " << epsilon_);
     LOG("potential core width: σ = " << sigma_);
 
-    cuda::host::vector<float2> param(g_param_.size());
+    cuda::memory::host::vector<float2> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 2> p;
         p[lennard_jones_kernel::EPSILON] = epsilon_.data()[i];

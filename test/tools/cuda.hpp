@@ -42,7 +42,7 @@ struct set_cuda_device
     {
         halmd::device::set();
         cuda::thread::synchronize();
-        BOOST_TEST_MESSAGE("Using CUDA device #" << halmd::device::get());
+        BOOST_TEST_MESSAGE("Using CUDA device #" << halmd::device::num());
     }
 
     /**

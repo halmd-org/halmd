@@ -83,7 +83,7 @@ template <int dimension, typename float_type>
 void max_displacement<dimension, float_type>::zero()
 {
     cache<position_array_type> const& position_cache = particle_->position();
-    cuda::vector<float4> const& position = read_cache(position_cache);
+    cuda::memory::device::vector<float4> const& position = read_cache(position_cache);
 
     LOG_TRACE("zero maximum squared displacement");
 

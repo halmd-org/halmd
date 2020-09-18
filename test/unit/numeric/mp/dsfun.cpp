@@ -46,13 +46,13 @@ BOOST_GLOBAL_FIXTURE( set_cuda_device );
 BOOST_AUTO_TEST_CASE(test_dsfun_add)
 {
     cuda::config dim(BLOCKS, THREADS);
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-    cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<dsfloat> h_dsp(h_a.size());
-    cuda::vector<dsfloat> g_a(h_dsp.size());
-    cuda::vector<dsfloat> g_b(h_dsp.size());
-    cuda::vector<dsfloat> g_c(h_dsp.size());
+    cuda::memory::host::vector<double> h_a(BLOCKS * THREADS);
+    cuda::memory::host::vector<double> h_b(h_a.size());
+    cuda::memory::host::vector<double> h_c(h_a.size());
+    cuda::memory::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::memory::device::vector<dsfloat> g_a(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_b(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_c(h_dsp.size());
 
     // generate double-precision random numbers on host
     srand48(42);
@@ -84,13 +84,13 @@ BOOST_AUTO_TEST_CASE(test_dsfun_add)
 BOOST_AUTO_TEST_CASE(test_dsfun_sub)
 {
     cuda::config dim(BLOCKS, THREADS);
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-    cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<dsfloat> h_dsp(h_a.size());
-    cuda::vector<dsfloat> g_a(h_dsp.size());
-    cuda::vector<dsfloat> g_b(h_dsp.size());
-    cuda::vector<dsfloat> g_c(h_dsp.size());
+    cuda::memory::host::vector<double> h_a(BLOCKS * THREADS);
+    cuda::memory::host::vector<double> h_b(h_a.size());
+    cuda::memory::host::vector<double> h_c(h_a.size());
+    cuda::memory::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::memory::device::vector<dsfloat> g_a(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_b(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_c(h_dsp.size());
 
     // generate double-precision random numbers on host
     srand48(42);
@@ -122,13 +122,13 @@ BOOST_AUTO_TEST_CASE(test_dsfun_sub)
 BOOST_AUTO_TEST_CASE(test_dsfun_mul)
 {
     cuda::config dim(BLOCKS, THREADS);
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-    cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<dsfloat> h_dsp(h_a.size());
-    cuda::vector<dsfloat> g_a(h_dsp.size());
-    cuda::vector<dsfloat> g_b(h_dsp.size());
-    cuda::vector<dsfloat> g_c(h_dsp.size());
+    cuda::memory::host::vector<double> h_a(BLOCKS * THREADS);
+    cuda::memory::host::vector<double> h_b(h_a.size());
+    cuda::memory::host::vector<double> h_c(h_a.size());
+    cuda::memory::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::memory::device::vector<dsfloat> g_a(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_b(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_c(h_dsp.size());
 
     // generate double-precision random numbers on host
     srand48(42);
@@ -160,13 +160,13 @@ BOOST_AUTO_TEST_CASE(test_dsfun_mul)
 BOOST_AUTO_TEST_CASE(test_dsfun_mulss)
 {
     cuda::config dim(BLOCKS, THREADS);
-    cuda::host::vector<float> h_a(BLOCKS * THREADS);
-    cuda::host::vector<float> h_b(h_a.size());
-    cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<dsfloat> h_dsp(h_a.size());
-    cuda::vector<float> g_a(h_dsp.size());
-    cuda::vector<float> g_b(h_dsp.size());
-    cuda::vector<dsfloat> g_c(h_dsp.size());
+    cuda::memory::host::vector<float> h_a(BLOCKS * THREADS);
+    cuda::memory::host::vector<float> h_b(h_a.size());
+    cuda::memory::host::vector<double> h_c(h_a.size());
+    cuda::memory::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::memory::device::vector<float> g_a(h_dsp.size());
+    cuda::memory::device::vector<float> g_b(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_c(h_dsp.size());
 
     srand48(42);
     std::generate(h_a.begin(), h_a.end(), drand48);
@@ -193,13 +193,13 @@ BOOST_AUTO_TEST_CASE(test_dsfun_mulss)
 BOOST_AUTO_TEST_CASE(test_dsfun_div)
 {
     cuda::config dim(BLOCKS, THREADS);
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-    cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<dsfloat> h_dsp(h_a.size());
-    cuda::vector<dsfloat> g_a(h_dsp.size());
-    cuda::vector<dsfloat> g_b(h_dsp.size());
-    cuda::vector<dsfloat> g_c(h_dsp.size());
+    cuda::memory::host::vector<double> h_a(BLOCKS * THREADS);
+    cuda::memory::host::vector<double> h_b(h_a.size());
+    cuda::memory::host::vector<double> h_c(h_a.size());
+    cuda::memory::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::memory::device::vector<dsfloat> g_a(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_b(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_c(h_dsp.size());
 
     // generate double-precision random numbers on host
     srand48(42);
@@ -231,11 +231,11 @@ BOOST_AUTO_TEST_CASE(test_dsfun_div)
 BOOST_AUTO_TEST_CASE(test_dsfun_sqrt)
 {
     cuda::config dim(BLOCKS, THREADS);
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-    cuda::host::vector<dsfloat> h_dsp(h_a.size());
-    cuda::vector<dsfloat> g_a(h_dsp.size());
-    cuda::vector<dsfloat> g_b(h_dsp.size());
+    cuda::memory::host::vector<double> h_a(BLOCKS * THREADS);
+    cuda::memory::host::vector<double> h_b(h_a.size());
+    cuda::memory::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::memory::device::vector<dsfloat> g_a(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_b(h_dsp.size());
 
     // generate double-precision random numbers on host
     srand48(42);

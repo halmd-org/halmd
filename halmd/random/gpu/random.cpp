@@ -59,7 +59,7 @@ void random<RandomNumberGenerator>::seed(unsigned int seed)
  * fill array with uniform random numbers in [0.0, 1.0)
  */
 template <typename RandomNumberGenerator>
-void random<RandomNumberGenerator>::uniform(cuda::vector<float>& g_v)
+void random<RandomNumberGenerator>::uniform(cuda::memory::device::vector<float>& g_v)
 {
     get_random_kernel<rng_type>().uniform.configure(rng_.dim.grid,
         rng_.dim.block);
@@ -71,7 +71,7 @@ void random<RandomNumberGenerator>::uniform(cuda::vector<float>& g_v)
  * fill array with random integers in [0, 2^32-1]
  */
 template <typename RandomNumberGenerator>
-void random<RandomNumberGenerator>::get(cuda::vector<unsigned int>& g_v)
+void random<RandomNumberGenerator>::get(cuda::memory::device::vector<unsigned int>& g_v)
 {
     get_random_kernel<rng_type>().get.configure(rng_.dim.grid, rng_.dim.block);
     get_random_kernel<rng_type>().get(g_v, g_v.size(), rng_.rng());
@@ -82,7 +82,7 @@ void random<RandomNumberGenerator>::get(cuda::vector<unsigned int>& g_v)
  * fill array with normal distributed random numbers in [0.0, 1.0)
  */
 template <typename RandomNumberGenerator>
-void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean, float sigma)
+void random<RandomNumberGenerator>::normal(cuda::memory::device::vector<float>& g_v, float mean, float sigma)
 {
     get_random_kernel<rng_type>().normal.configure(rng_.dim.grid,
         rng_.dim.block);

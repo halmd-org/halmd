@@ -73,11 +73,11 @@ void hilbert<dimension, float_type>::order()
     LOG_TRACE("order particles along Hilbert space-filling curve");
     {
         scoped_timer_type timer(runtime_.order);
-        cuda::vector<unsigned int> g_index(particle_->nparticle());
+        cuda::memory::device::vector<unsigned int> g_index(particle_->nparticle());
         g_index.reserve(particle_->dim().threads());
         {
 
-            cuda::vector<unsigned int> g_map(particle_->nparticle());
+            cuda::memory::device::vector<unsigned int> g_map(particle_->nparticle());
             g_map.reserve(particle_->dim().threads());
             this->map(g_map);
             this->permutation(g_map, g_index);
@@ -91,7 +91,7 @@ void hilbert<dimension, float_type>::order()
  * map particles to Hilbert curve
  */
 template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
+void hilbert<dimension, float_type>::map(cuda::memory::device::vector<unsigned int>& g_map)
 {
     position_array_type const& position = read_cache(particle_->position());
 
@@ -109,7 +109,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
  * generate permutation
  */
 template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index)
+void hilbert<dimension, float_type>::permutation(cuda::memory::device::vector<unsigned int>& g_map, cuda::memory::device::vector<unsigned int>& g_index)
 {
     configure_kernel(wrapper_type::kernel.gen_index, particle_->dim(), true);
     wrapper_type::kernel.gen_index(g_index);

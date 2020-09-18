@@ -170,7 +170,7 @@ void particle<dimension, float_type>::aux_enable()
  * rearrange particles by permutation
  */
 template <int dimension, typename float_type>
-void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const& g_index)
+void particle<dimension, float_type>::rearrange(cuda::memory::device::vector<unsigned int> const& g_index)
 {
     auto g_position = make_cache_mutable(mutable_data<gpu_position_type>("position"));
     auto g_image = make_cache_mutable(mutable_data<gpu_image_type>("image"));
@@ -204,7 +204,7 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     );
 
     position.swap(*g_position);
-    image.swap(*g_image);
+    swap(image, *g_image);
     velocity.swap(*g_velocity);
     cuda::copy(id.begin(), id.begin() + id.capacity(), make_cache_mutable(id_)->begin());
 

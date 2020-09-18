@@ -142,8 +142,8 @@ void from_particle<dimension, float_type>::update()
         // mark neighbour list placeholders as virtual particles
         cuda::memset(g_neighbour->begin(), g_neighbour->end(), 0xFF);
         // build neighbour lists
-        cuda::vector<int> g_overflow(1);
-        cuda::host::vector<int> h_overflow(1);
+        cuda::memory::device::vector<int> g_overflow(1);
+        cuda::memory::host::vector<int> h_overflow(1);
         cuda::memset(g_overflow.begin(), g_overflow.end(), 0);
 
         cuda::texture<float> rr_cut_skin(g_rr_cut_skin_);

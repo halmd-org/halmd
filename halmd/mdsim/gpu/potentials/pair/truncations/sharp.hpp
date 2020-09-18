@@ -63,7 +63,7 @@ public:
     {
         LOG("potential cutoff length: r_c = " << r_cut_sigma_);
 
-        cuda::host::vector<float> param(g_param_.size());
+        cuda::memory::host::vector<float> param(g_param_.size());
         for (size_t i = 0; i < param.size(); ++i) {
             param[i] = rr_cut_.data()[i];
         }

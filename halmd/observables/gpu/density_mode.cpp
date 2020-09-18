@@ -58,7 +58,7 @@ density_mode<dimension, float_type>::density_mode(
         // cast from fixed_vector<double, ...> to fixed_vector<float, ...>
         // and finally to gpu_vector_type (float4 or float2)
         auto const& q = wavevector_->value();
-        cuda::host::vector<gpu_vector_type> h_q(nq_);
+        cuda::memory::host::vector<gpu_vector_type> h_q(nq_);
         for (unsigned int i = 0; i < q.size(); ++i) {
             h_q[i] = static_cast<vector_type>(q[i]);
         }

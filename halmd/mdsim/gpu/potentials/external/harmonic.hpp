@@ -86,7 +86,7 @@ private:
     /** position of potential minimum in MD units */
     vector_container_type offset_;
     /** potential parameters at CUDA device */
-    cuda::vector<float4> g_param_;
+    cuda::memory::device::vector<float4> g_param_;
     /** array of potential parameters for all particle species */
     cuda::texture<float4> t_param_;
     /** module logger */

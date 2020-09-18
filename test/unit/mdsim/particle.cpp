@@ -122,7 +122,7 @@ inline typename std::enable_if<
 make_array_from_iterator_range(array_type& array, iterator_type const& first, iterator_type const& last)
 {
     array_type g_output(last - first);
-    cuda::host::vector<typename array_type::value_type> h_output(g_output.size());
+    cuda::memory::host::vector<typename array_type::value_type> h_output(g_output.size());
     std::copy(first, last, h_output.begin());
     cuda::copy(h_output.begin(), h_output.end(), g_output.begin());
     array = std::move(g_output);
@@ -146,7 +146,7 @@ make_stress_array_from_iterator_range(
     int constexpr stress_pot_size = particle_type::stress_pot_type::static_size;
     typename particle_type::stress_pot_array_type g_stress_pot(last - first);
     g_stress_pot.reserve(g_stress_pot.size() * stress_pot_size);
-    cuda::host::vector<typename particle_type::stress_pot_array_type::value_type> h_stress_pot(g_stress_pot.size());
+    cuda::memory::host::vector<typename particle_type::stress_pot_array_type::value_type> h_stress_pot(g_stress_pot.size());
     h_stress_pot.reserve(g_stress_pot.capacity());
 
     // convert stress tensor to column-major memory layout

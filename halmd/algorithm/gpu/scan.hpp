@@ -68,7 +68,7 @@ public:
     /**
      * in-place parallel exclusive prefix sum
      */
-    void operator()(cuda::vector<T>& g_array)
+    void operator()(cuda::memory::device::vector<T>& g_array)
     {
         assert(g_array.size() == count);
 
@@ -102,7 +102,7 @@ public:
 
 private:
     uint count, threads;
-    std::vector<cuda::vector<T> > g_sum;
+    std::vector<cuda::memory::device::vector<T> > g_sum;
     std::vector<uint> blocks;
 };
 

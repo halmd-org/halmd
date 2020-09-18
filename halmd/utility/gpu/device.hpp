@@ -53,7 +53,11 @@ public:
     static void luaopen(lua_State* L);
 
     static void set(int num = -1);
-    static int get();
+    static int num();
+
+#ifndef __CUDACC__
+    static cuda::device const& get();
+#endif
 
     static std::string nvidia_driver_version();
     static std::string compute_version();

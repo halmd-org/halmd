@@ -33,7 +33,7 @@ namespace halmd {
  * fulfilled.
  * Predicate is a functor with signature bool operator()(T const& value)
  *
- * Note that this function is designed to work with cuda::vector both as input
+ * Note that this function is designed to work with cuda::memory::device::vector both as input
  * and output iterator
  */
 template <typename Iterator, typename Predicate>
@@ -52,8 +52,8 @@ copy_if(
 {
     typedef typename std::iterator_traits<Iterator>::pointer pointer;
 
-    // the iterators from cuda::vector are not supported in CUDA kernels,
-    // therefore use pointers of cuda::vector elements instead of iterators
+    // the iterators from cuda::memory::device::vector are not supported in CUDA kernels,
+    // therefore use pointers of cuda::memory::device::vector elements instead of iterators
     auto const& kernel = halmd::algorithm::gpu::copy_if_wrapper<pointer, pointer, Predicate>::kernel;
     unsigned int output_size = kernel.copy_if(
         &*first

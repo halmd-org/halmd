@@ -107,7 +107,7 @@ private:
     /** square of pair separation */
     matrix_type sigma2_;
     /** potential parameters at CUDA device */
-    cuda::vector<float4> g_param_;
+    cuda::memory::device::vector<float4> g_param_;
     /** array of potential parameters for all combinations of particle types */
     cuda::texture<float4> t_param_;
     /** module logger */

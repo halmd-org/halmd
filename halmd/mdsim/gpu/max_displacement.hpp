@@ -75,11 +75,11 @@ private:
     displacement_impl_type displacement_impl_;
 
     /** particle positions at last neighbour list update */
-    cuda::vector<float4> g_r0_;
+    cuda::memory::device::vector<float4> g_r0_;
     /** block-reduced squared particle distances */
-    cuda::vector<float> g_rr_;
+    cuda::memory::device::vector<float> g_rr_;
     /** block-reduced squared particle distances */
-    cuda::host::vector<float> h_rr_;
+    cuda::memory::host::vector<float> h_rr_;
     /** cache observer of position updates */
     cache<> position_cache_;
     /** the last calculated displacement */

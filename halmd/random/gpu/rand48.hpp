@@ -57,7 +57,7 @@ public:
     void seed(unsigned int value)
     {
         // compute leapfrog multipliers for initialization
-        cuda::vector<uint48> g_A(dim.threads()), g_C(dim.threads());
+        cuda::memory::device::vector<uint48> g_A(dim.threads()), g_C(dim.threads());
         get_rand48_kernel().leapfrog.configure(dim.grid, dim.block);
         get_rand48_kernel().leapfrog(g_A);
 
@@ -67,8 +67,8 @@ public:
         scan(g_C);
 
         // initialize generator with seed
-        cuda::vector<uint48> g_a(1), g_c(1);
-        cuda::host::vector<uint48> h_a(1), h_c(1);
+        cuda::memory::device::vector<uint48> g_a(1), g_c(1);
+        cuda::memory::host::vector<uint48> h_a(1), h_c(1);
         get_rand48_kernel().seed.configure(dim.grid, dim.block);
         get_rand48_kernel().seed(g_A, g_C, g_a, g_c, g_state_, value);
         cuda::copy(g_a.begin(), g_a.end(), h_a.begin());
@@ -88,7 +88,7 @@ public:
     }
 
 private:
-    cuda::vector<ushort3> g_state_;
+    cuda::memory::device::vector<ushort3> g_state_;
     rand48_rng rng_;
 };
 

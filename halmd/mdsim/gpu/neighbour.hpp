@@ -40,7 +40,7 @@ namespace gpu {
 class neighbour
 {
 public:
-    typedef cuda::vector<unsigned int> array_type;
+    typedef cuda::memory::device::vector<unsigned int> array_type;
 
     virtual ~neighbour() {}
     /** Lua bindings */

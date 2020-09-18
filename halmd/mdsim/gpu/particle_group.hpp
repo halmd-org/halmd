@@ -51,9 +51,9 @@ namespace gpu {
 class particle_group
 {
 public:
-    typedef cuda::vector<unsigned int> array_type;
+    typedef cuda::memory::device::vector<unsigned int> array_type;
     typedef array_type::value_type size_type;
-    typedef cuda::host::vector<size_type> host_array_type;
+    typedef cuda::memory::host::vector<size_type> host_array_type;
 
     /**
      * Returns ordered sequence of particle indices.
@@ -105,7 +105,7 @@ get_ordered(particle_group& group, iterator_type const& first)
 {
     typedef particle_group::array_type array_type;
     array_type const& g_ordered = read_cache(group.ordered());
-    cuda::host::vector<array_type::value_type> h_ordered(g_ordered.size());
+    cuda::memory::host::vector<array_type::value_type> h_ordered(g_ordered.size());
     cuda::copy(g_ordered.begin(), g_ordered.end(), h_ordered.begin());
     return std::copy(h_ordered.begin(), h_ordered.end(), first);
 }
@@ -119,7 +119,7 @@ get_unordered(particle_group& group, iterator_type const& first)
 {
     typedef particle_group::array_type array_type;
     array_type const& g_unordered = read_cache(group.unordered());
-    cuda::host::vector<array_type::value_type> h_unordered(g_unordered.size());
+    cuda::memory::host::vector<array_type::value_type> h_unordered(g_unordered.size());
     cuda::copy(g_unordered.begin(), g_unordered.end(), h_unordered.begin());
     return std::copy(h_unordered.begin(), h_unordered.end(), first);
 }

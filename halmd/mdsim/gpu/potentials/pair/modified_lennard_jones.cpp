@@ -80,7 +80,7 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
         }
     }
 
-    cuda::host::vector<float4> param(g_param_.size());
+    cuda::memory::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p;
         p[modified_lennard_jones_kernel::EPSILON] = epsilon_.data()[i];

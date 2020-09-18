@@ -163,7 +163,7 @@ private:
     /** (cutoff lengths + neighbour list skin)² */
     matrix_type rr_cut_skin_;
     /** (cutoff lengths + neighbour list skin)² */
-    cuda::vector<float> g_rr_cut_skin_;
+    cuda::memory::device::vector<float> g_rr_cut_skin_;
     /** FIXME average desired cell occupancy */
     float nu_cell_;
     /** preferred algorithm for update */

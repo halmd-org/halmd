@@ -46,7 +46,7 @@ BOOST_FIXTURE_TEST_CASE( performance, set_cuda_device )
 {
     unsigned int memsize = 1024 * 1024;
 
-    cuda::vector<float4> data(memsize);
+    cuda::memory::device::vector<float4> data(memsize);
     data.reserve(memsize * 2);
     cuda::memset(data.begin(), data.begin() + data.capacity(), 0);
 
@@ -107,11 +107,11 @@ BOOST_FIXTURE_TEST_CASE( overloaded_kernel, set_cuda_device )
 
     // allocate GPU memory for 2×memsize float4, initialise to 0
     dsfloat_cuda_vector<float4> g_data(memsize);
-    cuda::vector<float4>& g_data_float4 = g_data;
+    cuda::memory::device::vector<float4>& g_data_float4 = g_data;
     cuda::memset(g_data_float4.begin(), g_data_float4.begin() + g_data_float4.capacity(), 0);
 
     // assign 1's to first float4 array
-    cuda::host::vector<float4> h_data(memsize);
+    cuda::memory::host::vector<float4> h_data(memsize);
     std::fill(h_data.begin(), h_data.end(), float4{ 1, 1, 1, 1 });
     cuda::copy(h_data.begin(), h_data.end(), g_data_float4.begin());
 

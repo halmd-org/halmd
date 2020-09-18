@@ -62,7 +62,7 @@ public:
     {
         LOG("core radius r_core/σ = " << r_core_sigma_);
 
-        cuda::host::vector<float> param(g_param_.size());
+        cuda::memory::host::vector<float> param(g_param_.size());
         for (size_t i = 0; i < param.size(); ++i) {
             param[i] = r_core_.data()[i];
         }

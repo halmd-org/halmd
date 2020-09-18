@@ -81,13 +81,13 @@ public:
     typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_vector_type position_array_type;
     typedef typename particle_array_gpu<gpu_vector_type>::gpu_vector_type image_array_type;
     typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_vector_type velocity_array_type;
-    typedef cuda::vector<unsigned int> id_array_type;
-    typedef cuda::vector<unsigned int>  reverse_id_array_type;
+    typedef cuda::memory::device::vector<unsigned int> id_array_type;
+    typedef cuda::memory::device::vector<unsigned int>  reverse_id_array_type;
     typedef typename particle_array_gpu<gpu_vector_type>::gpu_vector_type force_array_type;
     typedef typename particle_array_gpu<float>::gpu_vector_type en_pot_array_type;
     typedef typename particle_array_gpu<float>::gpu_vector_type stress_pot_array_type;
 
-    void rearrange(cuda::vector<unsigned int> const& g_index);
+    void rearrange(cuda::memory::device::vector<unsigned int> const& g_index);
 
     /** grid and block dimensions for CUDA calls */
     cuda::config const& dim() const {
@@ -585,7 +585,7 @@ inline iterator_type
 get_id(particle_type const& particle, iterator_type const& first)
 {
     auto const& g_id = read_cache(particle.id());
-    cuda::host::vector<unsigned int> id(particle.nparticle());
+    cuda::memory::host::vector<unsigned int> id(particle.nparticle());
     cuda::copy(g_id.begin(), g_id.begin() + particle.nparticle(), id.begin());
     auto output = first;
     for (size_t i = 0; i < particle.nparticle(); i++) {
@@ -601,7 +601,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_id(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<unsigned int> id(particle.nparticle());
+    cuda::memory::host::vector<unsigned int> id(particle.nparticle());
     auto input = first;
     for (size_t i = 0; i < particle.nparticle(); i++) {
         id[i] = *input++;
@@ -619,7 +619,7 @@ inline iterator_type
 get_reverse_id(particle_type const& particle, iterator_type const& first)
 {
     auto const& g_reverse_id = read_cache(particle.reverse_id());
-    cuda::host::vector<unsigned int> reverse_id(particle.nparticle());
+    cuda::memory::host::vector<unsigned int> reverse_id(particle.nparticle());
     cuda::copy(g_reverse_id.begin(), g_reverse_id.begin() + particle.nparticle(), reverse_id.begin());
     auto output = first;
     for (size_t i = 0; i < particle.nparticle(); i++) {
@@ -635,7 +635,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_reverse_id(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<unsigned int> reverse_id(particle.nparticle());
+    cuda::memory::host::vector<unsigned int> reverse_id(particle.nparticle());
     auto input = first;
     for (size_t i = 0; i < particle.nparticle(); i++) {
         reverse_id[i] = *input++;

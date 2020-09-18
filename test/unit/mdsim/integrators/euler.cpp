@@ -362,8 +362,8 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
     typedef typename particle_type::vector_type vector_type;
     typedef apply_wrapper<negate_, vector_type, float4, vector_type, float4> apply_negate_wrapper;
 
-    cuda::vector<float4> const& position = read_cache(particle->position());
-    cuda::vector<float4>& velocity = *make_cache_mutable(particle->velocity());
+    cuda::memory::device::vector<float4> const& position = read_cache(particle->position());
+    cuda::memory::device::vector<float4>& velocity = *make_cache_mutable(particle->velocity());
 
     // copy -g_r[i] to g_v[i]
     //

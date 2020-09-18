@@ -84,7 +84,7 @@ struct gpu_samples {
         auto g_position = phase_space.template acquire<gpu_sample_type>("position");
         auto g_velocity = phase_space.template acquire<gpu_sample_type>("velocity");
 
-        cuda::host::vector<float4> h_buf(g_position->data().size());
+        cuda::memory::host::vector<float4> h_buf(g_position->data().size());
         position = std::make_shared<position_sample_type>(g_position->data().size());
         species = std::make_shared<species_sample_type>(g_position->data().size());
         velocity = std::make_shared<velocity_sample_type>(g_velocity->data().size());
@@ -117,8 +117,8 @@ void shuffle(
 )
 {
     // generate random permutation
-    cuda::vector<unsigned int> g_index(particle->nparticle());
-    cuda::host::vector<unsigned int> h_index(g_index.size());
+    cuda::memory::device::vector<unsigned int> g_index(particle->nparticle());
+    cuda::memory::host::vector<unsigned int> h_index(g_index.size());
     std::iota(h_index.begin(), h_index.end(), 0);
     cuda::copy(h_index.begin(), h_index.end(), g_index.begin());
     random->shuffle(g_index);

@@ -100,9 +100,9 @@ private:
     /** block sum of momentum */
     dsfloat_cuda_vector<gpu_vector_type> g_mv_;
     /** block sum of kinetic energy without 1/2 */
-    cuda::vector<dsfloat> g_mv2_;
+    cuda::memory::device::vector<dsfloat> g_mv2_;
     /** block sum of mass */
-    cuda::vector<dsfloat> g_m_;
+    cuda::memory::device::vector<dsfloat> g_m_;
 
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;

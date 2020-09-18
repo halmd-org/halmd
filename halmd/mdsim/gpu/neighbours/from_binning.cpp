@@ -187,8 +187,8 @@ void from_binning<dimension, float_type>::update()
         // mark neighbour list placeholders as virtual particles
         cuda::memset(g_neighbour->begin(), g_neighbour->end(), 0xFF);
         // build neighbour lists
-        cuda::vector<int> g_ret(1);
-        cuda::host::vector<int> h_ret(1);
+        cuda::memory::device::vector<int> g_ret(1);
+        cuda::memory::host::vector<int> h_ret(1);
         cuda::memset(g_ret.begin(), g_ret.end(), EXIT_SUCCESS);
         auto *kernel = &from_binning_wrapper<dimension>::kernel;
         if (!use_naive) {

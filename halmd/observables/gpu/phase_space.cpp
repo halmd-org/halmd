@@ -56,7 +56,7 @@ public:
     phase_space_host_cache(std::shared_ptr<mdsim::gpu::particle_array_gpu_base const> array)
       : array_(array) {}
 
-    cuda::host::vector<uint8_t>& acquire(void)
+    cuda::memory::host::vector<uint8_t>& acquire(void)
     {
         if(!(array_->cache_observer() == cache_observer_)) {
             data_ = array_->get_host_data();
@@ -66,7 +66,7 @@ public:
     }
 
 private:
-    cuda::host::vector<uint8_t> data_;
+    cuda::memory::host::vector<uint8_t> data_;
     cache<> cache_observer_;
     std::shared_ptr<mdsim::gpu::particle_array_gpu_base const> array_;
 };

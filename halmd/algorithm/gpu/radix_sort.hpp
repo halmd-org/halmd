@@ -66,7 +66,7 @@ public:
         if (!count) return;
 
         // assign GPU dual buffers, as in the CUDA SDK radix sort example
-        cuda::vector<key_type> g_key(count);
+        cuda::memory::device::vector<key_type> g_key(count);
         std::pair<Iterator, Iterator> key = {first, g_key.begin()};
 
         for (unsigned int shift = 0; shift < 32; shift += RADIX) {
@@ -114,9 +114,9 @@ public:
         std::size_t const count = last1 - first1;
 
         // assign GPU dual buffers, as in the CUDA SDK radix sort example
-        cuda::vector<key_type> g_key(count);
+        cuda::memory::device::vector<key_type> g_key(count);
         std::pair<Iterator1, Iterator1> key = {first1, g_key.begin()};
-        cuda::vector<value_type> g_value(count);
+        cuda::memory::device::vector<value_type> g_value(count);
         std::pair<Iterator2, Iterator2> value = {first2, g_value.begin()};
 
         // do nothing in case of an empty array
@@ -172,7 +172,7 @@ private:
     unsigned int threads_;
     unsigned int blocks_;
     scan<unsigned int> scan_;
-    cuda::vector<unsigned int> g_bucket_;
+    cuda::memory::device::vector<unsigned int> g_bucket_;
 };
 
 } // namespace gpu

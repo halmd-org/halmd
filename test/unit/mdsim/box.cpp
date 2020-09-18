@@ -160,10 +160,10 @@ void periodic_gpu()
     unsigned int npos = position.size();
 
     // allocate device memory and host memory for conversion to GPU type
-    cuda::host::vector<coalesced_vector_type> h_position(npos);
-    cuda::host::vector<coalesced_vector_type> h_reduced(npos);
-    cuda::vector<coalesced_vector_type> g_position(npos);
-    cuda::vector<coalesced_vector_type> g_reduced(npos);
+    cuda::memory::host::vector<coalesced_vector_type> h_position(npos);
+    cuda::memory::host::vector<coalesced_vector_type> h_reduced(npos);
+    cuda::memory::device::vector<coalesced_vector_type> g_position(npos);
+    cuda::memory::device::vector<coalesced_vector_type> g_reduced(npos);
 
     // allocate memory for conversion to GPU type and transfer positions to device
     std::copy(position.begin(), position.end(), h_position.begin());

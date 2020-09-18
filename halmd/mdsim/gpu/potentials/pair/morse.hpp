@@ -104,7 +104,7 @@ private:
     /** position of potential well in units of sigma */
     matrix_type r_min_sigma_;
     /** potential parameters at CUDA device */
-    cuda::vector<float4> g_param_;
+    cuda::memory::device::vector<float4> g_param_;
     /** array of potential parameters for all combinations of particle types */
     cuda::texture<float4> t_param_;
     /** module logger */

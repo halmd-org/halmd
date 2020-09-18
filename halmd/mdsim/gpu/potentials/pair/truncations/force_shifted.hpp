@@ -75,7 +75,7 @@ public:
         LOG("potential cutoff energy: U = " << en_cut_);
         LOG("potential cutoff force: F_c = " << force_cut_);
 
-        cuda::host::vector<float4> param(g_param_.size());
+        cuda::memory::host::vector<float4> param(g_param_.size());
         for (size_t i = 0; i < param.size(); ++i) {
             fixed_vector<float, 4> p;
             p[force_shifted_kernel::R_CUT] = r_cut_.data()[i];

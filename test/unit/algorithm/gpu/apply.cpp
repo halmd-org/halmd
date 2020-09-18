@@ -48,10 +48,10 @@ BOOST_AUTO_TEST_CASE( apply_square )
     > square;
 
     unsigned int size = 1234567;
-    cuda::host::vector<float2> h_input(size);
-    cuda::host::vector<float> h_output(size);
-    cuda::vector<float2> g_input(size);
-    cuda::vector<float> g_output(size);
+    cuda::memory::host::vector<float2> h_input(size);
+    cuda::memory::host::vector<float> h_output(size);
+    cuda::memory::device::vector<float2> g_input(size);
+    cuda::memory::device::vector<float> g_output(size);
 
     // create sequence of 2-dim vectors
     for (unsigned int i = 0; i < size; ++i) {

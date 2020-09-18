@@ -59,13 +59,13 @@ BOOST_DATA_TEST_CASE_F(
 
     halmd::accumulator<double> elapsed;
     for (unsigned int i = 0; i < repeat; ++i) {
-        cuda::vector<unsigned int> g_output(count);
+        cuda::memory::device::vector<unsigned int> g_output(count);
         cuda::memset(g_output.begin(), g_output.end(), 0);
         {
             halmd::scoped_timer<halmd::timer> t(elapsed);
             halmd::iota(g_output.begin(), g_output.end(), value);
         }
-        cuda::host::vector<unsigned int> h_output(count);
+        cuda::memory::host::vector<unsigned int> h_output(count);
         BOOST_CHECK( cuda::copy(
             g_output.begin()
           , g_output.end()

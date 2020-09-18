@@ -73,9 +73,9 @@ private:
     /** kernel execution parameters */
     cuda::config dim_;
     /** accumulators per block in GPU memory */
-    cuda::vector<accumulator_type> g_block_;
+    cuda::memory::device::vector<accumulator_type> g_block_;
     /** accumulators per block in pinned host memory */
-    cuda::host::vector<accumulator_type> h_block_;
+    cuda::memory::host::vector<accumulator_type> h_block_;
     /** reduce kernel function matching number of threads per block */
     cuda::function<function_type> reduce_;
 };

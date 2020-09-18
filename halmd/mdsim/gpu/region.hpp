@@ -40,7 +40,7 @@ namespace gpu {
 class region_base
 {
 public:
-    typedef cuda::vector<unsigned int> array_type;
+    typedef cuda::memory::device::vector<unsigned int> array_type;
     typedef typename array_type::value_type size_type;
 
     /**
@@ -165,7 +165,7 @@ get_selection(region_type& region, iterator_type const& first)
 {
     typedef typename region_type::array_type::value_type value_type;
     auto const& selection = read_cache(region.selection());
-    cuda::host::vector<value_type> h_selection(selection.size());
+    cuda::memory::host::vector<value_type> h_selection(selection.size());
     cuda::copy(std::begin(selection), std::end(selection), h_selection.begin());
     iterator_type output = first;
     for (auto const& element : h_selection) {
@@ -183,7 +183,7 @@ get_mask(region_type& region, iterator_type const& first)
 {
     typedef typename region_type::array_type::value_type value_type;
     auto const& g_mask = read_cache(region.mask());
-    cuda::host::vector<value_type> h_mask(g_mask.size());
+    cuda::memory::host::vector<value_type> h_mask(g_mask.size());
     cuda::copy(g_mask.begin(), g_mask.end(), h_mask.begin());
     iterator_type output = first;
     for (auto const& m : h_mask) {

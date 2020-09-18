@@ -78,7 +78,7 @@ void device::set(int num)
     device_.set(num);
     cuda::thread::synchronize();
 
-    cuda::device::properties prop(num);
+    cuda::device::properties prop(device_);
 
     LOG("GPU: " << num);
     LOG("GPU name: " << prop.name());
@@ -95,15 +95,20 @@ void device::set(int num)
     LOG("CUDA compute version: " << device::compute_version());
 }
 
-int device::get()
+int device::num()
 {
     return device_.get();
+}
+
+cuda::device const& device::get()
+{
+    return device_;
 }
 
 cuda::config const& device::validate(cuda::config const& dim)
 {
     cuda::thread::synchronize();
-    cuda::device::properties prop(device_.get());
+    cuda::device::properties prop(device_);
     unsigned int threads = dim.threads_per_block();
 
     if (threads < 1) {
@@ -195,7 +200,7 @@ static void translate_cuda_error(lua_State* L, cuda::error const& e)
 
 static int wrap_gpu(device const&)
 {
-    return device::get();
+    return device::num();
 }
 
 void device::luaopen(lua_State* L)

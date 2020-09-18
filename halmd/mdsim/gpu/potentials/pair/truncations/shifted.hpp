@@ -72,7 +72,7 @@ public:
         LOG("potential cutoff length: r_c = " << r_cut_sigma_);
         LOG("potential cutoff energy: U = " << en_cut_);
 
-        cuda::host::vector<float2> param(g_param_.size());
+        cuda::memory::host::vector<float2> param(g_param_.size());
         for (size_t i = 0; i < param.size(); ++i) {
             fixed_vector<float, 2> p;
             p[shifted_kernel::RR_CUT] = rr_cut_.data()[i];

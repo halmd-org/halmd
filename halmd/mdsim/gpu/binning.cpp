@@ -198,8 +198,8 @@ void binning<dimension, float_type>::update()
         kernel->find_cell_offset(g_cell_index_, g_cell_offset_, nparticle);
 
         // assign particles to cells
-        cuda::vector<int> g_ret(1);
-        cuda::host::vector<int> h_ret(1);
+        cuda::memory::device::vector<int> g_ret(1);
+        cuda::memory::host::vector<int> h_ret(1);
         cuda::memset(g_ret.begin(), g_ret.end(), EXIT_SUCCESS);
         kernel->assign_cells.configure(dim_cell_.grid, dim_cell_.block);
         kernel->assign_cells(

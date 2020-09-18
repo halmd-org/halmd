@@ -62,7 +62,7 @@ power_law<float_type>::power_law(
     LOG("interaction range: σ = " << sigma_);
     LOG("power law index: n = " << index_);
 
-    cuda::host::vector<float4> param(g_param_.size());
+    cuda::memory::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p(0); // initialise unused elements as well
         p[power_law_kernel::EPSILON] = epsilon_.data()[i];
