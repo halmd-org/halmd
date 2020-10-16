@@ -28,7 +28,7 @@ def main(args):
 
     # open and read H5MD input file
     with h5py.File(args.input, 'r') as H5:
-        msd = H5['dynamics/all/mean_square_displacement']
+        msd = H5['dynamics/{0}/mean_square_displacement'.format(args.group)]
 
         # get relavant data for MSD calculation
         x = np.array(msd['time']).flatten()
@@ -96,6 +96,7 @@ def parse_args():
 
     # define and parse command line arguments
     parser = argparse.ArgumentParser()
+    parser.add_argument('--group', default='all', help='particle group in H5MD file')
     parser.add_argument('--dimension', type=int, default=3, help='space dimension')
     parser.add_argument('--no-plot', action='store_true', help='do not produce plots, but do the analysis')
     parser.add_argument('--rectify', action='store_true', help='rectify plot by showing MSD(t) / t')
