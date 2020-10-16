@@ -57,13 +57,16 @@ function main(args)
     -- create system state
     local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = nspecies})
 
-    -- smoothly truncated Lennard-Jones potential
+    -- define Lennard-Jones pair potential
     local potential = mdsim.potentials.pair.lennard_jones({species = particle.nspecies})
-    -- smooth truncation
-    if args.smoothing > 0 then
-        potential = potential:truncate({"smooth_r4", cutoff = args.cutoff, h = args.smoothing})
-    else
-        potential = potential:truncate({cutoff = args.cutoff})
+    -- apply interaction cutoff
+    if args.cutoff > 0 then
+        -- use smooth truncation
+        if args.smoothing > 0 then
+            potential = potential:truncate({"smooth_r4", cutoff = args.cutoff, h = args.smoothing})
+        else
+            potential = potential:truncate({cutoff = args.cutoff})
+        end
     end
     -- compute forces
     local force = mdsim.forces.pair({
