@@ -100,13 +100,6 @@ function main(args)
     local group_included = mdsim.particle_groups.from_region({particle = particle, region = region, selection = "included", label = region.label})
 
     local msv_local = observables.thermodynamics({box = box, group = group_included})
-    observables.sampler:on_sample(
-        function()
-            halmd.io.log.info("particles in region: %d, temp: %f", group_included.size, msv_local:temperature())
-        end
-      , 200
-      , 0
-    )
 
     -- sample phase space
     local phase_space = observables.phase_space({box = box, group = particle_group})
