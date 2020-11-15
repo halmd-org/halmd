@@ -97,10 +97,10 @@ BOOST_AUTO_TEST_CASE( validation )
 
     // CM velocity at first step
     const double vcm_limit = gpu ? 0.5 * eps_float : 30 * eps;
-    fixed_vector<double, 3> v_cm;
+    fixed_vector<double, 3> v_cm = 0;                           // zero all components
     h5xx::detail::read_chunked_dataset<double, 1>(
         observables.openDataSet("center_of_mass_velocity/value")
-      , reinterpret_cast<double*>(&v_cm)
+      , reinterpret_cast<double*>(&v_cm[0])
       , 0
     );
 //    h5xx::read_chunked_dataset(
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE( validation )
     // CM velocity at last step
     h5xx::detail::read_chunked_dataset<double, 1>(  // FIXME see above
         observables.openDataSet("center_of_mass_velocity/value")
-      , reinterpret_cast<double*>(&v_cm)
+      , reinterpret_cast<double*>(&v_cm[0])
       , -1
     );
     BOOST_CHECK_SMALL(norm_inf(v_cm), vcm_limit);
@@ -149,11 +149,14 @@ BOOST_AUTO_TEST_CASE( validation )
 
     // with the first released version of HAL's MD package (commit f5283a2),
     // an energy drift of less than 5e-6 ε was obtained over 2e8 MD steps
-    // using a potential with smooth cutoff (dt*=0.001, h=0.005)
+    // using a potential with smooth cutoff (dt*=0.001, h=0.005).
+    // Add a minimal tolerance to account for fluctuations of the energy on top
+    // of the drift.
 #ifndef USE_HOST_SINGLE_PRECISION
-    const double en_limit = max(3e-5, steps * 1e-12);
+    const double en_limit = 3e-5 + steps * 10 * 3e-14;    // add a factor of 10 for safety
 #else
-    const double en_limit = max(7e-5, steps * 1e-12);
+    // with single precision, the drift was 1e-3 ε over 1e7 steps.
+    const double en_limit = 1e-4 + steps * 10 * 1e-10;
 #endif
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_tot), en_limit);
 

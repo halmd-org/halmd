@@ -75,7 +75,7 @@ public:
      * Test if the placement of a sphere is possible with no overlap with other
      * previously placed spheres
      * 
-     * @param center center position of sphere
+     * @param centre centre position of sphere
      * @param diameter diameter of the sphere
      * @return true if the placement is possible
      */

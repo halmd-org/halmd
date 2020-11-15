@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2010-2016 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2010-2012 Peter Colberg
  *
@@ -79,6 +79,11 @@ public:
     virtual double en_kin();
 
     /**
+     * Compute total force.
+     */
+    virtual vector_type const& total_force();
+
+    /**
      * Compute velocity of centre of mass
      */
     virtual vector_type const& v_cm();
@@ -129,6 +134,8 @@ private:
 
     /** mean kinetic energy per particle */
     double en_kin_;
+    /** total force */
+    vector_type force_;
     /** velocity of centre of mass */
     vector_type v_cm_;
     /** centre of mass */
@@ -144,6 +151,8 @@ private:
 
     /** cache observers of mean kinetic energy per particle */
     std::tuple<cache<>, cache<>, cache<>> en_kin_cache_;
+    /** cache observers of total force */
+    std::tuple<cache<>, cache<>> force_cache_;
     /** cache observers of velocity of centre of mass */
     std::tuple<cache<>, cache<>, cache<>> v_cm_cache_;
     /** cache observers of cemtre of mass */
@@ -161,6 +170,7 @@ private:
     struct runtime
     {
         accumulator_type en_kin;
+        accumulator_type force;
         accumulator_type v_cm;
         accumulator_type r_cm;
         accumulator_type en_pot;

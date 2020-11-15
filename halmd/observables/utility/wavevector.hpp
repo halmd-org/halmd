@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011-2013 Felix Höfling
+ * Copyright © 2011-2018 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -45,15 +45,40 @@ public:
     typedef std::vector<double> wavenumber_array_type;
     typedef std::vector<vector_type> wavevector_array_type;
     typedef std::vector<std::pair<std::size_t, std::size_t>> shell_array_type;
+    typedef fixed_vector<unsigned int, dimension> filter_type;
 
     static void luaopen(lua_State* L);
 
-    // constructor
+    /**
+     * construction of sparse wavevector grid
+     *
+     * For each wavenumber given, find at most `max_count` wavevectors on the
+     * reciprocal lattice of the simulation box and group them in shells
+     * according to the wavenumber.
+     *
+     * Allow for a relative deviation of the wavenumber as given by `tolerance`.
+     */
     wavevector(
         std::vector<double> const& wavenumber
       , vector_type const& box_length
       , double tolerance
       , unsigned int max_count
+      , filter_type const& filter
+    );
+
+    /**
+     * construction of dense wavevector grid
+     *
+     * Set up all wavevectors @f$ \vec q @f$ on the reciprocal lattice of the
+     * simulation box up to the maximum wavenumber given, $f@ |\vec q| \leq
+     * q_{max} @f$. Group results in shells according to the wavenumbers given.
+     *
+     * Shells are half open sets: @f$ q_{i-1} \leq |\vec q| < q_i @f$.
+     */
+    wavevector(
+        std::vector<double> const& wavenumber
+      , vector_type const& box_length
+      , filter_type const& filter
     );
 
     //! returns tolerance on wavevector magnitude
@@ -66,6 +91,12 @@ public:
     unsigned int max_count() const
     {
         return max_count_;
+    }
+
+    //! returns wavevector filter
+    filter_type const& filter() const
+    {
+        return filter_;
     }
 
     //! returns list of wavevectors
@@ -100,10 +131,12 @@ protected:
     double tolerance_;
     /** maximum number of wavevectors per wavenumber */
     double max_count_;
-    // list of wavevectors grouped by their magnitude in ascending order
+    /** list of wavevectors grouped by their magnitude in the order of 'wavenumber' */
     wavevector_array_type wavevector_;
-    // list of wavevector shells
+    /** list of wavevector shells */
     shell_array_type shell_;
+    /** filter for wavevectors, a zero entry sets the respective Cartesian component to zero. */
+    filter_type filter_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

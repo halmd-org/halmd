@@ -1,6 +1,6 @@
 /*
  * Copyright © 2016      Daniel Kirchner
- * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2010-2016 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
  *
@@ -440,6 +440,8 @@ private:
     /** map of the stored particle arrays */
     std::unordered_map<std::string, std::shared_ptr<particle_array>> data_;
 
+    /** flag that the force update is in progress */
+    bool force_in_progress_;
     /** flag that the force has to be reset to zero prior to reading */
     bool force_zero_;
     /** flag that the force cache is dirty (not up to date) */

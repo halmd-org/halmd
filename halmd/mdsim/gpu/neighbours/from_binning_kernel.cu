@@ -201,11 +201,11 @@ __global__ void update_neighbours(
     //
     // With the WCA potential (Weeks-Chandler-Andersen, purely repulsive
     // part of the shifted Lennard-Jones potential) using the N-squared
-    // algorithm, the center of mass velocity effectively stays zero if
+    // algorithm, the centre of mass velocity effectively stays zero if
     // the initial list of particles arranged on a lattice is randomly
     // permuted before simulation.
     // Using the cell algorithm with the WCA potential however results
-    // in a continuously drifting center of mass velocity, independent
+    // in a continuously drifting centre of mass velocity, independent
     // of the chosen simulation timestep.
     //
     // The reason for this behaviour lies in the disadvantageous summing

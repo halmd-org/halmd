@@ -81,6 +81,11 @@ local h5 = assert(libhalmd.h5)
 --    Returns the instantaneous temperature as given by the kinetic energy:
 --    :math:`k_B T = 2 u_{\text{kin}} / d`.
 --
+-- .. method:: total_force()
+--
+--    Returns the total force:
+--    :math:`\vec F_{\text{tot}} = \sum_{i=1}^N \vec F_i`.
+--
 -- .. method:: center_of_mass_velocity()
 --
 --    Returns the centre-of-mass velocity:
@@ -192,15 +197,26 @@ local M = module(function(args)
         local module_group = file.root:open_group("h5md"):open_group("modules"):open_group("thermodynamics")
         module_group:write_attribute("version", h5.int_array(), {1, 0})
 
-        -- store particle number and density in 'truncate' mode
-        -- assuming unchanging values
-        -- FIXME should be queried from box and particle_group
+        -- special treatment of particle number and density:
+        -- store them in 'truncate' mode if they are unchanging values,
+        -- otherwise treat them as normal data fields
         local writer = file:writer{location = location, mode = "truncate"}
-        writer.group:write_attribute("dimension", h5.int(), self.dimension)
+        writer.group:write_attribute("dimension", h5.int(), self.dimension) -- always store spatial dimension
 
-        writer:on_write(self.particle_number, {"particle_number"})
-        writer:on_write(self.density, {"density"})
-        writer:write()
+        if not group.fluctuating then
+            for k,v in pairs({"particle_number", "density"}) do
+                writer:on_write(assert(self[v]), {v})
+                -- remove from set of data fields if present
+                if fields[v] ~= nil then
+                    fields[v] = nil
+                    logger:warning("skip repeated output of " .. v)
+                end
+            end
+            writer:write()
+        else
+            table.insert(fields, "particle_number")
+            table.insert(fields, "density")
+        end
 
         writer = file:writer{location = location, mode = "append"}
 
@@ -220,11 +236,7 @@ local M = module(function(args)
         local aux = false
         for k,v in pairs(fields) do
             local name = (type(k) == "string") and k or v
-            if name == "particle_number" or name == "density" then
-                logger:warning("skip repeated output of " .. name)
-            else
-                writer:on_write(assert(self[v]), {name})
-            end
+            writer:on_write(assert(self[v]), {name})
             if aux_table[name] then
                 aux = true
             end
@@ -260,6 +272,7 @@ function M.profile(self, profiler)
         end
     end
     profile("en_kin"       , "kinetic energy"         )
+    profile("force"        , "total force"            )
     profile("v_cm"         , "centre-of-mass velocity")
     profile("r_cm"         , "centre-of-mass"         )
     profile("en_pot"       , "potential energy"       )

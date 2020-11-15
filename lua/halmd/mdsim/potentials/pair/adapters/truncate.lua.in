@@ -113,23 +113,23 @@ end
 --
 -- .. math::
 --
---   g(\xi) = \frac{\xi^4}{1 + \xi^4}, \qquad \xi = \frac{r - r_c}{h r_c} \,,
+--   g(\xi) = \frac{\xi^4}{1 + \xi^4}, \qquad \xi = \frac{r - r_c}{h} \,,
 --
--- where :math:`r_c` is the cutoff distance, and the dimensionless parameter
--- :math:`h \ll 1` controls the the range of smoothing. The C²-continuous
--- truncated potential then reads
+-- where :math:`r_c` is the cutoff distance, and the parameter
+-- :math:`h \ll \sigma`, which has the dimension of a length, controls the the
+-- range of smoothing. The C²-continuous truncated potential then reads
 --
 -- .. math::
 --
---   \tilde U(r) = [U(r) - U(r_c)] \, g\left(\frac{r - r_c}{h r_c}\right) \Theta(r_c - r),
+--   \tilde U(r) = [U(r) - U(r_c)] \, g\left(\frac{r - r_c}{h}\right) \Theta(r_c - r),
 --
 -- and the C¹-continuous force is
 --
 -- .. math::
 --
 --   \lvert\tilde{\vec{F}}\left(\vec{r}\right)\rvert =
---     \lvert\vec{F}\left(\vec{r}\right)\rvert g\left(\frac{r - r_c}{h r_c}\right)
---     - \frac{1}{h r_c} U\left(r\right) g^\prime\left(\frac{r - r_c}{h r_c}\right)
+--     \lvert\vec{F}\left(\vec{r}\right)\rvert g\left(\frac{r - r_c}{h}\right)
+--     - \frac{1}{h} U\left(r\right) g^\prime\left(\frac{r - r_c}{h}\right)
 --     \Theta(r_c - r)
 --
 -- with the derivative of the smoothing function

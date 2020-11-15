@@ -4,6 +4,7 @@
 add_subdirectory(mdsim)
 add_subdirectory(numeric)
 add_subdirectory(recipes)
+add_subdirectory(utility)
 
 # Lua test for simulation script
 configure_file(

@@ -11,21 +11,6 @@ foreach(file ${halmd_lua_sources})
   endif()
 endforeach()
 
-if(HALMD_VARIANT_HOST_SINGLE_PRECISION)
-  set(HALMD_HOST_FLOAT_TYPE "float")
-  set(HALMD_HOST_PRECISION "single")
-else()
-  set(HALMD_HOST_FLOAT_TYPE "double")
-  set(HALMD_HOST_PRECISION "double")
-endif()
-
-if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
-  set(HALMD_DEFAULT_GPU_PRECISION "double-single")
-else()
-  set(HALMD_DEFAULT_GPU_PRECISION "single")
-endif()
-
-
 # copy files from source to build tree
 foreach(file ${halmd_lua_sources})
   string(REGEX REPLACE "\\.in$" "" out_file ${file})

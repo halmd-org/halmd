@@ -25,7 +25,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/numeric/mp/dsfloat_vector.hpp>
+#include <halmd/utility/gpu/dsfloat_cuda_vector.hpp>
 #include <halmd/mdsim/gpu/particle_array_gpu.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
 #include <halmd/mdsim/force_kernel.hpp>

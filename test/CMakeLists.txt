@@ -28,6 +28,12 @@ set(HALMD_TEST_LIBRARIES
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
   ${HALMD_COMMON_LIBRARIES}
 )
+# make sure to link against halmd_utility_gpu, required for halmd::device d'tor
+if(HALMD_WITH_GPU)
+  list(APPEND HALMD_TEST_LIBRARIES
+    halmd_utility_gpu
+  )
+endif(HALMD_WITH_GPU)
 
 set(HALMD_TEST_CMAKE_BINARY_DIR "${CMAKE_BINARY_DIR}/test/cmake")
 

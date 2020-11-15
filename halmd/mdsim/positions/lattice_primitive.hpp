@@ -92,7 +92,7 @@ private:
 };
 
 /**
- * Three-dimensional face centered cubic unit lattice.
+ * Three-dimensional face-centred cubic unit lattice.
  *
  * @tparam Position 3-dimensional floating-point array type
  * @tparam Shape 3-dimensional integer array type

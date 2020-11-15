@@ -138,8 +138,9 @@ void test_euler<modules_type>::linear_motion()
     typename position_sample_type::array_type const& position = position_sample->data();
 
     // particlewise comparison with analytic solution
-    // the absolute error should be relative to the maximum value, i.e., the box length
-    float_type tolerance = 4 * steps * numeric_limits::epsilon() * norm_inf(box->length());
+    // the absolute error should be relative to the maximum value, i.e., the box length,
+    // but also to the maximum initial velocity (which is not considered here)
+    float_type tolerance = 10 * steps * numeric_limits::epsilon() * norm_inf(box->length());
     float_type duration = steps * integrator->timestep();
     float_type max_deviation = 0;
     for (size_t i = 0; i < npart; ++i) {

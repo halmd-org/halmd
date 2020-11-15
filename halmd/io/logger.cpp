@@ -83,10 +83,10 @@ void logging::open_file(std::string file_name, severity_level level)
 {
     boost::shared_ptr<file_backend_type> backend(
         boost::make_shared<file_backend_type>(
-            keywords::file_name = file_name
+            keywords::file_name = file_name,
+            keywords::auto_flush = true
         )
     );
-    backend->auto_flush(true);
 
     core::get()->remove_sink(file_);
     file_ = boost::make_shared<file_sink_type>(backend);

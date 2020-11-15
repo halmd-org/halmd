@@ -131,7 +131,7 @@ local M = module(function(args)
     local nparticle = msv:particle_number()
 
     local stress_tensor = accumulator({
-        aquire = msv.stress_tensor
+        acquire = msv.stress_tensor
       , every = interval
       , desc = "stress tensor"
       , aux_enable = {msv.group.particle}

@@ -40,7 +40,7 @@ simulation scripts can be found in ``share/doc/halmd/examples`` in the
 installation directory. A minimal simulation script is of the following form:
 
 .. literalinclude:: /test/lua/script.lua
-   :lines: 2-25
+   :lines: 2-20
    :language: lua
 
 

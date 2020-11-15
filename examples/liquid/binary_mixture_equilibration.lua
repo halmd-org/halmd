@@ -185,7 +185,7 @@ end
 --
 function define_args(parser)
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
-        default = "binary_mixture_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+        default = "binary_mixture_equilibration_%Y%m%d_%H%M%S", help = "basename of output files"})
     parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {4000, 1000}, help = "number of particles"})
@@ -199,7 +199,7 @@ function define_args(parser)
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser:add_argument("initial-temperature", {type = "number", default = 1.5, help = "initial temperature"})
     parser:add_argument("temperature", {type = "number", default = 0.7, help = "target temperature"})
-    parser:add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
+    parser:add_argument("rate", {type = "number", default = 2, help = "heat bath collision rate"})
     parser:add_argument("time", {type = "number", default = 1000, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.002, help = "integration time step"})
 

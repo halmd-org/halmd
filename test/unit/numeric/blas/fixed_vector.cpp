@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011-2012  Peter Colberg and Felix Höfling
+ * Copyright © 2011-2019 Felix Höfling
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -23,6 +24,7 @@
 
 #include <vector>
 
+#include <halmd/utility/demangle.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <test/tools/ctest.hpp>
 
@@ -59,10 +61,8 @@ BOOST_AUTO_TEST_CASE( t )               \
     test_ ## t<4>();                    \
     test_ ## t<5>();                    \
     test_ ## t<8>();                    \
-    test_ ## t<13>();                   \
-    test_ ## t<21>();                   \
-    test_ ## t<34>();                   \
-    test_ ## t<55>();                   \
+    test_ ## t<15>();                   \
+    test_ ## t<17>();                   \
 }                                       \
 template <size_t N>                     \
 void test_ ## t()                       \
@@ -81,20 +81,30 @@ BOOST_AUTO_TEST_CASE( t )               \
     test_ ## t<float, 4>();             \
     test_ ## t<float, 5>();             \
     test_ ## t<float, 8>();             \
-    test_ ## t<float, 13>();            \
-    test_ ## t<float, 21>();            \
-    test_ ## t<float, 34>();            \
-    test_ ## t<float, 55>();            \
+    test_ ## t<float, 15>();            \
+    test_ ## t<float, 17>();            \
     test_ ## t<double, 1>();            \
     test_ ## t<double, 2>();            \
     test_ ## t<double, 3>();            \
     test_ ## t<double, 4>();            \
     test_ ## t<double, 5>();            \
     test_ ## t<double, 8>();            \
-    test_ ## t<double, 13>();           \
-    test_ ## t<double, 21>();           \
-    test_ ## t<double, 34>();           \
-    test_ ## t<double, 55>();           \
+    test_ ## t<double, 15>();           \
+    test_ ## t<double, 17>();           \
+    test_ ## t<signed char, 1>();       \
+    test_ ## t<signed char, 2>();       \
+    test_ ## t<signed char, 3>();       \
+    test_ ## t<signed char, 4>();       \
+    test_ ## t<signed char, 5>();       \
+    /* larger sizes for signed char lead to overflow troubles in the tests */ \
+    test_ ## t<uint64_t, 1>();          \
+    test_ ## t<uint64_t, 2>();          \
+    test_ ## t<uint64_t, 3>();          \
+    test_ ## t<uint64_t, 4>();          \
+    test_ ## t<uint64_t, 5>();          \
+    test_ ## t<uint64_t, 8>();          \
+    test_ ## t<uint64_t, 15>();         \
+    test_ ## t<uint64_t, 17>();         \
 }                                       \
 template <typename T, size_t N>         \
 void test_ ## t()                       \
@@ -112,42 +122,22 @@ BOOST_AUTO_TEST_CASE( t )                       \
     test_ ## t<float, float, 2>();              \
     test_ ## t<float, float, 3>();              \
     test_ ## t<float, float, 4>();              \
-    test_ ## t<float, float, 5>();              \
-    test_ ## t<float, float, 8>();              \
-    test_ ## t<float, float, 13>();             \
-    test_ ## t<float, float, 21>();             \
-    test_ ## t<float, float, 34>();             \
-    test_ ## t<float, float, 55>();             \
     test_ ## t<float, double, 1>();             \
     test_ ## t<float, double, 2>();             \
     test_ ## t<float, double, 3>();             \
     test_ ## t<float, double, 4>();             \
-    test_ ## t<float, double, 5>();             \
-    test_ ## t<float, double, 8>();             \
-    test_ ## t<float, double, 13>();            \
-    test_ ## t<float, double, 21>();            \
-    test_ ## t<float, double, 34>();            \
-    test_ ## t<float, double, 55>();            \
-    test_ ## t<float, double, 1>();             \
-    test_ ## t<float, double, 2>();             \
-    test_ ## t<float, double, 3>();             \
-    test_ ## t<float, double, 4>();             \
-    test_ ## t<float, double, 5>();             \
-    test_ ## t<float, double, 8>();             \
-    test_ ## t<float, double, 13>();            \
-    test_ ## t<float, double, 21>();            \
-    test_ ## t<float, double, 34>();            \
-    test_ ## t<float, double, 55>();            \
     test_ ## t<double, double, 1>();            \
     test_ ## t<double, double, 2>();            \
     test_ ## t<double, double, 3>();            \
     test_ ## t<double, double, 4>();            \
-    test_ ## t<double, double, 5>();            \
-    test_ ## t<double, double, 8>();            \
-    test_ ## t<double, double, 13>();           \
-    test_ ## t<double, double, 21>();           \
-    test_ ## t<double, double, 34>();           \
-    test_ ## t<double, double, 55>();           \
+    test_ ## t<unsigned int, double, 1>();      \
+    test_ ## t<unsigned int, double, 2>();      \
+    test_ ## t<unsigned int, double, 3>();      \
+    test_ ## t<unsigned int, double, 4>();      \
+    test_ ## t<unsigned int, int, 1>();         \
+    test_ ## t<unsigned int, int, 2>();         \
+    test_ ## t<unsigned int, int, 3>();         \
+    test_ ## t<unsigned int, int, 4>();         \
 }                                               \
 template <typename T, typename S, size_t N>     \
 void test_ ## t()                               \
@@ -156,6 +146,8 @@ BOOST_AUTO_TEST_SUITE( construction )
 
 TEST_CASE_VECTOR_TYPE_SIZE( scalar )
 {
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x(1);
     for (size_t i = 0; i < N; ++i) {
         BOOST_CHECK_EQUAL(x[i], 1);
@@ -166,6 +158,8 @@ TEST_CASE_VECTOR_TYPE( initialiser_list )
 {
     constexpr size_t N = 4;
     typedef fixed_vector<T, N> vector_type;
+
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
 
     // construction by initialiser list for all class members
     vector_type x{1, 2, 3, 4};
@@ -188,41 +182,57 @@ BOOST_AUTO_TEST_SUITE( blas1 )
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_norm_1 )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = -(i + 1.);
+        x[i] = -T(i + 1);                   // must be evaluated as signed expression if T is signed
     }
-    BOOST_CHECK_CLOSE_FRACTION(norm_1(x), N * (N + 1) / 2, eps);
+
+    T result = N * (N + 1) / 2;
+    if (std::is_unsigned<T>::value) {       // handle unsigned types
+        result = T(-1) - result + 1;
+    }
+    BOOST_CHECK_EQUAL(norm_1(x), result);   // floating-point arithmetic with integers is exact
 }
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_norm_2 )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
+    T const eps = std::is_floating_point<T>::value ? numeric_limits<T>::epsilon() : 1;
     fixed_vector<T, N> x;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = -(i + 1.);
+        x[i] = -T(i + 1);
     }
-    BOOST_CHECK_CLOSE_FRACTION(norm_2(x), sqrt(N * (N + 1) * (2 * N + 1) / 6.), eps);
+
+    // for the 2-norm, the unsigned issue above is absent as, e.g., (-3U)^2 = 9
+    BOOST_CHECK_CLOSE_FRACTION(norm_2(x), std::sqrt(N * (N + 1) * (2 * N + 1) / 6), eps);
 }
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_norm_inf )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = -(i + 1.);
+        x[i] = -T(i + 1);
     }
-    BOOST_CHECK_CLOSE_FRACTION(norm_inf(x), N, eps);
+
+    T result = std::is_unsigned<T>::value ? T(-1) : N;     // handle unsigned types
+    BOOST_CHECK_EQUAL(norm_inf(x), result);
 }
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_index_norm_inf )
 {
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = -(i + 1.);
+        x[i] = -T(i + 1);
     }
-    BOOST_CHECK_EQUAL(index_norm_inf(x), N - 1);
+    size_t result = std::is_unsigned<T>::value ? 0 : N - 1;     // handle unsigned types
+    BOOST_CHECK_EQUAL(index_norm_inf(x), result);
 }
 
 BOOST_AUTO_TEST_SUITE_END() // blas1
@@ -231,6 +241,8 @@ BOOST_AUTO_TEST_SUITE( operators )
 
 TEST_CASE_VECTOR_SIZE( vector_split_dsfloat )
 {
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<dsfloat, N>>()));
+
     float const eps = numeric_limits<float>::epsilon();
     fixed_vector<dsfloat, N> x;
     for (size_t i = 0; i < N; ++i) {
@@ -246,43 +258,50 @@ TEST_CASE_VECTOR_SIZE( vector_split_dsfloat )
 
 TEST_CASE_VECTOR_TYPE_TYPE_SIZE( vector_assign_add )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()) << " and " << (demangled_name<fixed_vector<S, N>>()));
+
     fixed_vector<T, N> x;
     fixed_vector<S, N> y;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = pow(i + 1., 2) + pow(i + 0., 2);
+        x[i] = pow(i + 1, 2) + pow(i + 0, 2);
         y[i] = 2 * (i + 1) * i;
     }
     x += y;
+
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], pow(2 * i + 1., 2), eps);
+        BOOST_CHECK_EQUAL(x[i], pow(2 * i + 1, 2));
     }
 }
 
 TEST_CASE_VECTOR_TYPE_TYPE_SIZE( vector_assign_subtract )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()) << " and " << (demangled_name<fixed_vector<S, N>>()));
+
     fixed_vector<T, N> x;
     fixed_vector<S, N> y;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = pow(i + 1., 2) + pow(i + 0., 2);
+        x[i] = pow(i + 1, 2) + pow(i + 0, 2);
         y[i] = 2 * (i + 1) * i;
     }
     x -= y;
+
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], 1, eps);
+        BOOST_CHECK_EQUAL(x[i], 1);
     }
 }
 
 TEST_CASE_VECTOR_TYPE_TYPE_SIZE( vector_assign_multiply )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()) << " and " << demangled_name<S>());
+
+    double const eps = std::is_floating_point<T>::value ? numeric_limits<T>::epsilon() : 0.5;
     fixed_vector<T, N> x;
     for (size_t i = 0; i < N; ++i) {
         x[i] = i + 1;
     }
-    S y = M_PI;
+    S y = S(M_PI);
     x *= y;
+
     for (size_t i = 0; i < N; ++i) {
         BOOST_CHECK_CLOSE_FRACTION(x[i], M_PI * (i + 1), eps);
     }
@@ -290,20 +309,24 @@ TEST_CASE_VECTOR_TYPE_TYPE_SIZE( vector_assign_multiply )
 
 TEST_CASE_VECTOR_TYPE_TYPE_SIZE( vector_assign_divide )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()) << " and " << demangled_name<S>());
+
+    double const eps = std::is_floating_point<T>::value ? numeric_limits<T>::epsilon() : 0.5;
     fixed_vector<T, N> x;
     for (size_t i = 0; i < N; ++i) {
         x[i] = i + 1;
     }
-    S y = M_PI;
+    S y = S(M_PI);
     x /= y;
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], M_1_PI * (i + 1), eps);
+        BOOST_CHECK_SMALL(x[i] - M_1_PI * (i + 1), 2 * eps);      // x[i] can become zero
     }
 }
 
 TEST_CASE_VECTOR_SIZE( vector_assign_modulus )
 {
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<unsigned int, N>>()));
+
     fixed_vector<unsigned int, N> x;
     for (size_t i = 0; i < N; ++i) {
         x[i] = i + 1;
@@ -317,100 +340,107 @@ TEST_CASE_VECTOR_SIZE( vector_assign_modulus )
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_add )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x, y, z;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = pow(i + 1., 2) + pow(i + 0., 2);
+        x[i] = pow(i + 1, 2) + pow(i + 0, 2);
         y[i] = 2 * (i + 1) * i;
     }
     z = x + y;
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], pow(i + 1., 2) + pow(i + 0., 2), eps);
-        BOOST_CHECK_CLOSE_FRACTION(y[i], 2 * (i + 1) * i, eps);
-        BOOST_CHECK_CLOSE_FRACTION(z[i], pow(2 * i + 1., 2), eps);
+        BOOST_CHECK_EQUAL(x[i], pow(i + 1, 2) + pow(i + 0, 2));
+        BOOST_CHECK_EQUAL(y[i], 2 * (i + 1) * i);
+        BOOST_CHECK_EQUAL(z[i], pow(2 * i + 1, 2));
     }
 }
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_subtract )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x, y, z;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = pow(i + 1., 2) + pow(i + 0., 2);
+        x[i] = pow(i + 1, 2) + pow(i + 0, 2);
         y[i] = 2 * (i + 1) * i;
     }
     z = x - y;
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], pow(i + 1., 2) + pow(i + 0., 2), eps);
-        BOOST_CHECK_CLOSE_FRACTION(y[i], 2 * (i + 1) * i, eps);
-        BOOST_CHECK_CLOSE_FRACTION(z[i], 1, eps);
+        BOOST_CHECK_EQUAL(x[i], pow(i + 1, 2) + pow(i + 0, 2));
+        BOOST_CHECK_EQUAL(y[i], 2 * (i + 1) * i);
+        BOOST_CHECK_EQUAL(z[i], 1);
     }
 }
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_sign )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x, y;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = M_PI * (i + 1);
+        x[i] = 3 * (i + 1);
     }
     y = -x;
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], M_PI * (i + 1), eps);
-        BOOST_CHECK_CLOSE_FRACTION(y[i], -M_PI * (i + 1), eps);
+        BOOST_CHECK_EQUAL(x[i], 3 * (i + 1));
+        BOOST_CHECK_EQUAL(y[i], -T(3) * (i + 1));     // bypass unsigned issue
     }
 }
 
 TEST_CASE_VECTOR_TYPE_TYPE_SIZE( vector_multiply_left )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x, z;
     for (size_t i = 0; i < N; ++i) {
         x[i] = i + 1;
     }
-    S y = M_PI;
+    S y = 3;
     z = y * x;
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], i + 1, eps);
-        BOOST_CHECK_CLOSE_FRACTION(z[i], M_PI * (i + 1), eps);
+        BOOST_CHECK_EQUAL(x[i], i + 1);
+        BOOST_CHECK_EQUAL(z[i], 3 * (i + 1));
     }
-    BOOST_CHECK_CLOSE_FRACTION(y, M_PI, eps);
+    BOOST_CHECK_EQUAL(y, 3);
 }
 
 TEST_CASE_VECTOR_TYPE_TYPE_SIZE( vector_multiply_right )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x, z;
     for (size_t i = 0; i < N; ++i) {
         x[i] = i + 1;
     }
-    S y = M_PI;
+    S y = 3;
     z = x * y;
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], i + 1, eps);
-        BOOST_CHECK_CLOSE_FRACTION(z[i], M_PI * (i + 1), eps);
+        BOOST_CHECK_EQUAL(x[i], i + 1);
+        BOOST_CHECK_EQUAL(z[i], 3 * (i + 1));
     }
-    BOOST_CHECK_CLOSE_FRACTION(y, M_PI, eps);
+    BOOST_CHECK_EQUAL(y, 3);
 }
 
 TEST_CASE_VECTOR_TYPE_TYPE_SIZE( vector_divide )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x, z;
     for (size_t i = 0; i < N; ++i) {
         x[i] = i + 1;
     }
-    S y = M_PI;
+    S y = 4;            // floating-point division by powers of 2 is exact
     z = x / y;
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], i + 1, eps);
-        BOOST_CHECK_CLOSE_FRACTION(z[i], M_1_PI * (i + 1), eps);
+        BOOST_CHECK_EQUAL(x[i], i + 1);
+        BOOST_CHECK_EQUAL(z[i], T(i + 1) / 4);
     }
-    BOOST_CHECK_CLOSE_FRACTION(y, M_PI, eps);
 }
 
 TEST_CASE_VECTOR_SIZE( vector_modulus )
 {
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<unsigned int, N>>()));
+
     fixed_vector<unsigned int, N> x, z;
     for (size_t i = 0; i < N; ++i) {
         x[i] = i + 1;
@@ -426,6 +456,8 @@ TEST_CASE_VECTOR_SIZE( vector_modulus )
 
 TEST_CASE_VECTOR_TYPE_TYPE_SIZE( vector_comparison )
 {
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()) << " and " << (demangled_name<fixed_vector<S, N>>()));
+
     T const eps = numeric_limits<T>::epsilon(); // assume that T has lower precision than S
     fixed_vector<T, N> x;
     fixed_vector<S, N> y;
@@ -441,48 +473,60 @@ TEST_CASE_VECTOR_TYPE_TYPE_SIZE( vector_comparison )
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_inner_prod )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = -(i + 1.);
+        x[i] = -T(i + 1);
     }
-    BOOST_CHECK_CLOSE_FRACTION(inner_prod(x, x), N * (N + 1) * (2 * N + 1) / 6., eps);
+    // for the inner product, there is no unsigned issue as, e.g., (-3U)^2 = 9
+    BOOST_CHECK_EQUAL(inner_prod(x, x), N * (N + 1) * (2 * N + 1) / 6);
 }
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_element_prod )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x, y, z;
+    T a = T(1) / 4;               // floating-point division by powers of 2 is exact
     for (size_t i = 0; i < N; ++i) {
-        x[i] = M_PI * (i + 1);
-        y[i] = M_1_PI * (i + 1);
+        x[i] = 4 * (i + 1);
+        y[i] = a * (i + 1);
     }
     z = element_prod(x, y);
+
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], M_PI * (i + 1), eps);
-        BOOST_CHECK_CLOSE_FRACTION(y[i], M_1_PI * (i + 1), eps);
-        BOOST_CHECK_CLOSE_FRACTION(z[i], pow(i + 1., 2), eps);
+        BOOST_CHECK_EQUAL(x[i], 4 * (i + 1));
+        BOOST_CHECK_EQUAL(y[i], a * (i + 1));
+        if (std::is_floating_point<T>::value) {
+            BOOST_CHECK_EQUAL(z[i], pow(i + 1, 2));
+        }
+        else {
+            BOOST_CHECK_EQUAL(z[i], 0);
+        }
     }
 }
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_element_div )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x, y, z;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = M_PI * (i + 1);
-        y[i] = M_PI * (i + 1);
+        x[i] = T(M_PI) * (i + 1);
+        y[i] = T(M_PI) * (i + 1);
     }
     z = element_div(x, y);
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], M_PI * (i + 1), eps);
-        BOOST_CHECK_CLOSE_FRACTION(y[i], M_PI * (i + 1), eps);
-        BOOST_CHECK_CLOSE_FRACTION(z[i], 1, eps);
+        BOOST_CHECK_EQUAL(x[i], y[i]);
+        BOOST_CHECK_EQUAL(z[i], 1);
     }
 }
 
 TEST_CASE_VECTOR_SIZE( vector_element_mod )
 {
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<unsigned int, N>>()));
+
     fixed_vector<unsigned int, N> x, y, z;
     for (size_t i = 0; i < N; ++i) {
         x[i] = i + 23;
@@ -498,33 +542,31 @@ TEST_CASE_VECTOR_SIZE( vector_element_mod )
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_element_max )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x, y, z;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = sin((i + 1) / M_PI);
-        y[i] = sin((i + 1) / M_PI + M_PI);
+        x[i] = (1UL << i) % N;
+        y[i] = (i * i + 1) % N;
     }
     z = element_max(x, y);
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], sin((i + 1) / M_PI), eps);
-        BOOST_CHECK_CLOSE_FRACTION(y[i], -sin((i + 1) / M_PI), 20 * eps);
-        BOOST_CHECK_CLOSE_FRACTION(z[i], abs(sin((i + 1) / M_PI)), 20 * eps);
+        BOOST_CHECK_EQUAL(z[i], std::max(x[i], y[i]));
     }
 }
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_element_min )
 {
-    T const eps = numeric_limits<T>::epsilon();
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<T, N>>()));
+
     fixed_vector<T, N> x, y, z;
     for (size_t i = 0; i < N; ++i) {
-        x[i] = sin((i + 1) / M_PI);
-        y[i] = sin((i + 1) / M_PI + M_PI);
+        x[i] = (1UL << i) % N;
+        y[i] = (i * i + 1) % N;
     }
     z = element_min(x, y);
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(x[i], sin((i + 1) / M_PI), eps);
-        BOOST_CHECK_CLOSE_FRACTION(y[i], -sin((i + 1) / M_PI), 20 * eps);
-        BOOST_CHECK_CLOSE_FRACTION(z[i], -abs(sin((i + 1) / M_PI)), 20 * eps);
+        BOOST_CHECK_EQUAL(z[i], std::min(x[i], y[i]));
     }
 }
 

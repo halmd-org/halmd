@@ -86,6 +86,40 @@ function M.reverse(t)
 end
 
 ---
+-- Functions on strings
+-- --------------------
+--
+
+---
+-- Interpolate strings supporting Pythonic formatting specifications
+-- (see http://lua-users.org/wiki/StringInterpolation, example by RiciLake)
+--
+-- :param string s: formatting string
+-- :param table t: (key, value) pairs
+--
+-- :returns: interpolated copy of string 's'
+--
+-- Occurrences of '{key:fmt}' in the formatting string are substituted by
+-- '("%fmt"):format(value)', where 'fmt' is one of the C-printf formatting
+-- codes. The method is added to the `string` type as `string.interp`.
+--
+-- Example:
+--
+-- print( ("{name:s} is {val:7.2f}%"):interp({name = "concentration", val = 56.2795}) )
+--
+-- --> "concentration is   56.28%"
+--
+function M.interp(s, t)
+  return (s:gsub('%{([%a_][%w_]*)(:[-0-9%.]*[cdeEfgGiouxXsq])%}',  -- FIXME make match of second group optional
+             function(k, fmt)
+                 fmt = fmt and fmt:sub(2) or "s" -- default format: "s"
+                 return t[k] and ("%"..fmt):format(t[k]) or '%('..k..')'..fmt
+             end
+         ))
+end
+getmetatable("").__index.interp = M.interp -- make method known to string type
+
+---
 -- Assertions
 -- ----------
 --

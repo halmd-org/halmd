@@ -150,6 +150,11 @@ public:
         return count_.lock() == c.count_.lock() && initial_ == c.initial_;
     }
 
+    bool operator!=(cache<> const& c) const
+    {
+        return !(*this == c);
+    }
+
 private:
     /** cache identity */
     std::weak_ptr<void> count_;

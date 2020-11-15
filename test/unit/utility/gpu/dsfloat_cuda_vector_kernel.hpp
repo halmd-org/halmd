@@ -26,19 +26,14 @@
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
-#ifndef __CUDACC__
-#include <halmd/numeric/mp/dsfloat_vector.hpp>
-#endif
 
 struct dsfloat_kernel_wrapper
 {
-    cuda::function <void (float4*, halmd::fixed_vector<halmd::dsfloat,3>)> test1;
-    cuda::function <void (halmd::dsfloat_ptr<float4>, halmd::fixed_vector<halmd::dsfloat,3>)> test2;
+    cuda::function <void (float4*, halmd::fixed_vector<halmd::dsfloat,3>)> test_float4_ptr;
+    cuda::function <void (halmd::dsfloat_ptr<float4>, halmd::fixed_vector<halmd::dsfloat,3>)> test_dsfloat_ptr;
 
     static dsfloat_kernel_wrapper kernel;
 };
-
-
 
 template<typename value_type, int dimension>
 struct dsfloat_traits {
@@ -54,7 +49,7 @@ template<typename float_type>
 struct dsfloat_kernel_overloaded_wrapper
 {
     typedef typename dsfloat_traits<float_type, 3>::ptr_type ptr_type;
-    cuda::function <void (ptr_type, halmd::fixed_vector<float_type,3>)> test;
+    cuda::function <void (ptr_type, halmd::fixed_vector<float_type,3>)> overloaded_test;
 
     static dsfloat_kernel_overloaded_wrapper kernel;
 };

@@ -235,6 +235,8 @@ struct make_potential<mdsim::host::potentials::pair::truncations::smooth_r4<base
     }
 };
 
+#ifdef HALMD_WITH_GPU
+
 template<typename base_potential_type>
 struct make_potential<mdsim::gpu::potentials::pair::truncations::smooth_r4<base_potential_type>>
 {
@@ -266,6 +268,8 @@ struct gpu_tolerance<float_type, mdsim::gpu::potentials::pair::truncations::forc
     // seems unsuitable due to the subtractions in the potential computation
     static constexpr double value = 5e2 * 10 * numeric_limits<float>::epsilon();
 };
+
+#endif // HALMD_WITH_GPU
 
 BOOST_AUTO_TEST_CASE( lennard_jones_host )
 {

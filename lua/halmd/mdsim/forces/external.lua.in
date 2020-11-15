@@ -1,0 +1,110 @@
+--
+-- Copyright © 2010-2014 Felix Höfling
+-- Copyright © 2016      Sutapa Roy
+-- Copyright © 2013      Nicolas Höft
+-- Copyright © 2010-2011 Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local core              = require("halmd.mdsim.core")
+local utility           = require("halmd.utility")
+local device            = require("halmd.utility.device")
+local module            = require("halmd.utility.module")
+local profiler          = require("halmd.utility.profiler")
+
+---
+-- External Potential Force
+-- ========================
+--
+--
+
+-- grab C++ wrappers
+local external = assert(libhalmd.mdsim.forces.external)
+
+---
+-- Construct external potential force.
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :mod:`halmd.mdsim.box`
+-- :param args.potential: instance of :mod:`halmd.mdsim.potentials.external`
+--
+-- The module computes the force on the particles due to an external potential.
+-- Recomputation is triggered by the signals `on_force` and `on_prepend_force`
+-- of `args.particle`.
+--
+-- .. attribute:: potential
+--
+--    Instance of :mod:`halmd.mdsim.potentials.external`.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect force from profiler and particle module.
+--
+-- .. method:: on_prepend_apply(slot)
+--
+--    Connect nullary slot function to signal. The signal is emitted before the
+--    force computation.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_append_apply(slot)
+--
+--    Connect nullary slot function to signal. The signal is emitted after the
+--    force computation.
+--
+--    :returns: signal connection
+--
+--
+local M = module(function(args)
+    local particle = utility.assert_kwarg(args, "particle")
+    local box = utility.assert_kwarg(args, "box")
+    local potential = utility.assert_kwarg(args, "potential")
+    local logger = assert(potential.logger)
+
+    if particle.memory ~= potential.memory then
+        error("mismatching memory locations of 'particle' and 'potential'", 2)
+    end
+
+    -- construct force module
+    local self = external(potential, particle, box, logger)
+
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "external force module")
+
+    -- test if the cache is up-to-date
+    table.insert(conn, particle:on_prepend_force(function() self:check_cache() end))
+    -- apply the force (if necessary)
+    table.insert(conn, particle:on_force(function() self:apply() end))
+
+    -- store potential Lua object (which contains the C++ object) as a
+    -- read-only Lua property, so we may read it in profiler:on_profile
+    -- and retrieve the description of the potential for the log entry
+    self.potential = property(function(self)
+        return potential
+    end)
+
+    local desc = ("computation of %s"):format(potential.description)
+    table.insert(conn, profiler:on_profile(assert(self.runtime).compute, desc))
+    table.insert(conn, profiler:on_profile(assert(self.runtime).compute_aux, desc .. " and auxiliary variables"))
+
+    return self
+end)
+
+
+return M

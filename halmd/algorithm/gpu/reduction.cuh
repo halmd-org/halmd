@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2019       Felix Höfling
  * Copyright © 2008-2009  Peter Colberg
  *
  * This file is part of HALMD.
@@ -53,9 +54,21 @@ reduce(T& sum, V s_sum[])
         sum = transform<transform_>(sum, static_cast<T>(s_sum[tid + threads]));
         s_sum[tid] = sum;
     }
-    // no further syncs needed within execution warp of 32 threads
+
     if (threads >= warpSize) {
         __syncthreads();
+    }
+    else {
+        // on hardware of compute capability ≥ 7.0 (Volta),
+        // warps are no longer guaranteed to be executed in lock-step
+#if CUDART_VERSION >= 9000
+        // select warp lanes with TID < threads,
+        // fix compilation of operator<< for large values of 'threads'
+        unsigned mask = (1U << (threads & (warpSize - 1))) - 1;
+        __syncwarp(mask);
+#else
+        __syncthreads();    // only needed if the _hardware_ is Volta or later
+#endif
     }
 
     reduce<threads / 2, transform_>(sum, s_sum);
@@ -84,9 +97,21 @@ reduce(T0& sum0, T1& sum1, V0 s_sum0[], V1 s_sum1[])
         s_sum0[tid] = sum0;
         s_sum1[tid] = sum1;
     }
-    // no further syncs needed within execution warp of 32 threads
+
     if (threads >= warpSize) {
         __syncthreads();
+    }
+    else {
+        // on hardware of compute capability ≥ 7.0 (Volta),
+        // warps are no longer guaranteed to be executed in lock-step
+#if CUDART_VERSION >= 9000
+        // select warp lanes with TID < threads,
+        // fix compilation of operator<< for large values of 'threads'
+        unsigned mask = (1U << (threads & (warpSize - 1))) - 1;
+        __syncwarp(mask);
+#else
+        __syncthreads();    // only needed if the _hardware_ is Volta or later
+#endif
     }
 
     reduce<threads / 2, transform_>(sum0, sum1, s_sum0, s_sum1);
@@ -116,9 +141,21 @@ reduce(T0& sum0, T1& sum1, T2& sum2, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[])
         s_sum1[tid] = sum1;
         s_sum2[tid] = sum2;
     }
-    // no further syncs needed within execution warp of 32 threads
+
     if (threads >= warpSize) {
         __syncthreads();
+    }
+    else {
+        // on hardware of compute capability ≥ 7.0 (Volta),
+        // warps are no longer guaranteed to be executed in lock-step
+#if CUDART_VERSION >= 9000
+        // select warp lanes with TID < threads,
+        // fix compilation of operator<< for large values of 'threads'
+        unsigned mask = (1U << (threads & (warpSize - 1))) - 1;
+        __syncwarp(mask);
+#else
+        __syncthreads();    // only needed if the _hardware_ is Volta or later
+#endif
     }
 
     reduce<threads / 2, transform_>(sum0, sum1, sum2, s_sum0, s_sum1, s_sum2);
@@ -149,9 +186,21 @@ reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, V0 s_sum0[], V1 s_sum1[], V2 s_su
         s_sum2[tid] = sum2;
         s_sum3[tid] = sum3;
     }
-    // no further syncs needed within execution warp of 32 threads
+
     if (threads >= warpSize) {
         __syncthreads();
+    }
+    else {
+        // on hardware of compute capability ≥ 7.0 (Volta),
+        // warps are no longer guaranteed to be executed in lock-step
+#if CUDART_VERSION >= 9000
+        // select warp lanes with TID < threads,
+        // fix compilation of operator<< for large values of 'threads'
+        unsigned mask = (1U << (threads & (warpSize - 1))) - 1;
+        __syncwarp(mask);
+#else
+        __syncthreads();    // only needed if the _hardware_ is Volta or later
+#endif
     }
 
     reduce<threads / 2, transform_>(sum0, sum1, sum2, sum3, s_sum0, s_sum1, s_sum2, s_sum3);

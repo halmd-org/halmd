@@ -227,7 +227,7 @@ HALMD_GPU_ENABLED unsigned int map(vector_type r, unsigned int depth)
     //
     // Therefore, we use a simple cubic lattice of predefined dimensions
     // according to the number of cells at the deepest recursion level,
-    // and round the particle position to the nearest center of a cell.
+    // and round the particle position to the nearest centre of a cell.
     //
 
     // Hilbert cells per dimension at deepest recursion level
@@ -235,7 +235,7 @@ HALMD_GPU_ENABLED unsigned int map(vector_type r, unsigned int depth)
     // fractional index of particle's Hilbert cell in [0, n)
     r = (r - floor(r)) * n;
 
-    // round particle position to center of cell in unit coordinates
+    // round particle position to centre of cell in unit coordinates
     r = (floor(r) + vector_type(0.5f)) / n;
     // use symmetric coordinates
     r -= vector_type(0.5f);

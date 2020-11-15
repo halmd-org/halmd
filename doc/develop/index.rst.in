@@ -8,11 +8,12 @@ Developer’s guide
 
    overview
    repository
-   debugging
+   signals
    floating_point
-   luabind
    module
-   redmine
-   style
    testing
+   style
+   luabind
+   debugging
+   redmine
 

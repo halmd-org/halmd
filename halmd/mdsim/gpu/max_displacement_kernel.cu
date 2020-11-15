@@ -77,7 +77,8 @@ __global__ void displacement(
 
 template <int dimension>
 max_displacement_wrapper<dimension> max_displacement_wrapper<dimension>::kernel = {
-    max_displacement_kernel::displacement<fixed_vector<float, dimension>, 512>
+    max_displacement_kernel::displacement<fixed_vector<float, dimension>, 1024>
+  , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 512>
   , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 256>
   , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 128>
   , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 64>

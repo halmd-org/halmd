@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2016 Felix Höfling
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -80,6 +81,15 @@ wrap_en_kin(std::shared_ptr<thermodynamics_type> self)
 
 template <typename thermodynamics_type>
 static std::function<typename thermodynamics_type::vector_type ()>
+wrap_total_force(std::shared_ptr<thermodynamics_type> self)
+{
+    return [=]() {
+        return self->total_force();
+    };
+}
+
+template <typename thermodynamics_type>
+static std::function<typename thermodynamics_type::vector_type ()>
 wrap_v_cm(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
@@ -156,6 +166,7 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
             .property("internal_energy", &wrap_en_tot<thermodynamics>)
             .property("pressure", &wrap_pressure<thermodynamics>)
             .property("temperature", &wrap_temp<thermodynamics>)
+            .property("total_force", &wrap_total_force<thermodynamics>)
             .property("center_of_mass_velocity", &wrap_v_cm<thermodynamics>)
             .property("center_of_mass", &wrap_r_cm<thermodynamics>)
             .property("mean_mass", &wrap_mean_mass<thermodynamics>)

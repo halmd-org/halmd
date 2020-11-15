@@ -83,7 +83,7 @@ public:
     /**
      * Returns coordinates of lowest corner of simulation domain.
      */
-    vector_type origin() const;
+    vector_type lowest_corner() const;
 
     /**
      * Returns edge lengths.

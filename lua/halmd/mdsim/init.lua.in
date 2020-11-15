@@ -36,5 +36,6 @@ local module = require("halmd.utility.module")
 --    velocities/index
 --    positions/index
 --    sorts/index
+--    geometries/index
 --
 return module.loader("halmd.mdsim")

@@ -24,6 +24,7 @@
 #include <lua.hpp>
 #include <luaponte/luaponte.hpp>
 #include <memory>
+#include <ostream>
 
 #define LUA_WARN( str )         BOOST_WARN_MESSAGE( lua_test_fixture::dostring( str ), lua_test_fixture::error(lua_test_fixture::L) )
 #define LUA_CHECK( str )        BOOST_CHECK_MESSAGE( lua_test_fixture::dostring( str ), lua_test_fixture::error(lua_test_fixture::L) )

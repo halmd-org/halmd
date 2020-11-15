@@ -63,6 +63,13 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
   project(HALMD CXX)
 
+  if(${CMAKE_VERSION} VERSION_LESS 3.4.0)
+    enable_language(C)
+  endif()
+
+  # FindCUDA uses the static cuda runtime by default, we need to set this variable before find_package is called
+  set(CUDA_USE_STATIC_CUDA_RUNTIME OFF CACHE BOOL "Use the static version of the CUDA runtime library if available")
+
   # By default, enable GPU support only if CUDA is available.
   # If HALMD_WITH_GPU is explicitly set to TRUE, require CUDA.
   if(NOT DEFINED HALMD_WITH_GPU)
@@ -75,12 +82,15 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     if(COMMAND cuda_add_library)
       # original CMake
 
+      #
+      # default CUDA flags are duplicated here from cmake/platform.cmake (used by CMake with native CUDA support)
+      #
       if(CUDA_VERSION VERSION_LESS 6.5)
         set(HALMD_GPU_ARCH "120") # sane default value
-        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12" CACHE STRING "Flags used by the compiler during all build types")
+        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_12 -code=compute_12" CACHE STRING "Flags used by the compiler during all build types")
       else()
-        set(HALMD_GPU_ARCH "210") # sane default value
-        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch=compute_20 -code=compute_20 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true" CACHE STRING "Flags used by the compiler during all build types")
+        set(HALMD_GPU_ARCH "350") # sane default value
+        set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_35 -code=compute_35,sm_35 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true" CACHE STRING "Flags used by the compiler during all build types")
       endif()
 
       string(REPLACE " " ";" __NVCC_ARGS "${CMAKE_CUDA_FLAGS}")
@@ -107,6 +117,11 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
       # output information about CUDA Compiler
       message(STATUS "The CUDA compiler identification is NVCC ${CUDA_VERSION}")
+
+      # warn user about static linking when using CUDA 9.2 because of a bug
+      if(${CUDA_USE_STATIC_CUDA_RUNTIME} AND ${CUDA_VERSION} VERSION_EQUAL 9.2)
+        message(WARNING "Static linking of the CUDA runtime library may lead to kernel launch failures")
+      endif()
     else()
       # CMake with CUDA patch by Peter Colberg
 
@@ -150,6 +165,8 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     set(Boost_USE_STATIC_LIBS TRUE)
     set(HDF5_USE_STATIC_LIBS TRUE)
     set(LUA_USE_STATIC_LIBS TRUE)
+
+    message(STATUS "For static linking of the CUDA runtime library specifically set CUDA_USE_STATIC_CUDA_RUNTIME to ON")
   endif()
 
   # define BOOST_LOG_DYN_LINK in case of dynamic linkage
@@ -170,6 +187,8 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     thread
     unit_test_framework
   )
+  set(Boost_VERSION ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION})
+
   find_package(HDF5 QUIET REQUIRED COMPONENTS CXX)
   find_package(LuaLibs QUIET REQUIRED)
 
@@ -181,7 +200,11 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   endif()
 
   # be verbose about library versions (but suppress all the gory details given by find_package)
-  message(STATUS "Boost version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
+  message(STATUS "Boost version: ${Boost_VERSION}")
+  if (${Boost_VERSION} LESS 1.59.0)
+    message(WARNING "Your version of Boost doesn't support data-driven testcases (< 1.59.0), some unit tests will be disabled.")
+  endif()
+
   message(STATUS "Lua library version: ${LUA_VERSION_STRING}")
   message(STATUS "HDF5 library version: ${HDF5_VERSION}")
 
@@ -285,6 +308,9 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 else()
 
   project(HALMD NONE) # no compiler languages
+
+  # Set HALMD build variant flags
+  include(${CMAKE_SOURCE_DIR}/cmake/variant.cmake)
 
   add_subdirectory(doc)
   add_subdirectory(lua)

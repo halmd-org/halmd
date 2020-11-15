@@ -3,8 +3,7 @@ Multi-GPU machines
 
 To distribute multiple HALMD processes among CUDA devices in a single machine,
 the CUDA devices have to be locked exclusively by the respective process.
-HALMD will then choose the first available CUDA device, or an available device
-in the subset given by the ``--device`` option.
+HALMD will then choose the first available CUDA device.
 
 nvidia-smi tool
 ---------------
@@ -15,14 +14,17 @@ devices to *compute exclusive mode* to restrict use to one process per device::
   sudo nvidia-smi --gpu=0 --compute-mode-rules=1
   sudo nvidia-smi --gpu=1 --compute-mode-rules=1
 
-.. warning::
-
-  Compute exclusive mode seems to work reliably only with NVIDIA Tesla devices.
-  Although NVIDIA GeForce cards may be set to compute exclusive mode as well,
-  doing so might occasionally cause a system crash.
 
 nvlock tool
 -----------
+
+.. warning::
+
+   The mechanism used by ``nvlock`` to make certain GPUs invisible to the
+   NVIDIA driver does no longer work with recent drivers, e.g., later than
+   version 346. Please use the environment variable `CUDA_VISIBLE_DEVICES`
+   instead. (Caveat: with this, the reported GPU IDs are re-enumerated, always
+   starting with 0.)
 
 If your NVIDIA driver version does not support the nvidia-smi tool, or if you
 wish not to set the devices to compute exclusive mode, the ``nvlock`` tool

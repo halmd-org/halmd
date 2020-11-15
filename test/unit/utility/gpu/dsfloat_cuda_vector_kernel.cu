@@ -1,5 +1,6 @@
 /*
  * Copyright © 2016 Daniel Kirchner
+ * Copyright © 2017 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -18,40 +19,40 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <test/unit/numeric/dsfloat/dsfloat.hpp>
+#include <test/unit/utility/gpu/dsfloat_cuda_vector_kernel.hpp>
 
 using namespace halmd;
 
-__global__ void dsfloat_kernel_test_1 (float4 *g, fixed_vector<dsfloat, 3> increment)
+namespace kernel {
+
+__global__ void test_float4_ptr(float4 *g, fixed_vector<dsfloat, 3> increment)
 {
     fixed_vector<dsfloat, 3> position;
     unsigned int species;
 
     tie (position, species) <<= tie(g[GTID], g[GTID + GTDIM]);
 
-    for (int i = 0; i < 100; i++) {
-        position += increment;
-    }
+    position += increment;
+    species *= 2;
 
     tie(g[GTID], g[GTID + GTDIM]) <<= tie(position, species);
 }
 
-__global__ void dsfloat_kernel_test_2 (dsfloat_ptr<float4> g, fixed_vector<dsfloat, 3> increment)
+__global__ void test_dsfloat_ptr(dsfloat_ptr<float4> g, fixed_vector<dsfloat, 3> increment)
 {
     fixed_vector<dsfloat, 3> position;
     unsigned int species;
 
     tie (position, species) <<= g[GTID];
 
-    for (int i = 0; i < 100; i++) {
-        position += increment;
-    }
+    position += increment;
+    species *= 2;
 
     g[GTID] <<= tie(position, species);
 }
 
-template<typename T>
-__global__ void dsfloat_kernel_overloaded_test (typename dsfloat_traits<T, 3>::ptr_type g, fixed_vector<T, 3> increment)
+template <typename T>
+__global__ void overloaded_test(typename dsfloat_traits<T, 3>::ptr_type g, fixed_vector<T, 3> increment)
 {
     fixed_vector<T, 3> value;
     int ignored;
@@ -60,14 +61,13 @@ __global__ void dsfloat_kernel_overloaded_test (typename dsfloat_traits<T, 3>::p
     g[GTID] <<= tie(value, ignored);
 }
 
-dsfloat_kernel_wrapper dsfloat_kernel_wrapper::kernel = {
-    dsfloat_kernel_test_1,
-    dsfloat_kernel_test_2
-};
+} // namespace kernel
 
-template<typename float_type>
+dsfloat_kernel_wrapper dsfloat_kernel_wrapper::kernel = { kernel::test_float4_ptr, kernel::test_dsfloat_ptr };
+
+template <typename float_type>
 dsfloat_kernel_overloaded_wrapper<float_type> dsfloat_kernel_overloaded_wrapper<float_type>::kernel = {
-    dsfloat_kernel_overloaded_test<float_type>
+    kernel::overloaded_test<float_type>
 };
 
 template class dsfloat_kernel_overloaded_wrapper<float>;

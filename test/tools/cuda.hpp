@@ -26,6 +26,7 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <test/tools/init.hpp>
+#include <halmd/utility/gpu/device.hpp>
 
 /**
  * "global fixture" for Boost Unit Test Framework: select CUDA device
@@ -48,6 +49,8 @@ struct set_cuda_device
      */
     ~set_cuda_device()
     {
+        // make sure the caching allocator frees its memory
+        halmd::device::deallocate_all();
         cuda::thread::exit();
     }
 };

@@ -1,7 +1,7 @@
 /*
- * Copyright © 2012      Peter Colberg
- * Copyright © 2012      Felix Höfling
+ * Copyright © 2012-2016 Felix Höfling
  * Copyright © 2016      Daniel Kirchner
+ * Copyright © 2012      Peter Colberg
  * Copyright © 2013-2015 Nicolas Höft
  *
  * This file is part of HALMD.
@@ -190,6 +190,23 @@ fixed_vector<double, particle_type::velocity_type::static_size>
 get_v_cm(particle_type const& particle, particle_group& group)
 {
     return std::get<0>(get_v_cm_and_mean_mass(particle, group));
+}
+
+/**
+ * Compute total force on all particles.
+ */
+template <typename particle_type>
+fixed_vector<double, particle_type::force_type::static_size>
+get_total_force(particle_type& particle, particle_group& group)
+{
+    typedef particle_group::array_type group_array_type;
+    unsigned int constexpr dimension = particle_type::force_type::static_size;
+    typedef observables::gpu::total_force<dimension, dsfloat> accumulator_type;
+
+    group_array_type const& unordered = read_cache(group.unordered());
+
+    accumulator_type::get().bind(*particle.force());
+    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())();
 }
 
 /**

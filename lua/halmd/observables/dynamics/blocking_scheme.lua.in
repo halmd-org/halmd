@@ -46,7 +46,7 @@ local correlation = assert(libhalmd.observables.dynamics.correlation)
 -- :param number args.shift: coarse-graining shift between odd and even levels
 --      (*default:* :math:`\lfloor\sqrt\text{size}\rfloor`)
 -- :param number args.separation: minimal separation of samples for time
---      averages in sampling steps (*default:* -- :math:`\text{every}\times\text{size}`)
+--      averages in sampling steps (*default:* `size`)
 -- :param number args.flush: interval in seconds for flushing the accumulated
 --      results to the file (*default:* 900)
 --
@@ -84,7 +84,7 @@ local M = module(function(args)
     local every = utility.assert_type(utility.assert_kwarg(args, "every"), "number")
     local size = utility.assert_type(args.size, "number")
     local shift = utility.assert_type(args.shift or math.floor(math.sqrt(size)), "number")
-    local separation = utility.assert_type(args.separation or every * size, "number")
+    local separation = utility.assert_type(args.separation or size, "number")
     local resolution = every * assert(clock.timestep)
     local flush = utility.assert_type(args.flush or 900, "number")
     local logger = log.logger({label = "blocking_scheme"})

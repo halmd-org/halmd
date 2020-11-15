@@ -56,6 +56,16 @@ function main(args)
         for i = 1, nparticle do table.insert(species, s) end
     end
     particle.data["species"] = species
+
+    -- select particles from upper right quadrant of the box
+    local lowest_corner = {}
+    for i = 1, dimension do
+        lowest_corner[i] = 0
+        length[i] = length[i]/2
+    end
+    local geometry = mdsim.geometries.cuboid({lowest_corner = lowest_corner, length = length})
+    local region = mdsim.region({particle = particle, label = "upper quadrant", geometry = geometry, selection = "included", box = box})
+
     -- set initial particle positions
     local lattice = mdsim.positions.lattice({box = box, particle = particle})
     lattice:set()
@@ -66,13 +76,16 @@ function main(args)
     })
     boltzmann:set()
 
-    -- smoothly truncated Lennard-Jones potential
+    -- define Lennard-Jones pair potential
     local potential = mdsim.potentials.pair.lennard_jones({species = particle.nspecies})
-    -- smooth truncation
-    if args.smoothing > 0 then
-        potential = potential:truncate({"smooth_r4", cutoff = args.cutoff, h = args.smoothing})
-    else
-        potential = potential:truncate({cutoff = args.cutoff})
+    -- apply interaction cutoff
+    if args.cutoff > 0 then
+        -- use smooth truncation
+        if args.smoothing > 0 then
+            potential = potential:truncate({"smooth_r4", cutoff = args.cutoff, h = args.smoothing})
+        else
+            potential = potential:truncate({cutoff = args.cutoff})
+        end
     end
     -- compute forces
     local force = mdsim.forces.pair({
@@ -87,6 +100,9 @@ function main(args)
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
+    local group_included = mdsim.particle_groups.from_region({particle = particle, region = region, selection = "included", label = region.label})
+
+    local msv_local = observables.thermodynamics({box = box, group = group_included})
 
     -- sample phase space
     local phase_space = observables.phase_space({box = box, group = particle_group})
@@ -104,10 +120,11 @@ function main(args)
     if interval > 0 then
         msv = observables.thermodynamics({box = box, group = particle_group})
         msv:writer({file = file, every = interval})
+        msv_local:writer({file = file, every = interval})
     end
 
     local accumulator = observables.utility.accumulator({
-         aquire = msv.internal_energy
+         acquire = msv.internal_energy
        , every = 10
        , desc = "Averaged internal energy"
        , aux_enable = {particle}
@@ -148,7 +165,7 @@ end
 --
 function define_args(parser)
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
-        default = "lennard_jones_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+        default = "lennard_jones_equilibration_rc{cutoff:g}_rho{density:g}_T{temperature:.2f}_%Y%m%d_%H%M%S", help = "basename of output files"})
     parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("random-seed", {type = "integer", action = parser.action.random_seed,
@@ -166,7 +183,7 @@ function define_args(parser)
     parser:add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser:add_argument("temperature", {type = "number", default = 1.5, help = "initial system temperature"})
-    parser:add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
+    parser:add_argument("rate", {type = "number", default = 2, help = "heat bath collision rate"})
     parser:add_argument("time", {type = "number", default = 100, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.005, help = "integration time step"})
 

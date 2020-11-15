@@ -23,7 +23,12 @@
 
 #include <tuple>
 #include <boost/bind.hpp>
-#include <boost/test/output_test_stream.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 107100
+# include <boost/test/tools/output_test_stream.hpp>
+#else
+# include <boost/test/output_test_stream.hpp>
+#endif
 
 #include <halmd/utility/lua/function.hpp>
 #include <test/tools/lua.hpp>

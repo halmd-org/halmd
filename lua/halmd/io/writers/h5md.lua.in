@@ -74,7 +74,7 @@ local h5md = libhalmd.io.writers.h5md
 --    Example for creating and using a truncate writer::
 --
 --       local writer = file:writer({location = {"particles", "box"}, mode = "truncate"})
---       writer:on_write(box.origin, {"offset"})
+--       writer:on_write(box.lowest_corner, {"offset"})
 --       writer:on_write(box.edges, {"edges"})
 --
 --       local sampler = require("halmd.observables.sampler")

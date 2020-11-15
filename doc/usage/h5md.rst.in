@@ -33,16 +33,21 @@ Using the h5ls/h5dump tools
 
 For a quick analysis of HDF5 data files, use the ``h5ls`` tool (bundled with the HDF5 library)::
 
-  h5ls -v file
+  h5ls -v file.h5
 
 Alternatively, the structure of a file may be inspected with the ``h5dump`` tool::
 
-  h5dump -A file
+  h5dump -A file.h5
 
-The contents of individual groups or datasets may be displayed as follows::
+The contents of individual groups or datasets may be displayed either by ::
 
-  h5dump -g /path/to/group file
-  h5dump -d /path/to/dataset file
+  h5ls -v file.h5/path/to/group
+  h5ls -d file.h5/path/to/dataset
+
+or this way::
+
+  h5dump -g /path/to/group file.h5
+  h5dump -d /path/to/dataset file.h5
 
 
 Using Python and h5py
@@ -54,16 +59,16 @@ multi-dimensional arrays.  This is where the H5MD format reveals its true
 strength, as NumPy allows arbitrary transformations of HDF5 datasets, all while
 using a real programming language.
 
-As a simple example, we open a H5MD file and print a dataset::
+As a simple example, we open an H5MD file and print a dataset::
 
   import h5py
-  f = h5py.File("file", "r")
+  f = h5py.File("file.h5", "r")
   d = f["path/to/dataset"]
   print d
   print d[0:5]
   f.close()
 
-Attributes may be read with the attrs class member::
+Attributes may be read with the ``attrs`` class member::
 
   print f["h5md"].attrs["version"]
   if "observables" in f.keys():

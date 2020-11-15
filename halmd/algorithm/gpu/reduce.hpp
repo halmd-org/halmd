@@ -48,8 +48,7 @@ public:
      * @param threads number of threads per block
      *
      * The number of threads per block must be power of 2, and at least 32
-     * (size of a wrap). CUDA PTX < 2.0 allows a maximum number of threads
-     * of 512, while CUDA PTX ≥ 2.0 allows 1024 threads per block.
+     * (size of a wrap). CUDA PTX ≥ 2.0 allows up to 1024 threads per block.
      */
     reduction(unsigned int blocks = 16, unsigned int threads = max_threads);
 

@@ -1,5 +1,6 @@
 /*
  * Copyright © 2011-2012  Peter Colberg
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -20,11 +21,12 @@
 
 #define BOOST_TEST_MODULE multi_range
 #include <boost/test/unit_test.hpp>
+#include <boost/test/data/test_case.hpp>
+#include <boost/test/data/monomorphic.hpp>
 
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
 #include <boost/multi_array.hpp>
-#include <boost/test/unit_test.hpp>
 #include <iterator> // std::back_inserter
 
 #include <halmd/algorithm/multi_range.hpp>
@@ -32,7 +34,6 @@
 #include <halmd/utility/timer.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <test/tools/ctest.hpp>
-#include <test/tools/init.hpp>
 
 using namespace boost;
 using namespace boost::assign;
@@ -396,38 +397,20 @@ struct time_nested_for_loops : multi_array_4_fixture
     }
 };
 
-static void test_time_multi_range_for_each(unsigned int size)
-{
+/**
+ * Data-driven test case regristration.
+ */
+using namespace boost::unit_test;
+
+auto sizes_range = data::xrange(20, 101, 20);
+
+BOOST_DATA_TEST_CASE( test_time_multi_range_for_each, sizes_range, size ) {
     time_multi_range_for_each::index_type sizes = list_of(size)(size)(size)(size);
     time_multi_range_for_each test(sizes);
     test(10);
 }
-
-static void test_time_nested_for_loops(unsigned int size)
-{
+BOOST_DATA_TEST_CASE( test_time_nested_for_loops, sizes_range, size ) {
     time_nested_for_loops::index_type sizes = list_of(size)(size)(size)(size);
     time_nested_for_loops test(sizes);
     test(10);
-}
-
-/**
- * Manual test case registration.
- */
-HALMD_TEST_INIT( multi_range )
-{
-    using namespace boost::unit_test;
-
-    /*
-     * While the goal of multi_range_for_each is to allow iteration over a
-     * multi-dimensional range of arbitrary dimensions, which is not possible
-     * with nested for loops, this test ensures that multi_range_for_each is
-     * equivalent to nested for loops in terms of performance.
-     */
-    for (unsigned int size = 20; size <= 100; size += 20) {
-        auto time_multi_range_for_each = bind(&test_time_multi_range_for_each, size);
-        framework::master_test_suite().add(BOOST_TEST_CASE( time_multi_range_for_each ));
-
-        auto time_nested_for_loops = bind(&test_time_nested_for_loops, size);
-        framework::master_test_suite().add(BOOST_TEST_CASE( time_nested_for_loops ));
-    }
 }

@@ -100,7 +100,7 @@ inline void timer::gettime(struct timespec& ts)
 {
     boost::system::error_code ec(
         clock_gettime(CLOCK_MONOTONIC, &ts)
-      , boost::system::get_posix_category()
+      , boost::system::generic_category()
     );
     if (ec != boost::system::errc::success) {
         throw boost::system::system_error(ec);
@@ -111,7 +111,7 @@ inline void timer::getres(struct timespec& ts)
 {
     boost::system::error_code ec(
         clock_getres(CLOCK_MONOTONIC, &ts)
-      , boost::system::get_posix_category()
+      , boost::system::generic_category()
     );
     if (ec != boost::system::errc::success) {
         throw boost::system::system_error(ec);

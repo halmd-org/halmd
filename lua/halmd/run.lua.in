@@ -45,6 +45,11 @@ return function()
     end
     local args = parser:parse_args()
 
+    -- replace parameter values in output filename if present
+    if args.output then
+        args.output = (args.output):interp(args)
+    end
+
     -- start logger
     log.open_console({severity = args.verbose[1]})
     -- log to file

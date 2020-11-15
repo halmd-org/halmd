@@ -40,7 +40,7 @@ def main():
 
     # open and read data file
     H5 = h5py.File(args.input, 'r')
-    H5obs = H5['observables'][args.group]
+    H5obs = H5['observables']
     H5particle = H5['particles'][args.group]
     H5box = H5particle['box']
 
@@ -55,7 +55,7 @@ def main():
     # compute and print some averages
     # the simplest selection of a data set looks like this:
     #     temp, temp_err = compute_average(H5obs['temperature'], 'Temperature')
-    # full support for slicing (th second pair of brackets) requires conversion to a NumPy array before
+    # full support for slicing (the second pair of brackets) requires conversion to a NumPy array before
     temp, temp_err = compute_average(array(H5obs['temperature/value'])[range[0]:range[1]], 'Temperature')
     pressure, pressure_err = compute_average(array(H5obs['pressure/value'])[range[0]:range[1]], 'Pressure')
     epot, epot_err = compute_average(array(H5obs['potential_energy/value'])[range[0]:range[1]], 'Potential energy')
