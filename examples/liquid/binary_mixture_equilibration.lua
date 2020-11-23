@@ -175,9 +175,6 @@ function main(args)
     -- run remaining part of the simulation in NVE ensemble
     -- to prepare for the NVE production run
     observables.sampler:run(steps - steps / 2)
-
-    -- log profiler results
-    utility.profiler:profile()
 end
 
 --

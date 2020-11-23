@@ -155,9 +155,6 @@ function main(args)
 
     -- run simulation
     observables.sampler:run(steps)
-
-    -- log profiler results
-    utility.profiler:profile()
 end
 
 --

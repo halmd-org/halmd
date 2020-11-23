@@ -210,9 +210,6 @@ local function equilibrate(box, particle, args)
     -- run remaining part of the simulation in NVE ensemble
     -- to prepare for the NVE production run
     observables.sampler:run(steps - math.floor(steps / 2))
-
-    -- log profiler results
-    utility.profiler:profile()
 end
 
 function main(args)

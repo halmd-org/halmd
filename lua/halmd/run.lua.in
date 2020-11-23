@@ -61,6 +61,12 @@ return function()
 
     -- call run method from user script
     main(args)
+
+    -- finish simulation run
+    halmd.observables.sampler:finish()
+
+    -- log profiler results
+    utility.profiler:profile()
   else
     error("simulation script did not define a \"main\" method")
   end

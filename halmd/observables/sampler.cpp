@@ -1,6 +1,6 @@
 /*
+ * Copyright © 2010-2020 Felix Höfling
  * Copyright © 2010-2012 Peter Colberg
- * Copyright © 2010-2011 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  *
  * This file is part of HALMD.
@@ -35,7 +35,9 @@ sampler::sampler(
   , std::shared_ptr<core_type> core
 )
   : clock_(clock)
-  , core_(core) {}
+  , core_(core)
+  , first_run_(false)
+{}
 
 void sampler::sample()
 {
@@ -46,12 +48,13 @@ void sampler::sample()
 
 void sampler::run(step_type steps)
 {
-    {
-        scoped_timer_type timer(runtime_.start);
-        on_start_();
+    // do some initialisation upon first invocation of run()
+    if (first_run_) {
+        first_run_ = false;
+        start();
     }
 
-    LOG("starting simulation run over " << steps << " integration steps");
+    LOG("running simulation over " << steps << " integration steps");
     {
         scoped_timer_type timer(runtime_.total);
 
@@ -76,12 +79,23 @@ void sampler::run(step_type steps)
             }
         }
     }
-    LOG("finished simulation run");
+    LOG("completed " << steps << " integration steps");
+}
 
-    {
-        scoped_timer_type timer(runtime_.finish);
-        on_finish_();
-    }
+void sampler::start()
+{
+    LOG("starting simulation run");
+
+    scoped_timer_type timer(runtime_.start);
+    on_start_();
+}
+
+void sampler::finish()
+{
+    LOG("finishing simulation run");
+
+    scoped_timer_type timer(runtime_.finish);
+    on_finish_();
 }
 
 connection sampler::on_prepare(std::function<void ()> const& slot, step_type interval, step_type start)
@@ -140,6 +154,7 @@ void sampler::luaopen(lua_State* L)
             >())
             .def("sample", &sampler::sample)
             .def("run", &sampler::run)
+            .def("finish", &sampler::finish)
             .def("on_prepare", &sampler::on_prepare)
             .def("on_sample", &sampler::on_sample)
             .def("on_start", &sampler::on_start)

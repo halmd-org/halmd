@@ -225,9 +225,6 @@ function main(args)
 
     -- run simulation
     observables.sampler:run(steps)
-
-    -- log profiler results
-    halmd.utility.profiler:profile()
 end
 
 --
