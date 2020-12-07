@@ -1,6 +1,7 @@
 /*
  * Copyright © 2017 Daniel Kirchner
  * Copyright © 2017 Felix Höfling
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -22,13 +23,17 @@
 #ifndef HALMD_UTILITY_GPU_CONFIGURE_KERNEL_HPP
 #define HALMD_UTILITY_GPU_CONFIGURE_KERNEL_HPP
 
+#include <halmd/utility/gpu/device.hpp>
+
+#include <algorithm>
+
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd {
 
 /**
  * Find maximum possible block size for a given CUDA kernel for a fixed or
- * minimal total number of threads and configure that kernel. 
+ * minimal total number of threads and configure that kernel.
  *
  * @param k: CUDA kernel, instance of cuda::function from cuda_wrapper
  * @param default_dim: default configuration dimensions, specifies the total number of threads
@@ -43,7 +48,13 @@ cuda::config configure_kernel(kernel_type& k, cuda::config const& default_dim,
     bool fixed_total_threads, size_t smem_per_thread = 0)
 {
     cuda::config dim = default_dim;
-    int block_size = k.max_block_size();    // smem size needs to be considered here too
+
+    int block_size = k.max_block_size();
+    if (smem_per_thread > 0) {
+        cuda::device::properties prop(device::get());
+        block_size = std::min(block_size, int(prop.shared_mem_per_block() / smem_per_thread));
+        block_size = (block_size / 32) * 32; // round block_size down to a multiple of 32 (the warpSize)
+    }
 
     if (block_size > 0) {
         int grid_size = (default_dim.threads() + block_size - 1) / block_size;
