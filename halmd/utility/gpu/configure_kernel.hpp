@@ -23,8 +23,9 @@
 #ifndef HALMD_UTILITY_GPU_CONFIGURE_KERNEL_HPP
 #define HALMD_UTILITY_GPU_CONFIGURE_KERNEL_HPP
 
-#include <algorithm>
+#include <halmd/utility/gpu/device.hpp>
 
+#include <algorithm>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd {
@@ -49,8 +50,8 @@ cuda::config configure_kernel(kernel_type& k, cuda::config const& default_dim,
 
     int block_size = k.max_block_size();
     if (smem_per_thread > 0) {
-        size_t shared_mem_per_block = 48 << 10;     // 48 kB
-        block_size = std::min(block_size, int(shared_mem_per_block / smem_per_thread));
+        cuda::device::properties prop(device::get());
+        block_size = std::min(block_size, int(prop.shared_mem_per_block() / smem_per_thread));
         block_size = (block_size / 32) * 32; // round block_size down to a multiple of 32 (the warpSize)
     }
 
