@@ -21,16 +21,14 @@
 
 #include <halmd/algorithm/gpu/copy_if.hpp>
 #include <halmd/algorithm/gpu/radix_sort.hpp>
+#include <halmd/mdsim/geometries/cuboid.hpp>
+#include <halmd/mdsim/geometries/sphere.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_groups/region_species.hpp>
 #include <halmd/mdsim/gpu/particle_groups/region_species_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-#include <halmd/mdsim/geometries/cuboid.hpp>
-#include <halmd/mdsim/geometries/sphere.hpp>
-
 #include <cuda_wrapper/cuda_wrapper.hpp>
-
 #include <exception>
 #include <stdexcept>
 
@@ -45,14 +43,14 @@ region_species<dimension, float_type, geometry_type>::region_species(
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<geometry_type const> geometry
   , geometry_selection geometry_sel
-  , unsigned int species_type
+  , unsigned int species
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
   , box_(box)
   , geometry_(geometry)
   , geometry_selection_(geometry_sel)
-  , species_type_(species_type)
+  , species_(species)
   , logger_(logger)
 {
     try {
@@ -90,25 +88,25 @@ template <int dimension, typename float_type, typename geometry_type>
 void region_species<dimension, float_type, geometry_type>::update_mask_()
 {
     cache<position_array_type> const& position_cache = particle_->position();
-
-    if (position_cache != mask_cache_ ) {
+    if (position_cache != mask_cache_) {
         LOG_TRACE("update selection mask");
         scoped_timer_type timer(runtime_.update_mask);
 
-        auto mask = make_cache_mutable(mask_);
         position_array_type const& position = read_cache(particle_->position());
+        auto mask = make_cache_mutable(mask_);
+
         auto const& kernel = region_species_wrapper<dimension, geometry_type>::kernel;
         // calculate "bin", ie. inside/outside the region
         cuda::memset(*mask, 0xFF);
         cuda::configure(particle_->dim().grid, particle_->dim().block);
         kernel.compute_mask(
-            species_type_
-          , position.data()
+            position.data()
           , particle_->nparticle()
           , mask->data()
           , *geometry_
-          , geometry_selection_ == excluded ? halmd::mdsim::gpu::particle_groups::excluded : halmd::mdsim::gpu::particle_groups::included
+          , geometry_selection_ == excluded ? particle_groups::excluded : particle_groups::included
           , static_cast<position_type>(box_->length())
+          , species_
         );
         mask_cache_ = position_cache;
     }
@@ -125,18 +123,20 @@ void region_species<dimension, float_type, geometry_type>::update_selection_()
     if(position_cache != selection_cache_) {
         LOG_TRACE("update particle selection");
         scoped_timer_type timer(runtime_.update_selection);
+
         unsigned int nparticle = particle_->nparticle();
         auto const& position = read_cache(particle_->position());
+
         auto selection = make_cache_mutable(selection_);
 
         auto const& kernel = region_species_wrapper<dimension, geometry_type>::kernel;
         unsigned int size = kernel.copy_selection(
-            species_type_
-          , position.data()
+            position.data()
           , nparticle
           , selection->data()
           , *geometry_
-          , geometry_selection_ == excluded ? halmd::mdsim::gpu::particle_groups::excluded : halmd::mdsim::gpu::particle_groups::included
+          , geometry_selection_ == excluded ? particle_groups::excluded : particle_groups::included
+          , species_
         );
         selection->resize(size);
 
@@ -197,8 +197,11 @@ region_species<dimension, float_type, geometry_type>::size()
 }
 
 template <typename particle_group_type, typename particle_type>
-static void
-wrap_to_particle(std::shared_ptr<particle_group_type> self, std::shared_ptr<particle_type> particle_src, std::shared_ptr<particle_type> particle_dst)
+static void wrap_to_particle(
+    std::shared_ptr<particle_group_type> self
+  , std::shared_ptr<particle_type> particle_src
+  , std::shared_ptr<particle_type> particle_dst
+)
 {
     particle_group_to_particle(*particle_src, *self, *particle_dst);
 }
@@ -222,14 +225,15 @@ void region_species<dimension, float_type, geometry_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &region_species::runtime_)
                     .def("to_particle", &wrap_to_particle<region_species<dimension, float_type, geometry_type>, particle_type>)
-                 , def("region_species", &std::make_shared<region_species<dimension, float_type, geometry_type>
+
+              , def("region_species", &std::make_shared<region_species<dimension, float_type, geometry_type>
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<geometry_type const>
                   , geometry_selection
                   , unsigned int
                   , std::shared_ptr<logger>
-                  >)
+                >)
             ]
         ]
     ];

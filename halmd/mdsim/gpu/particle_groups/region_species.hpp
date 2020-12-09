@@ -1,4 +1,5 @@
-/* Copyright © 2019 Roya Ebrahimi Viand
+/*
+ * Copyright © 2019 Roya Ebrahimi Viand
  * Copyright © 2014-2015 Nicolas Höft
  *
  * This file is part of HALMD.
@@ -42,7 +43,8 @@ namespace gpu {
 namespace particle_groups {
 
 /**
- * Select particles of a given particle instance according to a region in space
+ * Select particles of a given particle instance from a region in space
+ * and of a given species.
  */
 template <int dimension, typename float_type, typename geometry_type>
 class region_species
@@ -61,24 +63,28 @@ public:
     };
 
     /**
-     * Select by region
+     * Select by region and species.
      */
     region_species(
         std::shared_ptr<particle_type const> particle
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<geometry_type const> geometry
       , geometry_selection geometry_sel
-      , unsigned int species_type
+      , unsigned int species
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     /**
-     * Returns particle indices that are within the
-     * defined region of the simulation box
+     * Returns indices of particles that are within the defined region of the
+     * simulation box and of the given species
      */
-    virtual cache<array_type> const& selection();
+    cache<array_type> const& selection();
 
-    virtual cache<array_type> const& mask();
+    /**
+     * Returns boolean mask for each particle whether it is within the defined
+     * region of the simulation box and of the given species
+     */
+    cache<array_type> const& mask();
 
     /**
      * Returns ordered sequence of particle indices.
@@ -109,19 +115,21 @@ private:
 
     /** particle instance */
     std::shared_ptr<particle_type const> particle_;
-    //! simulation box
+    /** simulation box */
     std::shared_ptr<box_type const> box_;
-    //! region the particles are sorted by
+    /** region the particles are sorted by */
     std::shared_ptr<geometry_type const> geometry_;
     geometry_selection geometry_selection_;
-    unsigned int species_type_;
+    /** select particles of given species */
+    unsigned int species_;
+    /** module logger */
+    std::shared_ptr<logger> logger_;
+
     /** cache observer of position updates for mask */
     cache<> mask_cache_;
     /** cache observer of position updates for selection updates */
     cache<> selection_cache_;
 
-    /** module logger */
-    std::shared_ptr<logger> logger_;
     /** ordered sequence of particle indices */
     cache<array_type> ordered_;
     /** unordered sequence of particle indices */
@@ -134,6 +142,7 @@ private:
     cache<> unordered_cache_;
     /** cache observer of size */
     cache<> size_cache_;
+
     /**
      * mask for particles that determines whether they are in-/outside the region,
      * each element has the value 0 or 1, where 0 means outside
@@ -141,7 +150,8 @@ private:
      * This mask is ordered by particle id.
      */
     cache<array_type> mask_;
-     /**
+
+    /**
      * indices of particles in the defined region
      */
     cache<array_type> selection_;
@@ -154,9 +164,9 @@ private:
         accumulator_type update_mask;
         accumulator_type update_selection;
     };
+
     /** profiling runtime accumulators */
     runtime runtime_;
-
 };
 
 } // namespace particle_groups

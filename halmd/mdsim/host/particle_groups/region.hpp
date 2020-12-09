@@ -27,7 +27,6 @@
 #include <halmd/mdsim/box.hpp>
 
 #include <lua.hpp>
-
 #include <memory>
 
 namespace halmd {
@@ -65,13 +64,13 @@ public:
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
-    /*
+    /**
      * Returns particle indices that are within the defined region of the
      * simulation box
      */
     cache<array_type> const& selection();
 
-    /*
+    /**
      * Returns boolean mask for each particle whether it is within the defined
      * region of the simulation box
      */
@@ -98,32 +97,33 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::position_array_type position_array_type;
     typedef typename particle_type::position_type position_type;
 
     void update_();
+
     /** particle instance */
     std::shared_ptr<particle_type const> particle_;
-    //! simulation box
+    /** simulation box */
     std::shared_ptr<box_type const> box_;
+    /** region the particles are sorted by */
+    std::shared_ptr<geometry_type const> geometry_;
+    geometry_selection geometry_selection_;
     /** module logger */
     std::shared_ptr<logger> logger_;
-    //! region the particles are sorted by
-    std::shared_ptr<geometry_type const> geometry_;
-    /** cache observer of position updates for mask */
-    cache<> mask_cache_;
-    geometry_selection geometry_selection_;
-    /*
-     * mask for particles that determines whether they are in-/outside the region,
-     * each element has the value 0 or 1, where 0 means outside
-     * the region and 1 included in region.
-     * This mask is ordered by particle id.
+
+    /**
+     * mask for particles that determines whether they are in-/outside the
+     * region, each element has the value 0 or 1, where 0 means outside the
+     * region and 1 included in region. This mask is ordered by particle id.
      */
     cache<array_type> mask_;
     /** particle indices of particles in the region */
     cache<array_type> selection_;
-    /** ordered sequence of particle indices */
+    /** cache observer of position updates for mask */
+    cache<> mask_cache_;
 
+    /** ordered sequence of particle indices */
     cache<array_type> ordered_;
     /** unordered sequence of particle indices */
     cache<array_type> unordered_;
@@ -144,6 +144,7 @@ typedef typename particle_type::position_array_type position_array_type;
         accumulator_type update_mask;
         accumulator_type update_selection;
     };
+
     /** profiling runtime accumulators */
     runtime runtime_;
 };

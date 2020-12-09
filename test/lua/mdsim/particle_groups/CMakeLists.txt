@@ -5,7 +5,8 @@ if(HALMD_WITH_GPU)
   set(DISABLE_GPU "--disable-gpu")
 endif()
 
-
 add_test(lua/particle_groups/region/host
   ${HALMD_EXECUTABLE} ${DISABLE_GPU} ${CMAKE_CURRENT_SOURCE_DIR}/region.lua
 )
+
+# FIXME add basic tests for all, id_range, region_species

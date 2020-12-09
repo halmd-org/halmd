@@ -91,8 +91,9 @@ void region<dimension, float_type, geometry_type>::update_mask_()
         LOG_TRACE("update selection mask");
         scoped_timer_type timer(runtime_.update_mask);
 
-        auto mask = make_cache_mutable(mask_);
         position_array_type const& position = read_cache(particle_->position());
+        auto mask = make_cache_mutable(mask_);
+
         auto const& kernel = region_wrapper<dimension, geometry_type>::kernel;
         // calculate "bin", ie. inside/outside the region
         cuda::memset(*mask, 0xFF);
@@ -102,7 +103,7 @@ void region<dimension, float_type, geometry_type>::update_mask_()
           , particle_->nparticle()
           , mask->data()
           , *geometry_
-          , geometry_selection_ == excluded ? halmd::mdsim::gpu::particle_groups::excluded : halmd::mdsim::gpu::particle_groups::included
+          , geometry_selection_ == excluded ? particle_groups::excluded : particle_groups::included
           , static_cast<position_type>(box_->length())
         );
         mask_cache_ = position_cache;
@@ -116,9 +117,11 @@ template <int dimension, typename float_type, typename geometry_type>
 void region<dimension, float_type, geometry_type>::update_selection_()
 {
     cache<position_array_type> const& position_cache = particle_->position();
+
     if(position_cache != selection_cache_) {
         LOG_TRACE("update particle selection");
         scoped_timer_type timer(runtime_.update_selection);
+
         unsigned int nparticle = particle_->nparticle();
         auto const& position = read_cache(particle_->position());
         auto selection = make_cache_mutable(selection_);
@@ -129,7 +132,7 @@ void region<dimension, float_type, geometry_type>::update_selection_()
           , nparticle
           , selection->data()
           , *geometry_
-          , geometry_selection_ == excluded ? halmd::mdsim::gpu::particle_groups::excluded : halmd::mdsim::gpu::particle_groups::included
+          , geometry_selection_ == excluded ? particle_groups::excluded : particle_groups::included
         );
         selection->resize(size);
 

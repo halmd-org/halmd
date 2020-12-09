@@ -1,4 +1,5 @@
-/* Copyright © 2019 Roya Ebrahimi Viand
+/*
+ * Copyright © 2019 Roya Ebrahimi Viand
  * Copyright © 2014-2015 Nicolas Höft
  *
  * This file is part of HALMD.
@@ -61,14 +62,14 @@ void region<dimension, float_type, geometry_type>::update_()
 
         scoped_timer_type timer(runtime_.update_mask);
 
-        auto mask = make_cache_mutable(mask_);
-        auto selection = make_cache_mutable(selection_);
         position_array_type const& position = read_cache(particle_->position());
 
+        auto mask = make_cache_mutable(mask_);
+        auto selection = make_cache_mutable(selection_);
         selection->clear();
 
         for (size_type i = 0; i < particle_->nparticle(); ++i) {
-            vector_type r = position[i];
+            vector_type const& r = position[i];
             // box_->reduce_periodic(r);  FIXME test whether this is really not needed
             bool in_geometry  = (*geometry_)(r);
             if (geometry_selection_ == excluded) {
@@ -151,40 +152,43 @@ region<dimension, float_type, geometry_type>::size()
     return size_;
 }
 
-    template <typename particle_group_type, typename particle_type>
-    static void
-    wrap_to_particle(std::shared_ptr<particle_group_type> self, std::shared_ptr<particle_type> particle_src, std::shared_ptr<particle_type> particle_dst)
-    {
-        particle_group_to_particle(*particle_src, *self, *particle_dst);
-    }
+template <typename particle_group_type, typename particle_type>
+static void wrap_to_particle(
+    std::shared_ptr<particle_group_type> self
+  , std::shared_ptr<particle_type> particle_src
+  , std::shared_ptr<particle_type> particle_dst
+)
+{
+    particle_group_to_particle(*particle_src, *self, *particle_dst);
+}
 
-    template <int dimension, typename float_type, typename geometry_type>
-    void region<dimension, float_type, geometry_type>::luaopen(lua_State* L)
-    {
-        using namespace luaponte;
-        module(L, "libhalmd")
+template <int dimension, typename float_type, typename geometry_type>
+void region<dimension, float_type, geometry_type>::luaopen(lua_State* L)
+{
+    using namespace luaponte;
+    module(L, "libhalmd")
+    [
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("particle_groups")
             [
-                namespace_("particle_groups")
-                [
-                    class_<region, particle_group>()
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("update_mask", &runtime::update_mask)
-                                .def_readonly("update_selection", &runtime::update_selection)
-                        ]
-                        .def_readonly("runtime", &region::runtime_)
-                        .def("to_particle", &wrap_to_particle<region<dimension, float_type, geometry_type>, particle_type>)
+                class_<region, particle_group>()
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("update_mask", &runtime::update_mask)
+                            .def_readonly("update_selection", &runtime::update_selection)
+                    ]
+                    .def_readonly("runtime", &region::runtime_)
+                    .def("to_particle", &wrap_to_particle<region<dimension, float_type, geometry_type>, particle_type>)
 
-                  , def("region", &std::make_shared<region<dimension, float_type, geometry_type>
-                      , std::shared_ptr<particle_type const>
-                      , std::shared_ptr<box_type const>
-                      , std::shared_ptr<geometry_type const>
-                      , geometry_selection
-                      , std::shared_ptr<logger>
-                  >)
+              , def("region", &std::make_shared<region<dimension, float_type, geometry_type>
+                  , std::shared_ptr<particle_type const>
+                  , std::shared_ptr<box_type const>
+                  , std::shared_ptr<geometry_type const>
+                  , geometry_selection
+                  , std::shared_ptr<logger>
+                >)
             ]
         ]
     ];

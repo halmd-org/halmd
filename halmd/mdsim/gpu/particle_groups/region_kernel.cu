@@ -25,7 +25,6 @@
 #include <halmd/mdsim/geometries/sphere.hpp>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/particle_groups/region_kernel.hpp>
-#include <halmd/mdsim/gpu/particle_groups/region_kernel.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
 namespace halmd {
@@ -33,6 +32,36 @@ namespace mdsim {
 namespace gpu {
 namespace particle_groups{
 namespace region_kernel {
+
+/**
+ *  Define selection criterion.
+ */
+template<typename geometry_type>
+struct geometry_predicate
+{
+    enum { dimension = geometry_type::vector_type::static_size };
+    typedef fixed_vector<float, dimension> vector_type;
+
+    geometry_predicate(float4 const* position, geometry_type const& geometry, geometry_selection sel)
+      : position_(position)
+      , geometry_(geometry)
+      , selection_(sel)
+    {};
+
+    HALMD_GPU_ENABLED bool operator()(int const& i) const
+    {
+        vector_type r;
+        unsigned int species;
+        tie(r, species) <<= position_[i];
+        bool in_geometry = geometry_(r);
+        return (selection_ == excluded) ? !in_geometry : in_geometry;       // use bitwise XOR?
+    }
+
+private:
+    float4 const* position_; // position array
+    geometry_type geometry_;
+    geometry_selection selection_;
+};
 
 template <typename vector_type, typename geometry_type>
 __global__ void compute_mask(
@@ -62,41 +91,16 @@ __global__ void compute_mask(
     g_mask[i] = in_geometry ? 1 : 0;
 }
 
-template<typename geometry_type>
-struct geometry_predicate
-{
-    enum { dimension = geometry_type::vector_type::static_size };
-    typedef fixed_vector<float, dimension> vector_type;
-
-    geometry_predicate(float4 const* position, geometry_type const& geometry, geometry_selection sel)
-      : position_(position)
-      , geometry_(geometry)
-      , selection_(sel)
-    {};
-
-    HALMD_GPU_ENABLED bool operator()(int const& i) const
-    {
-        vector_type r;
-        unsigned int species;
-        tie(r, species) <<= position_[i];
-        bool in_geometry = geometry_(r);
-        if (selection_ == excluded)
-            return !in_geometry;
-        return in_geometry;
-    }
-
-private:
-    float4 const* position_; // position array
-    geometry_type const geometry_;
-    geometry_selection selection_;
-
-};
-
 template <typename geometry_type>
-unsigned int copy_selection(float4 const* g_r, unsigned int nparticle, unsigned int* g_output, geometry_type const geometry, geometry_selection selection)
+unsigned int copy_selection(
+    float4 const* g_r
+  , unsigned int nparticle
+  , unsigned int* g_output
+  , geometry_type const geometry
+  , geometry_selection selection
+)
 {
-    typedef geometry_predicate<geometry_type> predicate_type;
-    predicate_type const predicate(g_r, geometry, selection);
+    geometry_predicate<geometry_type> predicate(g_r, geometry, selection);
 
     // iterate over the particle indices, not the positions itself
     cub::CountingInputIterator<int> index(0);
@@ -128,5 +132,4 @@ template class region_wrapper<2, halmd::mdsim::geometries::sphere<2, float> >;
 } // namespace particle_groups
 } // namespace gpu
 } // namespace mdsim
-
 } // namespace halmd

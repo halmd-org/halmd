@@ -33,7 +33,7 @@ struct geometry_predicate
       , geometry_(geometry)
     {};
 
-    HALMD_GPU_ENABLED bool operator()(int i)
+    HALMD_GPU_ENABLED bool operator()(unsigned int i)
     {
         vector_type r;
         unsigned int species;
@@ -44,7 +44,6 @@ struct geometry_predicate
 private:
     float4* position_; // position array
     geometry_type const geometry_;
-
 };
 
 #endif /* ! HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_SPECIES_KERNEL_CUH */

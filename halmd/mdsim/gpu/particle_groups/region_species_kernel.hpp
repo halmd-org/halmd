@@ -31,7 +31,7 @@
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace particle_groups{
+namespace particle_groups {
 
 enum geometry_selection {
     excluded = 1
@@ -45,22 +45,22 @@ struct region_species_wrapper
 
     /** create a mask for particles within/outside the region */
     cuda::function<void (
-        unsigned int // species
-      , float4 const* // position
+        float4 const* // position
       , unsigned int  // nparticle
       , unsigned int* // mask
       , geometry_type const
       , geometry_selection
       , vector_type  // box length
+      , unsigned int // species
     )> compute_mask;
 
     boost::function<unsigned int (
-        unsigned int         // species
-      , float4 const*        // position
+        float4 const*        // position
       , unsigned int         // nparticle
       , unsigned int*        // output array
       , geometry_type const  // predicate
       , geometry_selection   // geometry selection
+      , unsigned int         // species
     )> copy_selection;
 
     static region_species_wrapper const kernel;

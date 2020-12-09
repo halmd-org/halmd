@@ -1,6 +1,6 @@
 --
--- Copyright © 2019      Felix Höfling
--- Copyright © 2019 Roya Ebrahimi Viand
+-- Copyright © 2019-2020 Felix Höfling
+-- Copyright © 2019      Roya Ebrahimi Viand
 -- Copyright © 2014-2015 Nicolas Höft
 --
 -- This file is part of HALMD.
@@ -20,12 +20,11 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local log     = require("halmd.io.log")
-local module  = require("halmd.utility.module")
-local utility = require("halmd.utility")
-local mdsim   = {
-    particle = require("halmd.mdsim.particle")
-}
+local log      = require("halmd.io.log")
+local mdsim    = require("halmd.mdsim")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
+local utility  = require("halmd.utility")
 
 -- grab C++ wrappers
 local region = assert(libhalmd.mdsim.particle_groups.region)
@@ -48,19 +47,22 @@ local geometry_selection = {
 --    local system = halmd.mdsim.particle({particles = 10000})
 --    local geometry = halmd.mdsim.geometries.cuboid({lowest_corner = {0,0,0}, length = {1, 1, 1}})
 --
---    -- select particles from within this sub-box / region
---    local group_cuboid = halmd.mdsim.particle_groups.region({particle = system, label = "subbox", geometry = geometry, selection = "included", box = box})
+--    -- select particles from within this sub-box (region)
+--    local group_cuboid = halmd.mdsim.particle_groups.region({
+--        particle = system, box = box, label = "subbox"
+--      , geometry = geometry, selection = "included"
+--    })
 --
 
 ---
--- Construct particle group from region.
+-- Construct particle group from region and species.
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param table args.geometry: geometry of the region, instance of :mod:`halmd.mdsim.geometries`
 -- :param string args.selection: select particles within or outside the geometry. Allowed values are ``included`` and ``excluded``.
--- :param string args.label: group label *(defaults to region label)*
+-- :param string args.label: group label
 -- :param boolean args.global: particle group can comprise the whole simulation
 --                             world (*default:* ``false``)
 -- :param boolean args.fluctuating: the number or identity of selected particles
@@ -184,8 +186,15 @@ local M = module(function(args)
         return fluctuating
     end)
 
+    -- sequence of signal connections
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, "region module")
+
+    -- connect runtime accumulators to profiler
+    local desc = ("region (%s)"):format(label)
+    local runtime = assert(self.runtime)
+    table.insert(conn, profiler:on_profile(runtime.update_mask, ("update particle mask of %s"):format(desc)))
+    table.insert(conn, profiler:on_profile(runtime.update_selection, ("update selection by %s"):format(desc)))
 
     return self
 end)

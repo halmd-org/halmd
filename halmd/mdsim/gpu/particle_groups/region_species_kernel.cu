@@ -36,13 +36,13 @@ namespace region_species_kernel {
 
 template <typename vector_type, typename geometry_type>
 __global__ void compute_mask(
-    unsigned int species_type
-  , float4 const* g_r
+    float4 const* g_r
   , unsigned int nparticle
   , unsigned int* g_mask
   , geometry_type const geometry
   , geometry_selection selection
   , vector_type box_length
+  , unsigned int species_
 )
 {
     enum { dimension = vector_type::static_size };
@@ -56,7 +56,7 @@ __global__ void compute_mask(
 
     // enforce periodic boundary conditions
     box_kernel::reduce_periodic(r, box_length);
-    bool in_species = (species == species_type);
+    bool in_species = (species == species_);
     bool in_geometry = geometry(r);
     if(selection == excluded)
         in_geometry = !in_geometry;
@@ -70,39 +70,45 @@ struct geometry_predicate
     enum { dimension = geometry_type::vector_type::static_size };
     typedef fixed_vector<float, dimension> vector_type;
 
-    geometry_predicate(unsigned int species_type, float4 const* position, geometry_type const& geometry, geometry_selection sel)
-      : species_type_(species_type)
-      , position_(position)
+    geometry_predicate(float4 const* position, geometry_type const& geometry, geometry_selection sel, unsigned int species)
+      : position_(position)
       , geometry_(geometry)
       , selection_(sel)
+      , species_(species)
     {};
 
-    HALMD_GPU_ENABLED bool operator()(int const& i) const
+    HALMD_GPU_ENABLED bool operator()(unsigned int i) const
     {
         vector_type r;
         unsigned int species;
         tie(r, species) <<= position_[i];
-        bool in_species = (species == species_type_);
+        bool in_species = (species == species_);
         bool in_geometry = geometry_(r);
-        if (selection_ == excluded)
+        if (selection_ == excluded) {
             return !in_geometry;
+        }
 
         return (in_geometry && in_species);
     }
 
 private:
-    unsigned int species_type_;
     float4 const* position_; // position array
     geometry_type const geometry_;
     geometry_selection selection_;
-
+    unsigned int species_;
 };
 
 template <typename geometry_type>
-unsigned int copy_selection(unsigned int species_type, float4 const* g_r, unsigned int nparticle, unsigned int* g_output, geometry_type const geometry, geometry_selection selection)
+unsigned int copy_selection(
+    float4 const* g_r
+  , unsigned int nparticle
+  , unsigned int* g_output
+  , geometry_type const geometry
+  , geometry_selection selection
+  , unsigned int species
+)
 {
-    typedef geometry_predicate<geometry_type> predicate_type;
-    predicate_type const predicate(species_type ,g_r, geometry, selection);
+    geometry_predicate<geometry_type> predicate(g_r, geometry, selection, species);
 
     // iterate over the particle indices, not the positions itself
     cub::CountingInputIterator<int> index(0);

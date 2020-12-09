@@ -75,9 +75,9 @@ public:
      * Returns particle indices that are within the
      * defined region of the simulation box
      */
-    virtual cache<array_type> const& selection();
+    cache<array_type> const& selection();
 
-    virtual cache<array_type> const& mask();
+    cache<array_type> const& mask();
 
     /**
      * Returns ordered sequence of particle indices.
@@ -165,4 +165,4 @@ private:
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_PARTICLE_GROUPS_RANGE_HPP */
+#endif /* ! HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_HPP */
