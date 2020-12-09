@@ -40,13 +40,11 @@ namespace particle_groups {
 template <int dimension, typename float_type, typename geometry_type>
 region<dimension, float_type, geometry_type>::region(
     std::shared_ptr<particle_type const> particle
-  , std::shared_ptr<box_type const> box
   , std::shared_ptr<geometry_type const> geometry
   , geometry_selection geometry_sel
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
-  , box_(box)
   , geometry_(geometry)
   , geometry_selection_(geometry_sel)
   , logger_(logger)
@@ -104,7 +102,6 @@ void region<dimension, float_type, geometry_type>::update_mask_()
           , mask->data()
           , *geometry_
           , geometry_selection_ == excluded ? particle_groups::excluded : particle_groups::included
-          , static_cast<position_type>(box_->length())
         );
         mask_cache_ = position_cache;
     }
@@ -224,7 +221,6 @@ void region<dimension, float_type, geometry_type>::luaopen(lua_State* L)
 
               , def("region", &std::make_shared<region<dimension, float_type, geometry_type>
                   , std::shared_ptr<particle_type const>
-                  , std::shared_ptr<box_type const>
                   , std::shared_ptr<geometry_type const>
                   , geometry_selection
                   , std::shared_ptr<logger>

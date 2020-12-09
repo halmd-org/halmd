@@ -48,7 +48,6 @@ struct region_wrapper
       , unsigned int* // mask
       , geometry_type const
       , geometry_selection
-      , vector_type  // box length
     )> compute_mask;
 
     boost::function<unsigned int (

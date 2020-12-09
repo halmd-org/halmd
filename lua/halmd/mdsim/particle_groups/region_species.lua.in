@@ -49,7 +49,7 @@ local geometry_selection = {
 --
 --    -- select particles of species 0 and from within this sub-box (region)
 --    local group_cuboid = halmd.mdsim.particle_groups.region_species({
---        particle = system, box = box, label = "subbox"
+--        particle = system, label = "subbox"
 --      , geometry = geometry, selection = "included"
 --      , species = 0
 --    })
@@ -60,7 +60,6 @@ local geometry_selection = {
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
--- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param table args.geometry: geometry of the region, instance of :mod:`halmd.mdsim.geometries`
 -- :param string args.selection: select particles within or outside the geometry. Allowed values are ``included`` and ``excluded``.
 -- :param string args.species: 0-based particle species
@@ -128,7 +127,6 @@ local geometry_selection = {
 local M = module(function(args)
     utility.assert_type(args, "table")
     local particle = utility.assert_kwarg(args, "particle")
-    local box = utility.assert_kwarg(args, "box")
     local geometry = utility.assert_kwarg(args, "geometry")
     local selection = utility.assert_type(utility.assert_kwarg(args, "selection"), "string")
     local species = utility.assert_type(utility.assert_kwarg(args, "species"), "number")
@@ -143,7 +141,7 @@ local M = module(function(args)
     local logger = log.logger({prefix = ("region_species (%s)"):format(label)})
 
     -- construct particle group from region in space and species
-    local self = region_species(particle, box, geometry, geometry_selection[selection], species, logger)
+    local self = region_species(particle, geometry, geometry_selection[selection], species, logger)
 
     -- store label as Lua property
     self.label = property(function(self)

@@ -37,14 +37,12 @@ namespace particle_groups {
 template <int dimension, typename float_type, typename geometry_type>
 region_species<dimension, float_type, geometry_type>::region_species(
     std::shared_ptr<particle_type const> particle
-  , std::shared_ptr<box_type const> box
   , std::shared_ptr<geometry_type const> geometry
   , geometry_selection geometry_sel
   , unsigned int species
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
-  , box_(box)
   , logger_(logger)
   , geometry_(geometry)
   , geometry_selection_(geometry_sel)
@@ -74,7 +72,6 @@ void region_species<dimension, float_type, geometry_type>::update_()
         for (size_type i = 0; i < particle_->nparticle(); ++i) {
             vector_type const& r = position[i];
             unsigned int s = species[i];
-            // box_->reduce_periodic(r);  FIXME test whether this is really not needed
             bool in_species = (s == species_);
             bool in_geometry = (*geometry_)(r);
             if (geometry_selection_ == excluded) {
@@ -191,7 +188,6 @@ void region_species<dimension, float_type, geometry_type>::luaopen(lua_State* L)
 
               , def("region_species", &std::make_shared<region_species<dimension, float_type, geometry_type>
                   , std::shared_ptr<particle_type const>
-                  , std::shared_ptr<box_type const>
                   , std::shared_ptr<geometry_type const>
                   , geometry_selection
                   , unsigned int

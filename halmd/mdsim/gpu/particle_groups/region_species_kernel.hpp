@@ -50,7 +50,6 @@ struct region_species_wrapper
       , unsigned int* // mask
       , geometry_type const
       , geometry_selection
-      , vector_type  // box length
       , unsigned int // species
     )> compute_mask;
 

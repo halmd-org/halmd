@@ -23,7 +23,6 @@
 #define HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_SPECIES_HPP
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_group.hpp>
 #include <halmd/mdsim/gpu/particle_groups/region_species_kernel.hpp>
@@ -55,7 +54,6 @@ public:
     typedef typename particle_group::size_type size_type;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef mdsim::box<dimension> box_type;
 
     enum geometry_selection {
         excluded = 1
@@ -67,7 +65,6 @@ public:
      */
     region_species(
         std::shared_ptr<particle_type const> particle
-      , std::shared_ptr<box_type const> box
       , std::shared_ptr<geometry_type const> geometry
       , geometry_selection geometry_sel
       , unsigned int species
@@ -115,8 +112,6 @@ private:
 
     /** particle instance */
     std::shared_ptr<particle_type const> particle_;
-    /** simulation box */
-    std::shared_ptr<box_type const> box_;
     /** region the particles are sorted by */
     std::shared_ptr<geometry_type const> geometry_;
     geometry_selection geometry_selection_;

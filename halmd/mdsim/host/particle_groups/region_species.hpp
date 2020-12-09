@@ -24,7 +24,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle_group.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/box.hpp>
 
 #include <lua.hpp>
 #include <memory>
@@ -47,7 +46,6 @@ public:
     typedef typename particle_group::size_type size_type;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef mdsim::box<dimension> box_type;
 
     enum geometry_selection {
         excluded = 1
@@ -59,7 +57,6 @@ public:
      */
     region_species(
         std::shared_ptr<particle_type const> particle
-      , std::shared_ptr<box_type const> box
       , std::shared_ptr<geometry_type const> geometry
       , geometry_selection geometry_sel
       , unsigned int species
@@ -105,8 +102,6 @@ private:
 
     /** particle instance */
     std::shared_ptr<particle_type const> particle_;
-    /** simulation box */
-    std::shared_ptr<box_type const> box_;
     /** region the particles are sorted by */
     std::shared_ptr<geometry_type const> geometry_;
     geometry_selection geometry_selection_;

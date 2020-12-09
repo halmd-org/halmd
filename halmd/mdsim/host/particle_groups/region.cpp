@@ -36,13 +36,11 @@ namespace particle_groups {
 template <int dimension, typename float_type, typename geometry_type>
 region<dimension, float_type, geometry_type>::region(
     std::shared_ptr<particle_type const> particle
-  , std::shared_ptr<box_type const> box
   , std::shared_ptr<geometry_type const> geometry
   , geometry_selection geometry_sel
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
-  , box_(box)
   , logger_(logger)
   , geometry_(geometry)
   , geometry_selection_(geometry_sel)
@@ -70,7 +68,6 @@ void region<dimension, float_type, geometry_type>::update_()
 
         for (size_type i = 0; i < particle_->nparticle(); ++i) {
             vector_type const& r = position[i];
-            // box_->reduce_periodic(r);  FIXME test whether this is really not needed
             bool in_geometry = (*geometry_)(r);
             if (geometry_selection_ == excluded) {
                 in_geometry = !in_geometry;
@@ -184,7 +181,6 @@ void region<dimension, float_type, geometry_type>::luaopen(lua_State* L)
 
               , def("region", &std::make_shared<region<dimension, float_type, geometry_type>
                   , std::shared_ptr<particle_type const>
-                  , std::shared_ptr<box_type const>
                   , std::shared_ptr<geometry_type const>
                   , geometry_selection
                   , std::shared_ptr<logger>

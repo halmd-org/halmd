@@ -49,7 +49,7 @@ local geometry_selection = {
 --
 --    -- select particles from within this sub-box (region)
 --    local group_cuboid = halmd.mdsim.particle_groups.region({
---        particle = system, box = box, label = "subbox"
+--        particle = system, label = "subbox"
 --      , geometry = geometry, selection = "included"
 --    })
 --
@@ -59,7 +59,6 @@ local geometry_selection = {
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
--- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param table args.geometry: geometry of the region, instance of :mod:`halmd.mdsim.geometries`
 -- :param string args.selection: select particles within or outside the geometry. Allowed values are ``included`` and ``excluded``.
 -- :param string args.label: group label
@@ -126,7 +125,6 @@ local geometry_selection = {
 local M = module(function(args)
     utility.assert_type(args, "table")
     local particle = utility.assert_kwarg(args, "particle")
-    local box = utility.assert_kwarg(args, "box")
     local geometry = utility.assert_kwarg(args, "geometry")
     local selection = utility.assert_type(utility.assert_kwarg(args, "selection"), "string")
     local label = utility.assert_type(utility.assert_kwarg(args, "label"), "string")
@@ -140,7 +138,7 @@ local M = module(function(args)
     local logger = log.logger({prefix = ("region (%s)"):format(label)})
 
     -- construct particle group from region in space
-    local self = region(particle, box, geometry, geometry_selection[selection], logger)
+    local self = region(particle, geometry, geometry_selection[selection], logger)
 
     -- store label as Lua property
     self.label = property(function(self)

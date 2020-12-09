@@ -99,7 +99,7 @@ function main(args)
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
-    local group_included = mdsim.particle_groups.region({particle = particle, box = box
+    local group_included = mdsim.particle_groups.region({particle = particle
       , geometry = geometry, selection = "included"
       , label = "upper quadrant"
     })

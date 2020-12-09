@@ -23,7 +23,6 @@
 #include <halmd/algorithm/gpu/copy_if_kernel.cuh>
 #include <halmd/mdsim/geometries/cuboid.hpp>
 #include <halmd/mdsim/geometries/sphere.hpp>
-#include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/particle_groups/region_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
@@ -63,17 +62,17 @@ private:
     geometry_selection selection_;
 };
 
-template <typename vector_type, typename geometry_type>
+template <typename geometry_type>
 __global__ void compute_mask(
     float4 const* g_r
   , unsigned int nparticle
   , unsigned int* g_mask
   , geometry_type const geometry
   , geometry_selection selection
-  , vector_type box_length
 )
 {
-    enum { dimension = vector_type::static_size };
+    typedef typename geometry_type::vector_type vector_type;
+
     unsigned int const i = GTID;
     if(i >= nparticle)
         return;
@@ -82,8 +81,6 @@ __global__ void compute_mask(
     unsigned int species;
     tie(r, species) <<= g_r[i];
 
-    // enforce periodic boundary conditions
-    box_kernel::reduce_periodic(r, box_length);
     bool in_geometry = geometry(r);
     if(selection == excluded)
         in_geometry = !in_geometry;

@@ -68,12 +68,12 @@ local function setup(args)
     -- construct included/excluded particle groups, label is inherited from 'region'
     local group = {}
     group["included"] = mdsim.particle_groups.region_species({
-        particle = particle, box = box, geometry = cuboid, selection = "included"
+        particle = particle, geometry = cuboid, selection = "included"
       , species = 1
       , label = "upper quadrant (included)"
     })
     group["excluded"] = mdsim.particle_groups.region_species({
-        particle = particle, box = box, geometry = cuboid, selection = "excluded"
+        particle = particle, geometry = cuboid, selection = "excluded"
       , species = 1
       , label = "upper quadrant (excluded)"
     })
