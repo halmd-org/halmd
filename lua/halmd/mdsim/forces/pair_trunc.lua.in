@@ -53,22 +53,23 @@ local pair_trunc = assert(libhalmd.mdsim.forces.pair_trunc)
 -- triggered by the signals `on_force` and `on_prepend_force` of
 -- `args.particle[1]`.
 --
--- The argument ``weight`` determines the fraction of the potential energy and the stress
--- tensor that that is added to by the interaction of this force module. A value of `1`
--- is defined as adding the full potential energy and stress tensor of each interaction.
--- This is especially useful when considering pair forces where the particle instances (`A`
--- and `B`) are distinct and only `AB` but not `BA` interaction is calculated.
+-- The argument ``weight`` determines the fraction of the potential energy and
+-- the stress tensor that is added to by the interaction of this force module.
+-- A value of `1` is defined as adding the full potential energy and stress
+-- tensor of each interaction.  This is especially useful when considering pair
+-- forces where the particle instances (`A` and `B`) are distinct and only `AB`
+-- but not `BA` interaction is calculated.
 --
 -- .. note::
 --
 --   If two different instances of :class:`halmd.mdsim.particle` are passed,
 --   Newton's 3rd law is not obeyed. To restore such a behaviour, the module
 --   must be constructed a second time with the order of particle instances
---   reversed.
+--   reversed. In this situation, `weight` needs to be set to `0.5`.
 --
 -- If ``neighbour`` is left unspecified, a default neighbour list module is
 -- constructed using the default parameters of :mod:`halmd.mdsim.neighbour`. If
--- if a different value for, e.g., the ``occupancy`` parameter is needed, the
+-- a different value for, e.g., the ``occupancy`` parameter is needed, the
 -- neighbour list module has to be provided explicitly.
 --
 -- .. attribute:: potential
