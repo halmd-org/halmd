@@ -96,7 +96,6 @@ private:
     cache<> ordered_cache_;
     /** cache observer of particle reverse IDs */
     cache<> unordered_cache_;
-    cache<array_type> mask_;
     /** particle indices of particles in the region */
     cache<array_type> selection_;
 };

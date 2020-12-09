@@ -75,8 +75,8 @@ void region_species<dimension, float_type, geometry_type>::update_()
             vector_type const& r = position[i];
             unsigned int s = species[i];
             // box_->reduce_periodic(r);  FIXME test whether this is really not needed
-            bool in_geometry  = (*geometry_)(r);
             bool in_species = (s == species_);
+            bool in_geometry = (*geometry_)(r);
             if (geometry_selection_ == excluded) {
                 in_geometry = !in_geometry;
             }

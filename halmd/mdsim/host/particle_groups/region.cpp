@@ -71,7 +71,7 @@ void region<dimension, float_type, geometry_type>::update_()
         for (size_type i = 0; i < particle_->nparticle(); ++i) {
             vector_type const& r = position[i];
             // box_->reduce_periodic(r);  FIXME test whether this is really not needed
-            bool in_geometry  = (*geometry_)(r);
+            bool in_geometry = (*geometry_)(r);
             if (geometry_selection_ == excluded) {
                 in_geometry = !in_geometry;
             }
