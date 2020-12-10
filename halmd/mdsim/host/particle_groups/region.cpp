@@ -41,9 +41,9 @@ region<dimension, float_type, geometry_type>::region(
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
-  , logger_(logger)
   , geometry_(geometry)
   , geometry_selection_(geometry_sel)
+  , logger_(logger)
   , mask_(particle->nparticle())
 {
 }
