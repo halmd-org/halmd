@@ -245,7 +245,8 @@ make_range(size_type nparticle)
  */
 using namespace boost::unit_test;
 
-auto dataset = data::make<unsigned int>({500000, 25000, 1000});
+unsigned int const DATA_ARRAY[] = {500000, 25000, 1000};
+auto dataset = data::make(DATA_ARRAY);
 unsigned int const nspecies = 1;
 unsigned int constexpr repeat = 10;
 

@@ -38,14 +38,17 @@
 
 using namespace boost::unit_test;
 
+unsigned int const DATA_ARRAY_COUNT[] = {1000000, 100000, 10000, 1024, 1000, 512, 100, 10, 2, 1};
+unsigned int const DATA_ARRAY_VALUE[] = {0, 42};
+
 /**
  * Data-driven test case registration.
  */
 BOOST_DATA_TEST_CASE(
     test_iota
-    , data::make<unsigned int>({1000000, 100000, 10000, 1024, 1000, 512, 100, 10, 2, 1}) *
-        data::make<unsigned int>({0, 42})
-    , count, value
+  , data::make(DATA_ARRAY_COUNT) * data::make(DATA_ARRAY_VALUE)
+  , count
+  , value
 )
 {
     unsigned int const repeat = std::max(100 / count, 10u);
