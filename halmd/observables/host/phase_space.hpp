@@ -44,6 +44,7 @@ namespace host {
  */
 class phase_space_sampler {
 public:
+    virtual phase_space_sampler() {}
     virtual std::shared_ptr<sample_base> acquire(void) = 0;
     virtual void set(std::shared_ptr<sample_base const> sample) = 0;
     virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler> self) = 0;
@@ -55,6 +56,7 @@ template <int dimension, typename float_type>
 class phase_space
 {
 public:
+    virtual ~phase_space() {}
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;

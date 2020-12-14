@@ -54,6 +54,8 @@ public:
     typedef array_type::value_type size_type;
     typedef cuda::host::vector<size_type> host_array_type;
 
+    virtual ~particle_group() {}
+
     /**
      * Returns ordered sequence of particle indices.
      */

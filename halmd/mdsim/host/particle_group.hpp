@@ -50,6 +50,8 @@ public:
     typedef std::vector<unsigned int> array_type;
     typedef array_type::value_type size_type;
 
+    virtual ~particle_group() {}
+
     /**
      * Returns ordered sequence of particle indices.
      */
