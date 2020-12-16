@@ -75,6 +75,13 @@ public:
     void finish();
 
     /**
+     * Returns true if run() was not called since construction of the class object.
+     */
+    bool first_run() {
+        return first_run_;
+    }
+
+    /**
      * Connect slot to signal emitted before MD integration step
      */
     connection on_prepare(std::function<void ()> const& slot, step_type interval, step_type start);

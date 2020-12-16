@@ -36,7 +36,7 @@ sampler::sampler(
 )
   : clock_(clock)
   , core_(core)
-  , first_run_(false)
+  , first_run_(true)
 {}
 
 void sampler::sample()
@@ -159,6 +159,7 @@ void sampler::luaopen(lua_State* L)
             .def("on_sample", &sampler::on_sample)
             .def("on_start", &sampler::on_start)
             .def("on_finish", &sampler::on_finish)
+            .property("first_run", &sampler::first_run)
             .scope
             [
                 class_<runtime>("runtime")

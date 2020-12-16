@@ -19,6 +19,7 @@
 --
 
 local halmd = halmd
+local sampler = halmd.observables.sampler
 local utility = halmd.utility
 local log = halmd.io.log
 
@@ -62,8 +63,10 @@ return function()
     -- call run method from user script
     main(args)
 
-    -- finish simulation run
-    halmd.observables.sampler:finish()
+    -- finish simulation run, only if sampler:run() was called in user script
+    if not sampler.first_run then
+        sampler:finish()
+    end
 
     -- log profiler results
     utility.profiler:profile()
