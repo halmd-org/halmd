@@ -36,7 +36,7 @@
 using namespace std;
 using namespace halmd;
 
-#if BOOST_VERSION < 105900
+#if BOOST_VERSION < 106500
 BOOST_GLOBAL_FIXTURE(set_cuda_device);
 #else
 BOOST_TEST_GLOBAL_FIXTURE(set_cuda_device);
