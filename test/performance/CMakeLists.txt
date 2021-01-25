@@ -32,4 +32,15 @@ if(HALMD_WITH_GPU)
   halmd_add_gpu_test(performance/memory_allocation
     test_performance_memory_allocation --log_level=message
   )
+
+  cuda_add_executable(test_performance_reduction
+    reduction.cpp
+    reduction_kernel.cu
+  )
+  target_link_libraries(test_performance_reduction
+    ${HALMD_TEST_LIBRARIES}
+  )
+  halmd_add_gpu_test(performance/reduction
+    test_performance_reduction --log_level=message
+  )
 endif(HALMD_WITH_GPU)

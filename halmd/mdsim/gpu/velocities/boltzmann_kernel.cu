@@ -60,11 +60,6 @@ __global__ void gaussian(
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type float_type;
 
-    extern __shared__ char __s_array[];
-    fixed_vector<dsfloat, dimension>* const s_mv = reinterpret_cast<fixed_vector<dsfloat, dimension>*>(__s_array);
-    dsfloat* const s_mv2 = reinterpret_cast<dsfloat*>(&s_mv[TDIM]);
-    dsfloat* const s_m = reinterpret_cast<dsfloat*>(&s_mv2[TDIM]);
-
     fixed_vector<dsfloat, dimension> mv = 0;
     dsfloat mv2 = 0;
     dsfloat m = 0;
@@ -105,14 +100,8 @@ __global__ void gaussian(
     // store random number generator state in global device memory
     rng[GTID] = state;
 
-    // reduced values for this thread
-    s_mv[TID] = mv;
-    s_mv2[TID] = mv2;
-    s_m[TID] = m;
-    __syncthreads();
-
     // compute reduced value for all threads in block
-    reduce<threads / 2, ternary_sum_>(mv, mv2, m, s_mv, s_mv2, s_m);
+    reduce<ternary_sum_>(mv, mv2, m);
 
     if (TID < 1) {
         // store block reduced value in global memory

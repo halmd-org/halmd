@@ -108,11 +108,7 @@ float_type max_displacement<dimension, float_type>::compute()
 
         scoped_timer_type timer(runtime_.compute);
         try {
-            displacement_impl_.configure(
-                dim_reduce_.grid
-              , dim_reduce_.block
-              , dim_reduce_.threads_per_block() * sizeof(float)
-            );
+            displacement_impl_.configure(dim_reduce_.grid, dim_reduce_.block);
             displacement_impl_(
                 position.data()
               , g_r0_

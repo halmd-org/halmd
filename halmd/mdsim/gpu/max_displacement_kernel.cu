@@ -45,8 +45,6 @@ __global__ void displacement(
     typedef typename vector_type::value_type float_type;
     enum { dimension = vector_type::static_size };
 
-    extern __shared__ char __s_array[]; // CUDA 3.0/3.1 breaks template __shared__ type
-    float_type* const s_rr = reinterpret_cast<float_type*>(__s_array);
     float_type rr = 0;
 
     for (uint i = GTID; i < npart; i += GTDIM) {
@@ -60,12 +58,8 @@ __global__ void displacement(
         rr = max(rr, inner_prod(r, r));
     }
 
-    // reduced values for this thread
-    s_rr[TID] = rr;
-    __syncthreads();
-
     // reduce values for all threads in block with the maximum function
-    reduce<threads / 2, max_>(rr, s_rr);
+    reduce<max_>(rr);
 
     if (TID < 1) {
         // store block reduced value in global memory

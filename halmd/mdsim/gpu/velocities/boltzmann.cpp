@@ -97,11 +97,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 
     // generate Maxwell-Boltzmann distributed velocities,
     // assuming equal (unit) mass for all particle types
-    gaussian_impl_.configure(
-        random_->rng().dim.grid
-      , random_->rng().dim.block
-      , random_->rng().dim.threads_per_block() * (2 + dimension) * sizeof(dsfloat)
-    );
+    gaussian_impl_.configure(random_->rng().dim.grid, random_->rng().dim.block);
     gaussian_impl_(
         velocity->data()
       , particle_->nparticle()
