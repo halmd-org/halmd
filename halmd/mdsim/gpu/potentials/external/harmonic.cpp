@@ -60,10 +60,12 @@ harmonic<dimension, float_type>::harmonic(
     LOG("potential stiffness: K = " << stiffness_);
     LOG("potential offset: r₀ = " << offset_);
 
-    // merge parameters in a single array
-    for (size_t i = 0; i < g_param_.size(); ++i) {
-        g_param_[i] <<= tie(offset_[i], stiffness_[i]);
+    // merge parameters in a single array and copy to device
+    cuda::memory::host::vector<float4> param(g_param_.size());
+    for (size_t i = 0; i < param.size(); ++i) {
+        param[i] <<= tie(offset_[i], stiffness_[i]);
     }
+    cuda::copy(param.begin(), param.end(), g_param_.begin());
 }
 
 template <int dimension, typename float_type>

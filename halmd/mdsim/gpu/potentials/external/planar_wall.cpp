@@ -94,12 +94,15 @@ planar_wall<dimension, float_type>::planar_wall(
         n /= norm_2(n);
     }
 
-    // merge geometry parameters in a single array
+    // merge geometry parameters in a single array and copy to device
+    cuda::memory::host::vector<float4> param_geometry(g_param_geometry_.size());
     for (size_t i = 0; i < nwall; ++i) {
-            g_param_geometry_[i] <<= tie(surface_normal_(i), offset_(i));
+            param_geometry[i] <<= tie(surface_normal_(i), offset_(i));
     }
+    cuda::copy(param_geometry.begin(), param_geometry.end(), g_param_geometry_.begin());
 
-    // merge potential parameters in a single array
+    // merge potential parameters in a single array and copy to device
+    cuda::memory::host::vector<float4> param_potential(g_param_potential_.size());
     for (size_t i = 0; i < nwall; ++i) {
         for (size_t j = 0; j < nspecies; ++j) {
               using namespace planar_wall_kernel;
@@ -109,9 +112,10 @@ planar_wall<dimension, float_type>::planar_wall(
               p[SIGMA]   = sigma_(i, j);
               p[WETTING] = wetting_(i, j);
               p[CUTOFF]  = cutoff_(i, j);
-              g_param_potential_[j * nwall + i] = p;
+              param_potential[j * nwall + i] = p;
         }
     }
+    cuda::copy(param_potential.begin(), param_potential.end(), g_param_potential_.begin());
 
     // copy CUDA symbols
     planar_wall_wrapper::nwall.set(nwall);
