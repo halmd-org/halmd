@@ -34,7 +34,7 @@
 
 #include <halmd/config.hpp>
 #ifdef __CUDACC__
-# include <halmd/algorithm/gpu/bits.cuh> // swap
+# include <halmd/algorithm/gpu/bits/swap.cuh> // swap
 #endif
 
 namespace halmd {
@@ -45,7 +45,7 @@ namespace detail {
 
 // import into detail namespace
 #ifdef __CUDACC__
-using algorithm::gpu::swap;
+using algorithm::gpu::bits::swap;
 #else
 using boost::math::signbit;
 using std::swap;
