@@ -23,6 +23,7 @@
 #ifndef HALMD_UTILITY_GPU_CONFIGURE_KERNEL_HPP
 #define HALMD_UTILITY_GPU_CONFIGURE_KERNEL_HPP
 
+#include <halmd/io/logger.hpp>
 #include <halmd/utility/gpu/device.hpp>
 
 #include <algorithm>
