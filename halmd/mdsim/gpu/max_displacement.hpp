@@ -57,7 +57,7 @@ private:
     typedef typename particle_type::position_array_type position_array_type;
 
     typedef typename particle_type::vector_type vector_type;
-    typedef typename max_displacement_wrapper<dimension>::displacement_impl_type displacement_impl_type;
+    typedef max_displacement_wrapper<dimension> wrapper_type;
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;
 
@@ -71,8 +71,6 @@ private:
     std::shared_ptr<box_type const> box_;
 
     cuda::config dim_reduce_;
-    static displacement_impl_type get_displacement_impl(int threads);
-    displacement_impl_type displacement_impl_;
 
     /** particle positions at last neighbour list update */
     cuda::memory::device::vector<float4> g_r0_;

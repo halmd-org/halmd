@@ -33,7 +33,7 @@ namespace max_displacement_kernel {
 /**
  * maximum squared particle displacement
  */
-template <typename vector_type, int threads>
+template <typename vector_type>
 __global__ void displacement(
     float4 const* g_r
   , float4 const* g_r0
@@ -71,12 +71,7 @@ __global__ void displacement(
 
 template <int dimension>
 max_displacement_wrapper<dimension> max_displacement_wrapper<dimension>::kernel = {
-    max_displacement_kernel::displacement<fixed_vector<float, dimension>, 1024>
-  , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 512>
-  , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 256>
-  , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 128>
-  , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 64>
-  , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 32>
+    max_displacement_kernel::displacement<fixed_vector<float, dimension>>
 };
 
 template class max_displacement_wrapper<3>;

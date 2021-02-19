@@ -84,7 +84,7 @@ __device__ void reduce_warp(accumulator_type& acc, unsigned int size)
  *
  * @param acc accumulator of block thread 0
  */
-template <unsigned int threads, typename accumulator_type>
+template <typename accumulator_type>
 inline __device__ void reduce(accumulator_type& acc)
 {
     // We need to avoid default initialization of the shared memory
@@ -122,7 +122,7 @@ inline __device__ void reduce(accumulator_type& acc)
  * @param g_block_acc output block accumulators
  * @param input accumulator
  */
-template <unsigned int threads, typename accumulator_type>
+template <typename accumulator_type>
 static __global__ void reduction(
     typename accumulator_type::iterator const first
   , typename std::iterator_traits<typename accumulator_type::iterator>::difference_type size
@@ -135,7 +135,7 @@ static __global__ void reduction(
         acc(first[i]);
     }
     // compute reduced value for all threads in block
-    reduce<threads>(acc);
+    reduce(acc);
 
     if (TID < 1) {
         // store block reduced value in global memory
@@ -143,12 +143,13 @@ static __global__ void reduction(
     }
 }
 
-template <unsigned int threads, typename accumulator_type>
-reduction_kernel<threads, accumulator_type> const reduction_kernel<threads, accumulator_type>::kernel = {
-    reduction<threads>
+} // namespace detail
+
+template <typename accumulator_type>
+reduction_kernel<accumulator_type> reduction_kernel<accumulator_type>::kernel = {
+    detail::reduction
 };
 
-} // namespace detail
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_REDUCE_KERNEL_CUH */
