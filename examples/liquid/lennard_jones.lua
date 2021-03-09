@@ -25,6 +25,7 @@ local mdsim = halmd.mdsim
 local numeric = halmd.numeric
 local observables = halmd.observables
 local dynamics = halmd.observables.dynamics
+local log = halmd.io.log
 local readers = halmd.io.readers
 local writers = halmd.io.writers
 
@@ -37,14 +38,16 @@ function main(args)
 
     -- construct a phase space reader and sample
     local reader, sample = observables.phase_space.reader({
-        file = file, location = {"particles", "all"}, fields = {"position", "velocity", "species", "mass"}
+        file = file, location = {"particles", "all"}, fields = {"position", "velocity"}
     })
     -- read phase space sample at last step in file
     reader:read_at_step(-1)
     -- determine system parameters from phase space sample
     local nparticle = assert(sample.nparticle)
-    local nspecies = assert(sample.nspecies)
     local dimension = assert(sample.dimension)
+    if (assert(sample.nspecies) ~= 1) then
+        log.error("Simulation script expects input file with particle data for a single species.")
+    end
 
     -- read edge vectors of simulation domain from file
     local edges = mdsim.box.reader({file = file, location = {"particles", "all"}})
@@ -55,10 +58,20 @@ function main(args)
     file:close()
 
     -- create system state
-    local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = nspecies})
+    local particle = mdsim.particle({dimension = dimension, particles = nparticle})
+
+    -- select all particles
+    local all_group = mdsim.particle_groups.all({particle = particle})
+
+    -- use phase space "sampler" to set particle positions and velocities
+    -- by converting the sample obtained from the file,
+    -- the sampler will be reused below for observables and file output
+    local phase_space = observables.phase_space({box = box, group = all_group})
+    phase_space:set(sample)
 
     -- define Lennard-Jones pair potential
-    local potential = mdsim.potentials.pair.lennard_jones({species = particle.nspecies})
+    -- use default parameters ε=1 and σ=1 for a single species
+    local potential = mdsim.potentials.pair.lennard_jones()
     -- apply interaction cutoff
     if args.cutoff > 0 then
         -- use smooth truncation
@@ -68,16 +81,14 @@ function main(args)
             potential = potential:truncate({cutoff = args.cutoff})
         end
     end
-    -- compute forces
-    local force = mdsim.forces.pair({
+    -- register computation of pair forces
+    mdsim.forces.pair({
         box = box, particle = particle, potential = potential
     })
 
     -- add velocity-Verlet integrator
     local integrator = mdsim.integrators.verlet({
-        box = box
-      , particle = particle
-      , timestep = args.timestep
+        box = box, particle = particle, timestep = args.timestep
     })
 
     -- convert integration time to number of steps
@@ -86,21 +97,15 @@ function main(args)
     -- H5MD file writer
     local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
 
-    -- select all particles
-    local particle_group = mdsim.particle_groups.all({particle = particle})
-
-    -- sample phase space
-    local phase_space = observables.phase_space({box = box, group = particle_group})
-    -- set particle positions, velocities, species
-    phase_space:set(sample)
     -- write trajectory of particle groups to H5MD file
     local interval = args.sampling.trajectory or steps
     if interval > 0 then
-        phase_space:writer({file = file, fields = {"position", "velocity", "species", "mass"}, every = interval})
+        -- reuse instance of phase space sampler from above
+        phase_space:writer({file = file, fields = {"position", "velocity"}, every = interval})
     end
 
     -- sample macroscopic state variables
-    local msv = observables.thermodynamics({box = box, group = particle_group})
+    local msv = observables.thermodynamics({box = box, group = all_group})
     local interval = args.sampling.state_vars
     if interval > 0 then
         msv:writer({
@@ -132,7 +137,7 @@ function main(args)
         })
 
         -- compute density modes and output their time series,
-        density_mode = observables.density_mode({group = particle_group, wavevector = wavevector})
+        density_mode = observables.density_mode({group = all_group, wavevector = wavevector})
         if interval > 0 then
             density_mode:writer({file = file, every = interval})
         end
@@ -195,7 +200,7 @@ function main(args)
     observables.sampler:sample()
 
     -- estimate remaining runtime
-    local runtime = observables.runtime_estimate({
+    observables.runtime_estimate({
         steps = steps, first = 10, interval = 900, sample = 60
     })
 

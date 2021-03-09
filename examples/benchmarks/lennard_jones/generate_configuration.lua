@@ -74,7 +74,7 @@ function main(args)
     -- connect H5MD writer, output only first and last step
     observables.phase_space({box = box, group = all_group}):writer({
         file = file
-      , fields = {"position", "velocity", "species", "mass"}
+      , fields = {"position", "velocity"}
     })
 
     -- estimate remaining runtime
@@ -85,9 +85,6 @@ function main(args)
 
     -- run simulation
     observables.sampler:run(steps)
-
-    -- log profiler results
-    utility.profiler:profile()
 end
 
 --

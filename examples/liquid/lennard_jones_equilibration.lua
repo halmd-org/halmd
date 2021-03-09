@@ -32,8 +32,7 @@ local utility = halmd.utility
 --
 function main(args)
     -- total number of particles from sum of particles per species
-    local nspecies = #args.particles
-    local nparticle = numeric.sum(args.particles)
+    local nparticle = args.particles
 
     -- derive edge lengths from number of particles, density and edge ratios
     local volume = nparticle / args.density
@@ -48,35 +47,20 @@ function main(args)
     local box = mdsim.box({length = length})
 
     -- create system state
-    local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = nspecies})
-    -- set particle species, with continuous range of IDs per species
-    local species = {}
-    for s = 0, nspecies - 1 do
-        local nparticle = assert(args.particles[s + 1])
-        for i = 1, nparticle do table.insert(species, s) end
-    end
-    particle.data["species"] = species
-
-    -- select particles from upper right quadrant of the box
-    local lowest_corner = {}
-    for i = 1, dimension do
-        lowest_corner[i] = 0
-        length[i] = length[i]/2
-    end
-    local geometry = mdsim.geometries.cuboid({lowest_corner = lowest_corner, length = length})
+    local particle = mdsim.particle({dimension = dimension, particles = nparticle})
 
     -- set initial particle positions
-    local lattice = mdsim.positions.lattice({box = box, particle = particle})
-    lattice:set()
+    mdsim.positions.lattice({box = box, particle = particle})
+       :set()
     -- set initial particle velocities
     local boltzmann = mdsim.velocities.boltzmann({
         particle = particle
       , temperature = args.temperature
-    })
-    boltzmann:set()
+    }):set()
 
-    -- define Lennard-Jones pair potential
-    local potential = mdsim.potentials.pair.lennard_jones({species = particle.nspecies})
+    -- define Lennard-Jones pair potential,
+    -- use default parameters ε=1 and σ=1 for a single species
+    local potential = mdsim.potentials.pair.lennard_jones()
     -- apply interaction cutoff
     if args.cutoff > 0 then
         -- use smooth truncation
@@ -86,8 +70,8 @@ function main(args)
             potential = potential:truncate({cutoff = args.cutoff})
         end
     end
-    -- compute forces
-    local force = mdsim.forces.pair({
+    -- register computation of pair forces
+    mdsim.forces.pair({
         box = box, particle = particle, potential = potential
     })
 
@@ -98,21 +82,24 @@ function main(args)
     local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
 
     -- select all particles
-    local particle_group = mdsim.particle_groups.all({particle = particle})
-    local group_included = mdsim.particle_groups.region({particle = particle
-      , geometry = geometry, selection = "included"
-      , label = "upper quadrant"
+    local all_group = mdsim.particle_groups.all({particle = particle})
+
+    -- select particles from a sphere centred in the simulation box,
+    -- the radius is 1/4 of the shortest box edge
+    local sphere = mdsim.geometries.sphere({
+        centre = numeric.scalar_vector(dimension, 0), radius = numeric.min(length) / 4
+    })
+    local sphere_group = mdsim.particle_groups.region({particle = particle
+      , geometry = sphere, selection = "included", label = "central sphere"
     })
 
-    local msv_local = observables.thermodynamics({box = box, group = group_included})
-
     -- sample phase space
-    local phase_space = observables.phase_space({box = box, group = particle_group})
+    local phase_space = observables.phase_space({box = box, group = all_group})
     -- write trajectory of particle groups to H5MD file
     local interval = args.sampling.trajectory or steps
     if interval > 0 then
         phase_space:writer({
-            file = file, fields = {"position", "velocity", "species", "mass"}, every = interval
+            file = file, fields = {"position", "velocity"}, every = interval
         })
     end
 
@@ -120,9 +107,11 @@ function main(args)
     local msv
     local interval = args.sampling.state_vars
     if interval > 0 then
-        msv = observables.thermodynamics({box = box, group = particle_group})
+        msv = observables.thermodynamics({box = box, group = all_group})
         msv:writer({file = file, every = interval})
-        msv_local:writer({file = file, every = interval})
+
+        observables.thermodynamics({box = box, group = sphere_group})
+           :writer({file = file, every = interval})
     end
 
     local accumulator = observables.utility.accumulator({
@@ -170,7 +159,7 @@ function define_args(parser)
     parser:add_argument("random-seed", {type = "integer", action = parser.action.random_seed,
         help = "seed for random number generator"})
 
-    parser:add_argument("particles", {type = "vector", dtype = "integer", default = {10000}, help = "number of particles"})
+    parser:add_argument("particles", {type = "integer", default = 10000, help = "number of particles"})
     parser:add_argument("density", {type = "number", default = 0.75, help = "particle number density"})
     parser:add_argument("ratios", {type = "vector", dtype = "number", action = function(args, key, value)
         if #value ~= 2 and #value ~= 3 then
@@ -178,6 +167,7 @@ function define_args(parser)
         end
         args[key] = value
     end, default = {1, 1, 1}, help = "relative aspect ratios of simulation box"})
+
     parser:add_argument("cutoff", {type = "float32", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
     parser:add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
