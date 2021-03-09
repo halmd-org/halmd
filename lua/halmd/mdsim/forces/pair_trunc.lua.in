@@ -21,12 +21,11 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local core              = require("halmd.mdsim.core")
-local neighbour         = require("halmd.mdsim.neighbour")
-local device            = require("halmd.utility.device")
-local module            = require("halmd.utility.module")
-local profiler          = require("halmd.utility.profiler")
-local utility           = require("halmd.utility")
+local mdsim    = require("halmd.mdsim")
+local device   = require("halmd.utility.device")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
+local utility  = require("halmd.utility")
 
 ---
 -- Truncated Pair Force
@@ -44,7 +43,7 @@ local pair_trunc = assert(libhalmd.mdsim.forces.pair_trunc)
 -- :param args.particle: instance, or sequence of two instances, of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :mod:`halmd.mdsim.box`
 -- :param args.potential: instance of :mod:`halmd.mdsim.potentials`
--- :param args.neighbour: instance of :mod:`halmd.mdsim.neighbour` (optional)
+-- :param args.neighbour: instance of :mod:`halmd.mdsim.neighbour` or a table of keyword arguments (optional)
 -- :param number args.weight: weight of the auxiliary variables *(default: 1)*
 --
 -- The module computes the truncated potential forces excerted by the particles
@@ -69,8 +68,17 @@ local pair_trunc = assert(libhalmd.mdsim.forces.pair_trunc)
 --
 -- If ``neighbour`` is left unspecified, a default neighbour list module is
 -- constructed using the default parameters of :mod:`halmd.mdsim.neighbour`. If
--- a different value for, e.g., the ``occupancy`` parameter is needed, the
--- neighbour list module has to be provided explicitly.
+-- a different value for, e.g., the ``skin`` parameter is needed, either
+-- the neighbour list module has to be provided explicitly or a keyword table
+-- with the non-default arguments is passed, which is forwarded to the
+-- default-constructed neighbour list module. For example:
+--
+-- .. code-block:: lua
+--
+--     mdsim.forces.pair({
+--         box = [...], particle = [...], potential = [...]
+--       , neighbour = {skin = 0.7}     -- override default skin width
+--    })
 --
 -- .. attribute:: potential
 --
@@ -119,9 +127,19 @@ local M = module(function(args)
 
     local logger = assert(potential.logger)
 
-    -- create neighbour lists with cutoff radii of potential
-    local r_cut = assert(potential.r_cut)
-    local neighbour = args.neighbour or neighbour({box = box, particle = particle, r_cut = r_cut})
+    -- If no instance of a neighbour list was passed, create a default one. In
+    -- this case, a user-supplied table with keyword arguments is passed on to
+    -- the neighbour list constructor.
+    local neighbour = args.neighbour or {}
+    if type(neighbour) == "table" then
+        -- construct argument list
+        local args = neighbour
+        args.box = box
+        args.particle = particle
+        -- determine the cutoff radii from the potential
+        args.r_cut = assert(potential.r_cut)
+        neighbour = mdsim.neighbour(args)
+    end
 
     -- construct force module
     local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, weight, logger)
