@@ -85,17 +85,25 @@ public:
         return data();
     }
 
-    operator cuda::memory::device::vector<T> const&() const {
+    operator cuda::memory::device::vector<T> const&() const
+    {
         return data_;
     }
 
-    operator cuda::memory::device::vector<T>&() {
+    operator cuda::memory::device::vector<T>&()
+    {
         return data_;
     }
 
 private:
     cuda::memory::device::vector<T> data_;
 };
+
+template<typename T>
+inline void swap(dsfloat_cuda_vector<T>& lhs, dsfloat_cuda_vector<T>& rhs) noexcept
+{
+    lhs.swap(rhs);
+}
 
 } // namespace halmd
 

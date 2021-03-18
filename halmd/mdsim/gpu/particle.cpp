@@ -203,9 +203,12 @@ void particle<dimension, float_type>::rearrange(cuda::memory::device::vector<uns
       , nparticle_
     );
 
-    position.swap(*g_position);
+    using std::swap;
+
+    swap(position, *g_position);
     swap(image, *g_image);
-    velocity.swap(*g_velocity);
+    swap(velocity, *g_velocity);
+
     cuda::copy(id.begin(), id.begin() + id.capacity(), make_cache_mutable(id_)->begin());
 
     auto reverse_id = make_cache_mutable(reverse_id_);
