@@ -33,10 +33,6 @@
 
 #include <cuda.h>
 
-#if __CUDA_ARCH__ < 120
-# define USE_ORIGINAL_ANDERSEN_THERMOSTAT
-#endif
-
 namespace halmd {
 namespace mdsim {
 namespace gpu {

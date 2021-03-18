@@ -35,18 +35,7 @@
 
 // CUDA vector types for host compiler
 #ifdef HALMD_WITH_GPU
-/* Disable warning for CUDA 5.5 headers emitted by Clang:
- *   /usr/local/cuda-5.5/include/cuda_runtime.h:225:33: warning: function
- *   'cudaMallocHost' is not needed and will not be emitted [-Wunneeded-internal-declaration]
- */
-# if (defined(__clang__) && __clang_major__ >= 3 && __clang_minor__ > 2)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wunneeded-internal-declaration"
-#  include <cuda_runtime.h>
-#  pragma GCC diagnostic pop
-# else
-#  include <cuda_runtime.h>
-# endif
+# include <cuda_runtime.h>
 #endif
 
 #include <halmd/numeric/blas/detail/array.hpp>
