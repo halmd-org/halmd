@@ -98,7 +98,8 @@ from_binning<dimension, float_type>::lists()
 /**
  * Test compatibility of binning parameters with this neighbour list algorithm
  *
- * For the host implementation, there are no restrictions.
+ * The binning module is required to have at least 3 cells in each spatial
+ * direction in order to be used with the neighbour module.
  */
 template <int dimension, typename float_type>
 bool from_binning<dimension, float_type>::is_binning_compatible(
@@ -106,7 +107,8 @@ bool from_binning<dimension, float_type>::is_binning_compatible(
   , std::shared_ptr<binning_type const> binning2
 )
 {
-    return true;
+    auto ncell = binning2->ncell();
+    return *std::min_element(ncell.begin(), ncell.end()) >= 3;
 }
 
 /**
