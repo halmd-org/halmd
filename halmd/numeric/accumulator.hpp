@@ -201,13 +201,9 @@ HALMD_GPU_ENABLED T sum(accumulator<T> const& acc)
 } // namespace detail
 } // namespace numeric
 
-#ifndef HALMD_NO_TEMPLATE_ALIASES
 // import into top-level namespace
 template <typename T>
 using accumulator = halmd::numeric::detail::accumulator<T>;
-#else
-using halmd::numeric::detail::accumulator;
-#endif
 
 } // namespace halmd
 
