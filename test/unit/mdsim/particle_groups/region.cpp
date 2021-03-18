@@ -77,7 +77,13 @@ static void test_region(
     profiler.profile();
 
     // test if the mask is correct
+#ifdef HALMD_WITH_GPU
+    auto const& g_mask = read_cache(region.mask());
+    cuda::host::vector<size_type> mask(g_mask.size());
+    cuda::copy(g_mask.begin(), g_mask.end(), mask.begin());
+#else
     auto const& mask = read_cache(region.mask());
+#endif
     BOOST_CHECK_EQUAL(mask.size(), particle->nparticle());
     for(size_type i = 0; i < particle->nparticle(); ++i) {
         vector_type r = position[i];
@@ -86,7 +92,13 @@ static void test_region(
     }
 
     // check that each particle is classified properly as included/excluded
+#ifdef HALMD_WITH_GPU
+    auto const& g_selection = read_cache(region.selection());
+    cuda::host::vector<size_type> selection(g_selection.size());
+    cuda::copy(g_selection.begin(), g_selection.end(), selection.begin());
+#else
     auto const& selection = read_cache(region.selection());
+#endif
     for (auto idx : selection) {
         vector_type r = position[idx];
         BOOST_CHECK_EQUAL((*geometry)(r), true);
