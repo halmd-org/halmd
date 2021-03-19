@@ -1,4 +1,5 @@
 --
+-- Copyright © 2020      Felix Höfling
 -- Copyright © 2014-2015 Nicolas Höft
 --
 -- This file is part of HALMD.
@@ -20,10 +21,10 @@
 
 local mdsim = halmd.mdsim
 local observables = halmd.observables
+local random = halmd.random
 local writers = halmd.io.writers
 
-
-function setup(args)
+local function setup(args)
     local dimension = args.dimension      -- dimension of space
     local np = args.particles             -- number of particles
 
@@ -35,10 +36,19 @@ function setup(args)
     local box = mdsim.box({length = length})
 
     -- create system state for all particles first
-    local particle = mdsim.particle({dimension = dimension, particles = np, species = 1})
+    local particle = mdsim.particle({dimension = dimension, particles = np, species = 2})
+
+    -- set particle species, with continuous range of IDs per species
+    local species = {}
+    for i = 1, np do
+        table.insert(species, (i > np / 2) and 1 or 0)
+    end
+    particle.data["species"] = species
 
     -- set initial particle positions
     mdsim.positions.lattice({box = box, particle = particle}):set()
+    -- randomly shuffle the positions
+    particle.data["position"] = random.generator({memory = "host"}):shuffle(particle.data["position"])
 
     if particle.memory == "gpu" then
       -- sort particles *once*, as they do not move
@@ -55,34 +65,30 @@ function setup(args)
     end
     local cuboid = mdsim.geometries.cuboid({lowest_corner = lowest_corner, length = length})
 
-    -- construction of regions
-    local region = {}
-    region["included"] = mdsim.region({
-        box = box, particle = particle
-      , geometry = cuboid, selection = "included"
-      , label = "upper quadrant (included)"
-    })
-    region["excluded"] = mdsim.region({
-        box = box, particle = particle
-      , geometry = cuboid, selection = "excluded"
-      , label = "upper quadrant (excluded)"
-    })
-
     -- construct included/excluded particle groups, label is inherited from 'region'
     local group = {}
-    group["included"] = mdsim.particle_groups.from_region({
-        particle = particle, region = region["included"]
+    group["included"] = mdsim.particle_groups.region_species({
+        particle = particle, geometry = cuboid, selection = "included"
+      , species = 1
+      , label = "upper quadrant (included)"
     })
-    group["excluded"] = mdsim.particle_groups.from_region({
-        particle = particle, region = region["excluded"]
+    group["excluded"] = mdsim.particle_groups.region_species({
+        particle = particle, geometry = cuboid, selection = "excluded"
+      , species = 1
+      , label = "upper quadrant (excluded)"
     })
 
     return group, cuboid, args
 end
 
-function test(group, cuboid, args)
-    -- check if the total number of particles is correct
-    assert(group["excluded"].size + group["included"].size == args.particles)
+local function test(group, cuboid, args)
+    -- the total number of included/excluded particles must
+    -- equal the number of particles of species 1
+    print(("group sizes: %d (inc) + %d (exc) = %d")
+       :format(group["included"].size, group["excluded"].size, args.particles / 2)
+    )
+    assert(group["included"].size + group["excluded"].size == args.particles / 2)
+
     local lowest_corner = cuboid.lowest_corner
     local length = cuboid.length
 
@@ -93,16 +99,20 @@ function test(group, cuboid, args)
     -- for included/excluded check that the particles have been sorted
     -- into the respective group correctly
     local positions_inc = particle_inc.data.position
+    local species_inc = particle_inc.data.species
     for i = 1, group["included"].size do
+        assert(species_inc[i] == 1, ("particle #%d of species %d wrongly selected"):format(i, species_inc[i]))
         local r = positions_inc[i]
         for j = 1, #r do
             local dr = r[j] - lowest_corner[j]
-            assert(dr < length[j] and dr > 0, ("particle #%d not included in selection"):format(i))
+            assert(dr < length[j] and dr > 0, ("particle #%d wrongly included in selection"):format(i))
         end
     end
 
     local positions_exc = particle_exc.data.position
+    local species_exc = particle_exc.data.species
     for i = 1, group["excluded"].size do
+        assert(species_exc[i] == 1, ("particle #%d of species %d wrongly selected"):format(i, species_exc[i]))
         local r = positions_exc[i]
         local outside = false
         for j = 1, #r do
@@ -111,29 +121,23 @@ function test(group, cuboid, args)
                 outside = true
             end
         end
-        assert(outside, ("particle #%d not excluded from selection"):format(i))
+        assert(outside, ("particle #%d wrongly excluded from selection"):format(i))
     end
 end
 
 --
 -- Parse command-line arguments.
 --
-local function parse_args()
-    local parser = halmd.utility.program_options.argument_parser()
-
-    parser:add_argument("output,o", {type = "string", default = "from_region_test", help = "prefix of output files"})
+function define_args(parser)
+    parser:add_argument("output,o", {type = "string", default = "region_test", help = "prefix of output files"})
 
     parser:add_argument("particles", {type = "number", default = 10000, help = "number of particles"})
     parser:add_argument("dimension", {type = "number", default = 3, help = "dimension of space"})
-
-    return parser:parse_args()
 end
 
 --
 -- set up system and perform test
 --
-function main()
-    local args = parse_args()
-
+function main(args)
     test(setup(args))
 end

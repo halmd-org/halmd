@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2019 Roya Ebrahimi Viand
  * Copyright © 2014-2015 Nicolas Höft
  *
  * This file is part of HALMD.
@@ -18,38 +19,35 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <exception>
-
 #include <halmd/algorithm/gpu/copy_if.hpp>
-#include <halmd/mdsim/gpu/region.hpp>
-#include <halmd/utility/lua/lua.hpp>
-
+#include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/geometries/cuboid.hpp>
 #include <halmd/mdsim/geometries/sphere.hpp>
+#include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/mdsim/gpu/particle_groups/region.hpp>
+#include <halmd/mdsim/gpu/particle_groups/region_kernel.hpp>
+#include <halmd/utility/lua/lua.hpp>
+
+#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <exception>
+#include <stdexcept>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
+namespace particle_groups {
 
-/**
- * construct region module
- *
- * @param particle mdsim::gpu::particle instance
- * @param box mdsim::box instance
- */
 template <int dimension, typename float_type, typename geometry_type>
 region<dimension, float_type, geometry_type>::region(
     std::shared_ptr<particle_type const> particle
-  , std::shared_ptr<box_type const> box
-  , std::shared_ptr<geometry_type> geometry
+  , std::shared_ptr<geometry_type const> geometry
   , geometry_selection geometry_sel
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
-  , box_(box)
-  , logger_(logger)
   , geometry_(geometry)
   , geometry_selection_(geometry_sel)
+  , logger_(logger)
 {
     try {
         auto mask = make_cache_mutable(mask_);
@@ -63,7 +61,6 @@ region<dimension, float_type, geometry_type>::region(
         throw;
     }
 }
-
 template <int dimension, typename float_type, typename geometry_type>
 cache<typename region<dimension, float_type, geometry_type>::array_type> const&
 region<dimension, float_type, geometry_type>::selection()
@@ -89,22 +86,22 @@ void region<dimension, float_type, geometry_type>::update_mask_()
     cache<position_array_type> const& position_cache = particle_->position();
 
     if (position_cache != mask_cache_) {
+        position_array_type const& position = read_cache(particle_->position());
+        auto mask = make_cache_mutable(mask_);
+
+        LOG_TRACE("update selection mask for region");
         scoped_timer_type timer(runtime_.update_mask);
 
-        auto mask = make_cache_mutable(mask_);
-        position_array_type const& position = read_cache(particle_->position());
         auto& kernel = region_wrapper<dimension, geometry_type>::kernel;
         // calculate "bin", ie. inside/outside the region
         cuda::memset((*mask).begin(), (*mask).end(), 0xFF);
-        kernel.compute_mask.configure(particle_->dim().grid,
-            particle_->dim().block);
+        kernel.compute_mask.configure(particle_->dim().grid, particle_->dim().block);
         kernel.compute_mask(
             position.data()
           , particle_->nparticle()
           , mask->data()
           , *geometry_
-          , geometry_selection_ == excluded ? halmd::mdsim::gpu::excluded : halmd::mdsim::gpu::included
-          , static_cast<position_type>(box_->length())
+          , geometry_selection_ == excluded ? particle_groups::excluded : particle_groups::included
         );
         mask_cache_ = position_cache;
     }
@@ -117,11 +114,18 @@ template <int dimension, typename float_type, typename geometry_type>
 void region<dimension, float_type, geometry_type>::update_selection_()
 {
     cache<position_array_type> const& position_cache = particle_->position();
+
     if(position_cache != selection_cache_) {
-        scoped_timer_type timer(runtime_.update_selection);
         unsigned int nparticle = particle_->nparticle();
         auto const& position = read_cache(particle_->position());
+
+        LOG_TRACE("update particle selection for region");
+        scoped_timer_type timer(runtime_.update_selection);
+
         auto selection = make_cache_mutable(selection_);
+
+        // allocate memory for maximum selection (i.e., all particles)
+        selection->resize(nparticle);
 
         auto const& kernel = region_wrapper<dimension, geometry_type>::kernel;
         unsigned int size = kernel.copy_selection(
@@ -129,12 +133,68 @@ void region<dimension, float_type, geometry_type>::update_selection_()
           , nparticle
           , selection->data()
           , *geometry_
-          , geometry_selection_ == excluded ? halmd::mdsim::gpu::excluded : halmd::mdsim::gpu::included
+          , geometry_selection_ == excluded ? particle_groups::excluded : particle_groups::included
         );
+        // shrink array to actual size of selection
         selection->resize(size);
 
         selection_cache_ = position_cache;
     }
+}
+
+template <int dimension, typename float_type, typename geometry_type>
+cache<typename region<dimension, float_type, geometry_type>::array_type> const&
+region<dimension, float_type, geometry_type>::ordered()  // ID order
+{
+    auto const& s = selection();
+    if (s != ordered_cache_) {
+//        auto const& id = read_cache(particle_->id());
+
+        LOG_WARNING("sorting selection of particle indices not yet implemented");
+//        LOG_TRACE("sorting selection of particle indices");
+        scoped_timer_type timer(runtime_.sort_selection);
+
+        auto ordered = make_cache_mutable(ordered_);
+        ordered->resize(s->size());
+        cuda::copy(s->begin(), s->end(), ordered->begin());
+
+        // TODO: bring selection in ID order, sort 'ordered' by key 'id'
+        // 1) copy IDs of the selection, 2) perform in-place sort
+        // radix_sort(key.begin(), key.end(), ordered->begin());
+
+        ordered_cache_ = s;
+    }
+    return ordered_;
+}
+
+template <int dimension, typename float_type, typename geometry_type>
+cache<typename region<dimension, float_type, geometry_type>::array_type> const&
+region<dimension, float_type, geometry_type>::unordered()  // memory order
+{
+    return selection();
+}
+
+template <int dimension, typename float_type, typename geometry_type>
+cache<typename region<dimension, float_type, geometry_type>::size_type> const&
+region<dimension, float_type, geometry_type>::size()
+{
+    auto const& s = selection();
+    if (s != size_cache_) {
+        auto size = make_cache_mutable(size_);
+        *size = selection()->size();
+        size_cache_ = s;
+    }
+    return size_;
+}
+
+template <typename particle_group_type, typename particle_type>
+static void wrap_to_particle(
+    std::shared_ptr<particle_group_type> self
+  , std::shared_ptr<particle_type> particle_src
+  , std::shared_ptr<particle_type> particle_dst
+)
+{
+    particle_group_to_particle(*particle_src, *self, *particle_dst);
 }
 
 template <int dimension, typename float_type, typename geometry_type>
@@ -145,40 +205,32 @@ void region<dimension, float_type, geometry_type>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<region, region_base>()
-                .scope
-                [
-                    class_<runtime>("runtime")
-                        .def_readonly("update_mask", &runtime::update_mask)
-                        .def_readonly("update_selection", &runtime::update_selection)
-                ]
-                .def_readonly("runtime", &region::runtime_)
-          , def("region", &std::make_shared<region
+            namespace_("particle_groups")
+            [
+                class_<region, particle_group>()
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("update_mask", &runtime::update_mask)
+                            .def_readonly("update_selection", &runtime::update_selection)
+                            .def_readonly("sort_selection", &runtime::sort_selection)
+                    ]
+                    .def_readonly("runtime", &region::runtime_)
+                    .def("to_particle", &wrap_to_particle<region<dimension, float_type, geometry_type>, particle_type>)
+
+              , def("region", &std::make_shared<region<dimension, float_type, geometry_type>
                   , std::shared_ptr<particle_type const>
-                  , std::shared_ptr<box_type const>
-                  , std::shared_ptr<geometry_type>
+                  , std::shared_ptr<geometry_type const>
                   , geometry_selection
                   , std::shared_ptr<logger>
-              >)
+                >)
+            ]
         ]
     ];
 }
 
-void region_base::luaopen(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle_groups_region(lua_State* L)
 {
-    using namespace luaponte;
-    module(L, "libhalmd")
-    [
-        namespace_("mdsim")
-        [
-            class_<region_base>()
-        ]
-    ];
-}
-
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_region(lua_State* L)
-{
-    region_base::luaopen(L);
 #ifdef USE_GPU_SINGLE_PRECISION
     region<3, float, mdsim::geometries::cuboid<3, float>>::luaopen(L);
     region<2, float, mdsim::geometries::cuboid<2, float>>::luaopen(L);
@@ -194,6 +246,21 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_region(lua_State* L)
     return 0;
 }
 
+// explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
+template class region<3, float, mdsim::geometries::cuboid<3, float>>;
+template class region<2, float, mdsim::geometries::cuboid<2, float>>;
+template class region<3, float, mdsim::geometries::sphere<3, float>>;
+template class region<2, float, mdsim::geometries::sphere<2, float>>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class region<3, dsfloat, mdsim::geometries::cuboid<3, float>>;
+template class region<2, dsfloat, mdsim::geometries::cuboid<2, float>>;
+template class region<3, dsfloat, mdsim::geometries::sphere<3, float>>;
+template class region<2, dsfloat, mdsim::geometries::sphere<2, float>>;
+#endif
+
+} // namespace particle_groups
 } // namespace gpu
-} // namepsace mdsim
+} // namespace mdsim
 } // namespace halmd

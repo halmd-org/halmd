@@ -1,10 +1,14 @@
 halmd_add_modules(
-  libhalmd_mdsim_gpu_particle_groups_from_range
   libhalmd_mdsim_gpu_particle_groups_all
-  libhalmd_mdsim_gpu_particle_groups_from_region
+  libhalmd_mdsim_gpu_particle_groups_id_range
+  libhalmd_mdsim_gpu_particle_groups_region
+  libhalmd_mdsim_gpu_particle_groups_region_species
 )
 halmd_add_library(halmd_mdsim_gpu_particle_groups
-  from_range.cpp
   all.cpp
-  from_region.cpp
+  id_range.cpp
+  region.cpp
+  region_kernel.cu
+  region_species.cpp
+  region_species_kernel.cu
 )

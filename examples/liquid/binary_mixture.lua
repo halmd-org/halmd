@@ -127,7 +127,7 @@ function main(args)
     local offset = 0
     for label, sample in utility.sorted(samples) do
         -- select particles of species
-        local group = mdsim.particle_groups.from_range({
+        local group = mdsim.particle_groups.id_range({
             particle = particle
           , range = {offset + 1, offset + sample.nparticle}
           , label = label
@@ -225,9 +225,6 @@ function main(args)
 
     -- run simulation
     observables.sampler:run(steps)
-
-    -- log profiler results
-    halmd.utility.profiler:profile()
 end
 
 --

@@ -23,6 +23,7 @@
 local log     = require("halmd.io.log")
 local clock   = require("halmd.mdsim.clock")
 local module  = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
 local sampler = require("halmd.observables.sampler")
 local utility = require("halmd.utility")
 
@@ -253,10 +254,13 @@ local M = module(function(args)
         table.insert(conn, sampler:on_sample(writer.write, every, clock.step))
         return writer
     end
-    local conn = {}
-    self.disconnect = utility.signal.disconnect(conn, "thermodynamics module")
 
-    -- FIXME connect profilers
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, ("thermodynamics (%s)"):format(label))
+
+    -- connect runtime accumulators to module profiler
+    halmd.observables.thermodynamics.profile(self, conn)
 
     return self
 end)
@@ -264,11 +268,13 @@ end)
 --
 -- connect runtime accumulators to module profiler
 --
-function M.profile(self, profiler)
+function M.profile(self, conn)
     local label = assert(self.group.label)
+    local runtime = assert(self.runtime)
+
     local profile = function(name, desc)
-        if self.runtime[name] then
-            profiler:on_profile({self, [name] = ("summation of %s of %s particles"):format(desc, label)})
+        if runtime[name] then
+            table.insert(conn, profiler:on_profile(runtime[name], ("summation of %s of %s particles"):format(desc, label)))
         end
     end
     profile("en_kin"       , "kinetic energy"         )
@@ -278,6 +284,8 @@ function M.profile(self, profiler)
     profile("en_pot"       , "potential energy"       )
     profile("virial"       , "virial"                 )
     profile("stress_tensor", "stress tensor"          )
+
+    return conn
 end
 
 return M

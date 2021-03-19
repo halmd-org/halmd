@@ -759,7 +759,8 @@ static void test_stress_pot(particle_type& particle)
  */
 using namespace boost::unit_test;
 
-auto dataset = data::make<unsigned int>({109, 4789, 42589});
+unsigned int const DATA_ARRAY[] = {109, 4789, 42589};
+auto dataset = data::make(DATA_ARRAY);
 unsigned int const nspecies = 1;
 
 BOOST_AUTO_TEST_SUITE( host )

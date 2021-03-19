@@ -7,7 +7,7 @@ instance of :mod:`particle <halmd.mdsim.particle>`. The different components
 are distinguished by their value for ``species``, particles of the same species
 form a contiguous range in ``tag`` (which is given by the index in the particle
 array). This allows for the efficient selection of each component from a
-:mod:`range of tags <halmd.mdsim.particle_groups.from_range>`.
+:mod:`range of tags <halmd.mdsim.particle_groups.id_range>`.
 
 The setup procedure has the following steps:
 

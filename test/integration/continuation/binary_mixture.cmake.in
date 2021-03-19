@@ -21,7 +21,8 @@
 #
 
 ##
-# Test trajectory continuation for Lennard-Jones fluid
+# Test trajectory continuation for a simple, one-component Lennard-Jones fluid,
+# for which the optimised module of the GPU backend is used
 #
 # This test is related to HALMD bug #69.
 
@@ -36,9 +37,9 @@ if(DEFINED USE_HOST)
   if(HALMD_WITH_GPU)
     set(BACKEND_OPTION "--disable-gpu")
   endif()
-  message(STATUS "Using host backend")
+  message(STATUS "Using host backend for continuation")
 else()
-  message(STATUS "Using GPU backend")
+  message(STATUS "Using GPU backend for continuation")
 endif()
 
 if(NOT DEFINED DIMENSION)
@@ -63,7 +64,8 @@ execute_halmd(
   --ratios "${EDGE_RATIOS}"
   --density 0.1
   --time 1
-  --sampling trajectory=500
+  --timestep 0.002
+  --sampling trajectory=250
 )
 
 execute_halmd(
@@ -73,6 +75,7 @@ execute_halmd(
   --output "${OUTPUT_PREFIX}_continued"
   --input "${OUTPUT_PREFIX}.h5"
   --time 1
+  --timestep 0.001
   --sampling trajectory=1000
 )
 

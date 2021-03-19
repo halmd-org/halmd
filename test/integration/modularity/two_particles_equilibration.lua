@@ -57,7 +57,7 @@ local function setup(args)
             table.insert(species, s)
         end
         local label = string.char(string.byte("A") + s)
-        groups[label] = mdsim.particle_groups.from_range({
+        groups[label] = mdsim.particle_groups.id_range({
             particle = particle
           , range = {offset + 1, offset + n}
           , label = label
@@ -210,9 +210,6 @@ local function equilibrate(box, particle, args)
     -- run remaining part of the simulation in NVE ensemble
     -- to prepare for the NVE production run
     observables.sampler:run(steps - math.floor(steps / 2))
-
-    -- log profiler results
-    utility.profiler:profile()
 end
 
 function main(args)

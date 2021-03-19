@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2020      Felix Höfling
  * Copyright © 2014-2015 Nicolas Höft
  *
  * This file is part of HALMD.
@@ -17,7 +18,6 @@
  * Public License along with this program. If not, see
  * <http://www.gnu.org/licenses/>.
  */
-
 #include <halmd/config.hpp>
 
 #define BOOST_TEST_MODULE region
@@ -30,12 +30,14 @@
 #include <boost/iterator/transform_iterator.hpp>
 #include <cmath>
 
-#include <halmd/mdsim/host/region.cpp> // include definition file in order to generate template instantiations of region with 'simple' geometry
+// include definition file to generate template instantiations of region with 'simple' geometry
+#include <halmd/mdsim/host/particle_groups/region.cpp>
+
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
 #ifdef HALMD_WITH_GPU
-# include <halmd/mdsim/gpu/region.cpp>
+# include <halmd/mdsim/gpu/particle_groups/region.cpp>
 # include <test/tools/cuda.hpp>
 #endif
 
@@ -44,25 +46,22 @@
 /**
  * Test particle regions.
  */
-template <typename region_type, typename geometry_type>
+template <typename region_type, typename particle_type, typename geometry_type>
 static void test_region(
-    region_type& region
-  , geometry_type& geometry
-  , typename region_type::particle_type const& particle
-  , typename region_type::box_type const& box
+    std::shared_ptr<particle_type> particle
+  , std::shared_ptr<geometry_type> geometry
 )
 {
     typedef typename region_type::vector_type vector_type;
     typedef typename region_type::size_type size_type;
 
+    // construct region module
+    auto region = region_type(particle, geometry, region_type::included);
+
     // get particle positions
     std::vector<vector_type> position;
-    position.reserve(particle.nparticle());
-    get_position(particle, back_inserter(position));
-
-    // allocate output array for indices of particles
-    std::vector<unsigned int> particle_index;
-    particle_index.reserve(particle.nparticle());
+    position.reserve(particle->nparticle());
+    get_position(*particle, back_inserter(position));
 
     // setup profiling timer and connect to profiler
     // (we have no access to the private struct region.runtime)
@@ -72,30 +71,37 @@ static void test_region(
 
     {
         halmd::utility::profiler::scoped_timer_type timer(*runtime);
-        /*auto const& selection =*/ read_cache(region.selection());
+        region.selection();                 // computation of particle group, use cached results below
     }
     // output profiling timers
     profiler.profile();
 
     // test if the mask is correct
-    std::vector<size_type> mask;
-    mask.reserve(particle.nparticle());
-    get_mask(region, back_inserter(mask));
-    for(size_type i = 0; i < particle.nparticle(); ++i) {
+#ifdef HALMD_WITH_GPU
+    auto const& g_mask = read_cache(region.mask());
+    cuda::memory::host::vector<size_type> mask(g_mask.size());
+    cuda::copy(g_mask.begin(), g_mask.end(), mask.begin());
+#else
+    auto const& mask = read_cache(region.mask());
+#endif
+    BOOST_CHECK_EQUAL(mask.size(), particle->nparticle());
+    for(size_type i = 0; i < particle->nparticle(); ++i) {
         vector_type r = position[i];
-        box.reduce_periodic(r);
-        size_type mask_expected = geometry(r) ? 1 : 0;
+        size_type mask_expected = (*geometry)(r) ? 1 : 0;
         BOOST_CHECK_EQUAL(mask_expected, mask[i]);
     }
 
-    get_selection(region, back_inserter(particle_index));
-
-    // check that each particle is sorted into the correct bin
-    for (size_type i = 0; i < region.size(); ++i) {
-        unsigned int idx = particle_index[i];
+    // check that each particle is classified properly as included/excluded
+#ifdef HALMD_WITH_GPU
+    auto const& g_selection = read_cache(region.selection());
+    cuda::memory::host::vector<size_type> selection(g_selection.size());
+    cuda::copy(g_selection.begin(), g_selection.end(), selection.begin());
+#else
+    auto const& selection = read_cache(region.selection());
+#endif
+    for (auto idx : selection) {
         vector_type r = position[idx];
-        box.reduce_periodic(r);
-        BOOST_CHECK_EQUAL(geometry(r), true);
+        BOOST_CHECK_EQUAL((*geometry)(r), true);
     }
 }
 
@@ -106,25 +112,12 @@ test_uniform_density(shape_type const& shape, std::shared_ptr<geometry_type> geo
     enum { dimension = geometry_type::vector_type::static_size };
     typedef typename region_type::vector_type vector_type;
     typedef typename region_type::particle_type particle_type;
-    typedef typename region_type::box_type box_type;
     typedef typename shape_type::value_type size_type;
-
-    // convert box edge lengths to edge vectors
-    boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(shape.size());
-    for (size_type i = 0; i < shape.size(); ++i) {
-        edges(i, i) = shape[i];
-    }
 
     // create close-packed lattice of given shape
     halmd::close_packed_lattice<vector_type, shape_type> lattice(shape);
-    // create simulation domain
-    auto box = std::make_shared<box_type>(edges);
     // create system of particles of number of lattice points
     auto particle = std::make_shared<particle_type>(lattice.size(), 1);
-    // create particle region
-    region_type region(particle, box, geometry, region_type::included);
-
-    BOOST_TEST_MESSAGE( "number density " << particle->nparticle() / box->volume() );
 
     // place particles on lattice
     set_position(
@@ -132,8 +125,8 @@ test_uniform_density(shape_type const& shape, std::shared_ptr<geometry_type> geo
       , boost::make_transform_iterator(boost::make_counting_iterator(size_type(0)), lattice)
     );
 
-    // bin particles and test output
-    test_region(region, *geometry, *particle, *box);
+    // construct region class and perform tests
+    test_region<region_type>(particle, geometry);
 }
 
 /**
@@ -172,7 +165,7 @@ HALMD_TEST_INIT( region )
 #endif
         typedef simple_geometry<dimension, float_type> geometry_type;
         typedef geometry_type::vector_type vector_type;
-        typedef halmd::mdsim::host::region<dimension, float_type, geometry_type> region_type;
+        typedef halmd::mdsim::host::particle_groups::region<dimension, float_type, geometry_type> region_type;
         typedef halmd::fixed_vector<size_t, dimension> shape_type;
 
         auto uniform_density = [=]() {
@@ -193,7 +186,7 @@ HALMD_TEST_INIT( region )
 #endif
         typedef simple_geometry<dimension, float_type> geometry_type;
         typedef geometry_type::vector_type vector_type;
-        typedef halmd::mdsim::host::region<dimension, float_type, geometry_type> region_type;
+        typedef halmd::mdsim::host::particle_groups::region<dimension, float_type, geometry_type> region_type;
         typedef halmd::fixed_vector<size_t, dimension> shape_type;
 
         auto uniform_density = [=]() {
@@ -215,7 +208,7 @@ HALMD_TEST_INIT( region )
 #endif
         typedef simple_geometry<dimension, float> geometry_type;
         typedef geometry_type::vector_type vector_type;
-        typedef halmd::mdsim::gpu::region<dimension, float_type, geometry_type> region_type;
+        typedef halmd::mdsim::gpu::particle_groups::region<dimension, float_type, geometry_type> region_type;
         typedef halmd::fixed_vector<size_t, dimension> shape_type;
 
         auto uniform_density = [=]() {
@@ -257,7 +250,7 @@ HALMD_TEST_INIT( region )
 #endif
         typedef simple_geometry<dimension, float> geometry_type;
         typedef geometry_type::vector_type vector_type;
-        typedef halmd::mdsim::gpu::region<dimension, float_type, geometry_type> region_type;
+        typedef halmd::mdsim::gpu::particle_groups::region<dimension, float_type, geometry_type> region_type;
         typedef halmd::fixed_vector<size_t, dimension> shape_type;
 
         auto uniform_density = [=]() {

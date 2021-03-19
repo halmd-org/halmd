@@ -18,16 +18,18 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/region_kernel.cu>
+#include <halmd/mdsim/gpu/particle_groups/region_kernel.cu>
 #include <test/unit/mdsim/geometries/simple.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
+namespace particle_groups{
 
 template class region_wrapper<2, simple_geometry<2, float> >;
 template class region_wrapper<3, simple_geometry<3, float> >;
 
+} // namespace particle_groups
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd

@@ -23,7 +23,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle_group.hpp>
-#include <halmd/utility/raw_array.hpp>
 
 #include <lua.hpp>
 

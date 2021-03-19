@@ -63,7 +63,7 @@ Third-party libraries
     simulation scripts containing loops, user-defined correlation functions,
     etc.
 
-  A simulation with HALMD is setup and configured by means of the Lua scripting
+  A simulation with HALMD is set up and configured by means of the Lua scripting
   language. The fast and lightweight Lua interpreter is embedded in the HALMD
   executable.
 

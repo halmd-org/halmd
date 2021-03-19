@@ -1,7 +1,7 @@
 --
--- Copyright © 2012-2019 Felix Höfling
--- Copyright © 2015      Nicolas Höft
--- Copyright © 2012      Peter Colberg
+-- Copyright © 2019      Roya Ebrahimi Viand
+-- Copyright © 2019-2020 Felix Höfling
+-- Copyright © 2014-2015 Nicolas Höft
 --
 -- This file is part of HALMD.
 --
@@ -20,63 +20,69 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local log     = require("halmd.io.log")
-local module  = require("halmd.utility.module")
-local utility = require("halmd.utility")
-local mdsim   = {
-    particle = require("halmd.mdsim.particle")
+local log      = require("halmd.io.log")
+local mdsim    = require("halmd.mdsim")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
+local utility  = require("halmd.utility")
+
+-- grab C++ wrappers
+local region_species = assert(libhalmd.mdsim.particle_groups.region_species)
+
+local geometry_selection = {
+    excluded = 1
+  , included = 2
 }
 
 ---
--- From Range
--- ==========
+-- Region and Species
+-- ==================
 --
 -- A particle group represents a subset of particles, which is defined
--- by an instance of particle together with a sequence of indices.
+-- by an instance of particle together with a region_species in the simulation domain.
 --
 -- Example::
 --
 --    -- construct particle instance for given simulation domain
 --    local system = halmd.mdsim.particle({particles = 10000, species = 2})
+--    local geometry = halmd.mdsim.geometries.cuboid({lowest_corner = {0,0,0}, length = {1, 1, 1}})
 --
---    -- select each species, assuming particles of a species have contiguous IDs
---    local group_A = halmd.mdsim.particle_groups.from_range({particle = system, range = {1, 5000}, label = "A"})
---    local group_B = halmd.mdsim.particle_groups.from_range({particle = system, range = {5001, 10000}, label = "B"})
+--    -- select particles of species 0 and from within this sub-box (region)
+--    local group_cuboid = halmd.mdsim.particle_groups.region_species({
+--        particle = system, label = "subbox"
+--      , geometry = geometry, selection = "included"
+--      , species = 0
+--    })
 --
-
--- grab C++ wrappers
-local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 
 ---
--- Construct particle group from ID range.
+-- Construct particle group from region.
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
--- :param table args.range: particle ID range ``{first, last}``
+-- :param table args.geometry: geometry of the region, instance of :mod:`halmd.mdsim.geometries`
+-- :param string args.selection: select particles within or outside the geometry. Allowed values are ``included`` and ``excluded``.
+-- :param string args.species: 0-based particle species
 -- :param string args.label: group label
 -- :param boolean args.global: particle group can comprise the whole simulation
 --                             world (*default:* ``false``)
 -- :param boolean args.fluctuating: the number or identity of selected particles
---                                  can vary as the simulation progresses (*default:* ``false``)
---
--- .. note::
---
---    Particle IDs are 1-based, i.e. the first particle has ID 1.
+--                                  can vary as the simulation progresses (*default:* ``true``)
 --
 -- The flags ``global`` and ``fluctuating`` are used, e.g., for the output of
 -- thermodynamic quantities via :mod:`halmd.observables.thermodynamics`.
 --
--- .. attribute:: label
---
---    Particle group label.
---
 -- .. attribute:: particle
 --
---    Instance of :class:`halmd.mdsim.particle`.
+--    Instance of :class:`halmd.mdsim.particle`
 --
 -- .. attribute:: size
 --
 --    Number of particles in group.
+--
+-- .. attribute:: label
+--
+--    Instance label.
 --
 -- .. attribute:: global
 --
@@ -101,7 +107,7 @@ local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 --    .. note::
 --
 --       Only positions, mass, species and velocity are copied to the particle instance.
---       Other data (e.g. ID, force) will not be copied.
+--       Other data (e.g. id, force) will not be copied.
 --
 --    If ``args.particle`` is present, the particle group will be copied into the given
 --    particle instance. Otherwise a new suitable particle instance with the label
@@ -114,21 +120,33 @@ local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 --       ``args.particle`` must reside in the same memory as the group and the number of
 --       particles must be equal to ``size``.
 --
+-- .. method:: disconnect()
+--
+--    Disconnect region_species module from profiler.
+--
 local M = module(function(args)
+    utility.assert_type(args, "table")
     local particle = utility.assert_kwarg(args, "particle")
-    local range = utility.assert_kwarg(args, "range")
-    local label = utility.assert_type(args.label or assert(particle.label), "string")
+    local geometry = utility.assert_kwarg(args, "geometry")
+    local selection = utility.assert_type(utility.assert_kwarg(args, "selection"), "string")
+    local species = utility.assert_type(utility.assert_kwarg(args, "species"), "number")
+    local label = utility.assert_type(utility.assert_kwarg(args, "label"), "string")
     local global = utility.assert_type(args.global or false, "boolean")
-    local fluctuating = utility.assert_type(args.fluctuating or false, "boolean")
+    local fluctuating = utility.assert_type(args.fluctuating == nil and true or args.fluctuating, "boolean")
 
-    if type(range) ~= "table" or #range ~= 2 then
-        error("invalid argument 'range'", 2)
+    if not geometry_selection[selection] then
+        error(("unsupported geometry selection '%s'"):format(selection), 2)
     end
 
-    local logger = log.logger({prefix = ("group (%s)"):format(label)})
+    local logger = log.logger({prefix = ("region_species (%s)"):format(label)})
 
-    -- construct particle group from ID range
-    local self = from_range(particle, range, logger)
+    -- construct particle group from region in space and species
+    local self = region_species(particle, geometry, geometry_selection[selection], species, logger)
+
+    -- store label as Lua property
+    self.label = property(function(self)
+        return label
+    end)
 
     -- capture C++ method to_particle
     local to_particle = assert(self.to_particle)
@@ -169,7 +187,18 @@ local M = module(function(args)
         return fluctuating
     end)
 
-    return self
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "region_species module")
+
+    -- connect runtime accumulators to profiler
+    local desc = ("region and species (%s)"):format(label)
+    local runtime = assert(self.runtime)
+    table.insert(conn, profiler:on_profile(runtime.update_mask, ("update particle mask of %s"):format(desc)))
+    table.insert(conn, profiler:on_profile(runtime.update_selection, ("update selection of %s"):format(desc)))
+    table.insert(conn, profiler:on_profile(runtime.sort_selection, ("sorting indices of selection by %s"):format(desc)))
+
+return self
 end)
 
 return M
