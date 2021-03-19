@@ -79,7 +79,7 @@ static void test_region(
     // test if the mask is correct
 #ifdef HALMD_WITH_GPU
     auto const& g_mask = read_cache(region.mask());
-    cuda::memory::host::vector<size_type> mask(g_mask.size());
+    std::vector<size_type> mask(g_mask.size());
     cuda::copy(g_mask.begin(), g_mask.end(), mask.begin());
 #else
     auto const& mask = read_cache(region.mask());
@@ -94,7 +94,7 @@ static void test_region(
     // check that each particle is classified properly as included/excluded
 #ifdef HALMD_WITH_GPU
     auto const& g_selection = read_cache(region.selection());
-    cuda::memory::host::vector<size_type> selection(g_selection.size());
+    std::vector<size_type> selection(g_selection.size());
     cuda::copy(g_selection.begin(), g_selection.end(), selection.begin());
 #else
     auto const& selection = read_cache(region.selection());
