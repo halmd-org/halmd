@@ -83,14 +83,15 @@ region<dimension, float_type, geometry_type>::mask()
 template <int dimension, typename float_type, typename geometry_type>
 void region<dimension, float_type, geometry_type>::update_mask_()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
+    auto const& position_cache = particle_->position();
 
     if (position_cache != mask_cache_) {
-        position_array_type const& position = read_cache(particle_->position());
-        auto mask = make_cache_mutable(mask_);
+        auto const& position = read_cache(position_cache);
 
         LOG_TRACE("update selection mask for region");
         scoped_timer_type timer(runtime_.update_mask);
+
+        auto mask = make_cache_mutable(mask_);
 
         auto& kernel = region_wrapper<dimension, geometry_type>::kernel;
         // calculate "bin", ie. inside/outside the region
@@ -113,11 +114,11 @@ void region<dimension, float_type, geometry_type>::update_mask_()
 template <int dimension, typename float_type, typename geometry_type>
 void region<dimension, float_type, geometry_type>::update_selection_()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
+    auto const& position_cache = particle_->position();
 
     if(position_cache != selection_cache_) {
         unsigned int nparticle = particle_->nparticle();
-        auto const& position = read_cache(particle_->position());
+        auto const& position = read_cache(position_cache);
 
         LOG_TRACE("update particle selection for region");
         scoped_timer_type timer(runtime_.update_selection);

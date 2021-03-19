@@ -57,16 +57,18 @@ region_species<dimension, float_type, geometry_type>::region_species(
 template <int dimension, typename float_type, typename geometry_type>
 void region_species<dimension, float_type, geometry_type>::update_()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
-    if (position_cache != mask_cache_) {
+    auto const& position_cache = particle_->position();
+    auto const& species_cache = particle_->species();
+    if (std::tie(position_cache, species_cache) != mask_cache_) {
+        auto const& position = read_cache(position_cache);
+        auto const& species = read_cache(species_cache);
+
         LOG_TRACE("update selection and mask for region and species");
         scoped_timer_type timer(runtime_.update_mask);
 
-        auto const& position = read_cache(particle_->position());
-        auto const& species = read_cache(particle_->species());
-
         auto mask = make_cache_mutable(mask_);
         auto selection = make_cache_mutable(selection_);
+        auto size = make_cache_mutable(size_);
         selection->clear();
 
         for (size_type i = 0; i < particle_->nparticle(); ++i) {
@@ -83,7 +85,9 @@ void region_species<dimension, float_type, geometry_type>::update_()
                 selection->push_back(i);
             }
         }
-        mask_cache_ = position_cache;
+        *size = selection->size();
+
+        mask_cache_ = std::tie(position_cache, species_cache);
     }
 }
 
@@ -140,12 +144,7 @@ template <int dimension, typename float_type, typename geometry_type>
 cache<typename region_species<dimension, float_type, geometry_type>::size_type> const&
 region_species<dimension, float_type, geometry_type>::size()
 {
-    auto const& s = selection();
-    if (s != size_cache_) {
-        auto size = make_cache_mutable(size_);
-        *size = selection()->size();
-        size_cache_ = s;
-    }
+    update_();
     return size_;
 }
 
