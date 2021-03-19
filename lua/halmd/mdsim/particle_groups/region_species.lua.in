@@ -138,7 +138,7 @@ local M = module(function(args)
         error(("unsupported geometry selection '%s'"):format(selection), 2)
     end
 
-    local logger = log.logger({prefix = ("region_species (%s)"):format(label)})
+    local logger = log.logger({label = ("region_species (%s)"):format(label)})
 
     -- construct particle group from region in space and species
     local self = region_species(particle, geometry, geometry_selection[selection], species, logger)
