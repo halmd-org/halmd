@@ -17,6 +17,7 @@
 -- Public License along with this program.  If not, see
 -- <http://www.gnu.org/licenses/>.
 
+local log     = require("halmd.io.log")
 local utility = require("halmd.utility")
 local device  = require("halmd.utility.device")
 local module  = require("halmd.utility.module")
@@ -41,6 +42,7 @@ local sphere = {
 -- :param table args.centre: sphere centre
 -- :param number args.radius: sphere radius
 -- :param string args.precision: floating point precision *(optional)*
+-- :param string args.label: geometry label *(default: sphere)*
 --
 --    The supported values for ``precision`` are ``single`` and ``double``. If
 --    ``precision`` is not specified, the precision is selected according to
@@ -60,24 +62,34 @@ local sphere = {
 --
 --    Sphere radius.
 --
+-- .. attribute:: label
+--
+--    Instance label.
+--
 local M = module(function(args)
     utility.assert_type(args, "table")
     local centre = utility.assert_type(utility.assert_kwarg(args, "centre"), "table")
     local radius = utility.assert_type(utility.assert_kwarg(args, "radius"), "number")
     local precision = args.precision or (device.gpu and "single" or "@HALMD_HOST_PRECISION@")
+    local label = utility.assert_type(args.label or "sphere", "string")
 
     if not sphere[precision] then
          error("Unsupported precision", 2)
     end
 
+    local logger = log.logger({label = ("geometry (%s)"):format(label)})
+
     -- construct instance
-    local self = sphere[precision](centre, radius)
+    local self = sphere[precision](centre, radius, logger)
 
     -- attach coordinates of sphere centre as read-only property
     self.centre = property(function(self) return centre end)
 
     -- attach sphere radius as read-only property
     self.radius = property(function(self) return radius end)
+
+    -- attach label as read-only property
+    self.label = property(function(self) return label end)
 
     return self
 end)

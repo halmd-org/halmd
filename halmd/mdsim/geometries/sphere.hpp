@@ -26,7 +26,9 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
 #ifndef __CUDACC__
+# include <halmd/io/logger.hpp>
 # include <lua.hpp>
+# include <memory>
 #endif
 
 namespace halmd {
@@ -40,8 +42,12 @@ public:
     typedef fixed_vector<float_type, dimension> vector_type;
 
 #ifndef __CUDACC__
-   
-    sphere(vector_type centre, float_type radius);
+    sphere(
+        vector_type centre
+      , float_type radius
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
+    );
+
     /**
      * Bind class to Lua
      */
@@ -57,6 +63,11 @@ private:
     vector_type centre_;
     float_type radius_;
     float_type radius2_;
+
+#ifndef __CUDACC__
+    /** module logger */
+    std::shared_ptr<logger> logger_;
+#endif
 };
 
 template<int dimension, typename float_type>

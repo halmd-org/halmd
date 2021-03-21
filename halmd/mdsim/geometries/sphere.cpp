@@ -30,12 +30,18 @@ namespace mdsim {
 namespace geometries {
 
 template <int dimension, typename float_type>
-sphere<dimension, float_type>::sphere(vector_type centre, float_type radius)
+sphere<dimension, float_type>::sphere(
+    vector_type centre
+  , float_type radius
+  , std::shared_ptr<logger> logger
+)
   : centre_(centre)
   , radius_(radius)
   , radius2_(radius_ * radius_)
+  , logger_(logger)
 {
-    LOG("geometry: sphere of radius " << radius_ << " at " << centre_);
+    LOG("centre: " << centre_);
+    LOG("radius: " << radius_);
 }
 
 template <int dimension, typename float_type>
@@ -53,6 +59,7 @@ void sphere<dimension, float_type>::luaopen(lua_State* L)
               , def(class_name.c_str(), &std::make_shared<sphere
                   , vector_type
                   , float_type
+                  , std::shared_ptr<logger>
                   >)
             ]
         ]

@@ -25,7 +25,9 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
 #ifndef __CUDACC__
+# include <halmd/io/logger.hpp>
 # include <lua.hpp>
+# include <memory>
 #endif
 
 namespace halmd {
@@ -39,7 +41,11 @@ public:
     typedef fixed_vector<float_type, dimension> vector_type;
 
 #ifndef __CUDACC__
-    cuboid(vector_type lowest_corner, vector_type length);
+    cuboid(
+        vector_type lowest_corner
+      , vector_type length
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
+    );
 
     /**
      * Bind class to Lua
@@ -55,6 +61,11 @@ public:
 private:
     vector_type lowest_corner_;
     vector_type edge_length_;
+
+#ifndef __CUDACC__
+    /** module logger */
+    std::shared_ptr<logger> logger_;
+#endif
 };
 
 template<int dimension, typename float_type>

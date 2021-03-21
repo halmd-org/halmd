@@ -29,10 +29,17 @@ namespace mdsim {
 namespace geometries {
 
 template <int dimension, typename float_type>
-cuboid<dimension, float_type>::cuboid(vector_type lowest_corner, vector_type length)
+cuboid<dimension, float_type>::cuboid(
+    vector_type lowest_corner
+  , vector_type length
+  , std::shared_ptr<logger> logger
+)
   : lowest_corner_(lowest_corner)
   , edge_length_(length)
+  , logger_(logger)
 {
+    LOG("edge lengths: " << edge_length_);
+    LOG("lower and uppper corners: " << lowest_corner_ << " < position < " << lowest_corner_ + edge_length_);
 }
 
 template <int dimension, typename float_type>
@@ -50,6 +57,7 @@ void cuboid<dimension, float_type>::luaopen(lua_State* L)
               , def(class_name.c_str(), &std::make_shared<cuboid
                   , vector_type
                   , vector_type
+                  , std::shared_ptr<logger>
                   >)
             ]
         ]
