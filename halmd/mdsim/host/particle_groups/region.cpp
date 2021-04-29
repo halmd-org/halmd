@@ -46,6 +46,7 @@ region<dimension, float_type, geometry_type>::region(
   , logger_(logger)
   , mask_(particle->nparticle())
 {
+    geometry_->log(logger_);
 }
 
 /**

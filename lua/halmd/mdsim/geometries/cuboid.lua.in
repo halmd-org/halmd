@@ -17,8 +17,6 @@
 -- Public License along with this program.  If not, see
 -- <http://www.gnu.org/licenses/>.
 
-
-local log     = require("halmd.io.log")
 local utility = require("halmd.utility")
 local device  = require("halmd.utility.device")
 local module  = require("halmd.utility.module")
@@ -43,7 +41,6 @@ local cuboid = {
 -- :param table args.lowest_corner: coordinates of the lower left corner
 -- :param table args.length: cuboid edge lengths
 -- :param string args.precision: floating point precision *(optional)*
--- :param string args.label: geometry label *(default: cuboid)*
 --
 --    The ``lowest_corner`` specifies the coordinates of the lower left corner
 --    of the cuboid, i.e., the minimal coordinates.
@@ -66,16 +63,11 @@ local cuboid = {
 --
 --    Edge lengths of cuboid.
 --
--- .. attribute:: label
---
---    Instance label.
---
 local M = module(function(args)
     utility.assert_type(args, "table")
     local lowest_corner = utility.assert_type(utility.assert_kwarg(args, "lowest_corner"), "table")
     local length = utility.assert_type(utility.assert_kwarg(args, "length"), "table")
     local precision = args.precision or (device.gpu and "single" or "@HALMD_HOST_PRECISION@")
-    local label = utility.assert_type(args.label or "cuboid", "string")
 
     if not cuboid[precision] then
          error("Unsupported precision", 2)
@@ -85,19 +77,14 @@ local M = module(function(args)
         error("'lowest_corner' and 'length' vectors have mismatching dimensions", 2)
     end
 
-    local logger = log.logger({label = ("geometry (%s)"):format(label)})
-
     -- construct instance
-    local self = cuboid[precision](lowest_corner, length, logger)
+    local self = cuboid[precision](lowest_corner, length)
 
     -- attach lowest corner as read-only property
     self.lowest_corner = property(function(self) return lowest_corner end)
 
     -- attach edge lengths as read-only property
     self.length = property(function(self) return length end)
-
-    -- attach label as read-only property
-    self.label = property(function(self) return label end)
 
     return self
 end)

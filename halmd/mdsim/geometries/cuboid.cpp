@@ -1,5 +1,6 @@
 /*
  * Copyright © 2014 Nicolas Höft
+ * Copyright © 2021 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -29,17 +30,17 @@ namespace mdsim {
 namespace geometries {
 
 template <int dimension, typename float_type>
-cuboid<dimension, float_type>::cuboid(
-    vector_type lowest_corner
-  , vector_type length
-  , std::shared_ptr<logger> logger
-)
+cuboid<dimension, float_type>::cuboid(vector_type lowest_corner, vector_type edge_length)
   : lowest_corner_(lowest_corner)
-  , edge_length_(length)
-  , logger_(logger)
+  , edge_length_(edge_length)
+{}
+
+template <int dimension, typename float_type>
+void cuboid<dimension, float_type>::log(std::shared_ptr<halmd::logger> logger_) const
 {
-    LOG("edge lengths: " << edge_length_);
-    LOG("lower and uppper corners: " << lowest_corner_ << " < position < " << lowest_corner_ + edge_length_);
+    LOG("using cuboid geometry");
+    LOG("lowest corner: " << lowest_corner_);
+    LOG("edge length: " << edge_length_);
 }
 
 template <int dimension, typename float_type>
@@ -57,7 +58,6 @@ void cuboid<dimension, float_type>::luaopen(lua_State* L)
               , def(class_name.c_str(), &std::make_shared<cuboid
                   , vector_type
                   , vector_type
-                  , std::shared_ptr<logger>
                   >)
             ]
         ]

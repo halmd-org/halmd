@@ -49,6 +49,7 @@ region_species<dimension, float_type, geometry_type>::region_species(
   , logger_(logger)
   , mask_(particle->nparticle())
 {
+    geometry_->log(logger_);
 }
 
 /**

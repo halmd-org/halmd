@@ -1,5 +1,6 @@
 /*
  * Copyright © 2019 Roya Ebrahimi Viand
+ * Copyright © 2021 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -42,11 +43,17 @@ public:
     typedef fixed_vector<float_type, dimension> vector_type;
 
 #ifndef __CUDACC__
-    sphere(
-        vector_type centre
-      , float_type radius
-      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
-    );
+    sphere(vector_type centre, float_type radius);
+
+    /**
+     * Log geometry information
+     *
+     * The logger cannot be used as a class member because the host and gpu versions of the class would have different
+     * sizes which would lead to memory problems in the gpu code.
+     *
+     * The logger_ argument must have an underscore in it's name because of the way the LOG() macro works.
+     */
+    void log(std::shared_ptr<halmd::logger> logger_ = std::make_shared<halmd::logger>()) const;
 
     /**
      * Bind class to Lua
@@ -63,11 +70,6 @@ private:
     vector_type centre_;
     float_type radius_;
     float_type radius2_;
-
-#ifndef __CUDACC__
-    /** module logger */
-    std::shared_ptr<logger> logger_;
-#endif
 };
 
 template<int dimension, typename float_type>
@@ -88,4 +90,3 @@ HALMD_GPU_ENABLED bool sphere<dimension, float_type>::operator()(vector_type con
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GEOMETRIES_SPHERE_HPP */
-

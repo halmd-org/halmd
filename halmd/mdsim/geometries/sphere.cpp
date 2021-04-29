@@ -1,5 +1,6 @@
 /*
  * Copyright © 2019 Roya Ebrahimi Viand
+ * Copyright © 2021 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -30,16 +31,16 @@ namespace mdsim {
 namespace geometries {
 
 template <int dimension, typename float_type>
-sphere<dimension, float_type>::sphere(
-    vector_type centre
-  , float_type radius
-  , std::shared_ptr<logger> logger
-)
+sphere<dimension, float_type>::sphere(vector_type centre, float_type radius)
   : centre_(centre)
   , radius_(radius)
   , radius2_(radius_ * radius_)
-  , logger_(logger)
+{}
+
+template <int dimension, typename float_type>
+void sphere<dimension, float_type>::log(std::shared_ptr<halmd::logger> logger_) const
 {
+    LOG("using sphere geometry");
     LOG("centre: " << centre_);
     LOG("radius: " << radius_);
 }
@@ -59,7 +60,6 @@ void sphere<dimension, float_type>::luaopen(lua_State* L)
               , def(class_name.c_str(), &std::make_shared<sphere
                   , vector_type
                   , float_type
-                  , std::shared_ptr<logger>
                   >)
             ]
         ]
