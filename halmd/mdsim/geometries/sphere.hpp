@@ -43,7 +43,7 @@ public:
     typedef fixed_vector<float_type, dimension> vector_type;
 
 #ifndef __CUDACC__
-    sphere(vector_type centre, float_type radius);
+    sphere(vector_type const& centre, float_type const& radius);
 
     /**
      * Log geometry information

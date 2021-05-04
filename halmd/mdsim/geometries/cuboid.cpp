@@ -30,7 +30,7 @@ namespace mdsim {
 namespace geometries {
 
 template <int dimension, typename float_type>
-cuboid<dimension, float_type>::cuboid(vector_type lowest_corner, vector_type edge_length)
+cuboid<dimension, float_type>::cuboid(vector_type const& lowest_corner, vector_type const& edge_length)
   : lowest_corner_(lowest_corner)
   , edge_length_(edge_length)
 {}

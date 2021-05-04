@@ -31,7 +31,7 @@ namespace mdsim {
 namespace geometries {
 
 template <int dimension, typename float_type>
-sphere<dimension, float_type>::sphere(vector_type centre, float_type radius)
+sphere<dimension, float_type>::sphere(vector_type const& centre, float_type const& radius)
   : centre_(centre)
   , radius_(radius)
   , radius2_(radius_ * radius_)

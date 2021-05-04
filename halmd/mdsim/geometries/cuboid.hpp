@@ -42,7 +42,7 @@ public:
     typedef fixed_vector<float_type, dimension> vector_type;
 
 #ifndef __CUDACC__
-    cuboid(vector_type lowest_corner, vector_type edge_length);
+    cuboid(vector_type const& lowest_corner, vector_type const& edge_length);
 
     /**
      * Log geometry information
