@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2012 Peter Colberg
+ * Copyright © 2021      Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -22,6 +23,7 @@
 #define HALMD_ALGORITHM_GPU_REDUCE_HPP
 
 #include <halmd/algorithm/gpu/reduce_kernel.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -33,12 +35,11 @@ namespace halmd {
 /**
  * Reduce an input array on GPU using an accumulator.
  */
-template <typename accumulator_type, unsigned int max_threads = shared_memory_max_threads<accumulator_type>::value>
+template <typename accumulator_type>
 class reduction
 {
 private:
-    typedef reduction_kernel<accumulator_type, max_threads> kernel_type;
-    typedef typename kernel_type::function_type function_type;
+    typedef reduction_kernel<accumulator_type> kernel_type;
 
 public:
     /**
@@ -47,10 +48,10 @@ public:
      * @param blocks number of blocks in execution grid
      * @param threads number of threads per block
      *
-     * The number of threads per block must be power of 2, and at least 32
-     * (size of a wrap). CUDA PTX ≥ 2.0 allows up to 1024 threads per block.
+     * The number of threads per block must be a multiple of 32
+     * (size of a warp). CUDA PTX ≥ 2.0 allows up to 1024 threads per block.
      */
-    reduction(unsigned int blocks = 16, unsigned int threads = max_threads);
+    reduction(unsigned int blocks = 16, unsigned int threads = 1024);
 
     /**
      * Reduce values in input array using given accumulator.
@@ -70,38 +71,32 @@ public:
     reduction& operator=(reduction const&) = delete;
 
 private:
-    /** kernel execution parameters */
-    cuda::config dim_;
     /** accumulators per block in GPU memory */
     cuda::memory::device::vector<accumulator_type> g_block_;
     /** accumulators per block in pinned host memory */
     cuda::memory::host::vector<accumulator_type> h_block_;
-    /** reduce kernel function matching number of threads per block */
-    cuda::function<function_type> reduce_;
 };
 
-template <typename accumulator_type, unsigned int max_threads>
-inline reduction<accumulator_type, max_threads>::reduction(
+template <typename accumulator_type>
+inline reduction<accumulator_type>::reduction(
     unsigned int blocks
   , unsigned int threads
 )
-  : dim_(blocks, threads)
-  , g_block_(blocks)
-  , reduce_(kernel_type::reduce(threads))
+  : g_block_(blocks)
 {
     // avoid DefaultConstructible requirement on accumulator_type
     h_block_.reserve(blocks);
+    configure_kernel(kernel_type::kernel.reduce, cuda::config(blocks, threads), false);
 }
 
-template <typename accumulator_type, unsigned int max_threads>
-inline accumulator_type reduction<accumulator_type, max_threads>::operator()(
+template <typename accumulator_type>
+inline accumulator_type reduction<accumulator_type>::operator()(
     typename accumulator_type::iterator first
   , typename accumulator_type::iterator last
   , accumulator_type const& acc
 )
 {
-    reduce_.configure(dim_.grid, dim_.block);
-    reduce_(first, last - first, g_block_, acc);
+    kernel_type::kernel.reduce(first, last - first, g_block_, acc);
     assert(g_block_.size() == h_block_.capacity());
     cuda::copy(g_block_.begin(), g_block_.end(), h_block_.begin());
     return std::for_each(h_block_.begin(), h_block_.begin() + h_block_.capacity(), acc);

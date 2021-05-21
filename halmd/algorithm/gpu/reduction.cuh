@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2021       Jaslo Ziska
  * Copyright © 2019       Felix Höfling
  * Copyright © 2008-2009  Peter Colberg
  *
@@ -22,188 +23,359 @@
 #ifndef HALMD_ALGORITHM_GPU_REDUCTION_CUH
 #define HALMD_ALGORITHM_GPU_REDUCTION_CUH
 
-#include <boost/mpl/int.hpp>
-
+#include <halmd/algorithm/gpu/bits/shfl.cuh>
 #include <halmd/algorithm/gpu/transform.cuh>
+#include <halmd/utility/gpu/thread.cuh>
 
 namespace halmd {
 namespace algorithm {
 namespace gpu {
 
-using boost::mpl::int_;
+using halmd::algorithm::gpu::bits::shfl_down;
+
+/**
+ * parallel unary warp reduction
+ */
+template <typename transform_, typename T>
+__device__ void reduce_warp(T& val)
+{
+    int delta = WARP_SIZE / 2;
+    val = transform<transform_>(val, shfl_down(FULL_MASK, val, delta));
+
+    if (WTID < WARP_SIZE / 2) { // exit upper half-warp
+        while (delta > 1) {
+            delta >>= 1;  // <=> delta /= 2;
+            val = transform<transform_>(val, shfl_down(0xFFFF, val, delta));
+        }
+    }
+}
+
+/**
+ * parallel unary warp reduction for less than 32 threads
+ */
+template <typename transform_, typename T>
+__device__ void reduce_warp(T& val, unsigned int size)
+{
+    assert(size > 1 && size <= warpSize);
+
+    int delta = 1 << (31 - __clz(size - 1)); // round down to previous power of 2 (powers of two are rounded down too)
+
+    T tmp = shfl_down(FULL_MASK, val, delta);
+    if (WTID + delta < size) { // only apply transformation if the warps are included in size
+        val = transform<transform_>(val, tmp);
+    }
+
+    if (WTID < (warpSize >> 1)) { // exit upper half-warp
+        // now that delta is a power of two reduce normally
+        while (delta > 1) {
+            delta >>= 1; // <=> delta /= 2;
+            val = transform<transform_>(val, shfl_down(0xFFFF, val, delta));
+        }
+    }
+}
 
 /**
  * parallel unary reduction
  */
-template <int threads, typename transform_, typename T, typename V>
-__device__ typename enable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T& sum, V s_sum[])
+template <typename transform_, typename T>
+__device__ void reduce(T& val)
 {
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        sum = transform<transform_>(sum, static_cast<T>(s_sum[tid + threads]));
+    /*
+     * The size of the shared memory array is 1024 / WARP_SIZE because, at the time of writing this function,
+     * the maximum number of threads per block is 1024 and the warp size is 32 so the length of the shared memory
+     * would never be exceeded.
+     */
+    assert(WDIM <= 1024 / WARP_SIZE);
+    static __shared__ unsigned char shared_bytes[sizeof(T) * 1024 / WARP_SIZE];
+    T* const shared = reinterpret_cast<T*>(shared_bytes);
+
+    // reduce each warp individually
+    reduce_warp<transform_>(val);
+
+    // write the result from the first thread of each warp (first lane) to shared memory
+    if (WTID == 0) {
+        shared[WID] = val;
+    }
+
+    __syncthreads();
+
+    // reduce the results from all warps in the first warp
+    if (WID == 0) {
+        val = shared[TID];
+        reduce_warp<transform_>(val, WDIM);
     }
 }
 
-template <int threads, typename transform_, typename T, typename V>
-__device__ typename disable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T& sum, V s_sum[])
+/**
+ * parallel binary warp reduction
+ */
+template <typename transform_, typename T0, typename T1>
+__device__ void reduce_warp(T0& val0, T1& val1)
 {
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        sum = transform<transform_>(sum, static_cast<T>(s_sum[tid + threads]));
-        s_sum[tid] = sum;
+    int delta = WARP_SIZE / 2;
+    transform<transform_>(val0, val1, shfl_down(FULL_MASK, val0, delta), shfl_down(FULL_MASK, val1, delta));
+
+    if (WTID < WARP_SIZE / 2) { // exit upper half-warp
+        while (delta > 1) {
+            delta >>= 1;  // <=> delta /= 2;
+            transform<transform_>(val0, val1, shfl_down(0xFFFF, val0, delta), shfl_down(0xFFFF, val1, delta));
+        }
+    }
+}
+
+/**
+ * parallel binary warp reduction for less than 32 threads
+ */
+template <typename transform_, typename T0, typename T1>
+__device__ void reduce_warp(T0& val0, T1& val1, unsigned int size)
+{
+    assert(size > 1 && size <= warpSize);
+
+    int delta = 1 << (31 - __clz(size - 1)); // round down to previous power of 2 (powers of two are rounded down too)
+
+    T0 tmp0 = shfl_down(FULL_MASK, val0, delta);
+    T1 tmp1 = shfl_down(FULL_MASK, val1, delta);
+    if (WTID + delta < size) { // only apply transformation if the warps are included in size
+        transform<transform_>(val0, val1, tmp0, tmp1);
     }
 
-    if (threads >= warpSize) {
-        __syncthreads();
+    if (WTID < (warpSize >> 1)) { // exit upper half-warp
+        // now that delta is a power of two reduce normally
+        while (delta > 1) {
+            delta = delta >> 1;
+            transform<transform_>(val0, val1, shfl_down(0xFFFF, val0, delta), shfl_down(0xFFFF, val1, delta));
+        }
     }
-    else {
-        // on hardware of compute capability ≥ 7.0 (Volta),
-        // warps are no longer guaranteed to be executed in lock-step
-#if CUDART_VERSION >= 9000
-        // select warp lanes with TID < threads,
-        // fix compilation of operator<< for large values of 'threads'
-        unsigned mask = (1U << (threads & (warpSize - 1))) - 1;
-        __syncwarp(mask);
-#else
-        __syncthreads();    // only needed if the _hardware_ is Volta or later
-#endif
-    }
-
-    reduce<threads / 2, transform_>(sum, s_sum);
 }
 
 /**
  * parallel binary reduction
  */
-template <int threads, typename transform_, typename T0, typename T1, typename V0, typename V1>
-__device__ typename enable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, V0 s_sum0[], V1 s_sum1[])
+template <typename transform_, typename T0, typename T1>
+__device__ void reduce(T0& val0, T1& val1)
 {
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        transform<transform_>(sum0, sum1, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]));
+    /*
+     * The size of the shared memory array is 1024 / WARP_SIZE because, at the time of writing this function,
+     * the maximum number of threads per block is 1024 and the warp size is 32 so the length of the shared memory
+     * would never be exceeded.
+     */
+    assert(WDIM <= 1024 / WARP_SIZE);
+    static __shared__ unsigned char shared_bytes[(sizeof(T0) + sizeof(T1)) * 1024 / WARP_SIZE];
+    T0* const shared0 = reinterpret_cast<T0*>(shared_bytes);
+    T1* const shared1 = reinterpret_cast<T1*>(&shared0[WARP_SIZE]);
+
+    // reduce each warp individually
+    reduce_warp<transform_>(val0, val1);
+
+    // write the results from the first thread of each warp (first lane) to shared memory
+    if (WTID == 0) {
+        shared0[WID] = val0;
+        shared1[WID] = val1;
+    }
+
+    __syncthreads();
+
+    // reduce the results from all warps in the first warp
+    if (WID == 0) {
+        val0 = shared0[TID];
+        val1 = shared1[TID];
+        reduce_warp<transform_>(val0, val1);
     }
 }
 
-template <int threads, typename transform_, typename T0, typename T1, typename V0, typename V1>
-__device__ typename disable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, V0 s_sum0[], V1 s_sum1[])
+/**
+ * parallel ternary warp reduction
+ */
+template <typename transform_, typename T0, typename T1, typename T2>
+__device__ void reduce_warp(T0& val0, T1& val1, T2& val2)
 {
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        transform<transform_>(sum0, sum1, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]));
-        s_sum0[tid] = sum0;
-        s_sum1[tid] = sum1;
-    }
+    int delta = WARP_SIZE / 2;
+    transform<transform_>(val0, val1, val2
+      , shfl_down(FULL_MASK, val0, delta)
+      , shfl_down(FULL_MASK, val1, delta)
+      , shfl_down(FULL_MASK, val2, delta)
+    );
 
-    if (threads >= warpSize) {
-        __syncthreads();
+    if (WTID < WARP_SIZE / 2) { // exit upper half-warp
+        while (delta > 1) {
+            delta >>= 1;  // <=> delta /= 2;
+            transform<transform_>(val0, val1, val2
+              , shfl_down(0xFFFF, val0, delta)
+              , shfl_down(0xFFFF, val1, delta)
+              , shfl_down(0xFFFF, val2, delta)
+            );
+        }
     }
-    else {
-        // on hardware of compute capability ≥ 7.0 (Volta),
-        // warps are no longer guaranteed to be executed in lock-step
-#if CUDART_VERSION >= 9000
-        // select warp lanes with TID < threads,
-        // fix compilation of operator<< for large values of 'threads'
-        unsigned mask = (1U << (threads & (warpSize - 1))) - 1;
-        __syncwarp(mask);
-#else
-        __syncthreads();    // only needed if the _hardware_ is Volta or later
-#endif
-    }
-
-    reduce<threads / 2, transform_>(sum0, sum1, s_sum0, s_sum1);
 }
+
+/**
+ * parallel ternary warp reduction for less than 32 threads
+ */
+template <typename transform_, typename T0, typename T1, typename T2>
+__device__ void reduce_warp(T0& val0, T1& val1, T2& val2, unsigned int size)
+{
+    assert(size > 1 && size <= warpSize);
+
+    int delta = 1 << (31 - __clz(size - 1)); // round down to previous power of 2 (powers of two are rounded down too)
+
+    T0 tmp0 = shfl_down(FULL_MASK, val0, delta);
+    T1 tmp1 = shfl_down(FULL_MASK, val1, delta);
+    T2 tmp2 = shfl_down(FULL_MASK, val2, delta);
+    if (WTID + delta < size) { // only apply transformation if the warps are included in size
+        transform<transform_>(val0, val1, val2, tmp0, tmp1, tmp2);
+    }
+
+    if (WTID < (warpSize >> 1)) { // exit upper half-warp
+        // now that delta is a power of two reduce normally
+        while (delta > 1) {
+            delta = delta >> 1;
+            transform<transform_>(val0, val1, val2
+              , shfl_down(0xFFFF, val0, delta)
+              , shfl_down(0xFFFF, val1, delta)
+              , shfl_down(0xFFFF, val2, delta)
+            );
+        }
+    }
+}
+
 
 /**
  * parallel ternary reduction
  */
-template <int threads, typename transform_, typename T0, typename T1, typename T2, typename V0, typename V1, typename V2>
-__device__ typename enable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T2& sum2, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[])
+template <typename transform_, typename T0, typename T1, typename T2>
+__device__ void reduce(T0& val0, T1& val1, T2& val2)
 {
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        transform<transform_>(sum0, sum1, sum2, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]));
+    /*
+     * The size of the shared memory array is 1024 / WARP_SIZE because, at the time of writing this function,
+     * the maximum number of threads per block is 1024 and the warp size is 32 so the length of the shared memory
+     * would never be exceeded.
+     */
+    assert(WDIM <= 1024 / WARP_SIZE);
+    static __shared__ unsigned char shared_bytes[(sizeof(T0) + sizeof(T1) + sizeof(T2)) * 1024 / WARP_SIZE];
+    T0* const shared0 = reinterpret_cast<T0*>(shared_bytes);
+    T1* const shared1 = reinterpret_cast<T1*>(&shared0[WARP_SIZE]);
+    T2* const shared2 = reinterpret_cast<T2*>(&shared1[WARP_SIZE]);
+
+    // reduce each warp individually
+    reduce_warp<transform_>(val0, val1, val2);
+
+    // write the results from the first thread of each warp (first lane) to shared memory
+    if (WTID == 0) {
+        shared0[WID] = val0;
+        shared1[WID] = val1;
+        shared2[WID] = val2;
+    }
+
+    __syncthreads();
+
+    // reduce the results from all warps in the first warp
+    if (WID == 0) {
+        val0 = shared0[WTID];
+        val1 = shared1[WTID];
+        val2 = shared2[WTID];
+        reduce_warp<transform_>(val0, val1, val2, WDIM);
     }
 }
 
-template <int threads, typename transform_, typename T0, typename T1, typename T2, typename V0, typename V1, typename V2>
-__device__ typename disable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T2& sum2, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[])
+/**
+ * parallel quartenary warp reduction
+ */
+template <typename transform_, typename T0, typename T1, typename T2, typename T3>
+__device__ void reduce_warp(T0& val0, T1& val1, T2& val2, T3& val3)
 {
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        transform<transform_>(sum0, sum1, sum2, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]));
-        s_sum0[tid] = sum0;
-        s_sum1[tid] = sum1;
-        s_sum2[tid] = sum2;
-    }
+    int delta = WARP_SIZE / 2;
+    transform<transform_>(val0, val1, val2, val3
+      , shfl_down(FULL_MASK, val0, delta)
+      , shfl_down(FULL_MASK, val1, delta)
+      , shfl_down(FULL_MASK, val2, delta)
+      , shfl_down(FULL_MASK, val3, delta)
+    );
 
-    if (threads >= warpSize) {
-        __syncthreads();
+    if (WTID < WARP_SIZE / 2) { // exit upper half-warp
+        while (delta > 1) {
+            delta >>= 1;  // <=> delta /= 2;
+            transform<transform_>(val0, val1, val2, val3
+              , shfl_down(0xFFFF, val0, delta)
+              , shfl_down(0xFFFF, val1, delta)
+              , shfl_down(0xFFFF, val2, delta)
+              , shfl_down(0xFFFF, val3, delta)
+            );
+        }
     }
-    else {
-        // on hardware of compute capability ≥ 7.0 (Volta),
-        // warps are no longer guaranteed to be executed in lock-step
-#if CUDART_VERSION >= 9000
-        // select warp lanes with TID < threads,
-        // fix compilation of operator<< for large values of 'threads'
-        unsigned mask = (1U << (threads & (warpSize - 1))) - 1;
-        __syncwarp(mask);
-#else
-        __syncthreads();    // only needed if the _hardware_ is Volta or later
-#endif
-    }
-
-    reduce<threads / 2, transform_>(sum0, sum1, sum2, s_sum0, s_sum1, s_sum2);
 }
+
+/**
+ * parallel quartenary warp reduction for less than 32 threads
+ */
+template <typename transform_, typename T0, typename T1, typename T2, typename T3>
+__device__ void reduce_warp(T0& val0, T1& val1, T2& val2, T3& val3, unsigned int size)
+{
+    assert(size > 1 && size <= warpSize);
+
+    int delta = 1 << (31 - __clz(size - 1)); // round down to previous power of 2 (powers of two are rounded down too)
+
+    T0 tmp0 = shfl_down(FULL_MASK, val0, delta);
+    T1 tmp1 = shfl_down(FULL_MASK, val1, delta);
+    T2 tmp2 = shfl_down(FULL_MASK, val2, delta);
+    T3 tmp3 = shfl_down(FULL_MASK, val3, delta);
+    if (WTID + delta < size) { // only apply transformation if the warps are included in size
+        transform<transform_>(val0, val1, val2, val3, tmp0, tmp1, tmp2, tmp3);
+    }
+
+    if (WTID < (warpSize >> 1)) { // exit upper half-warp
+        // now that delta is a power of two reduce normally
+        while (delta > 1) {
+            delta = delta >> 1;
+            transform<transform_>(val0, val1, val2, val3
+              , shfl_down(0xFFFF, val0, delta)
+              , shfl_down(0xFFFF, val1, delta)
+              , shfl_down(0xFFFF, val2, delta)
+              , shfl_down(0xFFFF, val3, delta)
+            );
+        }
+    }
+}
+
 
 /**
  * parallel quartenary reduction
  */
-template <int threads, typename transform_, typename T0, typename T1, typename T2, typename T3, typename V0, typename V1, typename V2, typename V3>
-__device__ typename enable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[], V3 s_sum3[])
+template <typename transform_, typename T0, typename T1, typename T2, typename T3>
+__device__ void reduce(T0& val0, T1& val1, T2& val2, T3& val3)
 {
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        transform<transform_>(sum0, sum1, sum2, sum3, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]), static_cast<T3>(s_sum3[tid + threads]));
-    }
-}
+    /*
+     * The size of the shared memory array is 1024 / WARP_SIZE because, at the time of writing this function,
+     * the maximum number of threads per block is 1024 and the warp size is 32 so the length of the shared memory
+     * would never be exceeded.
+     */
+    assert(WDIM <= 1024 / WARP_SIZE);
+    static __shared__ unsigned char shared_bytes[(sizeof(T0) + sizeof(T1) + sizeof(T2) + sizeof(T3)) * 1024 / WARP_SIZE];
+    T0* const shared0 = reinterpret_cast<T0*>(shared_bytes);
+    T1* const shared1 = reinterpret_cast<T1*>(&shared0[WARP_SIZE]);
+    T2* const shared2 = reinterpret_cast<T2*>(&shared1[WARP_SIZE]);
+    T3* const shared3 = reinterpret_cast<T3*>(&shared2[WARP_SIZE]);
 
-template <int threads, typename transform_, typename T0, typename T1, typename T2, typename T3, typename V0, typename V1, typename V2, typename V3>
-__device__ typename disable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[], V3 s_sum3[])
-{
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        transform<transform_>(sum0, sum1, sum2, sum3, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]), static_cast<T3>(s_sum3[tid + threads]));
-        s_sum0[tid] = sum0;
-        s_sum1[tid] = sum1;
-        s_sum2[tid] = sum2;
-        s_sum3[tid] = sum3;
-    }
+    // reduce each warp individually
+    reduce_warp<transform_>(val0, val1, val2, val3);
 
-    if (threads >= warpSize) {
-        __syncthreads();
-    }
-    else {
-        // on hardware of compute capability ≥ 7.0 (Volta),
-        // warps are no longer guaranteed to be executed in lock-step
-#if CUDART_VERSION >= 9000
-        // select warp lanes with TID < threads,
-        // fix compilation of operator<< for large values of 'threads'
-        unsigned mask = (1U << (threads & (warpSize - 1))) - 1;
-        __syncwarp(mask);
-#else
-        __syncthreads();    // only needed if the _hardware_ is Volta or later
-#endif
+    // write the results from the first thread of each warp (first lane) to shared memory
+    if (WTID == 0) {
+        shared0[WID] = val0;
+        shared1[WID] = val1;
+        shared2[WID] = val2;
+        shared3[WID] = val3;
     }
 
-    reduce<threads / 2, transform_>(sum0, sum1, sum2, sum3, s_sum0, s_sum1, s_sum2, s_sum3);
+    __syncthreads();
+
+    // reduce the results from all warps in the first warp
+    if (WID == 0) {
+        val0 = shared0[TID];
+        val1 = shared1[TID];
+        val2 = shared2[TID];
+        val3 = shared3[TID];
+        reduce_warp<transform_>(val0, val1, val2, val3, WDIM);
+    }
 }
 
 } // namespace algorithm

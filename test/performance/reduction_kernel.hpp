@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2021 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -18,36 +18,22 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_MAX_DISPLACEMENT_KERNEL_HPP
-#define HALMD_MDSIM_GPU_MAX_DISPLACEMENT_KERNEL_HPP
+#ifndef HALMD_TEST_PERFORMANCE_REDUCTION_KERNEL_HPP
+#define HALMD_TEST_PERFORMANCE_REDUCTION_KERNEL_HPP
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/numeric/mp/dsfloat.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-namespace halmd {
-namespace mdsim {
-namespace gpu {
+typedef halmd::fixed_vector<float, 3> fixed_vector_type;
 
-template <int dimension>
-struct max_displacement_wrapper
-{
-    typedef fixed_vector<float, dimension> vector_type;
+static const size_t NTHREADS = 224; // NTHREADS / 32 is not a power of two
+static const size_t NREDUCES = 10000;
 
-    /** maximum squared particle displacement */
-    cuda::function<void (
-        float4 const* g_r
-      , float4 const* g_r0
-      , float* g_rr
-      , unsigned int
-      , vector_type
-    )> displacement;
+extern cuda::function<void (float const*, float*)> reduce_float_kernel;
+extern cuda::function<void (int const*, int*)> reduce_int_kernel;
+extern cuda::function<void (halmd::dsfloat const*, halmd::dsfloat*)> reduce_dsfloat_kernel;
+extern cuda::function<void (fixed_vector_type const*, fixed_vector_type*)> reduce_fixed_vector_kernel;
 
-    static max_displacement_wrapper kernel;
-};
-
-} // namespace mdsim
-} // namespace gpu
-} // namespace halmd
-
-#endif /* ! HALMD_MDSIM_GPU_MAX_DISPLACEMENT_KERNEL_HPP */
+#endif // ! HALMD_TEST_PERFORMANCE_REDUCTION_KERNEL_HPP

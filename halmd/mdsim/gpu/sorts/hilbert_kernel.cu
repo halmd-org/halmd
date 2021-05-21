@@ -20,13 +20,13 @@
 
 #include <float.h>
 
-#include <halmd/algorithm/gpu/bits.cuh>
+#include <halmd/algorithm/gpu/bits/swap.cuh>
 #include <halmd/mdsim/gpu/sorts/hilbert_kernel.hpp>
 #include <halmd/mdsim/sorts/hilbert_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
-using namespace halmd::algorithm::gpu;
+using namespace halmd::algorithm::gpu::bits;
 
 namespace halmd {
 namespace mdsim {
