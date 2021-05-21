@@ -66,6 +66,7 @@ endif()
 target_link_libraries(test_unit_mdsim_particle_groups_region
   halmd_mdsim_host_particle_groups
   halmd_mdsim
+  halmd_mdsim_geometries
   halmd_mdsim_host
   halmd_utility
   ${HALMD_TEST_LIBRARIES}

@@ -51,6 +51,7 @@ region_species<dimension, float_type, geometry_type>::region_species(
   , species_(species)
   , logger_(logger)
 {
+    geometry_->log(logger_);
     try {
         auto mask = make_cache_mutable(mask_);
         auto selection = make_cache_mutable(selection_);

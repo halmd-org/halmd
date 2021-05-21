@@ -125,7 +125,7 @@ local M = module(function(args)
         error("invalid argument 'range'", 2)
     end
 
-    local logger = log.logger({prefix = ("group (%s)"):format(label)})
+    local logger = log.logger({label = ("group (%s)"):format(label)})
 
     -- construct particle group from ID range
     local self = id_range(particle, range, logger)

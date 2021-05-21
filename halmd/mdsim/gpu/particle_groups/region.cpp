@@ -49,6 +49,7 @@ region<dimension, float_type, geometry_type>::region(
   , geometry_selection_(geometry_sel)
   , logger_(logger)
 {
+    geometry_->log(logger_);
     try {
         auto mask = make_cache_mutable(mask_);
         auto selection = make_cache_mutable(selection_);

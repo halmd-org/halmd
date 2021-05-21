@@ -1,5 +1,6 @@
 /*
  * Copyright © 2014 Nicolas Höft
+ * Copyright © 2021 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -29,10 +30,17 @@ namespace mdsim {
 namespace geometries {
 
 template <int dimension, typename float_type>
-cuboid<dimension, float_type>::cuboid(vector_type lowest_corner, vector_type length)
+cuboid<dimension, float_type>::cuboid(vector_type const& lowest_corner, vector_type const& edge_length)
   : lowest_corner_(lowest_corner)
-  , edge_length_(length)
+  , edge_length_(edge_length)
+{}
+
+template <int dimension, typename float_type>
+void cuboid<dimension, float_type>::log(std::shared_ptr<halmd::logger> logger_) const
 {
+    LOG("using cuboid geometry");
+    LOG("lowest corner: " << lowest_corner_);
+    LOG("edge length: " << edge_length_);
 }
 
 template <int dimension, typename float_type>

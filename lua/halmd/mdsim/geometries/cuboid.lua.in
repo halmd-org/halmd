@@ -17,7 +17,6 @@
 -- Public License along with this program.  If not, see
 -- <http://www.gnu.org/licenses/>.
 
-
 local utility = require("halmd.utility")
 local device  = require("halmd.utility.device")
 local module  = require("halmd.utility.module")
@@ -77,6 +76,7 @@ local M = module(function(args)
     if #lowest_corner ~= #length  then
         error("'lowest_corner' and 'length' vectors have mismatching dimensions", 2)
     end
+
     -- construct instance
     local self = cuboid[precision](lowest_corner, length)
 

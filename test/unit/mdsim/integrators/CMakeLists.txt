@@ -246,10 +246,10 @@ configure_file(
   @ONLY
 )
 
-add_test(unit/mdsim/integrators/verlet_nvt_hoover/lua/host/2d
+halmd_add_test(unit/mdsim/integrators/verlet_nvt_hoover/lua/host/2d
   ${CMAKE_COMMAND} -DDIMENSION=2 -DUSE_HOST=1 -P test_unit_mdsim_integrators_verlet_nvt_hoover.cmake
 )
-add_test(unit/mdsim/integrators/verlet_nvt_hoover/lua/host/3d
+halmd_add_test(unit/mdsim/integrators/verlet_nvt_hoover/lua/host/3d
   ${CMAKE_COMMAND} -DDIMENSION=3 -DUSE_HOST=1 -P test_unit_mdsim_integrators_verlet_nvt_hoover.cmake
 )
 if(HALMD_WITH_GPU)

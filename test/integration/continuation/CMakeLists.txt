@@ -13,10 +13,10 @@ configure_file(
   test_integration_continuation_lennard_jones.cmake
   @ONLY
 )
-add_test(integration/continuation/lennard_jones/host/2d
+halmd_add_test(integration/continuation/lennard_jones/host/2d
   ${CMAKE_COMMAND} -DDIMENSION=2 -DUSE_HOST=1 -P test_integration_continuation_lennard_jones.cmake
 )
-add_test(integration/continuation/lennard_jones/host/3d
+halmd_add_test(integration/continuation/lennard_jones/host/3d
   ${CMAKE_COMMAND} -DDIMENSION=3 -DUSE_HOST=1 -P test_integration_continuation_lennard_jones.cmake
 )
 if(HALMD_WITH_GPU)
@@ -33,10 +33,10 @@ configure_file(
   test_integration_continuation_binary_mixture.cmake
   @ONLY
 )
-add_test(integration/continuation/binary_mixture/host/2d
+halmd_add_test(integration/continuation/binary_mixture/host/2d
   ${CMAKE_COMMAND} -DDIMENSION=2 -DUSE_HOST=1 -P test_integration_continuation_binary_mixture.cmake
 )
-add_test(integration/continuation/binary_mixture/host/3d
+halmd_add_test(integration/continuation/binary_mixture/host/3d
   ${CMAKE_COMMAND} -DDIMENSION=3 -DUSE_HOST=1 -P test_integration_continuation_binary_mixture.cmake
 )
 if(HALMD_WITH_GPU)
