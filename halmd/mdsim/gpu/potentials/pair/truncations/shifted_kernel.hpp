@@ -69,7 +69,7 @@ public:
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED void fetch(
+    HALMD_GPU_ENABLED void fetch_param(
         unsigned int type1, unsigned int type2
       , unsigned int ntype1, unsigned int ntype2
     );

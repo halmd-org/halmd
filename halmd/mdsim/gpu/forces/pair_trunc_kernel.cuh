@@ -96,7 +96,7 @@ __global__ void compute(
         vector_type r2;
         tie(r2, type2) <<= tex1Dfetch<float4>(t_r2, j);
         // fetch pair potential
-        potential.fetch(type1, type2, ntype1, ntype2);
+        potential.fetch_param(type1, type2, ntype1, ntype2);
 
         // particle distance vector
         vector_type r = r1 - r2;

@@ -33,7 +33,7 @@ namespace potentials {
 namespace pair {
 namespace lennard_jones_kernel {
 
-__device__ void lennard_jones::fetch(
+__device__ void lennard_jones::fetch_param(
     unsigned int type1, unsigned int type2
   , unsigned int ntype1, unsigned int ntype2
 )

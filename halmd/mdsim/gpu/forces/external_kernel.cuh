@@ -70,7 +70,7 @@ __global__ void compute(
     box_kernel::reduce_periodic(r, box_length);
 
     // fetch potential
-    potential.fetch(species);
+    potential.fetch_param(species);
 
     // evaluate force acting on this particle
     // and contribution to potential energy

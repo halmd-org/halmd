@@ -30,7 +30,7 @@ namespace external {
 namespace harmonic_kernel {
 
 template <int dimension>
-__device__ void harmonic<dimension>::fetch(unsigned int species)
+__device__ void harmonic<dimension>::fetch_param(unsigned int species)
 {
     tie(offset_, stiffness_) <<= tex1Dfetch<float4>(t_param_, species);
 }

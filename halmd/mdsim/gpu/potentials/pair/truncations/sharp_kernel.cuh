@@ -36,12 +36,12 @@ namespace truncations {
 namespace sharp_kernel {
 
 template <typename parent_kernel>
-__device__ void sharp<parent_kernel>::fetch(
+__device__ void sharp<parent_kernel>::fetch_param(
     unsigned int type1, unsigned int type2
   , unsigned int ntype1, unsigned int ntype2
 )
 {
-    parent_kernel::fetch(type1, type2, ntype1, ntype2);
+    parent_kernel::fetch_param(type1, type2, ntype1, ntype2);
     rr_cut_ = tex1Dfetch<float>(t_param_, type1 * ntype2 + type2);
 }
 

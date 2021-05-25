@@ -41,12 +41,12 @@ namespace smooth_r4_kernel {
 static __constant__ float rri_smooth_;
 
 template <typename parent_kernel>
-__device__ void smooth_r4<parent_kernel>::fetch(
+__device__ void smooth_r4<parent_kernel>::fetch_param(
     unsigned int type1, unsigned int type2
   , unsigned int ntype1, unsigned int ntype2
 )
 {
-    parent_kernel::fetch(type1, type2, ntype1, ntype2);
+    parent_kernel::fetch_param(type1, type2, ntype1, ntype2);
     pair_ = tex1Dfetch<float4>(t_param_, type1 * ntype2 + type2);
 }
 

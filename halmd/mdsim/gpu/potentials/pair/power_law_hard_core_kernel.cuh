@@ -52,12 +52,12 @@ public:
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED void fetch(
+    HALMD_GPU_ENABLED void fetch_param(
         unsigned int type1, unsigned int type2
       , unsigned int ntype1, unsigned int ntype2
     )
     {
-        power_law_kernel::power_law::fetch(type1, type2, ntype1, ntype2);
+        power_law_kernel::power_law::fetch_param(type1, type2, ntype1, ntype2);
         core_sigma_ = tex1Dfetch<float>(t_param_, type1 * ntype2 + type2);
     }
 

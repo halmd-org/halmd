@@ -51,7 +51,7 @@ public:
     /**
      * Fetch parameters from texture cache for this particle species
      */
-    HALMD_GPU_ENABLED void fetch(unsigned int species);
+    HALMD_GPU_ENABLED void fetch_param(unsigned int species);
 
     /**
      * Compute force and potential for interaction.

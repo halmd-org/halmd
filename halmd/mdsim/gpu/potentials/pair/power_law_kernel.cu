@@ -33,7 +33,7 @@ namespace potentials {
 namespace pair {
 namespace power_law_kernel {
 
-__device__ void power_law::fetch(
+__device__ void power_law::fetch_param(
     unsigned int type1, unsigned int type2
   , unsigned int ntype1, unsigned int ntype2
 )

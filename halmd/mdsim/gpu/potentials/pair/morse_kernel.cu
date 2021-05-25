@@ -32,7 +32,7 @@ namespace potentials {
 namespace pair {
 namespace morse_kernel {
 
-__device__ void morse::fetch(
+__device__ void morse::fetch_param(
     unsigned int type1, unsigned int type2
   , unsigned int ntype1, unsigned int ntype2
 )

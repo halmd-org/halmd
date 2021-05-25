@@ -60,7 +60,7 @@ public:
       : t_param_geometry_(t_param_geometry), t_param_potential_(t_param_potential)
     {}
 
-    HALMD_GPU_ENABLED void fetch(unsigned int species);
+    HALMD_GPU_ENABLED void fetch_param(unsigned int species);
 
      /**
      * Compute force and potential energy due to planar_wall walls.
@@ -78,7 +78,7 @@ private:
 };
 
 template <int dimension>
-HALMD_GPU_ENABLED void planar_wall<dimension>::fetch(unsigned int species)
+HALMD_GPU_ENABLED void planar_wall<dimension>::fetch_param(unsigned int species)
 {
     species_ = species;
 }
