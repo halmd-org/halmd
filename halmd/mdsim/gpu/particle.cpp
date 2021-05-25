@@ -185,16 +185,16 @@ void particle<dimension, float_type>::rearrange(cuda::memory::device::vector<uns
 
     configure_kernel(get_particle_kernel<dimension, float_type>().rearrange, dim_, true);
 
-    cuda::texture<float4> r_tex(*g_position);
-    cuda::texture<gpu_vector_type> image_tex(*g_image);
-    cuda::texture<float4> v_tex(*g_velocity);
-    cuda::texture<unsigned int> id_tex(read_cache(id_));
+    cuda::texture<float4> t_r(*g_position);
+    cuda::texture<gpu_vector_type> t_image(*g_image);
+    cuda::texture<float4> t_v(*g_velocity);
+    cuda::texture<unsigned int> t_id(read_cache(id_));
 
     get_particle_kernel<dimension, float_type>().rearrange(
-        r_tex
-      , image_tex
-      , v_tex
-      , id_tex
+        t_r
+      , t_image
+      , t_v
+      , t_id
       , g_index
       , position
       , image

@@ -155,16 +155,16 @@ get_r_cm(particle_type const& particle, particle_group& group, box_type const& b
 
     group_array_type const& unordered = read_cache(group.unordered());
 
-    cuda::texture<float4> position_texture(*particle.position());
-    cuda::texture<typename accumulator_type::coalesced_vector_type> image_texture(*particle.image());
-    cuda::texture<float4> velocity_texture(*particle.velocity());
+    cuda::texture<float4> t_position(*particle.position());
+    cuda::texture<typename accumulator_type::coalesced_vector_type> t_image(*particle.image());
+    cuda::texture<float4> t_velocity(*particle.velocity());
     return reduce(
         std::make_tuple(&*unordered.begin(), static_cast<position_type>(box.length()))
       , std::make_tuple(&*unordered.end())
       , accumulator_type(
-            position_texture
-          , image_texture
-          , velocity_texture
+            t_position
+          , t_image
+          , t_velocity
         )
    )();
 }
@@ -269,15 +269,15 @@ get_stress_tensor(particle_type& particle, particle_group& group)
     stress_pot_array_type const& stress_pot = read_cache(particle.stress_pot());
 
     unsigned int stride = stress_pot.capacity() / stress_pot_type::static_size;
-    cuda::texture<float> stress_pot_texture(stress_pot);
-    cuda::texture<float4> velocity_texture(*particle.velocity());
+    cuda::texture<float> t_stress_pot(stress_pot);
+    cuda::texture<float4> t_velocity(*particle.velocity());
 
     return stress_tensor_type(reduce(
         &*unordered.begin()
       , &*unordered.end()
       , accumulator_type(
-            velocity_texture
-          , stress_pot_texture
+            t_velocity
+          , t_stress_pot
           , stride
         )
     )());
@@ -305,17 +305,17 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
     auto image    = make_cache_mutable(particle_dst.image());
     auto velocity = make_cache_mutable(particle_dst.velocity());
 
-    cuda::texture<float4> r_tex(read_cache(particle_src.position()));
-    cuda::texture<aligned_vector_type> image_tex(read_cache(particle_src.image()));
-    cuda::texture<float4> v_tex(read_cache(particle_src.velocity()));
+    cuda::texture<float4> t_r(read_cache(particle_src.position()));
+    cuda::texture<aligned_vector_type> t_image(read_cache(particle_src.image()));
+    cuda::texture<float4> t_v(read_cache(particle_src.velocity()));
 
     configure_kernel(particle_group_wrapper<dimension, float_type>::kernel
         .particle_group_to_particle, ordered.size());
 
     particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle(
-        r_tex
-      , image_tex
-      , v_tex
+        t_r
+      , t_image
+      , t_v
       , &*ordered.begin()
       , position->data()
       , &*image->begin()

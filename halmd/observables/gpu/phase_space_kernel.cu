@@ -37,8 +37,8 @@ namespace phase_space_kernel {
  */
 template <typename vector_type, typename T>
 __global__ void sample_position(
-    cudaTextureObject_t r_tex
-  , cudaTextureObject_t image_tex
+    cudaTextureObject_t t_r
+  , cudaTextureObject_t t_image
   , unsigned int const* g_reverse_id
   , T* g_r
   , vector_type box_length
@@ -54,9 +54,9 @@ __global__ void sample_position(
         // fetch particle from texture caches
         unsigned int type;
         vector_type r;
-        tie(r, type) <<= tex1Dfetch<float4>(r_tex, rid);
+        tie(r, type) <<= tex1Dfetch<float4>(t_r, rid);
         // extend particle positions in periodic box
-        vector_type img = tex1Dfetch<coalesced_vector_type>(image_tex, rid);
+        vector_type img = tex1Dfetch<coalesced_vector_type>(t_image, rid);
         box_kernel::extend_periodic(r, img, box_length);
         // store particle in global memory
         g_r[GTID] <<= tie(r, type);
@@ -68,7 +68,7 @@ __global__ void sample_position(
  */
 template <typename vector_type, typename coalesced_vector_type>
 __global__ void reduce_periodic(
-    cudaTextureObject_t r_tex
+    cudaTextureObject_t t_r
   , unsigned int const* g_reverse_id
   , float4* g_r
   , coalesced_vector_type* g_image
@@ -82,7 +82,7 @@ __global__ void reduce_periodic(
         unsigned int rid = g_reverse_id[GTID];
         vector_type r;
         unsigned int type;
-        tie(r, type) <<= tex1Dfetch<float4>(r_tex, rid);
+        tie(r, type) <<= tex1Dfetch<float4>(t_r, rid);
 
         vector_type image = box_kernel::reduce_periodic(r, box_length);
 
@@ -127,7 +127,7 @@ struct converter<dsfloat, U> : converter<fixed_vector<dsfloat, 1>, U> {};
 
 template <typename ptr_type, typename vector_type, typename T>
 __global__ void sample(
-    cudaTextureObject_t input_tex
+    cudaTextureObject_t t_input
   , unsigned int const* g_reverse_id
   , ptr_type data
   , unsigned int npart
@@ -137,7 +137,7 @@ __global__ void sample(
         uint const rid = g_reverse_id[GTID];
         // fetch particle data from texture caches
         data[GTID] = converter<vector_type, T>::convert(
-            tex1Dfetch<T>(input_tex, rid)
+            tex1Dfetch<T>(t_input, rid)
         );
     }
 }

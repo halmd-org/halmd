@@ -43,10 +43,10 @@ static __constant__ unsigned int ntype_;
  */
 template <int dimension, typename float_type, typename ptr_type, typename aligned_vector_type>
 __global__ void rearrange(
-    cudaTextureObject_t r_tex
-  , cudaTextureObject_t image_tex
-  , cudaTextureObject_t v_tex
-  , cudaTextureObject_t id_tex
+    cudaTextureObject_t t_r
+  , cudaTextureObject_t t_image
+  , cudaTextureObject_t t_v
+  , cudaTextureObject_t t_id
   , unsigned int const* g_index
   , ptr_type g_r
   , aligned_vector_type* g_image
@@ -59,14 +59,14 @@ __global__ void rearrange(
     int const i = (GTID < npart) ? g_index[GTID] : GTID;
 
     // copy position and velocity as float4 values, and image vector
-    g_r[GTID] = texFetch<float4, float_type>::fetch(r_tex, i);
-    g_v[GTID] = texFetch<float4, float_type>::fetch(v_tex, i);
+    g_r[GTID] = texFetch<float4, float_type>::fetch(t_r, i);
+    g_v[GTID] = texFetch<float4, float_type>::fetch(t_v, i);
 
     // select correct image texture depending on the space dimension
-    g_image[GTID] = tex1Dfetch<aligned_vector_type>(image_tex, i);
+    g_image[GTID] = tex1Dfetch<aligned_vector_type>(t_image, i);
 
     // copy particle IDs
-    g_id[GTID] = tex1Dfetch<unsigned int>(id_tex, i);
+    g_id[GTID] = tex1Dfetch<unsigned int>(t_id, i);
 }
 
 } // namespace particle_kernel

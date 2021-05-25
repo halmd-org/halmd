@@ -47,7 +47,7 @@ template <
 >
 __global__ void compute(
     potential_type potential
-  , cudaTextureObject_t r2_tex
+  , cudaTextureObject_t t_r2
   , float4 const* g_r1
   , gpu_vector_type* g_f
   , unsigned int const* g_neighbour
@@ -94,7 +94,7 @@ __global__ void compute(
         // load particle
         unsigned int type2;
         vector_type r2;
-        tie(r2, type2) <<= tex1Dfetch<float4>(r2_tex, j);
+        tie(r2, type2) <<= tex1Dfetch<float4>(t_r2, j);
         // fetch pair potential
         potential.fetch(type1, type2, ntype1, ntype2);
 

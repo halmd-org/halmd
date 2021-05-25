@@ -57,9 +57,9 @@ __device__ void centre_of_mass<dimension, float_type>::operator()(typename itera
     fixed_vector<float, dimension> r, v, img;
     unsigned int species;
     float mass;
-    tie(r, species) <<= tex1Dfetch<float4>(position_texture_, i);
-    tie(v, mass) <<= tex1Dfetch<float4>(velocity_texture_, i);
-    img = tex1Dfetch<coalesced_vector_type>(image_texture_, i);
+    tie(r, species) <<= tex1Dfetch<float4>(t_position_, i);
+    tie(v, mass) <<= tex1Dfetch<float4>(t_velocity_, i);
+    img = tex1Dfetch<coalesced_vector_type>(t_image_, i);
     mdsim::gpu::box_kernel::extend_periodic(r, img, box_length);
     mr_ += mass * r;
     m_ += mass;
@@ -99,8 +99,8 @@ __device__ void stress_tensor<dimension, float_type>::operator()(size_type i)
     fixed_vector<float, dimension> v;
     float mass;
 
-    stress_tensor_ += mdsim::read_stress_tensor<stress_tensor_type>(stress_pot_texture_, i, stride_);
-    tie(v, mass) <<= tex1Dfetch<float4>(velocity_texture_, i);
+    stress_tensor_ += mdsim::read_stress_tensor<stress_tensor_type>(t_stress_pot_, i, stride_);
+    tie(v, mass) <<= tex1Dfetch<float4>(t_velocity_, i);
     // compute the kinetic part of the stress tensor
     stress_tensor_ += mass * mdsim::make_stress_tensor(v);
 }

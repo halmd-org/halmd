@@ -31,7 +31,7 @@ namespace from_particle_kernel {
 
 template <typename vector_type>
 __global__ void update(
-    cudaTextureObject_t rr_cut_skin_tex
+    cudaTextureObject_t t_rr_cut_skin
   , float4 const* g_r1
   , unsigned int npart1
   , float4 const* g_r2
@@ -90,7 +90,7 @@ __global__ void update(
             float rr = inner_prod(dr, dr);
 
             // enforce cutoff length with neighbour list skin
-            float rr_cut_skin = tex1Dfetch<float>(rr_cut_skin_tex, type1 * ntype2 + type2);
+            float rr_cut_skin = tex1Dfetch<float>(t_rr_cut_skin, type1 * ntype2 + type2);
 
             if (rr > rr_cut_skin) { continue; }
 

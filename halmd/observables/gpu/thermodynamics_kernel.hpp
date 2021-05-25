@@ -102,10 +102,10 @@ public:
     /**
      * Initialise momentum and mass to zero.
      */
-    centre_of_mass(cudaTextureObject_t position_texture, cudaTextureObject_t image_texture
-      , cudaTextureObject_t velocity_texture) :
-        mr_(0), m_(0), position_texture_(position_texture), image_texture_(image_texture)
-      , velocity_texture_(velocity_texture) {}
+    centre_of_mass(cudaTextureObject_t t_position, cudaTextureObject_t t_image
+      , cudaTextureObject_t t_velocity) :
+        mr_(0), m_(0), t_position_(t_position), t_image_(t_image)
+      , t_velocity_(t_velocity) {}
 
     /**
      * Accumulate momentum and mass of a particle.
@@ -135,11 +135,11 @@ private:
     /** sum over mass */
     float_type m_;
     /** texture with positions and species */
-    cudaTextureObject_t position_texture_;
+    cudaTextureObject_t t_position_;
     /** texture with images */
-    cudaTextureObject_t image_texture_;
+    cudaTextureObject_t t_image_;
     /** texture with velocities and masses */
-    cudaTextureObject_t velocity_texture_;
+    cudaTextureObject_t t_velocity_;
 };
 
 /**
@@ -360,8 +360,8 @@ public:
     /**
      * Initialise stress tensor sum to zero and store number of strides
      */
-    stress_tensor(cudaTextureObject_t velocity_texture, cudaTextureObject_t stress_pot_texture, unsigned int stride) :
-        stride_(stride), stress_tensor_(0), velocity_texture_(velocity_texture), stress_pot_texture_(stress_pot_texture) {}
+    stress_tensor(cudaTextureObject_t t_velocity, cudaTextureObject_t t_stress_pot, unsigned int stride) :
+        stride_(stride), stress_tensor_(0), t_velocity_(t_velocity), t_stress_pot_(t_stress_pot) {}
 
     /**
      * Accumulate stress tensor diagonal of a particle.
@@ -396,9 +396,9 @@ private:
     /** sum of stress tensors */
     stress_tensor_type stress_tensor_;
     /** texture with velocities */
-    cudaTextureObject_t velocity_texture_;
+    cudaTextureObject_t t_velocity_;
     /** texture with stress tensors */
-    cudaTextureObject_t stress_pot_texture_;
+    cudaTextureObject_t t_stress_pot_;
 };
 
 } // namespace observables

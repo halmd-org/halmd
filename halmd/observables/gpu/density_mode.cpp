@@ -97,12 +97,12 @@ density_mode<dimension, float_type>::acquire()
 
         // compute density modes
         try {
-            cuda::texture<gpu_vector_type> wavevector_tex(g_q_);
+            cuda::texture<gpu_vector_type> t_wavevector(g_q_);
 
             wrapper_type::kernel.compute.configure(dim_.grid, dim_.block);
             // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
             wrapper_type::kernel.compute(
-                wavevector_tex
+                t_wavevector
               , position.data(), &*group.begin(), group.size()
               , g_sin_block_, g_cos_block_, nq_
             );
