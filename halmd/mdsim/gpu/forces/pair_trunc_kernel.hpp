@@ -38,8 +38,8 @@ struct pair_trunc_wrapper
     /** compute forces only */
     cuda::function<void (
         potential_type
-      , cudaTextureObject_t // positions, types
       , float4 const*
+      , cudaTextureObject_t // positions, types
       , coalesced_vector_type*
       , unsigned int const*
       , unsigned int
@@ -56,8 +56,8 @@ struct pair_trunc_wrapper
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
     cuda::function<void (
         potential_type
-      , cudaTextureObject_t // positions, types
       , float4 const*
+      , cudaTextureObject_t // positions, types
       , coalesced_vector_type*
       , unsigned int const*
       , unsigned int

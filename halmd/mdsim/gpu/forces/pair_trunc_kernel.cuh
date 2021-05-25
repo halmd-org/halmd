@@ -47,8 +47,8 @@ template <
 >
 __global__ void compute(
     potential_type potential
-  , cudaTextureObject_t t_r2
   , float4 const* g_r1
+  , cudaTextureObject_t t_r2
   , gpu_vector_type* g_f
   , unsigned int const* g_neighbour
   , unsigned int neighbour_size

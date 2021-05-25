@@ -229,10 +229,10 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
     configure_kernel(gpu_wrapper::kernel.compute, particle1_->dim(), true);
     gpu_wrapper::kernel.compute(
         potential_->get_gpu_potential()
-      , cuda::texture<float4>(position2)
       , position1.data()
-      , &*force->begin()
-      , &*g_neighbour.begin()
+      , cuda::texture<float4>(position2)
+      , force->data()
+      , g_neighbour.data()
       , neighbour_->size()
       , neighbour_->stride()
       , nullptr
@@ -268,10 +268,10 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
     configure_kernel(gpu_wrapper::kernel.compute_aux, particle1_->dim(), true);
     gpu_wrapper::kernel.compute_aux(
         potential_->get_gpu_potential()
-      , cuda::texture<float4>(position2)
       , position1.data()
-      , &*force->begin()
-      , &*g_neighbour.begin()
+      , cuda::texture<float4>(position2)
+      , force->data()
+      , g_neighbour.data()
       , neighbour_->size()
       , neighbour_->stride()
       , &*en_pot->begin()
