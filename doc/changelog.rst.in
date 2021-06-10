@@ -11,7 +11,7 @@ Snapshot (master branch)
 * fix misspelled keyword ``acquire`` in Lua API, it was ``aquire`` before.
   *(Felix Höfling)*
 
-* increase minimal required version of the CUDA SDK to 7.0 *(Jaslo Ziska)*
+* increase minimal required version of the CUDA SDK to 9.0 *(Jaslo Ziska)*
 
 **Bug fixes**
 

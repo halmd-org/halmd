@@ -135,11 +135,7 @@ __global__ void finalize(
 #ifdef USE_ORIGINAL_ANDERSEN_THERMOSTAT
         if (uniform(rng, state) > coll_prob) {
 #else
-# if CUDA_VERSION < 9000
-        if (__all(uniform(rng, state) > q)) {
-# else
         if (__all_sync(FULL_MASK, uniform(rng, state) > q)) {
-# endif
 #endif
             // read force from global device memory
             fixed_vector<float, dimension> f = g_force[i];
