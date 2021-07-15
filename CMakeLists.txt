@@ -121,8 +121,8 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
       # CMake with CUDA patch by Peter Colberg
 
       enable_language(CUDA)
-      if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 7.0)
-        message(SEND_ERROR "Minium required CUDA version is 7.0 (found ${CMAKE_CUDA_COMPILER_VERSION})")
+      if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 9.0)
+        message(SEND_ERROR "Minium required CUDA version is 9.0 (found ${CMAKE_CUDA_COMPILER_VERSION})")
       endif()
 
       try_compile(success "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu" OUTPUT_VARIABLE result)
