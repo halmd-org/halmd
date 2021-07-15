@@ -22,7 +22,6 @@
 #ifndef HALMD_MDSIM_GPU_POTENTIALS_EXTERNAL_HARMONIC_KERNEL_HPP
 #define HALMD_MDSIM_GPU_POTENTIALS_EXTERNAL_HARMONIC_KERNEL_HPP
 
-#include <halmd/mdsim/gpu/potentials/external/harmonic_kernel.hpp>
 #include <halmd/utility/tuple.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
