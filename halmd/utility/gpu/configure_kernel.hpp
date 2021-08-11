@@ -1,7 +1,7 @@
 /*
- * Copyright © 2017 Daniel Kirchner
- * Copyright © 2017 Felix Höfling
- * Copyright © 2020 Jaslo Ziska
+ * Copyright © 2020-2021 Jaslo Ziska
+ * Copyright © 2017      Daniel Kirchner
+ * Copyright © 2017      Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -48,36 +48,46 @@ cuda::config configure_kernel(kernel_type& k, cuda::config const& default_dim,
     bool fixed_total_threads, size_t smem_per_thread = 0)
 {
     cuda::config dim = default_dim;
+    cuda::device::properties prop(device::get());
+    size_t warp_size = prop.warp_size();
+    int threads = dim.threads();
 
-    int block_size = k.max_block_size();
+    assert(threads % warp_size == 0);
+
+    // unsigned long to prevent overflow when calculating warps_per_block
+    unsigned long int max_grid_size = prop.max_grid_size().x;
+    int min_grid_size = k.min_grid_size();
+
+    int max_block_size = k.max_block_size();
     if (smem_per_thread > 0) {
-        cuda::device::properties prop(device::get());
-        block_size = std::min(block_size, int(prop.shared_mem_per_block() / smem_per_thread));
-        block_size = (block_size / 32) * 32; // round block_size down to a multiple of 32 (the warpSize)
+        max_block_size = std::min(max_block_size, int(prop.shared_mem_per_block() / smem_per_thread));
+        max_block_size = (max_block_size / warp_size) * warp_size; // round down to a multiple of warp_size
     }
+    int max_warps_per_block = max_block_size / warp_size;
 
-    if (block_size > 0) {
-        int grid_size = (default_dim.threads() + block_size - 1) / block_size;
-        // if the resulting grid size is too small to achieve a good device occupancy
-        // use the default dimensions (which has a minimal block size)
-        if (grid_size >= k.min_grid_size()) {
-            if (!fixed_total_threads || (size_t(grid_size) * size_t(block_size) == default_dim.threads())) {
-                dim = cuda::config(grid_size, block_size);
-            } else {
-                // if exact block size does not match choose previous power of two
-                block_size |= (block_size >> 1);
-                block_size |= (block_size >> 2);
-                block_size |= (block_size >> 4);
-                block_size |= (block_size >> 8);
-                block_size |= (block_size >> 16);
-                block_size -= (block_size >> 1);
+    int warps = threads / warp_size;
+    // the (minimum) number of warps_per_block is the number of warps divided by the max_grid_size (rounded up)
+    int warps_per_block = (warps + max_grid_size - 1) / max_grid_size;
 
-                int grid_size = (default_dim.threads() + block_size - 1) / block_size;
-                if (size_t(grid_size) * size_t(block_size) == default_dim.threads()) {
-                    dim = cuda::config(grid_size, block_size);
-                } // otherwise, choose default dimensions
-            }
+    if (fixed_total_threads) {
+        // If the number of threads is fixed we need to find a number of warps_per_block which is a divisor of the total
+        // number of warps and which lies in the interval of maximum and minimum number of warps per block
+        while (warps % warps_per_block != 0 &&
+               warps_per_block <= max_warps_per_block &&
+               warps / warps_per_block >= min_grid_size) {
+            warps_per_block++;
         }
+
+        // Only change dim if we found a solution (when warps_per_block is a divisor of the total number of warps).
+        // Else we exited the loop because the maximum block size or the minimum grid size were exceeded.
+        if (warps % warps_per_block == 0) {
+            dim = cuda::config(warps / warps_per_block, warps_per_block * warp_size);
+        }
+    } else {
+        // When the number of threads is not fixed we can just calculate the dimensions with warps_per_block.
+        // The grid size is the number of warps divided by the warps_per_block (rounded up).
+        // The block size is just the warps_per_thread multiplied by the warp_size.
+        dim = cuda::config((warps + warps_per_block - 1) / warps_per_block, warps_per_block * warp_size);
     }
 
     LOG_TRACE("Configure GPU kernel for " << dim.blocks_per_grid() << " blocks of " << dim.threads_per_block() << " threads each");
