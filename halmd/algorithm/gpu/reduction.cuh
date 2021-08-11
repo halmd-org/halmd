@@ -92,17 +92,19 @@ __device__ void reduce(T& val)
     // reduce each warp individually
     reduce_warp<transform_>(val);
 
-    // write the result from the first thread of each warp (first lane) to shared memory
-    if (WTID == 0) {
-        shared[WID] = val;
-    }
+    if (WDIM > 1) { // only reduce the results if more than one warp was reduced
+        // write the result from the first thread of each warp (first lane) to shared memory
+        if (WTID == 0) {
+            shared[WID] = val;
+        }
 
-    __syncthreads();
+        __syncthreads();
 
-    // reduce the results from all warps in the first warp
-    if (WID == 0) {
-        val = shared[TID];
-        reduce_warp<transform_>(val, WDIM);
+        // reduce the results from all warps in the first warp
+        if (WID == 0) {
+            val = shared[TID];
+            reduce_warp<transform_>(val, WDIM);
+        }
     }
 }
 
@@ -167,19 +169,21 @@ __device__ void reduce(T0& val0, T1& val1)
     // reduce each warp individually
     reduce_warp<transform_>(val0, val1);
 
-    // write the results from the first thread of each warp (first lane) to shared memory
-    if (WTID == 0) {
-        shared0[WID] = val0;
-        shared1[WID] = val1;
-    }
+    if (WDIM > 1) { // only reduce the results if more than one warp was reduced
+        // write the results from the first thread of each warp (first lane) to shared memory
+        if (WTID == 0) {
+            shared0[WID] = val0;
+            shared1[WID] = val1;
+        }
 
-    __syncthreads();
+        __syncthreads();
 
-    // reduce the results from all warps in the first warp
-    if (WID == 0) {
-        val0 = shared0[TID];
-        val1 = shared1[TID];
-        reduce_warp<transform_>(val0, val1);
+        // reduce the results from all warps in the first warp
+        if (WID == 0) {
+            val0 = shared0[TID];
+            val1 = shared1[TID];
+            reduce_warp<transform_>(val0, val1);
+        }
     }
 }
 
@@ -259,21 +263,23 @@ __device__ void reduce(T0& val0, T1& val1, T2& val2)
     // reduce each warp individually
     reduce_warp<transform_>(val0, val1, val2);
 
-    // write the results from the first thread of each warp (first lane) to shared memory
-    if (WTID == 0) {
-        shared0[WID] = val0;
-        shared1[WID] = val1;
-        shared2[WID] = val2;
-    }
+    if (WDIM > 1) { // only reduce the results if more than one warp was reduced
+        // write the results from the first thread of each warp (first lane) to shared memory
+        if (WTID == 0) {
+            shared0[WID] = val0;
+            shared1[WID] = val1;
+            shared2[WID] = val2;
+        }
 
-    __syncthreads();
+        __syncthreads();
 
-    // reduce the results from all warps in the first warp
-    if (WID == 0) {
-        val0 = shared0[WTID];
-        val1 = shared1[WTID];
-        val2 = shared2[WTID];
-        reduce_warp<transform_>(val0, val1, val2, WDIM);
+        // reduce the results from all warps in the first warp
+        if (WID == 0) {
+            val0 = shared0[WTID];
+            val1 = shared1[WTID];
+            val2 = shared2[WTID];
+            reduce_warp<transform_>(val0, val1, val2, WDIM);
+        }
     }
 }
 
@@ -358,23 +364,25 @@ __device__ void reduce(T0& val0, T1& val1, T2& val2, T3& val3)
     // reduce each warp individually
     reduce_warp<transform_>(val0, val1, val2, val3);
 
-    // write the results from the first thread of each warp (first lane) to shared memory
-    if (WTID == 0) {
-        shared0[WID] = val0;
-        shared1[WID] = val1;
-        shared2[WID] = val2;
-        shared3[WID] = val3;
-    }
+    if (WDIM > 1) { // only reduce the results if more than one warp was reduced
+        // write the results from the first thread of each warp (first lane) to shared memory
+        if (WTID == 0) {
+            shared0[WID] = val0;
+            shared1[WID] = val1;
+            shared2[WID] = val2;
+            shared3[WID] = val3;
+        }
 
-    __syncthreads();
+        __syncthreads();
 
-    // reduce the results from all warps in the first warp
-    if (WID == 0) {
-        val0 = shared0[TID];
-        val1 = shared1[TID];
-        val2 = shared2[TID];
-        val3 = shared3[TID];
-        reduce_warp<transform_>(val0, val1, val2, val3, WDIM);
+        // reduce the results from all warps in the first warp
+        if (WID == 0) {
+            val0 = shared0[TID];
+            val1 = shared1[TID];
+            val2 = shared2[TID];
+            val3 = shared3[TID];
+            reduce_warp<transform_>(val0, val1, val2, val3, WDIM);
+        }
     }
 }
 

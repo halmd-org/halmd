@@ -100,17 +100,19 @@ inline __device__ void reduce(accumulator_type& acc)
     // reduce each warp individually
     reduce_warp(acc);
 
-    // write the result from the first thread of each warp (first lane) to shared memory
-    if (WTID == 0) {
-        s_acc[WID] = acc;
-    }
+    if (WDIM > 1) { // only reduce the results if more than one warp was reduced
+        // write the result from the first thread of each warp (first lane) to shared memory
+        if (WTID == 0) {
+            s_acc[WID] = acc;
+        }
 
-    __syncthreads();
+        __syncthreads();
 
-    // reduce the results from all warps in the first warp
-    if (WID == 0) {
-        acc = s_acc[WTID];
-        reduce_warp(acc, WDIM);
+        // reduce the results from all warps in the first warp
+        if (WID == 0) {
+            acc = s_acc[WTID];
+            reduce_warp(acc, WDIM);
+        }
     }
 }
 
