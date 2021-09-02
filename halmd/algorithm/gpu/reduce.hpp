@@ -84,8 +84,8 @@ inline reduction<accumulator_type>::reduction(
 )
 {
     cuda::config dim = configure_kernel(kernel_type::kernel.reduce, cuda::config(blocks, threads), false);
-    g_block_.resize(dim.grid.x);
-    h_block_.reserve(dim.grid.x); // avoid DefaultConstructible requirement on accumulator_type
+    g_block_.resize(dim.blocks_per_grid());
+    h_block_.reserve(dim.blocks_per_grid()); // avoid DefaultConstructible requirement on accumulator_type
 }
 
 template <typename accumulator_type>
