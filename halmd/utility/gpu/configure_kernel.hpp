@@ -1,7 +1,7 @@
 /*
  * Copyright © 2020-2021 Jaslo Ziska
+ * Copyright © 2017-2021 Felix Höfling
  * Copyright © 2017      Daniel Kirchner
- * Copyright © 2017      Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -27,37 +27,39 @@
 #include <halmd/utility/gpu/device.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd {
 
 /**
- * Find maximum possible block size for a given CUDA kernel for a fixed or
- * minimal total number of threads and configure that kernel.
+ * Find optimal block size for a given CUDA kernel for a fixed or minimal total
+ * number of threads and configure that kernel.
  *
  * @param k: CUDA kernel, instance of cuda::function from cuda_wrapper
- * @param default_dim: default configuration dimensions, specifies the total number of threads
- * @param fixed_total_threads: enforce the total number of threads given by default_dim
+ * @param dim: initial configuration dimensions, specifies the total number of threads
+ * @param fixed_total_threads: enforce the total number of threads given by dim
  * @param smem_per_thread: shared memory requirements per thread (in bytes)
  *
  * @returns: configuration parameters
  *
  */
 template <typename kernel_type>
-cuda::config configure_kernel(kernel_type& k, cuda::config const& default_dim,
-    bool fixed_total_threads, size_t smem_per_thread = 0)
+cuda::config configure_kernel(
+    kernel_type& k
+  , cuda::config dim                // pass by copy so that we can change it
+  , bool fixed_total_threads
+  , size_t smem_per_thread = 0
+)
 {
-    cuda::config dim = default_dim;
     cuda::device::properties prop(device::get());
     size_t warp_size = prop.warp_size();
     int threads = dim.threads();
 
     assert(threads % warp_size == 0);
+    int warps = threads / warp_size;        // total number of warps in the grid
 
-    // unsigned long to prevent overflow when calculating warps_per_block
-    unsigned long int max_grid_size = prop.max_grid_size().x;
     int min_grid_size = k.min_grid_size();
-
     int max_block_size = k.max_block_size();
     if (smem_per_thread > 0) {
         max_block_size = std::min(max_block_size, int(prop.shared_mem_per_block() / smem_per_thread));
@@ -65,32 +67,52 @@ cuda::config configure_kernel(kernel_type& k, cuda::config const& default_dim,
     }
     int max_warps_per_block = max_block_size / warp_size;
 
-    int warps = threads / warp_size;
-    // the (minimum) number of warps_per_block is the number of warps divided by the max_grid_size (rounded up)
-    int warps_per_block = (warps + max_grid_size - 1) / max_grid_size;
-
     if (fixed_total_threads) {
-        // If the number of threads is fixed we need to find a number of warps_per_block which is a divisor of the total
-        // number of warps and which lies in the interval of maximum and minimum number of warps per block
-        while (warps % warps_per_block != 0 &&
-               warps_per_block <= max_warps_per_block &&
-               warps / warps_per_block >= min_grid_size) {
-            warps_per_block++;
+        // If the number of threads is fixed we need to find a number of warps
+        // per block which is a divisor of the total number of warps, which
+        // does not exceed the maximum number of warps per block and which
+        // yields a grid size that is close (but smaller or equal than) the
+        // "minimal" grid size or a multiple of it.
+        //
+        // We use a cost model that assumes that the execution of a single warp
+        // does not depend on block size; second, blocks that fit within the
+        // minimal grid size run perfectly in parallel. Since this model would
+        // yield very small block sizes, we start at the largest possible block
+        // size and decrease the size only if the cost is reduced by a
+        // significant factor.
+        int warps_per_block = dim.threads_per_block() / warp_size;
+        int cost = int((dim.blocks_per_grid() + min_grid_size - 1) / min_grid_size) * warps_per_block;
+        double factor = 0.8;
+
+        for (int w = max_warps_per_block; w >= 1; --w) {
+            if (warps % w == 0 ) {
+                // estimate runtime cost
+                int grid_size = warps / w;
+                int c = int((grid_size + min_grid_size - 1) / min_grid_size) * w;
+                // update configuration
+                if (c < factor * cost) {
+                    cost = c;
+                    warps_per_block = w;
+                    LOG_TRACE("update: warps: " << w << ", cost: " << c);
+                }
+            }
         }
 
-        // Only change dim if we found a solution (when warps_per_block is a divisor of the total number of warps).
-        // Else we exited the loop because the maximum block size or the minimum grid size were exceeded.
-        if (warps % warps_per_block == 0) {
-            dim = cuda::config(warps / warps_per_block, warps_per_block * warp_size);
-        }
+        // store obtained execution dimensions
+        assert(warps % warps_per_block == 0);
+        dim = cuda::config(warps / warps_per_block, warps_per_block * warp_size);
     } else {
-        // When the number of threads is not fixed we can just calculate the dimensions with warps_per_block.
-        // The grid size is the number of warps divided by the warps_per_block (rounded up).
-        // The block size is just the warps_per_thread multiplied by the warp_size.
-        dim = cuda::config((warps + warps_per_block - 1) / warps_per_block, warps_per_block * warp_size);
+        // When the number of threads is not fixed, optimal execution dimensions can be calculated.
+        // The goal is to have the grid size equal to a multiple of min_grid_size or (slightly) below.
+        int r = max_warps_per_block * min_grid_size;
+        int grid_size = int((warps + r - 1) / r) * min_grid_size;
+        int block_size = int((warps + grid_size - 1) / grid_size) * warp_size;
+        assert(block_size <= max_block_size);
+        assert(grid_size * block_size >= threads);
+        dim = cuda::config(grid_size, block_size);
     }
 
-    LOG_TRACE("Configure GPU kernel for " << dim.blocks_per_grid() << " blocks of " << dim.threads_per_block() << " threads each");
+    LOG_TRACE("Configuring CUDA kernel for " << dim.blocks_per_grid() << " blocks of " << dim.threads_per_block() << " threads each");
     k.configure(dim.grid, dim.block, smem_per_thread * dim.threads_per_block());
 
     return dim;
