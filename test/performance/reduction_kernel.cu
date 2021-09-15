@@ -44,5 +44,7 @@ __global__ void reduce_sum(T const* input, T* output)
 cuda::function<void (float const*, float*)> reduce_float_kernel(reduce_sum<float>);
 cuda::function<void (int const*, int*)> reduce_int_kernel(reduce_sum<int>);
 cuda::function<void (halmd::dsfloat const*, halmd::dsfloat*)> reduce_dsfloat_kernel(reduce_sum<halmd::dsfloat>);
-cuda::function<void (fixed_vector_type const*, fixed_vector_type*)>
-    reduce_fixed_vector_kernel(reduce_sum<fixed_vector_type>);
+cuda::function<void (halmd::fixed_vector<float, 3> const*, halmd::fixed_vector<float, 3>*)>
+    reduce_fixed_vector_float_kernel(reduce_sum<halmd::fixed_vector<float, 3>>);
+cuda::function<void (halmd::fixed_vector<halmd::dsfloat, 3> const*, halmd::fixed_vector<halmd::dsfloat, 3>*)>
+    reduce_fixed_vector_dsfloat_kernel(reduce_sum<halmd::fixed_vector<halmd::dsfloat, 3>>);

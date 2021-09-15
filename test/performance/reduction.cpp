@@ -25,10 +25,10 @@
 #include <random>
 
 #include <boost/iterator/counting_iterator.hpp>
-#include <boost/type_index.hpp>
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/timer.hpp>
 #include <test/performance/reduction_kernel.hpp>
 #include <test/tools/ctest.hpp>
@@ -74,31 +74,7 @@ void reduce(cuda::memory::host::vector<T> const& h_input, cuda::memory::host::ve
     );
 
     float time = t2 - t1;
-    BOOST_TEST_MESSAGE("summation of " << h_input.size() << " * " << boost::typeindex::type_id<T>() << ": " << time << " s");
-}
-
-BOOST_AUTO_TEST_CASE(type_float)
-{
-    cuda::memory::host::vector<float> h_input(NTHREADS * NREDUCES);
-    cuda::memory::host::vector<float> h_output(NREDUCES);
-    std::vector<float> result(NREDUCES);
-
-    std::default_random_engine gen;
-    std::uniform_real_distribution<float> rand(0, 1);
-
-    // generate random numbers
-    std::generate(h_input.begin(), h_input.end(), std::bind(rand, std::ref(gen)));
-
-    reduce(h_input, h_output, reduce_float_kernel);
-
-    // calculate the result on the cpu
-    for (unsigned int i = 0; i < NREDUCES; ++i) {
-        result[i] = std::accumulate(h_input.begin() + NTHREADS * i, h_input.begin() + NTHREADS * (i + 1), 0.0);
-    }
-
-    for (unsigned int i = 0; i < NREDUCES; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(result[i], h_output[i], 1e-6);
-    }
+    BOOST_TEST_MESSAGE("summation of " << h_input.size() << " * " << halmd::demangled_name<T>() << ": " << time << " s");
 }
 
 BOOST_AUTO_TEST_CASE(type_int)
@@ -123,21 +99,20 @@ BOOST_AUTO_TEST_CASE(type_int)
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), h_output.begin(), h_output.end());
 }
 
-BOOST_AUTO_TEST_CASE(type_dsfloat)
+#ifdef USE_GPU_SINGLE_PRECISION
+BOOST_AUTO_TEST_CASE(type_float)
 {
-    using halmd::dsfloat;
-
-    cuda::memory::host::vector<dsfloat> h_input(NTHREADS * NREDUCES);
-    cuda::memory::host::vector<dsfloat> h_output(NREDUCES);
-    std::vector<dsfloat> result(NREDUCES);
+    cuda::memory::host::vector<float> h_input(NTHREADS * NREDUCES);
+    cuda::memory::host::vector<float> h_output(NREDUCES);
+    std::vector<float> result(NREDUCES);
 
     std::default_random_engine gen;
-    std::uniform_real_distribution<double> rand(0, 1);
+    std::uniform_real_distribution<float> rand(0, 1);
 
     // generate random numbers
     std::generate(h_input.begin(), h_input.end(), std::bind(rand, std::ref(gen)));
 
-    reduce(h_input, h_output, reduce_dsfloat_kernel);
+    reduce(h_input, h_output, reduce_float_kernel);
 
     // calculate the result on the cpu
     for (unsigned int i = 0; i < NREDUCES; ++i) {
@@ -145,12 +120,14 @@ BOOST_AUTO_TEST_CASE(type_dsfloat)
     }
 
     for (unsigned int i = 0; i < NREDUCES; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(result[i], h_output[i], 1e-12);
+        BOOST_CHECK_CLOSE_FRACTION(result[i], h_output[i], 1e-6);
     }
 }
 
-BOOST_AUTO_TEST_CASE(type_fixed_vector)
+BOOST_AUTO_TEST_CASE(type_fixed_vector_float)
 {
+    using fixed_vector_type = halmd::fixed_vector<float, 3>;
+
     cuda::memory::host::vector<fixed_vector_type> h_input(NTHREADS * NREDUCES);
     cuda::memory::host::vector<fixed_vector_type> h_output(NREDUCES);
     std::vector<fixed_vector_type> result(NREDUCES);
@@ -161,7 +138,7 @@ BOOST_AUTO_TEST_CASE(type_fixed_vector)
     // generate random numbers
     std::generate(h_input.begin(), h_input.end(), std::bind(rand, std::ref(gen)));
 
-    reduce(h_input, h_output, reduce_fixed_vector_kernel);
+    reduce(h_input, h_output, reduce_fixed_vector_float_kernel);
 
     // calculate the result on the cpu
     for (unsigned int i = 0; i < NREDUCES; ++i) {
@@ -178,3 +155,66 @@ BOOST_AUTO_TEST_CASE(type_fixed_vector)
         }
     }
 }
+#endif
+
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+BOOST_AUTO_TEST_CASE(type_dsfloat)
+{
+    using halmd::dsfloat;
+
+    cuda::memory::host::vector<dsfloat> h_input(NTHREADS * NREDUCES);
+    cuda::memory::host::vector<dsfloat> h_output(NREDUCES);
+    std::vector<double> result(NREDUCES);
+
+    std::default_random_engine gen;
+    std::uniform_real_distribution<double> rand(0, 1);
+
+    // generate random numbers
+    std::generate(h_input.begin(), h_input.end(), std::bind(rand, std::ref(gen)));
+
+    reduce(h_input, h_output, reduce_dsfloat_kernel);
+
+    // calculate the result on the cpu
+    for (unsigned int i = 0; i < NREDUCES; ++i) {
+        result[i] = std::accumulate(h_input.begin() + NTHREADS * i, h_input.begin() + NTHREADS * (i + 1), 0.0);
+    }
+
+    std::vector<double> h_result(h_output.begin(), h_output.end());
+    for (unsigned int i = 0; i < NREDUCES; ++i) {
+        BOOST_CHECK_CLOSE_FRACTION(result[i], h_result[i], 1e-12);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(type_fixed_vector_dsfloat)
+{
+    using halmd::dsfloat;
+    using fixed_vector_type = halmd::fixed_vector<dsfloat, 3>;
+
+    cuda::memory::host::vector<fixed_vector_type> h_input(NTHREADS * NREDUCES);
+    cuda::memory::host::vector<fixed_vector_type> h_output(NREDUCES);
+    std::vector<fixed_vector_type> result(NREDUCES);
+
+    std::default_random_engine gen;
+    std::uniform_real_distribution<double> rand(0, 1);
+
+    // generate random numbers
+    std::generate(h_input.begin(), h_input.end(), std::bind(rand, std::ref(gen)));
+
+    reduce(h_input, h_output, reduce_fixed_vector_dsfloat_kernel);
+
+    // calculate the result on the cpu
+    for (unsigned int i = 0; i < NREDUCES; ++i) {
+        result[i] = std::accumulate(
+            h_input.begin() + NTHREADS * i
+          , h_input.begin() + NTHREADS * (i + 1)
+          , fixed_vector_type(0.0)
+        );
+    }
+
+    for (unsigned int i = 0; i < NREDUCES; ++i) {
+        for (unsigned int j = 0; j < fixed_vector_type::static_size; ++j) {
+            BOOST_CHECK_CLOSE_FRACTION(result[i][j], h_output[i][j], 1e-12);
+        }
+    }
+}
+#endif
