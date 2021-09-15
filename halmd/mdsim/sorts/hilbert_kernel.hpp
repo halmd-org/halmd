@@ -24,11 +24,8 @@
 #include <boost/mpl/equal_to.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/utility/enable_if.hpp>
-#ifdef __CUDACC__
-# include <cuda_runtime.h> // signbit
-#else
+#ifndef __CUDACC__
 # include <boost/math/special_functions/sign.hpp> // std::signbit is not portable
-# include <cmath>
 # include <algorithm>
 #endif
 
