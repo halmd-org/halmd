@@ -24,8 +24,7 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-
-#include <boost/function.hpp>
+#include <functional>
 
 namespace halmd {
 namespace mdsim {
@@ -52,7 +51,7 @@ struct region_species_wrapper
       , unsigned int // species
     )> compute_mask;
 
-    boost::function<unsigned int (
+    std::function<unsigned int (
         float4 const*        // position
       , unsigned int         // nparticle
       , unsigned int*        // output array

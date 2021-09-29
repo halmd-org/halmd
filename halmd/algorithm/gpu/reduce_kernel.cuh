@@ -22,8 +22,6 @@
 #ifndef HALMD_ALGORITHM_GPU_REDUCE_KERNEL_CUH
 #define HALMD_ALGORITHM_GPU_REDUCE_KERNEL_CUH
 
-#include <boost/utility/enable_if.hpp>
-
 #include <halmd/algorithm/gpu/bits/shfl.cuh>
 #include <halmd/algorithm/gpu/reduce_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>

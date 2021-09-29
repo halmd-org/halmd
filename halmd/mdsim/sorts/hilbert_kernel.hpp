@@ -21,9 +21,8 @@
 #ifndef HALMD_MDSIM_SORTS_HILBERT_KERNEL_HPP
 #define HALMD_MDSIM_SORTS_HILBERT_KERNEL_HPP
 
-#include <boost/mpl/equal_to.hpp>
-#include <boost/mpl/int.hpp>
-#include <boost/utility/enable_if.hpp>
+#include <type_traits>
+
 #ifndef __CUDACC__
 # include <boost/math/special_functions/sign.hpp> // std::signbit is not portable
 # include <algorithm>
@@ -70,12 +69,9 @@ inline HALMD_GPU_ENABLED void swap(
  */
 template <typename vector_type>
 HALMD_GPU_ENABLED
-typename boost::enable_if<
-    boost::mpl::equal_to<
-        boost::mpl::int_<vector_type::static_size>
-      , boost::mpl::int_<3>
-    >
-  , unsigned int>::type map(vector_type r, unsigned int depth)
+typename std::enable_if<
+    (vector_type::static_size == 3), unsigned int
+>::type map(vector_type r, unsigned int depth)
 {
     //
     // Jun Wang & Jie Shan, Space-Filling Curve Based Point Clouds Index,
@@ -154,12 +150,9 @@ typename boost::enable_if<
  */
 template <typename vector_type>
 HALMD_GPU_ENABLED
-typename boost::enable_if<
-    boost::mpl::equal_to<
-        boost::mpl::int_<vector_type::static_size>
-      , boost::mpl::int_<2>
-    >
-  , unsigned int>::type map(vector_type r, unsigned int depth)
+typename std::enable_if<
+    (vector_type::static_size == 2), unsigned int
+>::type map(vector_type r, unsigned int depth)
 {
     //
     // Jun Wang & Jie Shan, Space-Filling Curve Based Point Clouds Index,

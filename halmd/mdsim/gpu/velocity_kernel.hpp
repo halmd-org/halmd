@@ -22,8 +22,6 @@
 #ifndef HALMD_MDSIM_GPU_VELOCITY_KERNEL_HPP
 #define HALMD_MDSIM_GPU_VELOCITY_KERNEL_HPP
 
-#include <boost/mpl/if.hpp>
-
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>

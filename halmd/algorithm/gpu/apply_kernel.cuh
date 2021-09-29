@@ -18,8 +18,6 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/preprocessor/repetition/enum_params.hpp>
-
 #include <halmd/algorithm/gpu/apply_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
@@ -53,18 +51,16 @@ __global__ void apply(
 } // namespace apply_kernel
 
 // bind function to wrapper
-
-//
-// To avoid repeating template arguments and at the same time not
-// define an ugly macro, we use BOOST_PP_ENUM_PARAMS to generate
-// the template arguments. The meaningless names (T0, T1, …) will
-// never show up in compile error messages, as the compiler uses
-// the template argument names of the *declaration*.
-//
-
-template <BOOST_PP_ENUM_PARAMS(5, typename T)>
-apply_wrapper<BOOST_PP_ENUM_PARAMS(5, T)> apply_wrapper<BOOST_PP_ENUM_PARAMS(5, T)>::kernel = {
-    apply_kernel::apply<BOOST_PP_ENUM_PARAMS(5, T)>
+template <
+    typename functor
+  , typename input_type
+  , typename coalesced_input_type
+  , typename output_type
+  , typename coalesced_output_type
+>
+apply_wrapper<functor, input_type, coalesced_input_type, output_type, coalesced_output_type>
+apply_wrapper<functor, input_type, coalesced_input_type, output_type, coalesced_output_type>::kernel = {
+    apply_kernel::apply<functor, input_type, coalesced_input_type, output_type, coalesced_output_type>
 };
 
 } // namespace algorithm

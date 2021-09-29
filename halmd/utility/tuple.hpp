@@ -24,10 +24,7 @@
 #ifndef __CUDACC__
 # include <tuple>
 #else
-# include <boost/mpl/int.hpp>
-# include <boost/type_traits/remove_reference.hpp>
-# include <boost/type_traits/is_same.hpp>
-# include <boost/utility/enable_if.hpp>
+# include <type_traits>
 #endif
 
 namespace halmd {
@@ -73,7 +70,7 @@ struct tuple;
 // tuple<> for 2-tuple, ...
 
 template <int i, typename T0>
-__device__ typename boost::enable_if<boost::is_same<boost::mpl::int_<0>, boost::mpl::int_<i> >, T0>::type
+__device__ typename std::enable_if<(i == 0), T0>::type
 get(tuple<T0> const& t)
 {
     return t.t0;
@@ -132,14 +129,14 @@ private:
 };
 
 template <int i, typename T0, typename T1>
-__device__ typename boost::enable_if<boost::is_same<boost::mpl::int_<0>, boost::mpl::int_<i> >, T0>::type
+__device__ typename std::enable_if<(i == 0), T0>::type
 get(tuple<T0, T1> const& t)
 {
     return t.t0;
 }
 
 template <int i, typename T0, typename T1>
-__device__ typename boost::enable_if<boost::is_same<boost::mpl::int_<1>, boost::mpl::int_<i> >, T1>::type
+__device__ typename std::enable_if<(i == 1), T1>::type
 get(tuple<T0, T1> const& t)
 {
     return t.t1;
@@ -207,21 +204,21 @@ private:
 };
 
 template <int i, typename T0, typename T1, typename T2>
-__device__ typename boost::enable_if<boost::is_same<boost::mpl::int_<0>, boost::mpl::int_<i> >, T0>::type
+__device__ typename std::enable_if<(i == 0), T0>::type
 get(tuple<T0, T1, T2> const& t)
 {
     return t.t0;
 }
 
 template <int i, typename T0, typename T1, typename T2>
-__device__ typename boost::enable_if<boost::is_same<boost::mpl::int_<1>, boost::mpl::int_<i> >, T1>::type
+__device__ typename std::enable_if<(i == 1), T1>::type
 get(tuple<T0, T1, T2> const& t)
 {
     return t.t1;
 }
 
 template <int i, typename T0, typename T1, typename T2>
-__device__ typename boost::enable_if<boost::is_same<boost::mpl::int_<2>, boost::mpl::int_<i> >, T2>::type
+__device__ typename std::enable_if<(i == 2), T2>::type
 get(tuple<T0, T1, T2> const& t)
 {
     return t.t2;

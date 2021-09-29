@@ -21,16 +21,11 @@
 #ifndef HALMD_ALGORITHM_GPU_TRANSFORM_CUH
 #define HALMD_ALGORITHM_GPU_TRANSFORM_CUH
 
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
+#include <type_traits>
 
 namespace halmd {
 namespace algorithm {
 namespace gpu {
-
-using boost::disable_if;
-using boost::enable_if;
-using boost::is_same;
 
 /**
  * transformation types
@@ -54,35 +49,35 @@ struct accumulate_;
  * unary transformations
  */
 template <typename transform_, typename input_type, typename output_type>
-__device__ typename enable_if<is_same<transform_, identity_>, output_type>::type
+__device__ typename std::enable_if<std::is_same<transform_, identity_>::value, output_type>::type
 transform(input_type v)
 {
     return v;
 }
 
 template <typename transform_, typename input_type, typename output_type>
-__device__ typename enable_if<is_same<transform_, negate_>, output_type>::type
+__device__ typename std::enable_if<std::is_same<transform_, negate_>::value, output_type>::type
 transform(input_type v)
 {
     return -v;
 }
 
 template <typename transform_, typename input_type, typename output_type>
-__device__ typename enable_if<is_same<transform_, square_>, output_type>::type
+__device__ typename std::enable_if<std::is_same<transform_, square_>::value, output_type>::type
 transform(input_type v)
 {
     return inner_prod(v, v);
 }
 
 template <typename transform_, typename input_type, typename output_type>
-__device__ typename enable_if<is_same<transform_, sqrt_>, output_type>::type
+__device__ typename std::enable_if<std::is_same<transform_, sqrt_>::value, output_type>::type
 transform(input_type v)
 {
     return sqrtf(v);
 }
 
 template <typename transform_, typename input_type, typename output_type>
-__device__ typename enable_if<is_same<transform_, at_0>, output_type>::type
+__device__ typename std::enable_if<std::is_same<transform_, at_0>::value, output_type>::type
 transform(input_type v)
 {
     return v[0];
@@ -90,21 +85,21 @@ transform(input_type v)
 
 /** return trace of tensor, i.e. the sum of the first few elements */
 template <typename transform_, typename input_type, typename output_type>
-__device__ typename enable_if<is_same<transform_, trace<2> >, output_type>::type
+__device__ typename std::enable_if<std::is_same<transform_, trace<2>>::value, output_type>::type
 transform(input_type v)
 {
     return v[0] + v[1];
 }
 
 template <typename transform_, typename input_type, typename output_type>
-__device__ typename enable_if<is_same<transform_, trace<3> >, output_type>::type
+__device__ typename std::enable_if<std::is_same<transform_, trace<3>>::value, output_type>::type
 transform(input_type v)
 {
     return v[0] + v[1] + v[2];
 }
 
 template <typename transform_, typename T>
-__device__ typename boost::enable_if<boost::is_same<transform_, accumulate_>, void>::type
+__device__ typename std::enable_if<std::is_same<transform_, accumulate_>::value, void>::type
 transform(T& acc, T&, T const& acc_, T const&)
 {
     acc(acc_);
@@ -114,14 +109,14 @@ transform(T& acc, T&, T const& acc_, T const&)
  * binary transformations
  */
 template <typename transform_, typename T>
-__device__ typename enable_if<is_same<transform_, sum_>, T>::type
+__device__ typename std::enable_if<std::is_same<transform_, sum_>::value, T>::type
 transform(T v1, T v2)
 {
     return v1 + v2;
 }
 
 template <typename transform_, typename T0, typename T1>
-__device__ typename enable_if<is_same<transform_, complex_sum_>, void>::type
+__device__ typename std::enable_if<std::is_same<transform_, complex_sum_>::value, void>::type
 transform(T0& r1, T1& i1, T0 r2, T1 i2)
 {
     r1 += r2;
@@ -129,7 +124,7 @@ transform(T0& r1, T1& i1, T0 r2, T1 i2)
 }
 
 template <typename transform_, typename T0, typename T1, typename T2>
-__device__ typename enable_if<is_same<transform_, ternary_sum_>, void>::type
+__device__ typename std::enable_if<std::is_same<transform_, ternary_sum_>::value, void>::type
 transform(T0& r1, T1& i1, T2& j1, T0 r2, T1 i2, T2 j2)
 {
     r1 += r2;
@@ -138,7 +133,7 @@ transform(T0& r1, T1& i1, T2& j1, T0 r2, T1 i2, T2 j2)
 }
 
 template <typename transform_, typename T0, typename T1, typename T2, typename T3>
-__device__ typename enable_if<is_same<transform_, quaternion_sum_>, void>::type
+__device__ typename std::enable_if<std::is_same<transform_, quaternion_sum_>::value, void>::type
 transform(T0& r1, T1& i1, T2& j1, T3& k1, T0 r2, T1 i2, T2 j2, T3 k2)
 {
     r1 += r2;
@@ -148,7 +143,7 @@ transform(T0& r1, T1& i1, T2& j1, T3& k1, T0 r2, T1 i2, T2 j2, T3 k2)
 }
 
 template <typename transform_, typename T>
-__device__ typename enable_if<is_same<transform_, max_>, T>::type
+__device__ typename std::enable_if<std::is_same<transform_, max_>::value, T>::type
 transform(T v1, T v2)
 {
     return max(v1, v2);
