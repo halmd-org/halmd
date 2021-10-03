@@ -112,7 +112,6 @@ thermodynamics<dimension, float_type>::v_cm()
     }
     return v_cm_;
 }
-
 /**
  * compute centre of mass
  */
