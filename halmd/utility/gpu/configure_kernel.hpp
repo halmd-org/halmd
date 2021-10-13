@@ -34,7 +34,7 @@ namespace halmd {
 
 /**
  * Find optimal block size for a given CUDA kernel for a fixed or minimal total
- * number of threads and configure that kernel.
+ * number of threads.
  *
  * @param k: CUDA kernel, instance of cuda::function from cuda_wrapper
  * @param dim: initial configuration dimensions, specifies the total number of threads
@@ -45,9 +45,9 @@ namespace halmd {
  *
  */
 template <typename kernel_type>
-cuda::config configure_kernel(
+cuda::config compute_kernel_dimensions(
     kernel_type& k
-  , cuda::config dim                // pass by copy so that we can change it
+  , cuda::config dim // pass by copy so that we can change it
   , bool fixed_total_threads
   , size_t smem_per_thread = 0
 )
@@ -112,6 +112,31 @@ cuda::config configure_kernel(
         dim = cuda::config(grid_size, block_size);
     }
 
+    return dim;
+}
+
+/**
+ * Find optimal block size for a given CUDA kernel using compute_kernel_dimensions()
+ * and configure that kernel.
+ *
+ * @param k: CUDA kernel, instance of cuda::function from cuda_wrapper
+ * @param dim: initial configuration dimensions, specifies the total number of threads
+ * @param fixed_total_threads: enforce the total number of threads given by dim
+ * @param smem_per_thread: shared memory requirements per thread (in bytes)
+ *
+ * @returns: configuration parameters
+ *
+ */
+template <typename kernel_type>
+cuda::config configure_kernel(
+    kernel_type& k
+  , cuda::config dim
+  , bool fixed_total_threads
+  , size_t smem_per_thread = 0
+)
+{
+    dim = compute_kernel_dimensions(k, dim, fixed_total_threads, smem_per_thread);
+
     LOG_TRACE("Configuring CUDA kernel for " << dim.blocks_per_grid() << " blocks of " << dim.threads_per_block() << " threads each");
     k.configure(dim.grid, dim.block, smem_per_thread * dim.threads_per_block());
 
@@ -119,17 +144,30 @@ cuda::config configure_kernel(
 }
 
 /**
- * Configure a given CUDA kernel for a given minimal total number of threads.
+ * Configure a given CUDA kernel for a given the total number of threads.
+ *
+ * @param k: CUDA kernel, instance of cuda::function from cuda_wrapper
+ * @param total_threads: total number of threads
+ * @param fixed_total_threads: enforce the total number of threads
+ * @param smem_per_thread: shared memory requirements per thread (in bytes)
  *
  * @returns: configuration parameters
  */
 template <typename kernel_type>
-cuda::config configure_kernel(kernel_type& k, size_t total_threads,
-    size_t smem_per_thread = 0)
+cuda::config configure_kernel(
+    kernel_type& k
+  , size_t total_threads
+  , bool fixed_total_threads = false
+  , size_t smem_per_thread = 0
+)
 {
-    unsigned int block_size = 32 << DEVICE_SCALE;    // default value for old CUDA versions: not too large, and not too small
+    unsigned int block_size = 32 << DEVICE_SCALE; // default value for old CUDA versions: not too large, and not too small
     unsigned int grid_size = (total_threads + block_size - 1) / block_size;
-    return configure_kernel(k, cuda::config(grid_size, block_size), false, smem_per_thread);
+
+    // ensure that the number of threads is unchanged when it is fixed
+    assert(fixed_total_threads || grid_size * block_size == total_threads);
+
+    return configure_kernel(k, cuda::config(grid_size, block_size), fixed_total_threads, smem_per_thread);
 }
 
 } // namespace halmd
