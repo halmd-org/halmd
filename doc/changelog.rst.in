@@ -8,10 +8,19 @@ Snapshot (master branch)
 
 **Breaking changes**
 
-* fix misspelled keyword ``acquire`` in Lua API, it was ``aquire`` before.
+* increase minimal required version of the CUDA SDK to 9.0 *(Jaslo Ziska)*
+
+
+Version 1.0.0
+=============
+
+**Breaking changes**
+
+* fix misspelled keyword ``acquire`` in Lua API, it was ``aquire`` before
   *(Felix Höfling)*
 
-* increase minimal required version of the CUDA SDK to 9.0 *(Jaslo Ziska)*
+* rename particle group ``from_range`` to
+  :mod:`id_range <halmd.mdsim.particle_groups.id_range>` *(Roya Ebrahimi Viand)*
 
 **Bug fixes**
 
@@ -29,19 +38,31 @@ Snapshot (master branch)
   if a non-cubic box and a wavevector filter were passed to
   :mod:`halmd.observables.utility.wavevector` *(Felix Höfling)*
 
-* various small fixes in example scripts, corrected and more robust unit tests *(Felix Höfling)*
+* various small fixes in example scripts, corrected and more robust unit tests
+  *(Jaslo Ziska, Felix Höfling)*
 
 **New features**
 
 * select particles in a region of the simulation box through the new particle
-  group :mod:`from_region <halmd.mdsim.particle_groups.from_region>`. The
-  selection can be inside or outside of a cuboid or a sphere. *(Nicolas Höft, Roya
+  group :mod:`region <halmd.mdsim.particle_groups.region>`. The
+  selection can be inside or outside of a cuboid or a sphere. Further, the new
+  particle group :mod:`region_species <halmd.mdsim.particle_groups.region_species>`
+  restricts this selection to a certain particle species. *(Nicolas Höft, Roya
   Ebrahimi Viand)*
 
 * support fluctuating particle number in file writer of
   :mod:`halmd.observables.thermodynamics`. It needs the new property
   ``fluctuating`` of the :mod:`particle group <halmd.mdsim.particle_group>` to be
   set. *(Felix Höfling)*
+
+* support for :mod:`external, one-body potentials <halmd.mdsim.potentials.external>`.
+  The list of potential functions is easily extensible, currently we have a
+  harmonic trap and a set of planar Lennard-Jones walls to form, e.g., a slit
+  pore or a wedge *(Felix Höfling, Sutapa Roy)*
+
+* signals ``prepend_apply`` and ``append_apply`` of the force modules, which
+  can be used e.g., to read out the force partially when adding up contributions
+  from different potentials *(Sutapa Roy)*
 
 * wavevectors can be restricted to an axis or plane aligned with the coordinate
   frame, using the new ``filter`` keyword of
@@ -50,20 +71,35 @@ Snapshot (master branch)
 
 **Improvements**
 
-* simple substitution of environment variables in filename pattern using a new
-  argument parser action from :mod:`halmd.utility.program_options` *(Felix
-  Höfling)*
-
 * usage documentation: add :ref:`tutorial <tutorial>` on diffusion in a simple
   liquid *(Jake Atwell)*
+
+* examples: simplify scripts for basic simulations of a one-component
+  Lennard-Jones fluid *(Felix Höfling)*
 
 * developer's guide: describe :ref:`programme flow <structure>`, data
   dependencies between modules, and the signal/slot mechanism *(Felix Höfling)*
 
+* support multiple calls to :mod:`sampler:run() <halmd.observables.sampler.run>`.
+  With the default simulation engine, the signals ``on_start`` and ``on_finish``
+  are triggered only upon first invocation of ``run()`` and upon return from
+  ``main()`` of the simulation script, respectively. The
+  :mod:`profiler <halmd.utility.profiler>` output function is connected to the
+  ``on_finish`` signal, removing the need to call it explicitly. *(Felix Höfling)*
+
+* forward non-default neighbour list parameters to
+  :mod:`forces.pair_trunc <halmd.mdsim.forces.pair_trunc>`, which in many cases
+  removes the need to construct a custom neighbour list module *(Felix Höfling)*
+
+* simple substitution of environment variables in filename pattern using a new
+  argument parser action from :mod:`halmd.utility.program_options` *(Felix
+  Höfling)*
+
 * :mod:`halmd.mdsim.clock` can be advanced explicitly in the simulation script
   (for experienced users only) *(Felix Höfling)*
 
-* support Boost C++ library up to version 1.72.0 *(Jaslo Ziska)*
+* support the CUDA SDK up to version 10.2, the HDF5 library up to version
+  1.10.6, and the Boost C++ library up to version 1.72.0 *(Jaslo Ziska)*
 
 
 Version 1.0-alpha6
