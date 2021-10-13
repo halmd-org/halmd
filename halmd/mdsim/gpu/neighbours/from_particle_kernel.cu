@@ -41,7 +41,6 @@ __global__ void update(
   , vector_type box_length
   , unsigned int* g_neighbour
   , unsigned int size
-  , unsigned int stride
   , int* g_overflow
 )
 {
@@ -96,7 +95,7 @@ __global__ void update(
 
             if (count < size) {
                 // scattered write to neighbour list
-                g_neighbour[count * stride + index1] = index2;
+                g_neighbour[index1 * size + count] = index2;
                 // increment neighbour list particle count
                 count++;
             }

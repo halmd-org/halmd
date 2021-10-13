@@ -44,7 +44,6 @@ struct from_binning_wrapper
       , int*
       , unsigned int*
       , unsigned int
-      , unsigned int
       , unsigned int const*
       , unsigned int const*
       , unsigned int
@@ -63,7 +62,6 @@ struct from_binning_wrapper
       , unsigned int
       , bool
       , unsigned int*
-      , unsigned int
       , unsigned int
       , unsigned int const*
       , unsigned int

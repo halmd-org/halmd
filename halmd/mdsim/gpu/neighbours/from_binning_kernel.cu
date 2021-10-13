@@ -111,7 +111,6 @@ __device__ void update_cell_neighbours(
   , unsigned int& count
   , unsigned int* g_neighbour
   , unsigned int neighbour_size
-  , unsigned int neighbour_stride
   , vector_type const& box_length
 )
 {
@@ -152,7 +151,7 @@ __device__ void update_cell_neighbours(
 
         if (rr <= rr_cut_skin && count < neighbour_size) {
             // scattered write to neighbour list
-            g_neighbour[count * neighbour_stride + n] = m;
+            g_neighbour[n * neighbour_size + count] = m;
             // increment neighbour list particle count
             count++;
         }
@@ -170,7 +169,6 @@ __global__ void update_neighbours(
   , int* g_ret
   , unsigned int* g_neighbour
   , unsigned int neighbour_size
-  , unsigned int neighbour_stride
   , unsigned int const* g_cell1
   , unsigned int const* g_cell2
   , unsigned int ntype1
@@ -232,9 +230,9 @@ __global__ void update_neighbours(
                     }
                     // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
                     update_cell_neighbours<false>(t_rr_cut_skin, t_r2, j, ncell, g_cell1, g_cell2, r, type, ntype1,
-                        ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+                        ntype2, n, count, g_neighbour, neighbour_size, box_length);
                     update_cell_neighbours<false>(t_rr_cut_skin, t_r2, -j, ncell, g_cell1, g_cell2, r, type, ntype1,
-                        ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+                        ntype2, n, count, g_neighbour, neighbour_size, box_length);
                 }
             }
             else {
@@ -243,17 +241,17 @@ __global__ void update_neighbours(
                 }
                 // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
                 update_cell_neighbours<false>(t_rr_cut_skin, t_r2, j, ncell, g_cell1, g_cell2, r, type, ntype1,
-                    ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+                    ntype2, n, count, g_neighbour, neighbour_size, box_length);
 
                 update_cell_neighbours<false>(t_rr_cut_skin, t_r2, -j, ncell, g_cell1, g_cell2, r, type, ntype1,
-                    ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+                    ntype2, n, count, g_neighbour, neighbour_size, box_length);
             }
         }
     }
 
 self:
     update_cell_neighbours<true>(t_rr_cut_skin, t_r2, j, ncell, g_cell1, g_cell2, r, type, ntype1, ntype2, n, count,
-        g_neighbour, neighbour_size, neighbour_stride, box_length);
+        g_neighbour, neighbour_size, box_length);
 
     // return failure if any neighbour list is fully occupied
     if (count == neighbour_size) {
@@ -285,7 +283,6 @@ __device__ void update_cell_neighbours_naive(
   , unsigned int& count
   , unsigned int* g_neighbour
   , unsigned int neighbour_size
-  , unsigned int neighbour_stride
   , unsigned int cell_size
   , vector_type const& box_length
 )
@@ -318,7 +315,7 @@ __device__ void update_cell_neighbours_naive(
 
         if (rr <= rr_cut_skin && count < neighbour_size) {
             // scattered write to neighbour list
-            g_neighbour[count * neighbour_stride + n] = m;
+            g_neighbour[n * neighbour_size + count] = m;
             // increment neighbour list particle count
             count++;
         }
@@ -344,7 +341,6 @@ __global__ void update_neighbours_naive(
   , bool same_particle
   , unsigned int* g_neighbour
   , unsigned int neighbour_size
-  , unsigned int neighbour_stride
   , unsigned int const* g_cell2
   , unsigned int ntype1
   , unsigned int ntype2
@@ -378,10 +374,10 @@ __global__ void update_neighbours_naive(
                     }
                     // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
                     update_cell_neighbours_naive<false>(t_rr_cut_skin, t_r2, j, cell_index, ncell, g_cell2,
-                        same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride,
+                        same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size,
                         cell_size, box_length);
                     update_cell_neighbours_naive<false>(t_rr_cut_skin, t_r2, -j, cell_index, ncell, g_cell2,
-                        same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride,
+                        same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size,
                         cell_size, box_length);
                 }
             }
@@ -391,10 +387,10 @@ __global__ void update_neighbours_naive(
                 }
                 // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
                 update_cell_neighbours_naive<false>(t_rr_cut_skin, t_r2, j, cell_index, ncell, g_cell2,
-                    same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride,
+                    same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size,
                     cell_size, box_length);
                 update_cell_neighbours_naive<false>(t_rr_cut_skin, t_r2, -j, cell_index, ncell, g_cell2,
-                    same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride,
+                    same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size,
                     cell_size, box_length);
             }
         }
@@ -402,7 +398,7 @@ __global__ void update_neighbours_naive(
 
 self:
     update_cell_neighbours_naive<true>(t_rr_cut_skin, t_r2, j, cell_index, ncell, g_cell2, same_particle, r, type,
-        ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, cell_size, box_length);
+        ntype1, ntype2, n, count, g_neighbour, neighbour_size, cell_size, box_length);
 
     // return failure if any neighbour list is fully occupied
     if (count == neighbour_size) {

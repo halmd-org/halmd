@@ -228,7 +228,6 @@ void from_binning<dimension, float_type>::update()
               , g_ret
               , &*g_neighbour->begin()
               , size_
-              , stride_
               , &*g_cell1.begin()
               , &*g_cell2.begin()
               , rr_cut_skin_.size1()
@@ -254,7 +253,6 @@ void from_binning<dimension, float_type>::update()
               , particle1_ == particle2_
               , &*g_neighbour->begin()
               , size_
-              , stride_
               , &*g_cell2.begin()
               , rr_cut_skin_.size1()
               , rr_cut_skin_.size2()

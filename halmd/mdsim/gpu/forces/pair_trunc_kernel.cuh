@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2021       Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -21,6 +22,7 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
 #define HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
 
+#include <halmd/algorithm/gpu/reduction.cuh>
 #include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
@@ -35,6 +37,10 @@ namespace mdsim {
 namespace gpu {
 namespace forces {
 namespace pair_trunc_kernel {
+
+using namespace halmd::algorithm::gpu;
+
+static unsigned int const NPARALLEL_PARTICLES = 32;
 
 /**
  * Compute pair forces, potential energy, and stress tensor for all particles
@@ -52,7 +58,6 @@ __global__ void compute(
   , gpu_vector_type* g_f
   , unsigned int const* g_neighbour
   , unsigned int neighbour_size
-  , unsigned int neighbour_stride
   , float* g_en_pot
   , float* g_stress_pot
   , unsigned int ntype1
@@ -65,27 +70,29 @@ __global__ void compute(
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type value_type;
     typedef typename type_traits<dimension, float>::stress_tensor_type stress_tensor_type;
-    unsigned int i = GTID;
+
+    unsigned int i = GTID / NPARALLEL_PARTICLES;
 
     // load particle associated with this thread
     unsigned int type1;
     vector_type r1;
     tie(r1, type1) <<= g_r1[i];
 
-    // contribution to potential energy
-    float en_pot_ = 0;
-    // contribution to stress tensor
-    stress_tensor_type stress_pot = 0;
-#ifdef USE_FORCE_DSFUN
     // force sum
+#ifdef USE_FORCE_DSFUN
     fixed_vector<dsfloat, dimension> f = 0;
 #else
     vector_type f = 0;
 #endif
 
-    for (unsigned int k = 0; k < neighbour_size; ++k) {
+    // contribution to potential energy
+    float en_pot_ = 0;
+    // contribution to stress tensor
+    stress_tensor_type stress_pot = 0;
+
+    for (int k = GTID % NPARALLEL_PARTICLES; k < neighbour_size; k += NPARALLEL_PARTICLES) {
         // coalesced read from neighbour list
-        unsigned int j = g_neighbour[k * neighbour_stride + i];
+        unsigned int j = g_neighbour[i * neighbour_size + k];
         // skip placeholder particles
         if (j == particle_kernel::placeholder) {
             break;
@@ -122,12 +129,23 @@ __global__ void compute(
         }
     }
 
+    if (!do_aux) {
+        reduce_warp<sum_>(f);
+    } else {
+        reduce_warp<ternary_sum_>(f, en_pot_, stress_pot);
+    }
+
+    // exit all threads except the first one in each warp (the one with the result of reduce)
+    if (TID % NPARALLEL_PARTICLES != 0) {
+        return;
+    }
+
     // add old force and auxiliary variables if not zero
     if (!force_zero) {
         f += static_cast<vector_type>(g_f[i]);
         if (do_aux) {
             en_pot_ += g_en_pot[i];
-            stress_pot += read_stress_tensor<stress_tensor_type>(g_stress_pot + i, GTDIM);
+            stress_pot += read_stress_tensor<stress_tensor_type>(g_stress_pot + i, GTDIM / NPARALLEL_PARTICLES);
         }
     }
     // write results to global memory
@@ -135,7 +153,7 @@ __global__ void compute(
 
     if (do_aux) {
         g_en_pot[i] = en_pot_;
-        write_stress_tensor(g_stress_pot + i, stress_pot, GTDIM);
+        write_stress_tensor(g_stress_pot + i, stress_pot, GTDIM / NPARALLEL_PARTICLES);
     }
 }
 
@@ -144,7 +162,8 @@ __global__ void compute(
 template <int dimension, typename potential_type>
 pair_trunc_wrapper<dimension, potential_type>
 pair_trunc_wrapper<dimension, potential_type>::kernel = {
-    pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
+    pair_trunc_kernel::NPARALLEL_PARTICLES
+  , pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
 };
 

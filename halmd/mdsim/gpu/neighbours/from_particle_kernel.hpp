@@ -44,7 +44,6 @@ struct from_particle_wrapper
       , fixed_vector<float, dimension>
       , unsigned int*
       , unsigned int
-      , unsigned int
       , int*
     )> update_function_type;
 

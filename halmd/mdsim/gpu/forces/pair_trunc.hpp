@@ -3,6 +3,7 @@
  * Copyright © 2016      Sutapa Roy
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
+ * Copyright © 2021      Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -226,7 +227,11 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
 
     scoped_timer_type timer(runtime_.compute);
 
-    configure_kernel(gpu_wrapper::kernel.compute, particle1_->dim(), true);
+    configure_kernel(
+        gpu_wrapper::kernel.compute
+      , particle1_->array_size() * gpu_wrapper::kernel.NPARALLEL_PARTICLES
+      , true
+    );
     gpu_wrapper::kernel.compute(
         potential_->get_gpu_potential()
       , position1.data()
@@ -234,7 +239,6 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
       , force->data()
       , g_neighbour.data()
       , neighbour_->size()
-      , neighbour_->stride()
       , nullptr
       , nullptr
       , particle1_->nspecies()
@@ -265,7 +269,11 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
         weight /= 2;
     }
 
-    configure_kernel(gpu_wrapper::kernel.compute_aux, particle1_->dim(), true);
+    configure_kernel(
+        gpu_wrapper::kernel.compute_aux
+      , particle1_->array_size() * gpu_wrapper::kernel.NPARALLEL_PARTICLES
+      , true
+    );
     gpu_wrapper::kernel.compute_aux(
         potential_->get_gpu_potential()
       , position1.data()
@@ -273,7 +281,6 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
       , force->data()
       , g_neighbour.data()
       , neighbour_->size()
-      , neighbour_->stride()
       , &*en_pot->begin()
       , &*stress_pot->begin()
       , particle1_->nspecies()

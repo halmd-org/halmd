@@ -110,7 +110,7 @@ from_particle<dimension, float_type>::g_neighbour()
 
     auto current_cache = std::tie(reverse_id_cache1, reverse_id_cache2);
 
-    if (neighbour_cache_ != current_cache|| float(displacement1_->compute()) > float(r_skin_ / 2)
+    if (neighbour_cache_ != current_cache || float(displacement1_->compute()) > float(r_skin_ / 2)
         || float(displacement2_->compute()) > float(r_skin_ / 2)) {
         on_prepend_update_();
         update();
@@ -165,7 +165,6 @@ void from_particle<dimension, float_type>::update()
           , static_cast<vector_type>(box_->length())
           , &*g_neighbour->begin()
           , size_
-          , stride_
           , g_overflow
         );
 
