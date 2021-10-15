@@ -24,7 +24,7 @@ Parameters:
 | Hardware                | time per MD step | steps per | FP precision  | compilation details        |
 |                         | and particle     | second    |               |                            |
 +=========================+==================+===========+===============+============================+
-| Intel Xeon E5-2640      | 750 ns           | 20.9      | double        | GCC 8.3.0, -O3             |
+| Intel Xeon E5-2637v4    | 750 ns           | 20.9      | double        | GCC 8.3.0, -O3             |
 +-------------------------+------------------+-----------+---------------+----------------------------+
 | NVIDIA Tesla V100-PCI   | 5.6 ns           | 2790      | double-single | CUDA 9.2, -arch compute_61 |
 +-------------------------+------------------+-----------+---------------+----------------------------+
@@ -50,7 +50,7 @@ Parameters:
 
       (:math:`\epsilon_{AA}=1`, :math:`\epsilon_{AB}=.5`, :math:`\epsilon_{BB}=1.5`,
       :math:`\sigma_{AA}=1`, :math:`\sigma_{AB}=.88`, :math:`\sigma_{BB}=.8`,
-      :math:`r_c = 2.5\sigma`, :math:`r_\text{skin} = 0.5\sigma`)
+      :math:`r_c = 2.5\sigma`, :math:`r_\text{skin} = 0.3\sigma`, neighbour list occupancy: 70%)
 
     * integrator: verlet (NVE, :math:`\delta t^* = 0.001`)
 
@@ -58,15 +58,15 @@ Parameters:
 | Hardware                | time per MD step | steps per | FP precision  | compilation details        |
 |                         | and particle     | second    |               |                            |
 +=========================+==================+===========+===============+============================+
-| Intel Xeon E5-2640      | 860 ns           | 4.52      | double        | GCC 8.3.0, -O3             |
+| Intel Xeon E5-2637v4    | 744 ns           | 5.25      | double        | GCC 10.2.1, -O3            |
 +-------------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla V100-PCI   | 4.1 ns           | 940       | double-single | CUDA 9.2, -arch compute_61 |
+| NVIDIA Tesla V100-PCI   | 3.83 ns          | 1020      | double-single | CUDA 9.2, -arch compute_61 |
 +-------------------------+------------------+-----------+---------------+----------------------------+
-|                         | 3.9 ns           | 994       | single        | CUDA 9.2, -arch compute_61 |
+|                         | 3.65 ns          | 1070      | single        | CUDA 9.2, -arch compute_61 |
 +-------------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA GeForce RTX 2070 | 7.1 ns           | 545       | double-single | CUDA 9.2, -arch compute_61 |
+| NVIDIA GeForce RTX 2070 | 6.63 ns          |  589      | double-single | CUDA 9.2, -arch compute_61 |
 +-------------------------+------------------+-----------+---------------+----------------------------+
-|                         | 6.9 ns           | 567       | single        | CUDA 9.2, -arch compute_61 |
+|                         | 6.28 ns          |  621      | single        | CUDA 9.2, -arch compute_61 |
 +-------------------------+------------------+-----------+---------------+----------------------------+
 
 Results were obtained from 1 independent measurement and are based on release
