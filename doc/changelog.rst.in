@@ -10,6 +10,17 @@ Snapshot (master branch)
 
 * increase minimal required version of the CUDA SDK to 9.0 *(Jaslo Ziska)*
 
+**Improvements**
+
+* Speed up calculation of truncated pair forces in case of small particle
+  numbers. In such situations, GPU utilisation is increased by unrolling the
+  loop over neighbour lists and processing it in parallel within a thread warp.
+  *(Jaslo Ziska)*
+
+**Internal changes**
+
+* algorithm/gpu/reduce: new CUDA kernel based on warp shuffle intrinsics *(Jaslo Ziska)*
+
 
 Version 1.0.0
 =============
