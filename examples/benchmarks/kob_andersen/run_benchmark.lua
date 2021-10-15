@@ -94,10 +94,14 @@ function main(args)
         epsilon = {{1, 1.5}, {1.5, 0.5}} -- ((AA, AB), (BA, BB))
       , sigma = {{1, 0.8}, {0.8, 0.88}} -- ((AA, AB), (BA, BB))
     }):truncate({cutoff = 2.5})
-    -- compute forces
+    -- compute pair forces
+    --
+    -- use smaller skin width and increased neighbour list occupancy as the
+    -- high density of the system makes diffusion slow and suppresses density
+    -- fluctuations; for tiny systems, disable binning and sorting.
     local force = mdsim.forces.pair({
         box = box, particle = particle, potential = potential
-      , neighbour = args.tiny and { disable_binning = true, disable_sorting = true }
+      , neighbour = { skin = 0.3, occupancy = 0.7, disable_binning = args.tiny, disable_sorting = args.tiny }
     })
 
     -- define velocity-Verlet integrator
