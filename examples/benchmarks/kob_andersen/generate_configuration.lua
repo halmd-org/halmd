@@ -1,6 +1,6 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2011-2014 Felix Höfling
+-- Copyright © 2011-2021 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -31,7 +31,7 @@ local utility = halmd.utility
 -- Setup and run simulation
 --
 function main(args)
-    local nparticle = 256000  -- total number of particles
+    local nparticle = args.tiny and 4096 or 256000  -- total number of particles
     local concentration = 0.8 -- concentration of A particles
     local density = 1.2       -- number density
     local temperature = 0.7   -- heat bath temperature
@@ -120,4 +120,5 @@ end
 function define_args(parser)
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
         default = "kob_andersen_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    parser:add_argument("tiny", {type = "boolean", help = "generate a tiny system (4096 particles)"})
 end

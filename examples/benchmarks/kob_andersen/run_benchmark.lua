@@ -1,6 +1,6 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2011-2012 Felix Höfling
+-- Copyright © 2011-2021 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -95,7 +95,10 @@ function main(args)
       , sigma = {{1, 0.8}, {0.8, 0.88}} -- ((AA, AB), (BA, BB))
     }):truncate({cutoff = 2.5})
     -- compute forces
-    local force = mdsim.forces.pair({box = box, particle = particle, potential = potential})
+    local force = mdsim.forces.pair({
+        box = box, particle = particle, potential = potential
+      , neighbour = args.tiny and { disable_binning = true, disable_sorting = true }
+    })
 
     -- define velocity-Verlet integrator
     local integrator = mdsim.integrators.verlet({
@@ -129,4 +132,5 @@ function define_args(parser)
 
     parser:add_argument("count", {type = "number", default = 5, help = "number of repetitions"})
     parser:add_argument("precision", {type = "string", help = "floating-point precision"})
+    parser:add_argument("tiny", {type = "boolean", help = "use optimisations for tiny systems"})
 end
