@@ -36,7 +36,7 @@ local pair_trunc    = require("halmd.mdsim.forces.pair_trunc")
 -- :param args.particle: instance, or sequence of two instances, of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :mod:`halmd.mdsim.box`
 -- :param args.potential: instance of :mod:`halmd.mdsim.potentials`
--- :param args.neighbour: instance of :mod:`halmd.mdsim.neighbour` (optional)
+-- :param args.neighbour: instance of :mod:`halmd.mdsim.neighbour` or a table of keyword arguments (optional)
 -- :param number args.weight: weight of the auxiliary variables *(default: 1)*
 --
 -- The module computes the potential forces excerted by the particles
@@ -58,14 +58,9 @@ local pair_trunc    = require("halmd.mdsim.forces.pair_trunc")
 --   must be constructed a second time with the order of particle instances
 --   reversed.
 --
--- If ``neighbour`` is left unspecified, a default neighbour list module is
--- constructed using the default parameters of :mod:`halmd.mdsim.neighbour`. If
--- if a different value for, e.g., the ``occupancy`` parameter is needed, the
--- neighbour list module has to be provided explicitly.
---
--- .. note::
---
---   The argument ``neighbour`` is only relevant for truncated potentials.
+-- The argument ``neighbour`` is only relevant for truncated potentials. See
+-- the description of the :mod:`truncated pair force <halmd.mdsim.forces.pair_trunc>`
+-- module for details.
 --
 -- .. attribute:: potential
 --
