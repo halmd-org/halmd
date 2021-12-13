@@ -44,7 +44,7 @@ max_displacement<dimension, float_type>::max_displacement(
   : particle_(particle)
   , box_(box)
   // select thread-dependent reduction kernel
-  , dim_reduce_(64, (64 << DEVICE_SCALE))
+  , dim_reduce_(64, 512)
   // allocate parameters
   , g_r0_(particle_->nparticle())
   , g_rr_(dim_reduce_.blocks_per_grid())

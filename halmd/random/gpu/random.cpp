@@ -97,7 +97,7 @@ unsigned int random<RandomNumberGenerator>::defaults::blocks() {
 }
 template <typename RandomNumberGenerator>
 unsigned int random<RandomNumberGenerator>::defaults::threads() {
-    return 32 << DEVICE_SCALE;
+    return 256;
 }
 
 template <typename RandomNumberGenerator>

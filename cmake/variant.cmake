@@ -12,11 +12,6 @@ if(HALMD_WITH_GPU)
   if(HALMD_VARIANT_FORCE_DSFUN)
     add_definitions(-DUSE_FORCE_DSFUN)
   endif(HALMD_VARIANT_FORCE_DSFUN)
-
-  set(HALMD_DEVICE_SCALE "3" CACHE STRING
-    "Scale/size of the CUDA device (try to reduce in case of insufficient resources)")
-  add_definitions(-DDEVICE_SCALE=${HALMD_DEVICE_SCALE})
-
 endif(HALMD_WITH_GPU)
 
 #
@@ -71,4 +66,3 @@ endif()
 
 message(STATUS "Floating-point precision of host backend: ${HALMD_HOST_PRECISION}")
 message(STATUS "Default floating-point precision of GPU backend: ${HALMD_DEFAULT_GPU_PRECISION}")
-

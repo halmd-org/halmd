@@ -161,7 +161,7 @@ cuda::config configure_kernel(
   , size_t smem_per_thread = 0
 )
 {
-    unsigned int block_size = 32 << DEVICE_SCALE; // default value for old CUDA versions: not too large, and not too small
+    unsigned int block_size = 256; // default value for old CUDA versions: not too large, and not too small
     unsigned int grid_size = (total_threads + block_size - 1) / block_size;
 
     // ensure that the number of threads is unchanged when it is fixed
