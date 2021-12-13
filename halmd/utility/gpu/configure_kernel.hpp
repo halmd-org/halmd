@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <stdexcept>
 
 namespace halmd {
 
@@ -164,8 +165,10 @@ cuda::config configure_kernel(
     unsigned int block_size = 256; // default value for old CUDA versions: not too large, and not too small
     unsigned int grid_size = (total_threads + block_size - 1) / block_size;
 
-    // ensure that the number of threads is unchanged when it is fixed
-    assert(fixed_total_threads || grid_size * block_size == total_threads);
+    if (fixed_total_threads && grid_size * block_size != total_threads) {
+        LOG_ERROR("total_threads (" << total_threads << ") must be a multiple of 256 when fixed_total_threads");
+        throw std::invalid_argument("total_threads must be a multiple of 256 when fixed_total_threads");
+    }
 
     return configure_kernel(k, cuda::config(grid_size, block_size), fixed_total_threads, smem_per_thread);
 }
