@@ -35,7 +35,7 @@ struct pair_trunc_wrapper
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
-    unsigned int const NPARALLEL_PARTICLES;
+    unsigned int const nparallel_particles;
 
     /** compute forces only */
     cuda::function<void (

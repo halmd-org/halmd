@@ -229,7 +229,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
 
     configure_kernel(
         gpu_wrapper::kernel.compute
-      , particle1_->array_size() * gpu_wrapper::kernel.NPARALLEL_PARTICLES
+      , particle1_->array_size() * gpu_wrapper::kernel.nparallel_particles
       , true
     );
     gpu_wrapper::kernel.compute(
@@ -271,7 +271,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
 
     configure_kernel(
         gpu_wrapper::kernel.compute_aux
-      , particle1_->array_size() * gpu_wrapper::kernel.NPARALLEL_PARTICLES
+      , particle1_->array_size() * gpu_wrapper::kernel.nparallel_particles
       , true
     );
     gpu_wrapper::kernel.compute_aux(

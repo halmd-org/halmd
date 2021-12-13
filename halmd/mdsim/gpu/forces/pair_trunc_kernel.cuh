@@ -40,7 +40,7 @@ namespace pair_trunc_kernel {
 
 using namespace halmd::algorithm::gpu;
 
-static unsigned int const NPARALLEL_PARTICLES = 32;
+static unsigned int const nparallel_particles = 32;
 
 /**
  * Compute pair forces, potential energy, and stress tensor for all particles
@@ -71,7 +71,7 @@ __global__ void compute(
     typedef typename vector_type::value_type value_type;
     typedef typename type_traits<dimension, float>::stress_tensor_type stress_tensor_type;
 
-    unsigned int i = GTID / NPARALLEL_PARTICLES;
+    unsigned int i = GTID / nparallel_particles;
 
     // load particle associated with this thread
     unsigned int type1;
@@ -90,7 +90,7 @@ __global__ void compute(
     // contribution to stress tensor
     stress_tensor_type stress_pot = 0;
 
-    for (int k = GTID % NPARALLEL_PARTICLES; k < neighbour_size; k += NPARALLEL_PARTICLES) {
+    for (int k = GTID % nparallel_particles; k < neighbour_size; k += nparallel_particles) {
         // coalesced read from neighbour list
         unsigned int j = g_neighbour[i * neighbour_size + k];
         // skip placeholder particles
@@ -136,7 +136,7 @@ __global__ void compute(
     }
 
     // exit all threads except the first one in each warp (the one with the result of reduce)
-    if (TID % NPARALLEL_PARTICLES != 0) {
+    if (TID % nparallel_particles != 0) {
         return;
     }
 
@@ -145,7 +145,7 @@ __global__ void compute(
         f += static_cast<vector_type>(g_f[i]);
         if (do_aux) {
             en_pot_ += g_en_pot[i];
-            stress_pot += read_stress_tensor<stress_tensor_type>(g_stress_pot + i, GTDIM / NPARALLEL_PARTICLES);
+            stress_pot += read_stress_tensor<stress_tensor_type>(g_stress_pot + i, GTDIM / nparallel_particles);
         }
     }
     // write results to global memory
@@ -153,7 +153,7 @@ __global__ void compute(
 
     if (do_aux) {
         g_en_pot[i] = en_pot_;
-        write_stress_tensor(g_stress_pot + i, stress_pot, GTDIM / NPARALLEL_PARTICLES);
+        write_stress_tensor(g_stress_pot + i, stress_pot, GTDIM / nparallel_particles);
     }
 }
 
@@ -162,7 +162,7 @@ __global__ void compute(
 template <int dimension, typename potential_type>
 pair_trunc_wrapper<dimension, potential_type>
 pair_trunc_wrapper<dimension, potential_type>::kernel = {
-    pair_trunc_kernel::NPARALLEL_PARTICLES
+    pair_trunc_kernel::nparallel_particles
   , pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
 };
