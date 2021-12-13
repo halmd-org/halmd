@@ -52,7 +52,7 @@ public:
     typedef signal_type::slot_function_type slot_function_type;
 
     pair_full(
-        std::shared_ptr<potential_type const> potential
+        std::shared_ptr<potential_type> potential
       , std::shared_ptr<particle_type> particle1
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
@@ -106,7 +106,7 @@ private:
     void compute_aux_();
 
     /** pair potential */
-    std::shared_ptr<potential_type const> potential_;
+    std::shared_ptr<potential_type> potential_;
     /** state of first system */
     std::shared_ptr<particle_type> particle1_;
     /** state of second system */
@@ -142,7 +142,7 @@ private:
 
 template <int dimension, typename float_type, typename potential_type>
 pair_full<dimension, float_type, potential_type>::pair_full(
-    std::shared_ptr<potential_type const> potential
+    std::shared_ptr<potential_type> potential
   , std::shared_ptr<particle_type> particle1
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
@@ -293,7 +293,7 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
                     .def_readonly("runtime", &pair_full::runtime_)
 
               , def("pair_full", &std::make_shared<pair_full,
-                    std::shared_ptr<potential_type const>
+                    std::shared_ptr<potential_type>
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>

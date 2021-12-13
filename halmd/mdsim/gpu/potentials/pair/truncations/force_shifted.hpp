@@ -89,8 +89,10 @@ public:
     }
 
     /** return gpu potential with textures */
-    gpu_potential_type get_gpu_potential() const
+    gpu_potential_type get_gpu_potential()
     {
+        // FIXME: tex1Dfetch reads zero when texture is not recreated once in a while
+        t_param_ = cuda::texture<float4>(g_param_);
         return gpu_potential_type(potential_type::get_gpu_potential(), t_param_);
     }
 
