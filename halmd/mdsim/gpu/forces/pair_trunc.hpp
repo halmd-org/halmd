@@ -223,6 +223,8 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
     neighbour_array_type const& g_neighbour = read_cache(neighbour_->g_neighbour());
     auto force = make_cache_mutable(particle1_->mutable_force());
 
+    cuda::texture<float4> t_r2(position2);
+
     LOG_TRACE("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
@@ -235,7 +237,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
     gpu_wrapper::kernel.compute(
         potential_->get_gpu_potential()
       , position1.data()
-      , cuda::texture<float4>(position2)
+      , t_r2
       , force->data()
       , g_neighbour.data()
       , neighbour_->size()
@@ -260,6 +262,8 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
     auto en_pot = make_cache_mutable(particle1_->mutable_potential_energy());
     auto stress_pot = make_cache_mutable(particle1_->mutable_stress_pot());
 
+    cuda::texture<float4> t_r2(position2);
+
     LOG_TRACE("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute_aux);
@@ -277,7 +281,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
     gpu_wrapper::kernel.compute_aux(
         potential_->get_gpu_potential()
       , position1.data()
-      , cuda::texture<float4>(position2)
+      , t_r2
       , force->data()
       , g_neighbour.data()
       , neighbour_->size()
