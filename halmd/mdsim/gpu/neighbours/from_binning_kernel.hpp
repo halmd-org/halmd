@@ -37,12 +37,13 @@ struct from_binning_wrapper
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
 
     /** update neighbour lists */
-    cuda::function<void (
+    typedef cuda::function<void (
         cudaTextureObject_t // (cutoff lengths + neighbour list skin)²
       , cudaTextureObject_t // positions, IDs of particle1
       , cudaTextureObject_t // positions, IDs of particle2
       , int*
       , unsigned int*
+      , unsigned int
       , unsigned int
       , unsigned int const*
       , unsigned int const*
@@ -51,10 +52,10 @@ struct from_binning_wrapper
       , unsigned int
       , cell_size_type
       , vector_type
-    )> update_neighbours;
+    )> update_neighbours_function_type;
 
     /** update neighbour lists that uses a 'naive' implementation */
-    cuda::function<void (
+    typedef cuda::function<void (
         cudaTextureObject_t // (cutoff lengths + neighbour list skin)²
       , cudaTextureObject_t // positions, IDs of particle2
       , int*
@@ -63,6 +64,7 @@ struct from_binning_wrapper
       , bool
       , unsigned int*
       , unsigned int
+      , unsigned int
       , unsigned int const*
       , unsigned int
       , unsigned int
@@ -70,7 +72,16 @@ struct from_binning_wrapper
       , vector_type
       , unsigned int
       , vector_type
-    )> update_neighbours_naive;
+    )> update_neighbours_naive_function_type;
+
+    struct functions
+    {
+        update_neighbours_function_type update_neighbours;
+        update_neighbours_naive_function_type update_neighbours_naive;
+    };
+
+    functions unroll_force_loop;
+    functions normal;
 
     static from_binning_wrapper kernel;
 };

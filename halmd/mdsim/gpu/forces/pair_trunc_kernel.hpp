@@ -34,42 +34,50 @@ struct pair_trunc_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
+    /** compute forces using 32 threads per particle and transposed neighbour lists */
+    typedef cuda::function<void (
+        potential_type
+      , float4 const*
+      , cudaTextureObject_t // positions, types
+      , coalesced_vector_type*
+      , unsigned int const*
+      , unsigned int
+      , float*
+      , float*
+      , unsigned int
+      , unsigned int
+      , vector_type
+      , bool
+      , float
+    )> compute_kernel_unroll_force_loop_type;
+    /** computer forced with one thread per particle */
+    typedef cuda::function<void (
+        potential_type
+      , float4 const*
+      , cudaTextureObject_t // positions, types
+      , coalesced_vector_type*
+      , unsigned int const*
+      , unsigned int
+      , unsigned int
+      , float*
+      , float*
+      , unsigned int
+      , unsigned int
+      , vector_type
+      , bool
+      , float
+    )> compute_kernel_type;
 
     unsigned int const nparallel_particles;
 
     /** compute forces only */
-    cuda::function<void (
-        potential_type
-      , float4 const*
-      , cudaTextureObject_t // positions, types
-      , coalesced_vector_type*
-      , unsigned int const*
-      , unsigned int
-      , float*
-      , float*
-      , unsigned int
-      , unsigned int
-      , vector_type
-      , bool
-      , float
-    )> compute;
-
+    compute_kernel_unroll_force_loop_type compute_unroll_force_loop;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
-    cuda::function<void (
-        potential_type
-      , float4 const*
-      , cudaTextureObject_t // positions, types
-      , coalesced_vector_type*
-      , unsigned int const*
-      , unsigned int
-      , float*
-      , float*
-      , unsigned int
-      , unsigned int
-      , vector_type
-      , bool
-      , float
-    )> compute_aux;
+    compute_kernel_unroll_force_loop_type compute_aux_unroll_force_loop;
+    /** compute forces only */
+    compute_kernel_type compute;
+    /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
+    compute_kernel_type compute_aux;
 
     static pair_trunc_wrapper kernel;
 };

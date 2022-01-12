@@ -49,6 +49,7 @@ from_particle<dimension, float_type>::from_particle(
   , matrix_type const& r_cut
   , double skin
   , double cell_occupancy
+  , bool unroll_force_loop
   , std::shared_ptr<logger> logger
 )
   // dependency injection
@@ -64,6 +65,7 @@ from_particle<dimension, float_type>::from_particle(
   , rr_cut_skin_(particle1_->nspecies(), particle2_->nspecies())
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
   , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
+  , unroll_force_loop_(unroll_force_loop)
 {
     for (size_t i = 0; i < particle1_->nspecies(); ++i) {
         for (size_t j = 0; j < particle2_->nspecies(); ++j) {
@@ -148,13 +150,18 @@ void from_particle<dimension, float_type>::update()
 
         cuda::texture<float> rr_cut_skin(g_rr_cut_skin_);
 
+        typename from_particle_wrapper<dimension>::update_function_type& kernel = from_particle_wrapper<dimension>::kernel.update;
+        if (unroll_force_loop_) {
+            kernel = from_particle_wrapper<dimension>::kernel.update_unroll_force_loop;
+        }
+
         configure_kernel(
-            get_from_particle_kernel<dimension>().update
+            kernel
           , particle1_->dim()
           , true
           , sizeof(unsigned int) + sizeof(vector_type)
         );
-        get_from_particle_kernel<dimension>().update(
+        kernel(
             rr_cut_skin
           , position1.data()
           , particle1_->nparticle()
@@ -165,6 +172,7 @@ void from_particle<dimension, float_type>::update()
           , static_cast<vector_type>(box_->length())
           , &*g_neighbour->begin()
           , size_
+          , stride_
           , g_overflow
         );
 
@@ -231,6 +239,7 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                     , matrix_type const&
                     , double
                     , double
+                    , bool
                     , std::shared_ptr<logger>
                   >)
             ]

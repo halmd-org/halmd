@@ -29,7 +29,7 @@ namespace gpu {
 namespace neighbours {
 namespace from_particle_kernel {
 
-template <typename vector_type>
+template <bool unroll_force_loop, typename vector_type>
 __global__ void update(
     cudaTextureObject_t t_rr_cut_skin
   , float4 const* g_r1
@@ -41,6 +41,7 @@ __global__ void update(
   , vector_type box_length
   , unsigned int* g_neighbour
   , unsigned int size
+  , unsigned int stride
   , int* g_overflow
 )
 {
@@ -95,7 +96,11 @@ __global__ void update(
 
             if (count < size) {
                 // scattered write to neighbour list
-                g_neighbour[index1 * size + count] = index2;
+                if (unroll_force_loop) {
+                    g_neighbour[index1 * size + count] = index2;
+                } else {
+                    g_neighbour[count * stride + index1] = index2;
+                }
                 // increment neighbour list particle count
                 count++;
             }
@@ -115,10 +120,9 @@ int block_size_to_smem_size(int block_size) {
 
 template <int dimension>
 from_particle_wrapper<dimension> from_particle_wrapper<dimension>::kernel = {
-    update_function_type(
-      from_particle_kernel::update<fixed_vector<float, dimension> >
-    , from_particle_kernel::block_size_to_smem_size<fixed_vector<float, dimension> >
-    )
+    from_particle_kernel::update<true, fixed_vector<float, dimension>>
+  , from_particle_kernel::update<false, fixed_vector<float, dimension>>
+  //  , from_particle_kernel::block_size_to_smem_size<fixed_vector<float, dimension>>
 };
 
 template class from_particle_wrapper<3>;

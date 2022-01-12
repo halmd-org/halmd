@@ -53,7 +53,7 @@ from_binning<dimension, float_type>::from_binning(
   , matrix_type const& r_cut
   , double skin
   , double cell_occupancy
-  , algorithm preferred_algorithm
+  , std::pair<algorithm, bool> options
   , std::shared_ptr<logger> logger
 )
   // dependency injection
@@ -71,7 +71,8 @@ from_binning<dimension, float_type>::from_binning(
   , rr_cut_skin_(r_cut.size1(), r_cut.size2())
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
   , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
-  , preferred_algorithm_(preferred_algorithm)
+  , preferred_algorithm_(options.first)
+  , unroll_force_loop_(options.second)
   , device_properties_(device::get())
 {
     for (size_t i = 0; i < r_cut.size1(); ++i) {
@@ -190,7 +191,12 @@ void from_binning<dimension, float_type>::update()
         cuda::memory::device::vector<int> g_ret(1);
         cuda::memory::host::vector<int> h_ret(1);
         cuda::memset(g_ret.begin(), g_ret.end(), EXIT_SUCCESS);
-        auto *kernel = &from_binning_wrapper<dimension>::kernel;
+
+        auto* kernel = &from_binning_wrapper<dimension>::kernel.normal;
+        if (unroll_force_loop_) {
+            kernel = &from_binning_wrapper<dimension>::kernel.unroll_force_loop;
+        }
+
         if (!use_naive) {
             // update the cell list of binning1 here, as the naive implementation
             // does not need it and calling binning1_->g_cell() may trigger
@@ -228,6 +234,7 @@ void from_binning<dimension, float_type>::update()
               , g_ret
               , &*g_neighbour->begin()
               , size_
+              , stride_
               , &*g_cell1.begin()
               , &*g_cell2.begin()
               , rr_cut_skin_.size1()
@@ -253,6 +260,7 @@ void from_binning<dimension, float_type>::update()
               , particle1_ == particle2_
               , &*g_neighbour->begin()
               , size_
+              , stride_
               , &*g_cell2.begin()
               , rr_cut_skin_.size1()
               , rr_cut_skin_.size2()
@@ -325,7 +333,7 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                   , matrix_type const&
                   , double
                   , double
-                  , algorithm
+                  , std::pair<algorithm, bool>
                   , std::shared_ptr<logger>
                 >)
               , def("is_binning_compatible", &from_binning::is_binning_compatible)

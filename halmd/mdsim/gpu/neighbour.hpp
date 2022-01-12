@@ -51,6 +51,8 @@ public:
     virtual unsigned int size() const = 0;
     /** neighbour list stride */
     virtual unsigned int stride() const = 0;
+    /** wether the list is transposed to be able to use multiple threads per particle */
+    virtual bool unroll_force_loop() const = 0;
 };
 
 } // namespace gpu

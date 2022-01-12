@@ -78,7 +78,7 @@ public:
       , matrix_type const& r_cut
       , double skin
       , double cell_occupancy = defaults::occupancy()
-      , algorithm preferred_algorithm = shared_mem
+      , std::pair<algorithm, bool> options = std::make_pair(shared_mem, false)
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -125,6 +125,11 @@ public:
         return stride_;
     }
 
+    virtual bool unroll_force_loop() const
+    {
+        return unroll_force_loop_;
+    }
+
     //! returns true if the binning modules are compatible with the neighbour list module
     static bool is_binning_compatible(
         std::shared_ptr<binning_type const> binning1
@@ -168,6 +173,8 @@ private:
     float nu_cell_;
     /** preferred algorithm for update */
     algorithm preferred_algorithm_;
+    /** transpose list */
+    bool unroll_force_loop_;
     /** neighbour lists */
     cache<array_type> g_neighbour_;
     /** cache observer for neighbour list update */

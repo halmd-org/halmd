@@ -101,7 +101,13 @@ function main(args)
     -- fluctuations; for tiny systems, disable binning and sorting.
     local force = mdsim.forces.pair({
         box = box, particle = particle, potential = potential
-      , neighbour = { skin = 0.3, occupancy = 0.7, disable_binning = args.tiny, disable_sorting = args.tiny }
+      , neighbour = {
+            skin = 0.3
+          , occupancy = 0.7
+          , disable_binning = args.tiny
+          , disable_sorting = args.tiny
+          , unroll_force_loop = args.tiny
+        }
     })
 
     -- define velocity-Verlet integrator

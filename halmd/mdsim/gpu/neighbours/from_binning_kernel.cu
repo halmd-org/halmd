@@ -95,7 +95,7 @@ inline __device__ unsigned int compute_cell_index(
 /**
  * update neighbour list with particles of given cell
  */
-template <bool same_cell, typename vector_type, typename cell_size_type, typename cell_difference_type>
+template <bool same_cell, bool unroll_force_loop, typename vector_type, typename cell_size_type, typename cell_difference_type>
 __device__ void update_cell_neighbours(
     cudaTextureObject_t t_rr_cut_skin
   , cudaTextureObject_t t_r2
@@ -111,6 +111,7 @@ __device__ void update_cell_neighbours(
   , unsigned int& count
   , unsigned int* g_neighbour
   , unsigned int neighbour_size
+  , unsigned int neighbour_stride
   , vector_type const& box_length
 )
 {
@@ -151,7 +152,11 @@ __device__ void update_cell_neighbours(
 
         if (rr <= rr_cut_skin && count < neighbour_size) {
             // scattered write to neighbour list
-            g_neighbour[n * neighbour_size + count] = m;
+            if (unroll_force_loop) {
+                g_neighbour[n * neighbour_size + count] = m;
+            } else {
+                g_neighbour[count * neighbour_stride + n] = m;
+            }
             // increment neighbour list particle count
             count++;
         }
@@ -161,7 +166,7 @@ __device__ void update_cell_neighbours(
 /**
  * update neighbour lists
  */
-template <unsigned int dimension>
+template <bool unroll_force_loop, unsigned int dimension>
 __global__ void update_neighbours(
     cudaTextureObject_t t_rr_cut_skin
   , cudaTextureObject_t t_r1
@@ -169,6 +174,7 @@ __global__ void update_neighbours(
   , int* g_ret
   , unsigned int* g_neighbour
   , unsigned int neighbour_size
+  , unsigned int neighbour_stride
   , unsigned int const* g_cell1
   , unsigned int const* g_cell2
   , unsigned int ntype1
@@ -229,10 +235,10 @@ __global__ void update_neighbours(
                         goto self;
                     }
                     // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-                    update_cell_neighbours<false>(t_rr_cut_skin, t_r2, j, ncell, g_cell1, g_cell2, r, type, ntype1,
-                        ntype2, n, count, g_neighbour, neighbour_size, box_length);
-                    update_cell_neighbours<false>(t_rr_cut_skin, t_r2, -j, ncell, g_cell1, g_cell2, r, type, ntype1,
-                        ntype2, n, count, g_neighbour, neighbour_size, box_length);
+                    update_cell_neighbours<false, unroll_force_loop>(t_rr_cut_skin, t_r2, j, ncell, g_cell1, g_cell2, r, type, ntype1,
+                        ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+                    update_cell_neighbours<false, unroll_force_loop>(t_rr_cut_skin, t_r2, -j, ncell, g_cell1, g_cell2, r, type, ntype1,
+                        ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
                 }
             }
             else {
@@ -240,18 +246,18 @@ __global__ void update_neighbours(
                     goto self;
                 }
                 // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-                update_cell_neighbours<false>(t_rr_cut_skin, t_r2, j, ncell, g_cell1, g_cell2, r, type, ntype1,
-                    ntype2, n, count, g_neighbour, neighbour_size, box_length);
+                update_cell_neighbours<false, unroll_force_loop>(t_rr_cut_skin, t_r2, j, ncell, g_cell1, g_cell2, r, type, ntype1,
+                    ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
 
-                update_cell_neighbours<false>(t_rr_cut_skin, t_r2, -j, ncell, g_cell1, g_cell2, r, type, ntype1,
-                    ntype2, n, count, g_neighbour, neighbour_size, box_length);
+                update_cell_neighbours<false, unroll_force_loop>(t_rr_cut_skin, t_r2, -j, ncell, g_cell1, g_cell2, r, type, ntype1,
+                    ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
             }
         }
     }
 
 self:
-    update_cell_neighbours<true>(t_rr_cut_skin, t_r2, j, ncell, g_cell1, g_cell2, r, type, ntype1, ntype2, n, count,
-        g_neighbour, neighbour_size, box_length);
+    update_cell_neighbours<true, unroll_force_loop>(t_rr_cut_skin, t_r2, j, ncell, g_cell1, g_cell2, r, type, ntype1,
+        ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
 
     // return failure if any neighbour list is fully occupied
     if (count == neighbour_size) {
@@ -266,7 +272,7 @@ self:
  * As the threads do not necessarily have particles that are in the same cell, we hope
  * that the cache hides this bottleneck.
  */
-template <bool same_cell, typename vector_type, typename cell_size_type, typename cell_difference_type>
+template <bool same_cell, bool unroll_force_loop, typename vector_type, typename cell_size_type, typename cell_difference_type>
 __device__ void update_cell_neighbours_naive(
     cudaTextureObject_t t_rr_cut_skin
   , cudaTextureObject_t t_r2
@@ -283,6 +289,7 @@ __device__ void update_cell_neighbours_naive(
   , unsigned int& count
   , unsigned int* g_neighbour
   , unsigned int neighbour_size
+  , unsigned int neighbour_stride
   , unsigned int cell_size
   , vector_type const& box_length
 )
@@ -315,7 +322,11 @@ __device__ void update_cell_neighbours_naive(
 
         if (rr <= rr_cut_skin && count < neighbour_size) {
             // scattered write to neighbour list
-            g_neighbour[n * neighbour_size + count] = m;
+            if (unroll_force_loop) {
+                g_neighbour[n * neighbour_size + count] = m;
+            } else {
+                g_neighbour[count * neighbour_stride + n] = m;
+            }
             // increment neighbour list particle count
             count++;
         }
@@ -331,7 +342,7 @@ __device__ void update_cell_neighbours_naive(
  * This can cause multiple independent reads of the same cell when A-particles in the
  * same block are not in the same cell.
  */
-template <unsigned int dimension>
+template <bool unroll_force_loop, unsigned int dimension>
 __global__ void update_neighbours_naive(
     cudaTextureObject_t t_rr_cut_skin
   , cudaTextureObject_t t_r2
@@ -341,6 +352,7 @@ __global__ void update_neighbours_naive(
   , bool same_particle
   , unsigned int* g_neighbour
   , unsigned int neighbour_size
+  , unsigned int neighbour_stride
   , unsigned int const* g_cell2
   , unsigned int ntype1
   , unsigned int ntype2
@@ -373,12 +385,12 @@ __global__ void update_neighbours_naive(
                         goto self;
                     }
                     // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-                    update_cell_neighbours_naive<false>(t_rr_cut_skin, t_r2, j, cell_index, ncell, g_cell2,
-                        same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size,
-                        cell_size, box_length);
-                    update_cell_neighbours_naive<false>(t_rr_cut_skin, t_r2, -j, cell_index, ncell, g_cell2,
-                        same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size,
-                        cell_size, box_length);
+                    update_cell_neighbours_naive<false, unroll_force_loop>(t_rr_cut_skin, t_r2, j, cell_index, ncell,
+                        g_cell2, same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size,
+                        neighbour_stride, cell_size, box_length);
+                    update_cell_neighbours_naive<false, unroll_force_loop>(t_rr_cut_skin, t_r2, -j, cell_index, ncell,
+                        g_cell2, same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size,
+                        neighbour_stride, cell_size, box_length);
                 }
             }
             else {
@@ -386,19 +398,20 @@ __global__ void update_neighbours_naive(
                     goto self;
                 }
                 // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-                update_cell_neighbours_naive<false>(t_rr_cut_skin, t_r2, j, cell_index, ncell, g_cell2,
-                    same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size,
+                update_cell_neighbours_naive<false, unroll_force_loop>(t_rr_cut_skin, t_r2, j, cell_index, ncell, g_cell2,
+                    same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride,
                     cell_size, box_length);
-                update_cell_neighbours_naive<false>(t_rr_cut_skin, t_r2, -j, cell_index, ncell, g_cell2,
-                    same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size,
-                    cell_size, box_length);
+                update_cell_neighbours_naive<false, unroll_force_loop>(t_rr_cut_skin, t_r2, -j, cell_index, ncell,
+                    g_cell2, same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size,
+                    neighbour_stride, cell_size, box_length);
             }
         }
     }
 
 self:
-    update_cell_neighbours_naive<true>(t_rr_cut_skin, t_r2, j, cell_index, ncell, g_cell2, same_particle, r, type,
-        ntype1, ntype2, n, count, g_neighbour, neighbour_size, cell_size, box_length);
+    update_cell_neighbours_naive<true, unroll_force_loop>(t_rr_cut_skin, t_r2, j, cell_index, ncell, g_cell2,
+        same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, cell_size,
+        box_length);
 
     // return failure if any neighbour list is fully occupied
     if (count == neighbour_size) {
@@ -408,10 +421,25 @@ self:
 
 } // namespace from_binning_kernel
 
+/*
 template <int dimension>
 from_binning_wrapper<dimension> from_binning_wrapper<dimension>::kernel = {
-    from_binning_kernel::update_neighbours<dimension>
-  , from_binning_kernel::update_neighbours_naive<dimension>
+    from_binning_kernel::update_neighbours<true, dimension>
+  , from_binning_kernel::update_neighbours<false, dimension>
+  , from_binning_kernel::update_neighbours_naive<true, dimension>
+  , from_binning_kernel::update_neighbours_naive<false, dimension>
+};
+*/
+template <int dimension>
+from_binning_wrapper<dimension> from_binning_wrapper<dimension>::kernel = {
+    {
+        from_binning_kernel::update_neighbours<true, dimension>
+      , from_binning_kernel::update_neighbours_naive<true, dimension>
+    }
+  , {
+        from_binning_kernel::update_neighbours<false, dimension>
+      , from_binning_kernel::update_neighbours_naive<false, dimension>
+    }
 };
 
 template class from_binning_wrapper<3>;

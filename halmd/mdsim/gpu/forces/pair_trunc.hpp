@@ -229,26 +229,46 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
 
     scoped_timer_type timer(runtime_.compute);
 
-    configure_kernel(
-        gpu_wrapper::kernel.compute
-      , particle1_->array_size() * gpu_wrapper::kernel.nparallel_particles
-      , true
-    );
-    gpu_wrapper::kernel.compute(
-        potential_->get_gpu_potential()
-      , position1.data()
-      , t_r2
-      , force->data()
-      , g_neighbour.data()
-      , neighbour_->size()
-      , nullptr
-      , nullptr
-      , particle1_->nspecies()
-      , particle2_->nspecies()
-      , static_cast<position_type>(box_->length())
-      , particle1_->force_zero()
-      , 1 // only relevant for kernel.compute_aux()
-    );
+    if (neighbour_->unroll_force_loop()) {
+        configure_kernel(
+            gpu_wrapper::kernel.compute_unroll_force_loop
+          , particle1_->array_size() * gpu_wrapper::kernel.nparallel_particles
+          , true
+        );
+        gpu_wrapper::kernel.compute_unroll_force_loop(
+            potential_->get_gpu_potential()
+          , position1.data()
+          , t_r2
+          , force->data()
+          , g_neighbour.data()
+          , neighbour_->size()
+          , nullptr
+          , nullptr
+          , particle1_->nspecies()
+          , particle2_->nspecies()
+          , static_cast<position_type>(box_->length())
+          , particle1_->force_zero()
+          , 1 // only relevant for kernel.compute_aux()
+        );
+    } else {
+        configure_kernel(gpu_wrapper::kernel.compute, particle1_->dim(), true);
+        gpu_wrapper::kernel.compute(
+            potential_->get_gpu_potential()
+          , position1.data()
+          , t_r2
+          , force->data()
+          , g_neighbour.data()
+          , neighbour_->size()
+          , neighbour_->stride()
+          , nullptr
+          , nullptr
+          , particle1_->nspecies()
+          , particle2_->nspecies()
+          , static_cast<position_type>(box_->length())
+          , particle1_->force_zero()
+          , 1 // only relevant for kernel.compute_aux()
+        );
+    }
     cuda::thread::synchronize();
 }
 
@@ -273,26 +293,46 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
         weight /= 2;
     }
 
-    configure_kernel(
-        gpu_wrapper::kernel.compute_aux
-      , particle1_->array_size() * gpu_wrapper::kernel.nparallel_particles
-      , true
-    );
-    gpu_wrapper::kernel.compute_aux(
-        potential_->get_gpu_potential()
-      , position1.data()
-      , t_r2
-      , force->data()
-      , g_neighbour.data()
-      , neighbour_->size()
-      , &*en_pot->begin()
-      , &*stress_pot->begin()
-      , particle1_->nspecies()
-      , particle2_->nspecies()
-      , static_cast<position_type>(box_->length())
-      , particle1_->force_zero()
-      , weight
-    );
+    if (neighbour_->unroll_force_loop()) {
+        configure_kernel(
+            gpu_wrapper::kernel.compute_aux_unroll_force_loop
+          , particle1_->array_size() * gpu_wrapper::kernel.nparallel_particles
+          , true
+        );
+        gpu_wrapper::kernel.compute_aux_unroll_force_loop(
+            potential_->get_gpu_potential()
+          , position1.data()
+          , t_r2
+          , force->data()
+          , g_neighbour.data()
+          , neighbour_->size()
+          , &*en_pot->begin()
+          , &*stress_pot->begin()
+          , particle1_->nspecies()
+          , particle2_->nspecies()
+          , static_cast<position_type>(box_->length())
+          , particle1_->force_zero()
+          , weight
+        );
+    } else {
+        configure_kernel(gpu_wrapper::kernel.compute_aux, particle1_->dim(), true);
+        gpu_wrapper::kernel.compute_aux(
+            potential_->get_gpu_potential()
+          , position1.data()
+          , t_r2
+          , force->data()
+          , g_neighbour.data()
+          , neighbour_->size()
+          , neighbour_->stride()
+          , &*en_pot->begin()
+          , &*stress_pot->begin()
+          , particle1_->nspecies()
+          , particle2_->nspecies()
+          , static_cast<position_type>(box_->length())
+          , particle1_->force_zero()
+          , weight
+        );
+    }
     cuda::thread::synchronize();
 }
 

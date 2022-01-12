@@ -44,9 +44,11 @@ struct from_particle_wrapper
       , fixed_vector<float, dimension>
       , unsigned int*
       , unsigned int
+      , unsigned int
       , int*
     )> update_function_type;
 
+    update_function_type update_unroll_force_loop;
     update_function_type update;
 
     static from_particle_wrapper kernel;

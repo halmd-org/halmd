@@ -73,7 +73,9 @@ function main(args)
       , sigma = {{1, 0.8}, {0.8, 0.88}} -- ((AA, AB), (BA, BB))
     }):truncate({cutoff = 2.5})
     -- compute forces
-    local force = mdsim.forces.pair({box = box, particle = particle, potential = potential})
+    local force = mdsim.forces.pair({
+        box = box, particle = particle, potential = potential, neighbour = { unroll_force_loop = args.tiny }
+    })
 
     -- define velocity-Verlet integrator with Andersen thermostat
     local integrator = mdsim.integrators.verlet_nvt_andersen({

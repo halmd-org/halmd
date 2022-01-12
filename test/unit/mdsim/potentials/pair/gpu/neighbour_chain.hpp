@@ -59,6 +59,11 @@ public:
         return stride_;
     }
 
+    virtual bool unroll_force_loop() const
+    {
+        return true;
+    }
+
 private:
     unsigned int stride_;
     /** neighbour lists */

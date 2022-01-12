@@ -87,6 +87,7 @@ end
 -- :param table args.r_cut: matrix with elements :math:`r_{\text{c}, ij}`
 -- :param number args.skin: neighbour list skin *(default: 0.5)*
 -- :param string args.algorithm: Preferred implementation of the neighbour list *(GPU variant only)*
+-- :param string args.unroll_force_loop: Use 32 threads per particle *(GPU variant only)*
 -- :param number args.occupancy: Desired cell occupancy. Defaults to
 --   :class:`halmd.mdsim.defaults.occupancy()` *(GPU variant only)*
 -- :param boolean args.disable_binning: Disable use of binning module and
@@ -181,6 +182,7 @@ local M = module(function(args)
     local dimension = #box:edges()
     local logger = log.logger({label = "neighbour " .. label(particle)})
     local occupancy = args.occupancy -- may be nil
+    local unroll_force_loop = utility.assert_type(args.unroll_force_loop or false, "boolean")
 
     -- domain decomposition
     local binning
@@ -241,10 +243,10 @@ local M = module(function(args)
     if memory == "gpu" then
         if binning then
             occupancy = occupancy or assert(defaults[dimension][precision].from_binning.occupancy)()
-            self = neighbours.from_binning(particle[1], particle[2], binning, displacement, box, r_cut, skin, occupancy, algorithm[preferred_algorithm], logger)
+            self = neighbours.from_binning(particle[1], particle[2], binning, displacement, box, r_cut, skin, occupancy, {algorithm[preferred_algorithm], unroll_force_loop}, logger)
         else
             occupancy = occupancy or assert(defaults[dimension][precision].from_particle.occupancy)()
-            self = neighbours.from_particle(particle[1], particle[2], displacement, box, r_cut, skin, occupancy, logger)
+            self = neighbours.from_particle(particle[1], particle[2], displacement, box, r_cut, skin, occupancy, unroll_force_loop, logger)
         end
     else
         if binning then
@@ -262,6 +264,8 @@ local M = module(function(args)
 
     -- store binning instances as Lua property
     self.binning = property(function(self) return binning end)
+
+    self.unroll_force_loop = property(function(self) return unroll_force_loop end)
 
     -- sort particles before neighbour list update
     if not args.disable_sorting then
