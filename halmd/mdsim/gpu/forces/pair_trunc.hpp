@@ -1,9 +1,9 @@
 /*
  * Copyright © 2010-2013 Felix Höfling
+ * Copyright © 2021      Jaslo Ziska
  * Copyright © 2016      Sutapa Roy
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
- * Copyright © 2021      Jaslo Ziska
  *
  * This file is part of HALMD.
  *

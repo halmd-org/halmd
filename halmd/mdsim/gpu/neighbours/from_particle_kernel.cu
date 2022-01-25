@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2021      Jaslo Ziska
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -122,7 +123,7 @@ template <int dimension>
 from_particle_wrapper<dimension> from_particle_wrapper<dimension>::kernel = {
     from_particle_kernel::update<true, fixed_vector<float, dimension>>
   , from_particle_kernel::update<false, fixed_vector<float, dimension>>
-  //  , from_particle_kernel::block_size_to_smem_size<fixed_vector<float, dimension>>
+  // FIXME , from_particle_kernel::block_size_to_smem_size<fixed_vector<float, dimension>>
 };
 
 template class from_particle_wrapper<3>;

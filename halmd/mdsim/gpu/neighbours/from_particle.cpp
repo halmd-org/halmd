@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2011  Felix Höfling
+ * Copyright © 2021       Jaslo Ziska
  * Copyright © 2014       Nicolas Höft
  * Copyright © 2008-2011  Peter Colberg
  *

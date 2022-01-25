@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011 Peter Colberg and Felix Höfling
+ * Copyright © 2021      Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -70,11 +71,11 @@ struct pair_trunc_wrapper
 
     unsigned int const nparallel_particles;
 
-    /** compute forces only */
+    /** compute forces only, using unrolled inner loop (one warp per thread) */
     compute_kernel_unroll_force_loop_type compute_unroll_force_loop;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
     compute_kernel_unroll_force_loop_type compute_aux_unroll_force_loop;
-    /** compute forces only */
+    /** compute forces only, one particle per thread */
     compute_kernel_type compute;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
     compute_kernel_type compute_aux;

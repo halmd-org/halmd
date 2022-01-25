@@ -1,6 +1,9 @@
 --
--- Copyright © 2013-2015  Nicolas Höft
--- Copyright © 2010-2011  Peter Colberg
+-- Copyright © 2021      Felix Höfling
+-- Copyright © 2021      Jaslo Ziska
+-- Copyright © 2017      Daniel Kirchner
+-- Copyright © 2013-2015 Nicolas Höft
+-- Copyright © 2010-2011 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -87,7 +90,7 @@ end
 -- :param table args.r_cut: matrix with elements :math:`r_{\text{c}, ij}`
 -- :param number args.skin: neighbour list skin *(default: 0.5)*
 -- :param string args.algorithm: Preferred implementation of the neighbour list *(GPU variant only)*
--- :param string args.unroll_force_loop: Use 32 threads per particle *(GPU variant only)*
+-- :param string args.unroll_force_loop: Use 32 threads per particle in force computation *(GPU variant only)*
 -- :param number args.occupancy: Desired cell occupancy. Defaults to
 --   :class:`halmd.mdsim.defaults.occupancy()` *(GPU variant only)*
 -- :param boolean args.disable_binning: Disable use of binning module and
@@ -114,6 +117,11 @@ end
 -- but slower on at least GTX 260 and later.
 -- Note that the ``shared_mem`` algorithm works only when both binning modules have equal
 -- number of cells in each spatial direction.
+--
+-- The flag ``unroll_force_loop`` may improve the GPU performance for small
+-- systems of a few thousand particles. If enabled, the memory layout of the
+-- neighbour lists is transposed so that the inner loop in the computation of
+-- pair forces can be unrolled and distributed to a CUDA warp (32 threads).
 --
 -- .. attribute:: particle
 --
@@ -243,16 +251,26 @@ local M = module(function(args)
     if memory == "gpu" then
         if binning then
             occupancy = occupancy or assert(defaults[dimension][precision].from_binning.occupancy)()
-            self = neighbours.from_binning(particle[1], particle[2], binning, displacement, box, r_cut, skin, occupancy, {algorithm[preferred_algorithm], unroll_force_loop}, logger)
+            self = neighbours.from_binning(
+                particle[1], particle[2], binning, displacement, box
+              , r_cut, skin, occupancy, { algorithm[preferred_algorithm], unroll_force_loop }
+              , logger)
         else
             occupancy = occupancy or assert(defaults[dimension][precision].from_particle.occupancy)()
-            self = neighbours.from_particle(particle[1], particle[2], displacement, box, r_cut, skin, occupancy, unroll_force_loop, logger)
+            self = neighbours.from_particle(
+                particle[1], particle[2], displacement, box
+              , r_cut, skin, occupancy, unroll_force_loop
+              , logger)
         end
     else
         if binning then
-            self = neighbours.from_binning(particle[1], particle[2], binning, displacement, box, r_cut, skin, logger)
+            self = neighbours.from_binning(
+                particle[1], particle[2], binning, displacement, box
+              , r_cut, skin, logger)
         else
-            self = neighbours.from_particle(particle[1], particle[2], displacement, box, r_cut, skin, logger)
+            self = neighbours.from_particle(
+                particle[1], particle[2], displacement, box
+              , r_cut, skin, logger)
         end
     end
 
