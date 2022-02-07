@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.8)
+project(HALMD NONE)
 
+set(CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/platform.cmake")
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # Set cmake policies to avoid warnings in newer cmake versions.
@@ -58,98 +60,59 @@ if(HALMD_USE_GIT)
 endif()
 
 if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
-
-  set(CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/platform.cmake")
-
-  project(HALMD CXX)
-
-  if(${CMAKE_VERSION} VERSION_LESS 3.4.0)
-    enable_language(C)
-  endif()
-
-  # FindCUDA uses the static cuda runtime by default, we need to set this variable before find_package is called
-  set(CUDA_USE_STATIC_CUDA_RUNTIME OFF CACHE BOOL "Use the static version of the CUDA runtime library if available")
-
   # By default, enable GPU support only if CUDA is available.
   # If HALMD_WITH_GPU is explicitly set to TRUE, require CUDA.
-  if(NOT DEFINED HALMD_WITH_GPU)
-    find_package(CUDA 9.0 QUIET COMPONENTS cuda cudart)
-  elseif(HALMD_WITH_GPU)
-    find_package(CUDA 9.0 QUIET REQUIRED COMPONENTS cuda cudart)
-  endif()
+  include(CheckLanguage)
+  check_language(CUDA)
 
-  if(CUDA_FOUND)
-    if(COMMAND cuda_add_library)
-      # original CMake
+  if(CMAKE_CUDA_COMPILER)
+    enable_language(CXX CUDA)
 
-      #
-      # default CUDA flags are duplicated here from cmake/platform.cmake (used by CMake with native CUDA support)
-      #
-      set(HALMD_GPU_ARCH "350") # sane default value
-      set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_35 -code=compute_35,sm_35 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true" CACHE STRING "Flags used by the compiler during all build types")
+    set(CUDA_USE_STATIC_CUDA_RUNTIME OFF CACHE BOOL "Use the static version of the CUDA runtime library if available")
 
-      string(REPLACE " " ";" __NVCC_ARGS "${CMAKE_CUDA_FLAGS}")
-      if(NOT "${CUDA_HOST_COMPILER}" STREQUAL "")
-		list(APPEND __NVCC_ARGS -ccbin "${CUDA_HOST_COMPILER}")
-      endif()
-      execute_process(COMMAND "${CUDA_NVCC_EXECUTABLE}" ${__NVCC_ARGS} "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu"
-              WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/CMakeFiles/"
-              ERROR_VARIABLE result OUTPUT_QUIET)
-      if(result MATCHES "__CUDA_ARCH__([0-9]+)__")
-        set(HALMD_GPU_ARCH "${CMAKE_MATCH_1}")
-      else()
-        message(WARNING "${result}")
-      endif()
-
-
-      set(CMAKE_CUDA_COMPILER_ID "NVCC")
-      set(CMAKE_CUDA_COMPILER_VERSION "${CUDA_VERSION}")
-      mark_as_advanced(CMAKE_CUDA_FLAGS)
-
-      set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} \"-DBOOST_NOINLINE=__attribute__((noinline))\"" CACHE INTERNAL "Internal NVCC flags (invisible to the user and overwritten by CMAKE_CUDA_FLAGS)" FORCE)
-      set(CUDA_PROPAGATE_HOST_FLAGS OFF CACHE INTERNAL "Internal host flag propagation flag (invisible to the user and always disabled)" FORCE)
-      set(CUDA_INCLUDE_DIR ${CUDA_INCLUDE_DIRS})
-
-      # output information about CUDA Compiler
-      message(STATUS "The CUDA compiler identification is NVCC ${CUDA_VERSION}")
-
-      # warn user about static linking when using CUDA 9.2 because of a bug
-      if(${CUDA_USE_STATIC_CUDA_RUNTIME} AND ${CUDA_VERSION} VERSION_EQUAL 9.2)
-        message(WARNING "Static linking of the CUDA runtime library may lead to kernel launch failures")
-      endif()
-    else()
-      # CMake with CUDA patch by Peter Colberg
-
-      enable_language(CUDA)
-      if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 9.0)
-        message(SEND_ERROR "Minium required CUDA version is 9.0 (found ${CMAKE_CUDA_COMPILER_VERSION})")
-      endif()
-
-      try_compile(success "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu" OUTPUT_VARIABLE result)
-      if(result MATCHES "__CUDA_ARCH__([0-9]+)__")
-        set(HALMD_GPU_ARCH "${CMAKE_MATCH_1}")
-      else()
-        message(SEND_ERROR "${result}")
-      endif()
-
-      # create macros for compatibility with unpatched cmake
-      macro(cuda_add_library)
-        add_library(${ARGN})
-      endmacro()
-      macro(cuda_add_executable)
-        add_executable(${ARGN})
-      endmacro()
+    if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 9.0)
+      message(SEND_ERROR "Minium required CUDA version is 9.0 (found ${CMAKE_CUDA_COMPILER_VERSION})")
     endif()
+
+    # warn user about static linking when using CUDA 9.2 because of a bug
+    if(${CUDA_USE_STATIC_CUDA_RUNTIME} AND ${CMAKE_CUDA_COMPILER_VERSION} VERSION_EQUAL 9.2)
+      message(WARNING "Static linking of the CUDA runtime library may lead to kernel launch failures")
+    endif()
+
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    set(CMAKE_CUDA_STANDARD 11)
+
+    set(CMAKE_CUDA_ARCHITECTURES OFF)
+
+    find_library(CUDA_LIBRARY NAMES cuda HINTS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+    if(CUDA_USE_STATIC_CUDA_RUNTIME)
+      find_library(CUDART_LIBRARY cudart_static HINTS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+    else()
+      find_library(CUDART_LIBRARY cudart HINTS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+    endif()
+
+    if(NOT CUDA_LIBRARY)
+      message(SEND_ERROR "CUDA driver library could not be found")
+    elseif(NOT CUDART_LIBRARY)
+      message(SEND_ERROR "CUDA runtime library could not be found")
+    endif()
+
+    try_compile(success "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu" OUTPUT_VARIABLE result)
+    if(result MATCHES "__CUDA_ARCH__([0-9]+)__")
+      set(HALMD_GPU_ARCH "${CMAKE_MATCH_1}")
+    else()
+      message(SEND_ERROR "${result}")
+    endif()
+
     set(HALMD_WITH_GPU TRUE)
   else()
+    if(HALMD_WITH_GPU)
+      message(SEND_ERROR "CUDA not found")
+    endif()
+
+    enable_language(CXX)
+
     set(HALMD_WITH_GPU FALSE)
-    # create macros for some of the tests
-    macro(cuda_add_library)
-      add_library(${ARGN})
-    endmacro()
-    macro(cuda_add_executable)
-      add_executable(${ARGN})
-    endmacro()
   endif()
 
   set(HALMD_USE_STATIC_LIBS FALSE CACHE BOOL
@@ -234,8 +197,8 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   )
   if(HALMD_WITH_GPU)
     list(APPEND HALMD_COMMON_LIBRARIES
-      ${CUDA_LIBRARIES}
-      ${CUDA_CUDA_LIBRARY}
+      ${CUDART_LIBRARY}
+      ${CUDA_LIBRARY}
     )
   endif(HALMD_WITH_GPU)
   list(APPEND HALMD_COMMON_LIBRARIES
@@ -257,7 +220,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   include_directories(SYSTEM ${HDF5_INCLUDE_DIRS})
   include_directories(SYSTEM ${LUA_INCLUDE_DIR})
   if(HALMD_WITH_GPU)
-    include_directories(SYSTEM ${CUDA_INCLUDE_DIR})
+    include_directories(SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     include_directories(${HALMD_SOURCE_DIR}/libs/cub)
   endif(HALMD_WITH_GPU)
 
@@ -302,8 +265,6 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   add_subdirectory(libs/luaponte/test)
 
 else()
-
-  project(HALMD NONE) # no compiler languages
 
   # Set HALMD build variant flags
   include(${CMAKE_SOURCE_DIR}/cmake/variant.cmake)

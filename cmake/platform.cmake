@@ -55,7 +55,7 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
 endif()
 
 if(DEFINED CMAKE_CUDA_COMPILER_ID)
-  if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVCC")
+  if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
 
     # Compile for CUDA compute capability 3.5 (Kepler), and generate PTX 3.5 code
     # as well as binary code for this target. (The sm_XX parameter is adjusted
@@ -68,11 +68,7 @@ if(DEFINED CMAKE_CUDA_COMPILER_ID)
     # which brings only non-IEEE-compliant, single-precision floating-point
     # arithmetics. So we consider it safe to disable IEEE-compliance, which
     # has (small) performance penalties.
-
-    #
-    # the following flags must be duplicated in /CMakeLists.txt for CMake without native CUDA support
-    #
-    set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_35 -code=compute_35,sm_35 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true")
+    set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -arch=compute_35 -code=compute_35,sm_35 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true")
 
   else()
     message(WARNING "Unsupported CUDA compiler: ${CMAKE_CUDA_COMPILER_ID}")

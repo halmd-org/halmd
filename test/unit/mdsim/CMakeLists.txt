@@ -52,7 +52,7 @@ endif()
 
 # module box
 if(HALMD_WITH_GPU)
-  cuda_add_executable(test_unit_mdsim_box
+  add_executable(test_unit_mdsim_box
     box.cpp
     box_kernel.cu
   )
@@ -145,4 +145,3 @@ if (NOT ${Boost_VERSION} VERSION_LESS 1.59.0)
     endif()
   endif()
 endif()
-
