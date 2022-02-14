@@ -135,7 +135,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   # Require thread-safe Boost libraries
   set(Boost_USE_MULTITHREADED TRUE)
 
-  find_package(Boost 1.55.0 QUIET REQUIRED COMPONENTS
+  find_package(Boost 1.61.0 QUIET REQUIRED COMPONENTS
     date_time
     filesystem
     log
@@ -159,10 +159,6 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
   # be verbose about library versions (but suppress all the gory details given by find_package)
   message(STATUS "Boost version: ${Boost_VERSION}")
-  if (${Boost_VERSION} LESS 1.59.0)
-    message(WARNING "Your version of Boost doesn't support data-driven testcases (< 1.59.0), some unit tests will be disabled.")
-  endif()
-
   message(STATUS "Lua library version: ${LUA_VERSION_STRING}")
   message(STATUS "HDF5 library version: ${HDF5_VERSION}")
 

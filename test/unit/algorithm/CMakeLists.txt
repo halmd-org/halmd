@@ -1,28 +1,24 @@
-if(HALMD_WITH_GPU AND NOT ${Boost_VERSION} VERSION_LESS 1.59.0)
-  add_executable(test_unit_algorithm_iota
-    iota.cpp
-  )
-  target_link_libraries(test_unit_algorithm_iota
-    halmd_algorithm_gpu
-    ${HALMD_TEST_LIBRARIES}
-  )
-  halmd_add_gpu_test(unit/algorithm/iota
-    test_unit_algorithm_iota --log_level=test_suite
-  )
-endif()
+add_executable(test_unit_algorithm_iota
+  iota.cpp
+)
+target_link_libraries(test_unit_algorithm_iota
+  halmd_algorithm_gpu
+  ${HALMD_TEST_LIBRARIES}
+)
+halmd_add_gpu_test(unit/algorithm/iota
+  test_unit_algorithm_iota --log_level=test_suite
+)
 
-if (NOT ${Boost_VERSION} VERSION_LESS 1.59.0)
-  add_executable(test_unit_algorithm_multi_range
-    multi_range.cpp
-  )
-  target_link_libraries(test_unit_algorithm_multi_range
-    ${HALMD_COMMON_LIBRARIES}
-    ${HALMD_TEST_LIBRARIES}
-  )
-  add_test(unit/algorithm/multi_range
-    test_unit_algorithm_multi_range --log_level=test_suite
-  )
-endif()
+add_executable(test_unit_algorithm_multi_range
+  multi_range.cpp
+)
+target_link_libraries(test_unit_algorithm_multi_range
+  ${HALMD_COMMON_LIBRARIES}
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/algorithm/multi_range
+  test_unit_algorithm_multi_range --log_level=test_suite
+)
 
 add_executable(test_unit_algorithm_permute
   permute.cpp
