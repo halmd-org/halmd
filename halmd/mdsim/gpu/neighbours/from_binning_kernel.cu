@@ -422,15 +422,6 @@ self:
 
 } // namespace from_binning_kernel
 
-/* FIXME
-template <int dimension>
-from_binning_wrapper<dimension> from_binning_wrapper<dimension>::kernel = {
-    from_binning_kernel::update_neighbours<true, dimension>
-  , from_binning_kernel::update_neighbours<false, dimension>
-  , from_binning_kernel::update_neighbours_naive<true, dimension>
-  , from_binning_kernel::update_neighbours_naive<false, dimension>
-};
-*/
 template <int dimension>
 from_binning_wrapper<dimension> from_binning_wrapper<dimension>::kernel = {
     {
