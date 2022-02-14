@@ -493,7 +493,10 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
                 .def(constructor<>())
                 .def("store", &variables_map_store)
                 .def("notify", &variables_map_notify)
-                .def("count", &po::variables_map::count)
+                .def("count",
+                     (po::variables_map::size_type
+                      (po::variables_map::*)(const po::variables_map::key_type&) const)
+                     &po::variables_map::count)
         ]
     ];
 

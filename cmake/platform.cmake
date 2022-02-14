@@ -2,17 +2,21 @@ set(CMAKE_BUILD_TYPE_INIT "Release")
 
 if(DEFINED CMAKE_CXX_COMPILER_ID)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-
-    # HALMD requires a C++11 compiler, e.g. GCC 4.7.
-    # Remove -DNDEBUG from RelWithDebInfo to enable assert() and LOG_DEBUG/LOG_TRACE.
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.7)
-      message(FATAL_ERROR "Minimal supported version of GCC compiler is 4.7")
+    # HALMD requires a C++14 compiler, e.g. GCC 5.
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.0)
+      message(FATAL_ERROR "Minimal supported version of GCC compiler is 5.0")
     endif()
-    set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+
+    # Remove -DNDEBUG from RelWithDebInfo to enable assert() and LOG_DEBUG/LOG_TRACE.
+    set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++14 -pedantic")
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # HALMD requires a C++14 compiler, e.g. Clang 3.4.
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.4)
+      message(FATAL_ERROR "Minimal supported version of Clang compiler is 3.4")
+    endif()
 
     # Clang versions >= 3.9.1 issue warnings if a template specialization is
     # declared, but not defined in a compilation unit.
@@ -20,9 +24,9 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
     # units. This paradigm conforms to the C++ standards and is intended,
     # therefore the warnings are disabled.
     if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "3.9.1")
-      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic -Wno-undefined-var-template")
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++14 -pedantic -Wno-undefined-var-template")
     else()
-      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++14 -pedantic")
     endif()
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
