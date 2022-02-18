@@ -19,7 +19,7 @@
  */
 
 #include <algorithm>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <cmath>
 
 #include <halmd/mdsim/host/sorts/hilbert.hpp>
@@ -44,6 +44,8 @@ hilbert<dimension, float_type>::hilbert(
   , binning_(binning)
   , logger_(logger)
 {
+    using namespace boost::placeholders;
+
     cell_size_type const& ncell = binning_->ncell();
     vector_type const& cell_length = binning_->cell_length();
     cell_array_type const& cell = read_cache(binning_->cell());

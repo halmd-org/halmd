@@ -152,7 +152,9 @@ wrap_write(std::shared_ptr<truncate> self)
  */
 void truncate::luaopen(lua_State* L)
 {
+    using namespace boost::placeholders;
     using namespace luaponte;
+
     module(L, "libhalmd")
     [
         namespace_("io")

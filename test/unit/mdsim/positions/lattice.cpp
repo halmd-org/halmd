@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE lattice
 #include <boost/test/unit_test.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <cmath>
@@ -126,6 +126,8 @@ static vector_type wrap_element_min(vector_type const& v, vector_type const& w)
 template <typename modules_type>
 void lattice<modules_type>::test()
 {
+    using namespace boost::placeholders;
+
     typedef typename modules_type::vector_type vector_type;
     typedef typename modules_type::slab_type slab_type;
     BOOST_TEST_MESSAGE("#particles: " << npart << ", #unit cells: " << ncell <<

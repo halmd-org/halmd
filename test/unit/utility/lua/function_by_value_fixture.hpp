@@ -22,7 +22,7 @@
 #define TEST_UNIT_UTILITY_LUA_BY_VALUE_FIXTURE_HPP
 
 #include <tuple>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 107100
 # include <boost/test/tools/output_test_stream.hpp>
@@ -125,41 +125,49 @@ struct function_by_value_fixture : lua_test_fixture
 
     static std::function<int (int)> wrap_slot_by_value1()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_value1, _1);
     }
 
     static std::function<int (int, int)> wrap_slot_by_value2()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_value2, _1, _2);
     }
 
     static std::function<int (int, int, int)> wrap_slot_by_value3()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_value3, _1, _2, _3);
     }
 
     static std::function<int (int, int, int, int)> wrap_slot_by_value4()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_value4, _1, _2, _3, _4);
     }
 
     static std::function<int (int, int, int, int, int)> wrap_slot_by_value5()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_value5, _1, _2, _3, _4, _5);
     }
 
     static std::function<int (int, int, int, int, int, int)> wrap_slot_by_value6()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_value6, _1, _2, _3, _4, _5, _6);
     }
 
     static std::function<int (int, int, int, int, int, int, int)> wrap_slot_by_value7()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_value7, _1, _2, _3, _4, _5, _6, _7);
     }
 
     static std::function<int (int, int, int, int, int, int, int, int)> wrap_slot_by_value8()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_value8, _1, _2, _3, _4, _5, _6, _7, _8);
     }
 

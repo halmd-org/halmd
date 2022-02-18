@@ -23,7 +23,7 @@
 #define HALMD_UTILITY_LUA_FIXED_VECTOR_CONVERTER_HPP
 
 #include <algorithm>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <luaponte/luaponte.hpp>
 

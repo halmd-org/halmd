@@ -24,7 +24,7 @@
 #define BOOST_TEST_MODULE ssf
 #include <boost/test/unit_test.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <cmath>
 #include <functional>

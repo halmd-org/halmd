@@ -19,6 +19,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/bind/bind.hpp>
 #include <h5xx/h5xx.hpp>
 #include <luaponte/luaponte.hpp>
 #include <luaponte/exception_handler.hpp>
@@ -244,7 +245,7 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
                 .def("exists_dataset", &h5xx::exists_dataset)
 
           , class_<H5::DataSet, bases<H5::H5Object, H5::AbstractDs> >("dataset")
-                .property("shape", &wrap_shape, pure_out_value(_2))
+                .property("shape", &wrap_shape, pure_out_value(boost::placeholders::_2))
                 .property("type", &wrap_type)
 
           , class_<type_wrapper<bool> >("bool")
