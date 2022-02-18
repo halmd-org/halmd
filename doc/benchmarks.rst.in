@@ -89,3 +89,35 @@ Results were obtained from 1 independent measurement and are based on release
 version 1.0.0. Each run consisted of NVT equilibration at :math:`T^*=0.7` over
 :math:`\Delta t^*=100` (2×10⁴ steps), followed by benchmarking 10⁴ NVE steps 5
 times in a row.
+
+Variant "tiny"
+--------------
+
+This benchmark tests an alternative implementation of the calculation of pair
+forces, using loop-unrolling. It is particularly suited for systems with small
+particle number.
+
+Parameters:
+
+    * 4,096 particles, all other parameters are as above
+    * neighbour lists are constructed directly, without binning to Verlet cells
+    * re-ordering of particle data in memory is disabled
+    * double-single floating point precision is enabled
+
++-------------------------+------------------+-----------+------------+-----------------------------+
+| Hardware                | time per MD step | steps per | unroll     | compilation details         |
+|                         | and particle     | second    | force loop |                             |
++=========================+==================+===========+============+=============================+
+| NVIDIA A40              | 17.9 ns          | 13638     | true       | CUDA 11.5, -arch compute_80 |
++-------------------------+------------------+-----------+------------+-----------------------------+
+|                         | 30.5 ns          | 8013      | false      | CUDA 11.5, -arch compute_80 |
++-------------------------+------------------+-----------+------------+-----------------------------+
+| NVIDIA A100             | 22.6 ns          | 10823     | true       | CUDA 11.5, -arch compute_80 |
++-------------------------+------------------+-----------+------------+-----------------------------+
+|                         | 38.8 ns          | 6285      | false      | CUDA 11.5, -arch compute_80 |
++-------------------------+------------------+-----------+------------+-----------------------------+
+
+Results were obtained from 1 independent measurement and are based on the
+pre-release version 1.0.0-67-g24afb4c68. Each run consisted of NVT
+equilibration at :math:`T^*=0.7` over :math:`\Delta t^*=100` (2×10⁴ steps),
+followed by benchmarking 10⁴ NVE steps 5 times in a row.
