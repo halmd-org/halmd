@@ -29,7 +29,12 @@
 
 #include <algorithm>
 #include <boost/numeric/ublas/banded.hpp>
-#include <boost/function_output_iterator.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION < 106600
+# include <boost/function_output_iterator.hpp>
+#else
+# include <boost/iterator/function_output_iterator.hpp>
+#endif
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <cmath>
