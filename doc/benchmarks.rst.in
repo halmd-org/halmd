@@ -56,8 +56,8 @@ Parameters:
     * 256,000 particles, number density :math:`\rho = 1.2\sigma^3`
     * force: lennard_jones with 2 particle species (80% :math:`A`, 20% :math:`B`)
 
-      (:math:`\epsilon_{AA}=1`, :math:`\epsilon_{AB}=.5`, :math:`\epsilon_{BB}=1.5`,
-      :math:`\sigma_{AA}=1`, :math:`\sigma_{AB}=.88`, :math:`\sigma_{BB}=.8`,
+      (:math:`\epsilon_{AA}=1`, :math:`\epsilon_{AB}=1.5`, :math:`\epsilon_{BB}=.5`,
+      :math:`\sigma_{AA}=1`, :math:`\sigma_{AB}=.8`, :math:`\sigma_{BB}=.88`,
       :math:`r_c = 2.5\sigma`, :math:`r_\text{skin} = 0.3\sigma`, neighbour list occupancy: 70%)
 
     * integrator: verlet (NVE, :math:`\delta t^* = 0.001`)
