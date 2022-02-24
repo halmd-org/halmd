@@ -18,18 +18,18 @@ A detailed step-by-step guide for manual installation is given in section
 Build environment
 -----------------
 
-* a :ref:`C++ compiler <supported_compilers>` with C++11 support,
+* a :ref:`C++ compiler <supported_compilers>` with C++14 support,
   builds have been tested with GCC and Clang
 
-  HALMD makes extensive use of C++11 features. Instructions for a
+  HALMD makes extensive use of C++14 features. Instructions for a
   semi-automated build of GCC are given in :ref:`automatic`.
 
-* `CMake <http://www.cmake.org/>`_ ≥ 2.8.12, latest version tested: 3.11.1
+* `CMake <http://www.cmake.org/>`_ ≥ 3.8, latest version tested: 3.22.2
 
   The build process of HALMD depends on CMake, a cross-platform, open-source
   build system.
 
-* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 9.0, latest version tested: 10.1
+* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 9.0, latest version tested: 11.2
 
   Please refer to the installation instructions shipped with the toolkit. The
   toolkit is not needed for builds without GPU acceleration.
@@ -38,8 +38,7 @@ Build environment
 Third-party libraries
 ---------------------
 
-* `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.55.0 (some unit tests will be disabled in
-  Boost versions less than 1.59.0), latest version tested: 1.72.0
+* `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.61.0, latest version tested: 1.78.0
 
   The C++ part of HALMD uses libraries in the Boost C++ collection.
 
@@ -67,7 +66,7 @@ Third-party libraries
   language. The fast and lightweight Lua interpreter is embedded in the HALMD
   executable.
 
-* `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ ≥ 1.8.13, latest version tested: 1.10.1
+* `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ ≥ 1.8.13, latest version tested: 1.12.1
 
   "HDF5 is a data model, library, and file format for storing and managing
   data. It supports an unlimited variety of datatypes, and is designed for
@@ -80,7 +79,7 @@ Documentation
 Documentation is generated **optionally** in HTML and PDF format if these
 prerequisites are met:
 
-* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ ≥ 1.4, latest version tested: 1.6.3
+* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ ≥ 1.4, latest version tested: 1.8.5
 
   "Sphinx is a tool that makes it easy to create intelligent and beautiful
   documentation."
