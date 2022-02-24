@@ -72,7 +72,7 @@ if(DEFINED CMAKE_CUDA_COMPILER_ID)
     # which brings only non-IEEE-compliant, single-precision floating-point
     # arithmetics. So we consider it safe to disable IEEE-compliance, which
     # has (small) performance penalties.
-    set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -arch=compute_35 -code=compute_35,sm_35 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true")
+    set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -arch=compute_60 -code=compute_60,sm_61 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true")
 
   else()
     message(WARNING "Unsupported CUDA compiler: ${CMAKE_CUDA_COMPILER_ID}")

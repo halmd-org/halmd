@@ -120,7 +120,7 @@ executables for each backend, which are statically linked to all libraries excep
 standard C and C++ libraries::
 
   CXXFLAGS="-fPIC -Wall"
-  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v -arch sm_60" \
+  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v -arch sm_61" \
   cmake \
       -DCMAKE_BUILD_TYPE=Release \
       ../..
