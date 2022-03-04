@@ -1,13 +1,15 @@
-add_executable(test_unit_algorithm_iota
-  iota.cpp
-)
-target_link_libraries(test_unit_algorithm_iota
-  halmd_algorithm_gpu
-  ${HALMD_TEST_LIBRARIES}
-)
-halmd_add_gpu_test(unit/algorithm/iota
-  test_unit_algorithm_iota --log_level=test_suite
-)
+if(HALMD_WITH_GPU)
+  add_executable(test_unit_algorithm_iota
+    iota.cpp
+  )
+  target_link_libraries(test_unit_algorithm_iota
+    halmd_algorithm_gpu
+    ${HALMD_TEST_LIBRARIES}
+  )
+  halmd_add_gpu_test(unit/algorithm/iota
+    test_unit_algorithm_iota --log_level=test_suite
+  )
+endif(HALMD_WITH_GPU)
 
 add_executable(test_unit_algorithm_multi_range
   multi_range.cpp
