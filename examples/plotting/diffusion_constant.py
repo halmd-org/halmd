@@ -57,7 +57,8 @@ def main(args):
     fit_yerr, no_fit_yerr = yerr[mask], yerr[~mask]
 
     # fit model
-    linear_model = lambda x, D : 2 * args.dimension * D * x
+    dimension = args.dimension
+    linear_model = lambda x, D : 2 * dimension * D * x
 
     popt, pcov = curve_fit(linear_model, fit_x, fit_y, sigma=fit_yerr)
     perr = np.sqrt(np.diag(pcov))
@@ -78,10 +79,12 @@ def main(args):
             plt.loglog(t, linear_model(t, *popt), '-k')
             ylabel = "Mean-square displacement"
         else:
-            plt.errorbar(fit_x, fit_y / fit_x, yerr=fit_yerr / fit_x, fmt='xb', label="data used in fit")
-            plt.errorbar(no_fit_x, no_fit_y / no_fit_x, yerr=no_fit_yerr / no_fit_x, fmt='xg', label="data not used in fit")
-            plt.semilogx(t, linear_model(t, *popt) / t, '-k')
-            ylabel = "MSD(t) / t"
+            fit_rect = 2 * dimension * fit_x
+            no_fit_rect = 2 * dimension * no_fit_x
+            plt.errorbar(fit_x, fit_y / fit_rect, yerr=fit_yerr / fit_rect, fmt='xb', label="data used in fit")
+            plt.errorbar(no_fit_x, no_fit_y / no_fit_rect, yerr=no_fit_yerr / no_fit_rect, fmt='xg', label="data not used in fit")
+            plt.semilogx(t, linear_model(t, *popt) / (2 * dimension * t), '-k')
+            ylabel = "MSD(t) / {0:d}t".format(2 * dimension)
 
         # add axes labels and finalise plot
         plt.axis('tight')

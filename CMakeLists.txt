@@ -147,6 +147,13 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   )
   set(Boost_VERSION ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION})
 
+  # the compiler macro __CUDACC_VER__ was deprecated in CUDA 9, but is used by Boost C++ 1.61 to 1.65
+  if(${CUDA_VERSION} VERSION_GREATER_EQUAL 9.0)
+    if(${Boost_VERSION} VERSION_GREATER_EQUAL 1.61 AND ${Boost_VERSION} VERSION_LESS_EQUAL 1.65)
+       message(SEND_ERROR "The combination of CUDA ≥ 9 and Boost C++ ≥ 1.61 and ≤ 1.65 is not supported.")
+    endif()
+  endif()
+
   find_package(HDF5 QUIET REQUIRED COMPONENTS CXX)
   find_package(LuaLibs QUIET REQUIRED)
 

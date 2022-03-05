@@ -58,7 +58,7 @@ function main(args)
     boltzmann:set()
 
     -- Lennard-Jones potential
-    local potential = mdsim.potentials.pair.lennard_jones({cutoff = args.cutoff})
+    local potential = mdsim.potentials.pair.lennard_jones():truncate({cutoff = args.cutoff})
 
     -- compute forces
     local force = mdsim.forces.pair({
