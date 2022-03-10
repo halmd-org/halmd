@@ -97,6 +97,12 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
       message(SEND_ERROR "CUDA runtime library could not be found")
     endif()
 
+    # unset CUDA implicit libraries so they don't overwrite the C++ libraries
+    unset(CMAKE_CUDA_IMPLICIT_LINK_LIBRARIES)
+    unset(CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES)
+    # we manually choose between cudart static/dynamic
+    set(CMAKE_CUDA_RUNTIME_LIBRARY None)
+
     try_compile(success "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu" OUTPUT_VARIABLE result)
     if(result MATCHES "__CUDA_ARCH__([0-9]+)__")
       set(HALMD_GPU_ARCH "${CMAKE_MATCH_1}")
