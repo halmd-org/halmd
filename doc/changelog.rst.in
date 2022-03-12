@@ -3,6 +3,24 @@
 Changelog
 *********
 
+Version 1.0.1
+=============
+
+**Bug fixes**
+
+* example script ``liquid/shear_viscosity.lua``: fixed the truncation of the
+  Lennard-Jones potential, which was missing due to the use of an outdated Lua
+  interface of the potential module *(Felix Höfling)*
+
+**Improvements**
+
+* documentation: minor amendments and corrections *(Felix Höfling)*
+* some improvements to example scripts *(Felix Höfling)*
+* :ref:`benchmarks <benchmarks>`: optimise neighbour list parameters, add
+  results for RTX 2080 Super *(Felix Höfling)*
+* improve stability of build process *(Jaslo Ziska, Felix Höfling)*
+
+
 Version 1.0.0
 =============
 
