@@ -76,11 +76,7 @@ __global__ void compute(
     // contribution to stress tensor
     stress_tensor_type stress_pot = 0;
     // force sum
-#ifdef USE_FORCE_DSFUN
     fixed_vector<dsfloat, dimension> f = 0;
-#else
-    vector_type f = 0;
-#endif
 
     for (unsigned int j = 0; j < npart2; ++j) {
         // load particle

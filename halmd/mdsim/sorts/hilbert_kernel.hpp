@@ -123,10 +123,6 @@ typename std::enable_if<
         }
         else if (v == 3 || v == 4) {
             swap(vc, a, c, mask);
-#ifdef USE_HILBERT_ALT_3D
-            swap(vc, b, d, mask);
-            swap(vc, e, g, mask);
-#endif
             swap(vc, f, h, mask);
         }
         else if (v == 5 || v == 6) {

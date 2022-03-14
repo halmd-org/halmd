@@ -79,11 +79,7 @@ __global__ void compute_unroll_force_loop(
     tie(r1, type1) <<= g_r1[i];
 
     // force sum
-#ifdef USE_FORCE_DSFUN
     fixed_vector<dsfloat, dimension> f = 0;
-#else
-    vector_type f = 0;
-#endif
 
     // contribution to potential energy
     float en_pot_ = 0;
@@ -195,11 +191,7 @@ __global__ void compute(
     tie(r1, type1) <<= g_r1[i];
 
     // force sum
-#ifdef USE_FORCE_DSFUN
     fixed_vector<dsfloat, dimension> f = 0;
-#else
-    vector_type f = 0;
-#endif
 
     // contribution to potential energy
     float en_pot_ = 0;
