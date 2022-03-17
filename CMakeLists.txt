@@ -224,6 +224,10 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     include_directories(${HALMD_SOURCE_DIR}/libs/cub)
     include_directories(${HALMD_SOURCE_DIR}/libs/cuda-wrapper)
     include_directories(SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+
+    if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 11.0)
+      add_definitions(-DTHRUST_IGNORE_CUB_VERSION_CHECK)
+    endif()
   endif(HALMD_WITH_GPU)
 
   # If the subdirectory doc/ contains a CMakeLists.txt, we are in a git repository,
