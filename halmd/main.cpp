@@ -29,8 +29,11 @@
 #include <halmd/script.hpp>
 #include <halmd/utility/program_options.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/gpu/device.hpp>
 #include <halmd/version.h>
+
+#ifdef HALMD_WITH_GPU
+# include <halmd/utility/gpu/device.hpp>
+#endif
 
 using namespace halmd;
 using namespace std;
