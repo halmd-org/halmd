@@ -8,8 +8,8 @@ has been specifically designed to support acceleration through `CUDA
 
 *HAL’s MD package* is maintained and developed by `Felix Höfling
 <http://page.mi.fu-berlin.de/hoefling>`_ and was initially written together
-with Peter Colberg. Special credit goes to `Nicolas Höft
-<http://www2.thphy.uni-duesseldorf.de/~nhoeft>`_ and `Daniel Kirchner
+with Peter Colberg. Special credits go to `Nicolas Höft
+<https://www.starlabs.de>`_ and `Daniel Kirchner
 <https://de.linkedin.com/in/daniel-kirchner-6024b375>`_ for their manifold
 contributions.
 
