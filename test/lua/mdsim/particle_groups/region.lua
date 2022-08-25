@@ -22,13 +22,14 @@ local mdsim = halmd.mdsim
 local observables = halmd.observables
 local writers = halmd.io.writers
 
-local function setup(args)
+local function setup(geometry, args)
     local dimension = args.dimension      -- dimension of space
     local np = args.particles             -- number of particles
+    local L = args.box_length             -- edge length of cubic box
 
     local length = {}
     for i = 1, dimension do
-        length[i] = 10
+        length[i] = L
     end
     -- create simulation domain with periodic boundary conditions
     local box = mdsim.box({length = length})
@@ -41,38 +42,42 @@ local function setup(args)
 
     if particle.memory == "gpu" then
       -- sort particles *once*, as they do not move
-      local sort = mdsim.sorts.hilbert({box = box, particle = particle})
-      sort:order()
+      mdsim.sorts.hilbert({box = box, particle = particle})
+        : order()
     end
-
-    -- select particles within/not within upper quadrant:
-    -- define geometry first
-    local lowest_corner = {}
-    for i = 1, dimension do
-        lowest_corner[i] = 0
-        length[i] = length[i] / 2
-    end
-    local cuboid = mdsim.geometries.cuboid({lowest_corner = lowest_corner, length = length})
 
     -- construct included/excluded particle groups, label is inherited from 'region'
     local group = {}
     group["included"] = mdsim.particle_groups.region({
-        particle = particle, geometry = cuboid, selection = "included"
+        particle = particle, geometry = geometry, selection = "included"
       , label = "upper quadrant (included)"
     })
     group["excluded"] = mdsim.particle_groups.region({
-        particle = particle, geometry = cuboid, selection = "excluded"
+        particle = particle, geometry = geometry, selection = "excluded"
       , label = "upper quadrant (excluded)"
     })
 
-    return group, cuboid, args
+    return group
 end
 
-local function test(group, cuboid, args)
+local function test_cuboid(args)
+    local dimension = args.dimension      -- dimension of space
+    local L = args.box_length             -- edge length of cubic box
+
+    -- select particles within/not within upper quadrant:
+    -- define geometry first
+    local length = {}
+    local lowest_corner = {}
+    for i = 1, dimension do
+        lowest_corner[i] = 0
+        length[i] = L / 2
+    end
+    local cuboid = mdsim.geometries.cuboid({lowest_corner = lowest_corner, length = length})
+
+    local group = setup(cuboid, args)
+
     -- check if the total number of particles is correct
     assert(group["excluded"].size + group["included"].size == args.particles)
-    local lowest_corner = cuboid.lowest_corner
-    local length = cuboid.length
 
     -- convert to a new particle instance in order to access the positions
     local particle_exc = group["excluded"]:to_particle()
@@ -111,11 +116,12 @@ function define_args(parser)
 
     parser:add_argument("particles", {type = "number", default = 10000, help = "number of particles"})
     parser:add_argument("dimension", {type = "number", default = 3, help = "dimension of space"})
+    parser:add_argument("box-length", {type = "number", default = 10, help = "edge length of cubic box"})
 end
 
 --
 -- set up system and perform test
 --
 function main(args)
-    test(setup(args))
+    test_cuboid(args)
 end
