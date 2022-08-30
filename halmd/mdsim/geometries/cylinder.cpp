@@ -50,8 +50,8 @@ template <int dimension, typename float_type>
 void cylinder<dimension, float_type>::log(std::shared_ptr<halmd::logger> logger_) const
 {
     LOG("using cylinder geometry");
-    LOG("cylinder radius " << radius_);
-    LOG("cylinder axis: " << axis_original_);
+    LOG("radius: " << radius_);
+    LOG("axis vector: " << axis_original_);
     LOG_DEBUG("cylinder axis after normalisation: " << axis_);
     LOG("axis offset: " << offset_);
 }
