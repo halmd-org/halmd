@@ -58,7 +58,7 @@ void sphere<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<sphere>()
               , def(class_name.c_str(), &std::make_shared<sphere
-                  , vector_type
+                  , vector_type const&
                   , float_type
                   >)
             ]
