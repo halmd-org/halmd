@@ -22,6 +22,7 @@
 #include <halmd/algorithm/gpu/copy_if.hpp>
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/geometries/cuboid.hpp>
+#include <halmd/mdsim/geometries/cylinder.hpp>
 #include <halmd/mdsim/geometries/sphere.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_groups/region.hpp>
@@ -236,12 +237,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle_groups_region(lua_State* L
 #ifdef USE_GPU_SINGLE_PRECISION
     region<3, float, mdsim::geometries::cuboid<3, float>>::luaopen(L);
     region<2, float, mdsim::geometries::cuboid<2, float>>::luaopen(L);
+    region<3, float, mdsim::geometries::cylinder<3, float>>::luaopen(L);
+    region<2, float, mdsim::geometries::cylinder<2, float>>::luaopen(L);
     region<3, float, mdsim::geometries::sphere<3, float>>::luaopen(L);
     region<2, float, mdsim::geometries::sphere<2, float>>::luaopen(L);
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     region<3, dsfloat, mdsim::geometries::cuboid<3, float>>::luaopen(L);
     region<2, dsfloat, mdsim::geometries::cuboid<2, float>>::luaopen(L);
+    region<3, dsfloat, mdsim::geometries::cylinder<3, float>>::luaopen(L);
+    region<2, dsfloat, mdsim::geometries::cylinder<2, float>>::luaopen(L);
     region<3, dsfloat, mdsim::geometries::sphere<3, float>>::luaopen(L);
     region<2, dsfloat, mdsim::geometries::sphere<2, float>>::luaopen(L);
 #endif
@@ -252,12 +257,16 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle_groups_region(lua_State* L
 #ifdef USE_GPU_SINGLE_PRECISION
 template class region<3, float, mdsim::geometries::cuboid<3, float>>;
 template class region<2, float, mdsim::geometries::cuboid<2, float>>;
+template class region<3, float, mdsim::geometries::cylinder<3, float>>;
+template class region<2, float, mdsim::geometries::cylinder<2, float>>;
 template class region<3, float, mdsim::geometries::sphere<3, float>>;
 template class region<2, float, mdsim::geometries::sphere<2, float>>;
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class region<3, dsfloat, mdsim::geometries::cuboid<3, float>>;
 template class region<2, dsfloat, mdsim::geometries::cuboid<2, float>>;
+template class region<3, dsfloat, mdsim::geometries::cylinder<3, float>>;
+template class region<2, dsfloat, mdsim::geometries::cylinder<2, float>>;
 template class region<3, dsfloat, mdsim::geometries::sphere<3, float>>;
 template class region<2, dsfloat, mdsim::geometries::sphere<2, float>>;
 #endif

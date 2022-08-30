@@ -21,6 +21,7 @@
  */
 
 #include <halmd/mdsim/geometries/cuboid.hpp>
+#include <halmd/mdsim/geometries/cylinder.hpp>
 #include <halmd/mdsim/geometries/sphere.hpp>
 #include <halmd/algorithm/host/radix_sort.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -197,11 +198,15 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_particle_groups_region_species(lua
 #ifndef USE_HOST_SINGLE_PRECISION
     region_species<3, double, halmd::mdsim::geometries::cuboid<3, double>>::luaopen(L);
     region_species<2, double, halmd::mdsim::geometries::cuboid<2, double>>::luaopen(L);
+    region_species<3, double, halmd::mdsim::geometries::cylinder<3, double>>::luaopen(L);
+    region_species<2, double, halmd::mdsim::geometries::cylinder<2, double>>::luaopen(L);
     region_species<3, double, halmd::mdsim::geometries::sphere<3, double>>::luaopen(L);
     region_species<2, double, halmd::mdsim::geometries::sphere<2, double>>::luaopen(L);
 #else
     region_species<3, float, halmd::mdsim::geometries::cuboid<3, float>>::luaopen(L);
     region_species<2, float, halmd::mdsim::geometries::cuboid<2, float>>::luaopen(L);
+    region_species<3, float, halmd::mdsim::geometries::cylinder<3, float>>::luaopen(L);
+    region_species<2, float, halmd::mdsim::geometries::cylinder<2, float>>::luaopen(L);
     region_species<3, float, halmd::mdsim::geometries::sphere<3, float>>::luaopen(L);
     region_species<2, float, halmd::mdsim::geometries::sphere<2, float>>::luaopen(L);
 #endif
