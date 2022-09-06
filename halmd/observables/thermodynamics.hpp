@@ -83,7 +83,7 @@ public:
     {
         return density() * (temp() + virial() / dimension);
     }
-    
+
     /** system temperature */
     double temp() { return 2 * en_kin() / dimension; }
     /** number density */

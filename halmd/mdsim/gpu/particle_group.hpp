@@ -299,10 +299,14 @@ get_heat_flux(particle_type& particle, particle_group& group)
     group_array_type const& unordered = read_cache(group.unordered());
 
     unsigned int stride = particle.stress_pot()->capacity() / stress_pot_type::static_size;
-    accumulator_type::get_stress_pot().bind(*particle.stress_pot());
-    accumulator_type::get().bind(*particle.velocity());
-    accumulator_type::get_potential_energy().bind(*particle.potential_energy());
-    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(stride))() / unordered.size();
+    cuda::texture<float4> t_velocity(*particle.velocity());
+    cuda::texture<float> t_potential(*particle.potential_energy());
+    cuda::texture<float> t_stress_pot(*particle.stress_pot());
+    return reduce(
+        &*unordered.begin()
+      , &*unordered.end()
+      , accumulator_type(t_velocity, t_potential, t_stress_pot, stride)
+    )() / unordered.size();
 
 }
 /**

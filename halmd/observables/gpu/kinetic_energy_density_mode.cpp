@@ -42,7 +42,7 @@ kinetic_energy_density_mode<dimension, float_type>::kinetic_energy_density_mode(
   , logger_(logger)
     // member initialisation
   , nq_(wavevector_->value().size())
-  , dim_(50, 64 << DEVICE_SCALE) // at most 1024 threads per block
+  , dim_(50, 512)
     // memory allocation
   , g_q_(nq_)
   , g_sin_block_(nq_ * dim_.blocks_per_grid()), g_cos_block_(nq_ * dim_.blocks_per_grid())
@@ -58,11 +58,11 @@ kinetic_energy_density_mode<dimension, float_type>::kinetic_energy_density_mode(
         // cast from fixed_vector<double, ...> to fixed_vector<float, ...>
         // and finally to gpu_vector_type (float4 or float2)
         auto const& q = wavevector_->value();
-        cuda::host::vector<gpu_vector_type> h_q(nq_);
+        cuda::memory::host::vector<gpu_vector_type> h_q(nq_);
         for (unsigned int i = 0; i < q.size(); ++i) {
             h_q[i] = static_cast<vector_type>(q[i]);
         }
-        cuda::copy(h_q, g_q_);
+        cuda::copy(h_q.begin(), h_q.end(), g_q_.begin());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy wavevectors to device");
@@ -99,18 +99,20 @@ kinetic_energy_density_mode<dimension, float_type>::acquire()
 
         // compute density modes
         try {
-            cuda::configure(dim_.grid, dim_.block);
-            wrapper_type::kernel.q.bind(g_q_);
-
+            cuda::texture<gpu_vector_type> t_q(g_q_);
+            wrapper_type::kernel.compute.configure(dim_.grid, dim_.block);
             // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
             wrapper_type::kernel.compute(
-                position.data(), velocity.data(), &*group.begin(), group.size()
+                t_q
+              , position.data()
+              , velocity.data()
+              , &*group.begin(), group.size()
               , g_sin_block_, g_cos_block_, nq_
             );
             cuda::thread::synchronize();
 
             // finalise block sums for each wavevector
-            cuda::configure(
+            wrapper_type::kernel.finalise.configure(
                 nq_                        // #blocks: one per wavevector
               , dim_.block                 // #threads per block, must be a power of 2
             );
@@ -122,8 +124,8 @@ kinetic_energy_density_mode<dimension, float_type>::acquire()
         }
 
         // copy data from device and store in density_mode sample
-        cuda::copy(g_sin_, h_sin_);
-        cuda::copy(g_cos_, h_cos_);
+        cuda::copy(g_sin_.begin(), g_sin_.end(), h_sin_.begin());
+        cuda::copy(g_cos_.begin(), g_cos_.end(), h_cos_.begin());
         auto rho_q = begin(*result_);
         for (unsigned int i = 0; i < nq_; ++i) {
             *rho_q++ = {{ h_cos_[i], -h_sin_[i] }};

@@ -181,7 +181,7 @@ thermodynamics<dimension, float_type>::stress_tensor()
     }
     return stress_tensor_;
 }
-1
+
 template <int dimension, typename float_type>
 typename thermodynamics<dimension, float_type>::vector_type const&
 thermodynamics<dimension, float_type>::heat_flux()

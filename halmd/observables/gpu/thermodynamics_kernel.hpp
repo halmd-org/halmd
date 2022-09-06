@@ -417,7 +417,12 @@ public:
     /**
      * Initialise heat flux to zero.
      */
-    heat_flux(unsigned int stride) : hf_(0), stride_(stride) {}
+    heat_flux(
+        cudaTextureObject_t t_velocity
+      , cudaTextureObject_t t_potential
+      , cudaTextureObject_t t_stress_pot
+      , unsigned int stride
+    ) : hf_(0), stride_(stride), t_velocity_(t_velocity), t_potential_(t_potential), t_stress_pot_(t_stress_pot) {}
     /**
      * Accumulate heat flux of a particle.
      */
@@ -439,38 +444,10 @@ public:
         return fixed_vector<double, dimension>(hf_);
     }
 
-    /**
-     * Returns reference to texture with velocities and masses.
-     */
-    static cuda::texture<float4> const& get()
-    {
-        return texture_;
-    }
-    /**
-     * Returns reference to texture with potential part of stress tensors.
-     */
-    static cuda::texture<float> const& get_stress_pot()
-    {
-        return stress_pot_texture_;
-    }
-
-    /**
-     * Returns reference to texture with potential energy.
-     */
-    static cuda::texture<float> const& get_potential_energy()
-    {
-        return potential_texture_;
-    }
-
 private:
     /** sum over heat flux vector */
     vector_type hf_;
-    /** texture with velocities and masses*/
-    static cuda::texture<float4> const texture_;
-    /** texture with potential energies*/
-    static cuda::texture<float> const potential_texture_;
-    /** texture with stress tensors */
-    static cuda::texture<float> const stress_pot_texture_;
+
     /**
      * stride of the stress tensor array in device memory
      *
@@ -479,6 +456,13 @@ private:
      * accumulation functor.
      **/
     unsigned int stride_;
+
+    /** texture with velocities and masses, float4 */
+    cudaTextureObject_t t_velocity_;
+    /** texture with potential energies, float */
+    cudaTextureObject_t t_potential_;
+    /** texture with stress tensors, float */
+    cudaTextureObject_t t_stress_pot_;
 };
 
 } // namespace observables

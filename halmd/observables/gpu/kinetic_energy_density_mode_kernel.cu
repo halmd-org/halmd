@@ -33,17 +33,6 @@ namespace observables {
 namespace gpu {
 namespace kinetic_energy_density_mode_kernel {
 
-// pass wavevectors via texture
-template<int dimension>
-struct wavevector
-{
-    // instantiate a separate texture for each aligned vector type
-    typedef texture<typename kinetic_energy_density_mode_wrapper<dimension>::coalesced_vector_type> type;
-    static type tex_;
-};
-// instantiate static members
-template<int dimension> wavevector<dimension>::type wavevector<dimension>::tex_;
-
 // recursive reduction function,
 // terminate for threads=0
 template <unsigned threads, typename T>
@@ -101,7 +90,8 @@ __device__ sum_reduce_type sum_reduce_select[] = {
  */
 template <typename vector_type, typename coalesced_vector_type>
 __global__ void compute(
-    coalesced_vector_type const* g_r
+    cudaTextureObject_t t_q
+  , coalesced_vector_type const* g_r
   , coalesced_vector_type const* g_v
   , unsigned int const* g_idx, int npart
   , float* g_sin_block, float* g_cos_block, int nq
@@ -114,7 +104,7 @@ __global__ void compute(
 
     // outer loop over wavevectors
     for (int i=0; i < nq; i++) {
-        vector_type q = tex1Dfetch(wavevector<dimension>::tex_, i);
+        vector_type q = tex1Dfetch<coalesced_vector_type>(t_q, i);
         sin_[TID] = 0;
         cos_[TID] = 0;
         for (int j = GTID; j < npart; j += GTDIM) {
@@ -195,9 +185,8 @@ __global__ void finalise(
 } // namespace density_mode_kernel
 
 template <int dimension>
-kinetic_energy_density_mode_wrapper<dimension> const kinetic_energy_density_mode_wrapper<dimension>::kernel = {
-    kinetic_energy_density_mode_kernel::wavevector<dimension>::tex_
-  , kinetic_energy_density_mode_kernel::compute<fixed_vector<float, dimension> >
+kinetic_energy_density_mode_wrapper<dimension> kinetic_energy_density_mode_wrapper<dimension>::kernel = {
+    kinetic_energy_density_mode_kernel::compute<fixed_vector<float, dimension> >
   , kinetic_energy_density_mode_kernel::finalise
 };
 

@@ -1,5 +1,6 @@
 /*
  * Copyright © 2020      Roya Ebrahimi Viand
+ * Copyright © 2016      Felix Höfling
  * Copyright © 2013-2015 Nicolas Höft
  * Copyright © 2012      Peter Colberg
  *
@@ -108,21 +109,22 @@ __device__ void stress_tensor<dimension, float_type>::operator()(size_type i)
 template <int dimension, typename float_type>
 __device__ void heat_flux<dimension, float_type>::operator()(size_type i)
 {
-    fixed_vector<float, dimension> v;
     typedef fixed_vector<float, dimension> stress_pot_diagonal;
-    float mass;
-    float vrl = 0;
-    stress_pot_diagonal s;
 
-    tie(v, mass) <<= tex1Dfetch(velocity_, i);
-    float p_e = tex1Dfetch(gpu::en_pot_, i);
-    s = mdsim::read_stress_tensor_diagonal<stress_pot_diagonal>(stress_pot_, i, stride_);
+    fixed_vector<float, dimension> v;
+    float mass;
+    tie(v, mass) <<= tex1Dfetch<float4>(t_velocity_, i);
+
+    float p_e = tex1Dfetch<float>(t_potential_, i);
+    stress_pot_diagonal s = mdsim::read_stress_tensor_diagonal<stress_pot_diagonal>(t_stress_pot_, i, stride_);
+
     // add trace of the potential part of the stress tensor
+    float vrl = 0;
     for (int j = 0; j < dimension; ++j) {
         vrl += s[j];
     }
 
-    hf_ += (p_e + 0.5 * mass *inner_prod(v, v) + vrl) * v;
+    hf_ += (p_e + 0.5 * mass * inner_prod(v, v) + vrl) * v;
 }
 
 template class observables::gpu::kinetic_energy<3, dsfloat>;

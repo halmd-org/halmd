@@ -137,9 +137,9 @@ private:
     /** cos(q r) for each wavevector on the device */
     cuda::vector<float> g_cos_;
     /** sin(q r) for each wavevector as page-locked host memory */
-    cuda::host::vector<float> h_sin_;
+    cuda::memory::host::vector<float> h_sin_;
     /** cos(q r) for each wavevector as page-locked host memory */
-    cuda::host::vector<float> h_cos_;
+    cuda::memory::host::vector<float> h_cos_;
 
     typedef halmd::utility::profiler::accumulator_type accumulator_type;
     typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;

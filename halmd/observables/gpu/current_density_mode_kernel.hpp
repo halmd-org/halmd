@@ -35,14 +35,18 @@ struct current_density_mode_wrapper
     typedef typename mdsim::type_traits<dimension, float>::gpu::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
-    /** list of wavevectors */
-    cuda::texture<coalesced_vector_type> q;
     /** compute density_mode for all particles of a single species */
-    cuda::function<void (float4 const*, float4 const*, unsigned int const*, int, float*, float*, int)> compute;
+    cuda::function<void (
+        cudaTextureObject_t
+      , float4 const*
+      , float4 const*
+      , unsigned int const*, int
+      , float*, float*, int
+    )> compute;
     /** finalise computation by summing block sums per wavevector */
     cuda::function<void (float const*, float const*, float*, float*, int, int)> finalise;
 
-    static current_density_mode_wrapper const kernel;
+    static current_density_mode_wrapper kernel;
 };
 
 template <int dimension>

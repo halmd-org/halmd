@@ -127,19 +127,19 @@ private:
     /** grid and block dimensions for CUDA calls */
     cuda::config const dim_;
     /** wavevectors */
-    cuda::vector<gpu_vector_type> g_q_;
+    cuda::memory::device::vector<gpu_vector_type> g_q_;
     /** block sums of sin(q r) for each wavevector on the device */
-    cuda::vector<float> g_sin_block_;
+    cuda::memory::device::vector<float> g_sin_block_;
     /** block sums of cos(q r) for each wavevector on the device */
-    cuda::vector<float> g_cos_block_;
+    cuda::memory::device::vector<float> g_cos_block_;
     /** sin(q r) for each wavevector on the device */
-    cuda::vector<float> g_sin_;
+    cuda::memory::device::vector<float> g_sin_;
     /** cos(q r) for each wavevector on the device */
-    cuda::vector<float> g_cos_;
+    cuda::memory::device::vector<float> g_cos_;
     /** sin(q r) for each wavevector as page-locked host memory */
-    cuda::host::vector<float> h_sin_;
+    cuda::memory::host::vector<float> h_sin_;
     /** cos(q r) for each wavevector as page-locked host memory */
-    cuda::host::vector<float> h_cos_;
+    cuda::memory::host::vector<float> h_cos_;
 
     typedef halmd::utility::profiler::accumulator_type accumulator_type;
     typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
