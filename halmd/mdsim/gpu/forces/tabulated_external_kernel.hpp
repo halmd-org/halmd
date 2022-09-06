@@ -65,7 +65,7 @@ struct tabulated_external_wrapper
       , bool
     )> compute_aux;
 
-    static tabulated_external_wrapper const kernel;
+    static tabulated_external_wrapper kernel;
 };
 
 } // namespace mdsim

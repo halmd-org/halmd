@@ -302,7 +302,9 @@ wrap_virial_coefficients(std::shared_ptr<tabulated_type> self, std::function<voi
 template <int dimension, typename float_type, typename force_interpolation_type>
 void tabulated_external<dimension, float_type, force_interpolation_type>::luaopen(lua_State* L)
 {
+    using namespace boost::placeholders;
     using namespace luaponte;
+
     module(L, "libhalmd")
     [
         namespace_("mdsim")

@@ -121,7 +121,7 @@ __global__ void compute(
 } // namespace tabulated_external_kernel
 
 template <int dimension, typename interpolation_type, typename virial_interpolation_type>
-tabulated_external_wrapper<dimension, interpolation_type, virial_interpolation_type> const
+tabulated_external_wrapper<dimension, interpolation_type, virial_interpolation_type>
 tabulated_external_wrapper<dimension, interpolation_type, virial_interpolation_type>::kernel = {
     tabulated_external_kernel::compute<false, fixed_vector<float, dimension> >
   , tabulated_external_kernel::compute<true, fixed_vector<float, dimension> >
@@ -136,4 +136,3 @@ template class tabulated_external_wrapper<2, cubic_hermite<2, float>, linear<2, 
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
-

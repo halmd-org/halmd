@@ -122,7 +122,7 @@ inline void tabulated_external<dimension, float_type, force_interpolation_type>:
 
     scoped_timer_type timer(runtime_.compute);
 
-    configure_kernel(gpu_wrapper::kernel.compute, particle_->dim(), true);
+    configure_kernel(gpu_wrapper::kernel.compute_aux, particle_->dim(), true);
     gpu_wrapper::kernel.compute_aux(
         position.data()
       , &*force->begin()
@@ -147,7 +147,7 @@ set_coefficients(force_type& tabulated, iterator_type const& first)
     typedef typename force_type::coefficient_value_type value_type;
 
     coefficient_array_type& g_coefficient = tabulated.coefficients();
-    cuda::host::vector<value_type> h_coefficient(g_coefficient.size());
+    cuda::memory::host::vector<value_type> h_coefficient(g_coefficient.size());
     iterator_type input = first;
     for (value_type& constraint : h_coefficient) {
         constraint = *input++;
@@ -165,7 +165,7 @@ get_coefficients(force_type& tabulated, iterator_type const& first)
 {
     typedef typename force_type::coefficient_array_type coefficient_array_type;
     coefficient_array_type const& g_coefficient = tabulated.coefficients();
-    cuda::host::vector<typename coefficient_array_type::value_type> h_coefficient(g_coefficient.size());
+    cuda::memory::host::vector<typename coefficient_array_type::value_type> h_coefficient(g_coefficient.size());
     cuda::copy(g_coefficient.begin(), g_coefficient.end(), h_coefficient.begin());
     return std::copy(h_coefficient.begin(), h_coefficient.end(), first);
 }
@@ -221,7 +221,7 @@ set_virial_coefficients(tabulated_type& tabulated, iterator_type const& first)
     typedef typename tabulated_type::coefficient_value_type value_type;
 
     coefficient_array_type& g_coefficient = tabulated.virial_coefficients();
-    cuda::host::vector<value_type> h_coefficient(g_coefficient.size());
+    cuda::memory::host::vector<value_type> h_coefficient(g_coefficient.size());
     iterator_type input = first;
     for (value_type& constraint : h_coefficient) {
         constraint = *input++;
@@ -239,7 +239,7 @@ get_virial_coefficients(tabulated_type& tabulated, iterator_type const& first)
 {
     typedef typename tabulated_type::coefficient_array_type coefficient_array_type;
     coefficient_array_type const& g_coefficient = tabulated.virial_coefficients();
-    cuda::host::vector<typename coefficient_array_type::value_type> h_coefficient(g_coefficient.size());
+    cuda::memory::host::vector<typename coefficient_array_type::value_type> h_coefficient(g_coefficient.size());
     cuda::copy(g_coefficient.begin(), g_coefficient.end(), h_coefficient.begin());
     return std::copy(h_coefficient.begin(), h_coefficient.end(), first);
 }
@@ -291,7 +291,9 @@ wrap_virial_coefficients(std::shared_ptr<tabulated_type> self, std::function<voi
 template <int dimension, typename float_type, typename force_interpolation_type>
 void tabulated_external<dimension, float_type, force_interpolation_type>::luaopen(lua_State* L)
 {
+    using namespace boost::placeholders;
     using namespace luaponte;
+
     module(L, "libhalmd")
     [
         namespace_("mdsim")
