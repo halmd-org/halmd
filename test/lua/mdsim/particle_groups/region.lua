@@ -173,6 +173,7 @@ end
 test["cylinder"] = function(args)
     local dimension = args.dimension      -- dimension of space
     local L = args.box_length             -- edge length of cubic box
+    local tolerance = 1e-12               -- tolerance when verifying selection criteria
 
     -- select particles within/not within a cylinder that runs parallel to the
     -- z=0, x=y diagonal of the simulation box. The cylinder has a fixed width
@@ -224,7 +225,7 @@ test["cylinder"] = function(args)
             dr_n = dr_n + dr * axis[j]
         end
         local distance = math.sqrt(dr2 - dr_n * dr_n)
-        assert(distance <= radius, ("particle #%d included in selection, but it should not"):format(i))
+        assert(distance <= radius * (1 + tolerance), ("particle #%d included in selection, but it should not"):format(i))
     end
 
     for i, r in ipairs(positions["excluded"]) do
@@ -236,7 +237,7 @@ test["cylinder"] = function(args)
             dr_n = dr_n + dr * axis[j]
         end
         local distance = math.sqrt(dr2 - dr_n * dr_n)
-        assert(distance > radius, ("particle #%d excluded from selection, but it should not"):format(i))
+        assert(distance > radius * (1 - tolerance), ("particle #%d excluded from selection, but it should not"):format(i))
     end
 end
 
