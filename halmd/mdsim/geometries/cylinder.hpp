@@ -67,10 +67,9 @@ public:
     HALMD_GPU_ENABLED bool operator()(vector_type const& r) const;
 
 private:
-#ifndef __CUDACC__
     vector_type axis_original_;     // store for logging purposes only
     float_type radius_;
-#endif
+
     vector_type axis_;
     vector_type offset_;
     float_type radius2_;
