@@ -22,15 +22,7 @@
 #define HALMD_ALGORITHM_GPU_COPY_IF_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <boost/version.hpp>
-
-#if defined(__CUDACC__) && BOOST_VERSION >= 106900
-# define BOOST_NO_CXX11_CONSTEXPR
-#endif
-#include <boost/function.hpp>
-#if defined(__CUDACC__) && BOOST_VERSION >= 106900
-# undef BOOST_NO_CXX11_CONSTEXPR
-#endif
+#include <functional>
 
 namespace halmd {
 namespace algorithm {
@@ -42,7 +34,7 @@ namespace gpu {
 template<typename InputIterator, typename OutputIterator, typename Predicate>
 struct copy_if_wrapper
 {
-    boost::function<unsigned int (
+    std::function<unsigned int (
         InputIterator          // input array
       , unsigned int           // array length
       , Predicate

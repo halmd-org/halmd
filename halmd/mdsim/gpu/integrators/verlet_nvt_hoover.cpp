@@ -187,7 +187,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 template <int dimension, typename float_type>
 float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
-    cuda::vector<float4> const& velocity = read_cache(particle_->velocity());
+    cuda::memory::device::vector<float4> const& velocity = read_cache(particle_->velocity());
 
     scoped_timer_type timer(runtime_.propagate);
 

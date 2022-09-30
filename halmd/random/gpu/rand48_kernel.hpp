@@ -35,11 +35,11 @@ struct rand48_wrapper
 {
     cuda::function<void (uint48*)> leapfrog;
     cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, ushort3* g_state, uint)> seed;
-    static rand48_wrapper const kernel;
+    static rand48_wrapper kernel;
 };
 
 // syntactic sugar
-inline rand48_wrapper const& get_rand48_kernel()
+inline rand48_wrapper& get_rand48_kernel()
 {
     return rand48_wrapper::kernel;
 }

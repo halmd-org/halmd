@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2021       Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -25,6 +26,9 @@
 // CUDA kernel helper macros
 //
 
+// warp size as a macro so it can be used for array lengths (warpSize is not a compile time constant)
+#define WARP_SIZE 32
+
 // For thread configuration within a block, we only make use of
 // one dimension. While CUDA execution configuration allows
 // (x, y, z) dimensions of (512, 512, 64) as a maximum, CUDA
@@ -43,6 +47,12 @@
 #define GTID    (BID * TDIM + TID)
 // number of threads per grid
 #define GTDIM   (BDIM * TDIM)
+// warp ID within block
+#define WID     (TID >> 5)
+// number of warps per block
+#define WDIM    (TDIM >> 5)
+// thread ID within warp
+#define WTID    (TID & (WARP_SIZE - 1))
 
 #define FULL_MASK 0xFFFFFFFF
 

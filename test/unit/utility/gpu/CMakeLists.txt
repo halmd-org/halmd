@@ -1,5 +1,5 @@
 # dsfloat_cuda_vector test
-cuda_add_executable(test_unit_utility_gpu_dsfloat_cuda_vector
+add_executable(test_unit_utility_gpu_dsfloat_cuda_vector
   dsfloat_cuda_vector.cpp
   dsfloat_cuda_vector_kernel.cu
 )

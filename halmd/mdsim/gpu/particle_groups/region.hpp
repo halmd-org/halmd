@@ -1,4 +1,5 @@
-/* Copyright © 2019 Roya Ebrahimi Viand
+/*
+ * Copyright © 2019 Roya Ebrahimi Viand
  * Copyright © 2014-2015 Nicolas Höft
  *
  * This file is part of HALMD.

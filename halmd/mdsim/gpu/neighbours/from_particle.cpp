@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2011  Felix Höfling
+ * Copyright © 2021       Jaslo Ziska
  * Copyright © 2014       Nicolas Höft
  * Copyright © 2008-2011  Peter Colberg
  *
@@ -49,6 +50,7 @@ from_particle<dimension, float_type>::from_particle(
   , matrix_type const& r_cut
   , double skin
   , double cell_occupancy
+  , bool unroll_force_loop
   , std::shared_ptr<logger> logger
 )
   // dependency injection
@@ -64,13 +66,15 @@ from_particle<dimension, float_type>::from_particle(
   , rr_cut_skin_(particle1_->nspecies(), particle2_->nspecies())
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
   , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
+  , unroll_force_loop_(unroll_force_loop)
 {
     for (size_t i = 0; i < particle1_->nspecies(); ++i) {
         for (size_t j = 0; j < particle2_->nspecies(); ++j) {
             rr_cut_skin_(i, j) = std::pow(r_cut(i, j) + r_skin_, 2);
         }
     }
-    cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
+    cuda::copy(rr_cut_skin_.data().begin(), rr_cut_skin_.data().end(),
+        g_rr_cut_skin_.begin());
     LOG("neighbour list skin: " << r_skin_);
 
     set_occupancy(cell_occupancy);
@@ -109,7 +113,7 @@ from_particle<dimension, float_type>::g_neighbour()
 
     auto current_cache = std::tie(reverse_id_cache1, reverse_id_cache2);
 
-    if (neighbour_cache_ != current_cache|| float(displacement1_->compute()) > float(r_skin_ / 2)
+    if (neighbour_cache_ != current_cache || float(displacement1_->compute()) > float(r_skin_ / 2)
         || float(displacement2_->compute()) > float(r_skin_ / 2)) {
         on_prepend_update_();
         update();
@@ -141,31 +145,41 @@ void from_particle<dimension, float_type>::update()
         // mark neighbour list placeholders as virtual particles
         cuda::memset(g_neighbour->begin(), g_neighbour->end(), 0xFF);
         // build neighbour lists
-        cuda::vector<int> g_overflow(1);
-        cuda::host::vector<int> h_overflow(1);
-        cuda::memset(g_overflow, 0);
-        get_from_particle_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
+        cuda::memory::device::vector<int> g_overflow(1);
+        cuda::memory::host::vector<int> h_overflow(1);
+        cuda::memset(g_overflow.begin(), g_overflow.end(), 0);
+
+        cuda::texture<float> rr_cut_skin(g_rr_cut_skin_);
+
+        typename from_particle_wrapper<dimension>::update_function_type& kernel = from_particle_wrapper<dimension>::kernel.update;
+        if (unroll_force_loop_) {
+            kernel = from_particle_wrapper<dimension>::kernel.update_unroll_force_loop;
+        }
+
         configure_kernel(
-          get_from_particle_kernel<dimension>().update
-        , particle1_->dim()
-        , true
-        , sizeof(unsigned int) + sizeof(vector_type)
+            kernel
+          , particle1_->dim()
+          , true
+          , sizeof(unsigned int) + sizeof(vector_type)
         );
-        get_from_particle_kernel<dimension>().update(
-          position1.data()
-        , particle1_->nparticle()
-        , position2.data()
-        , particle2_->nparticle()
-        , particle1_->nspecies()
-        , particle2_->nspecies()
-        , static_cast<vector_type>(box_->length())
-        , &*g_neighbour->begin()
-        , size_
-        , stride_
-        , g_overflow
+        kernel(
+            rr_cut_skin
+          , position1.data()
+          , particle1_->nparticle()
+          , position2.data()
+          , particle2_->nparticle()
+          , particle1_->nspecies()
+          , particle2_->nspecies()
+          , static_cast<vector_type>(box_->length())
+          , &*g_neighbour->begin()
+          , size_
+          , stride_
+          , g_overflow
         );
-        cuda::copy(g_overflow, h_overflow);
+
+        cuda::copy(g_overflow.begin(), g_overflow.end(), h_overflow.begin());
         cuda::thread::synchronize();
+
         overcrowded = h_overflow.front() > 0;
         if (overcrowded) {
             LOG("failed to bin " << h_overflow.front() << " particles, reducing occupancy");
@@ -226,6 +240,7 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                     , matrix_type const&
                     , double
                     , double
+                    , bool
                     , std::shared_ptr<logger>
                   >)
             ]

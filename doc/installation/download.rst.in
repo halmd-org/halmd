@@ -5,45 +5,51 @@ Downloading the source code
 
 The following release tarballs of *HAL’s MD package* are available:
 
-* latest `testing <http://code.halmd.org/tar/halmd-testing.tar.bz2>`_ release
+* latest `testing <https://code.halmd.org/tar/halmd-testing.tar.bz2>`_ release
+* latest `stable <https://code.halmd.org/tar/halmd-stable.tar.bz2>`_ release
 
 .. blank.
 
-* version `1.0.0 <http://code.halmd.org/tar/halmd-1.0.0.tar.bz2>`_
+* version `1.0.1 <https://code.halmd.org/tar/halmd-1.0.1.tar.bz2>`_
+* version `1.0.0 <https://code.halmd.org/tar/halmd-1.0.0.tar.bz2>`_
 
 .. blank.
 
 Developers' previews on version 1.0:
 
-* version `1.0-alpha6 <http://code.halmd.org/tar/halmd-1.0-alpha6.tar.bz2>`_
-* version `1.0-alpha5 <http://code.halmd.org/tar/halmd-1.0-alpha5.tar.bz2>`_
-* version `1.0-alpha4 <http://code.halmd.org/tar/halmd-1.0-alpha4.tar.bz2>`_
-* version `1.0-alpha3 <http://code.halmd.org/tar/halmd-1.0-alpha3.tar.bz2>`_
-* version `1.0-alpha2 <http://code.halmd.org/tar/halmd-1.0-alpha2.tar.bz2>`_
-* version `1.0-alpha1 <http://code.halmd.org/tar/halmd-1.0-alpha1.tar.bz2>`_
+* version `1.0-alpha6 <https://code.halmd.org/tar/halmd-1.0-alpha6.tar.bz2>`_
+* version `1.0-alpha5 <https://code.halmd.org/tar/halmd-1.0-alpha5.tar.bz2>`_
+* version `1.0-alpha4 <https://code.halmd.org/tar/halmd-1.0-alpha4.tar.bz2>`_
+* version `1.0-alpha3 <https://code.halmd.org/tar/halmd-1.0-alpha3.tar.bz2>`_
+* version `1.0-alpha2 <https://code.halmd.org/tar/halmd-1.0-alpha2.tar.bz2>`_
+* version `1.0-alpha1 <https://code.halmd.org/tar/halmd-1.0-alpha1.tar.bz2>`_
 
 .. blank.
 
-* version `0.2.1 <http://code.halmd.org/tar/halmd-0.2.1.tar.bz2>`_
-* version `0.2.0 <http://code.halmd.org/tar/halmd-0.2.0.tar.bz2>`_
+* version `0.2.1 <https://code.halmd.org/tar/halmd-0.2.1.tar.bz2>`_
+* version `0.2.0 <https://code.halmd.org/tar/halmd-0.2.0.tar.bz2>`_
 
 .. blank.
 
-* version `0.1.3 <http://code.halmd.org/tar/halmd-0.1.3.tar.bz2>`_
+* version `0.1.3 <https://code.halmd.org/tar/halmd-0.1.3.tar.bz2>`_
 
 
 Download and verify the integrity of the tar balls with the following command
 (in bash)::
 
-  TAR="halmd-1.0.0.tar.bz2" URL="http://code.halmd.org/tar"; \
+  TAR="halmd-1.0.1.tar.bz2" URL="https://code.halmd.org/tar"; \
   wget "$URL/$TAR" && openssl dgst -sha512 \
     -verify <(wget -qO- "$URL/cert.pem" | openssl x509 -noout -pubkey) \
     -signature <(wget -qO- "$URL/$TAR.sig") "$TAR"
 
 The files are signed with an `X.509 certificate
-<http://code.halmd.org/tar/cert.pem>`_ issued for Felix Hoefling by `MPG-CA
-<http://ca.mpg.de/>`_. The SHA1 fingerprint of the certificate is
-BA:FB:6E:55:81:8E:C5:4C:DD:47:93:52:CF:EA:1D:FE:0B:4D:35:8A as shown by::
+<https://code.halmd.org/tar/cert.pem>`_ issued for Felix Hoefling by `DFN-Verein Global Issuing CA
+<https://info.pca.dfn.de/dfn-ca-global-g2/>`_. The SHA1 fingerprint of the certificate is
+15:D6:78:70:3B:05:61:AA:40:28:0B:CF:55:8D:33:17:13:02:DC:8C
+as shown by::
 
-  wget -qO- http://code.halmd.org/tar/cert.pem | openssl x509 -fingerprint -noout
+  wget -qO- https://code.halmd.org/tar/cert.pem | openssl x509 -fingerprint -noout
 
+Tar balls for releases ≤ 1.0.0 use the certificate `cert-old.pem
+<https://code.halmd.org/tar/cert-old.pem>`_ with SHA1 fingerprint
+BA:FB:6E:55:81:8E:C5:4C:DD:47:93:52:CF:EA:1D:FE:0B:4D:35:8A

@@ -22,7 +22,7 @@
 #define HALMD_NUMERIC_POW_HPP
 
 #include <halmd/config.hpp>
-#include <boost/utility/enable_if.hpp>
+#include <type_traits>
 
 namespace halmd {
 
@@ -37,7 +37,7 @@ namespace halmd {
  */
 template <unsigned int n, typename float_type>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if_c<n == 0, float_type>::type
+typename std::enable_if<n == 0, float_type>::type
 fixed_pow(float_type x)
 {
     return float_type(1);
@@ -45,7 +45,7 @@ fixed_pow(float_type x)
 
 template <unsigned int n, typename float_type>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if_c<n == 0, float_type>::type
+typename std::enable_if<n != 0, float_type>::type
 fixed_pow(float_type x)
 {
     float_type y = fixed_pow<n / 2>(x);

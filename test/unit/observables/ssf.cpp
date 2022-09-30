@@ -24,7 +24,7 @@
 #define BOOST_TEST_MODULE ssf
 #include <boost/test/unit_test.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <cmath>
 #include <functional>
@@ -46,6 +46,7 @@
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/observables/gpu/density_mode.hpp>
 # include <halmd/utility/gpu/device.hpp>
+# include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
@@ -318,18 +319,18 @@ struct gpu_modules
 };
 
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( ssf_gpu_dsfloat_2d, device ) {
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_dsfloat_2d, set_cuda_device ) {
     lattice<gpu_modules<2, dsfloat> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( ssf_gpu_dsfloat_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_dsfloat_3d, set_cuda_device ) {
     lattice<gpu_modules<3, dsfloat> >().test();
 }
 # endif
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( ssf_gpu_float_2d, device ) {
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_float_2d, set_cuda_device ) {
     lattice<gpu_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( ssf_gpu_float_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_float_3d, set_cuda_device ) {
     lattice<gpu_modules<3, float> >().test();
 }
 # endif

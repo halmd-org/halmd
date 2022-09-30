@@ -49,6 +49,7 @@
 # include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
+# include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
@@ -361,8 +362,8 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
     typedef typename particle_type::vector_type vector_type;
     typedef apply_wrapper<negate_, vector_type, float4, vector_type, float4> apply_negate_wrapper;
 
-    cuda::vector<float4> const& position = read_cache(particle->position());
-    cuda::vector<float4>& velocity = *make_cache_mutable(particle->velocity());
+    cuda::memory::device::vector<float4> const& position = read_cache(particle->position());
+    cuda::memory::device::vector<float4>& velocity = *make_cache_mutable(particle->velocity());
 
     // copy -g_r[i] to g_v[i]
     //
@@ -376,7 +377,8 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
     //
     // Caveat: overwrites particle ids in g_v (which are not used anyway)
     try {
-        cuda::configure(particle->dim().grid, particle->dim().block);
+        apply_negate_wrapper::kernel.apply.configure(particle->dim().grid,
+            particle->dim().block);
 
         apply_negate_wrapper::kernel.apply(position.data()
                                          , velocity.data()
@@ -390,37 +392,37 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
 }
 
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( euler_gpu_float_2d_linear, device ) {
+BOOST_FIXTURE_TEST_CASE( euler_gpu_float_2d_linear, set_cuda_device ) {
     test_euler<gpu_modules<2, float> >().linear_motion();
 }
 
-BOOST_FIXTURE_TEST_CASE( euler_gpu_float_3d_linear, device ) {
+BOOST_FIXTURE_TEST_CASE( euler_gpu_float_3d_linear, set_cuda_device ) {
     test_euler<gpu_modules<3, float> >().linear_motion();
 }
 
-BOOST_FIXTURE_TEST_CASE( euler_gpu_float_2d_overdamped, device ) {
+BOOST_FIXTURE_TEST_CASE( euler_gpu_float_2d_overdamped, set_cuda_device ) {
     test_euler<gpu_modules<2, float> >().overdamped_motion();
 }
 
-BOOST_FIXTURE_TEST_CASE( euler_gpu_float_3d_overdamped, device ) {
+BOOST_FIXTURE_TEST_CASE( euler_gpu_float_3d_overdamped, set_cuda_device ) {
     test_euler<gpu_modules<3, float> >().overdamped_motion();
 }
 # endif
 
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( euler_gpu_dsfloat_2d_linear, device ) {
+BOOST_FIXTURE_TEST_CASE( euler_gpu_dsfloat_2d_linear, set_cuda_device ) {
     test_euler<gpu_modules<2, dsfloat> >().linear_motion();
 }
 
-BOOST_FIXTURE_TEST_CASE( euler_gpu_dsfloat_3d_linear, device ) {
+BOOST_FIXTURE_TEST_CASE( euler_gpu_dsfloat_3d_linear, set_cuda_device ) {
     test_euler<gpu_modules<3, dsfloat> >().linear_motion();
 }
 
-BOOST_FIXTURE_TEST_CASE( euler_gpu_dsfloat_2d_overdamped, device ) {
+BOOST_FIXTURE_TEST_CASE( euler_gpu_dsfloat_2d_overdamped, set_cuda_device ) {
     test_euler<gpu_modules<2, dsfloat> >().overdamped_motion();
 }
 
-BOOST_FIXTURE_TEST_CASE( euler_gpu_dsfloat_3d_overdamped, device ) {
+BOOST_FIXTURE_TEST_CASE( euler_gpu_dsfloat_3d_overdamped, set_cuda_device ) {
     test_euler<gpu_modules<3, dsfloat> >().overdamped_motion();
 }
 # endif

@@ -22,7 +22,7 @@
 #define TEST_UNIT_UTILITY_LUA_BY_REF_FIXTURE_HPP
 
 #include <tuple>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 107100
 # include <boost/test/tools/output_test_stream.hpp>
@@ -134,41 +134,49 @@ struct function_by_ref_fixture : lua_test_fixture
 
     static std::function<int& (int)> wrap_slot_by_ref1()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_ref1, _1);
     }
 
     static std::function<int& (int, int)> wrap_slot_by_ref2()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_ref2, _1, _2);
     }
 
     static std::function<int& (int, int, int)> wrap_slot_by_ref3()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_ref3, _1, _2, _3);
     }
 
     static std::function<int& (int, int, int, int)> wrap_slot_by_ref4()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_ref4, _1, _2, _3, _4);
     }
 
     static std::function<int& (int, int, int, int, int)> wrap_slot_by_ref5()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_ref5, _1, _2, _3, _4, _5);
     }
 
     static std::function<int& (int, int, int, int, int, int)> wrap_slot_by_ref6()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_ref6, _1, _2, _3, _4, _5, _6);
     }
 
     static std::function<int& (int, int, int, int, int, int, int)> wrap_slot_by_ref7()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_ref7, _1, _2, _3, _4, _5, _6, _7);
     }
 
     static std::function<int& (int, int, int, int, int, int, int, int)> wrap_slot_by_ref8()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot_by_ref8, _1, _2, _3, _4, _5, _6, _7, _8);
     }
 

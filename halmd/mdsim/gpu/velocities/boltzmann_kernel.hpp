@@ -21,8 +21,6 @@
 #ifndef HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_KERNEL_HPP
 #define HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_KERNEL_HPP
 
-#include <boost/mpl/if.hpp>
-
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
@@ -45,14 +43,11 @@ struct boltzmann_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
     typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
-    typedef cuda::function<void (ptr_type, unsigned int, unsigned int, float, dsfloat_ptr<coalesced_vector_type>, dsfloat*, dsfloat*, rng_type)> gaussian_impl_type;
-    gaussian_impl_type gaussian_impl_32;
-    gaussian_impl_type gaussian_impl_64;
-    gaussian_impl_type gaussian_impl_128;
-    gaussian_impl_type gaussian_impl_256;
-    gaussian_impl_type gaussian_impl_512;
+
+    cuda::function<void (ptr_type, unsigned int, unsigned int, float, dsfloat_ptr<coalesced_vector_type>, dsfloat*, dsfloat*, rng_type)> gaussian;
     cuda::function<void (ptr_type, uint, uint, dsfloat, dsfloat_ptr<coalesced_vector_type> const, dsfloat const*, dsfloat const*, uint)> shift;
-    static boltzmann_wrapper const kernel;
+
+    static boltzmann_wrapper kernel;
 };
 
 } // namespace mdsim

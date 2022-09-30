@@ -1,5 +1,6 @@
 /*
  * Copyright © 2016 Daniel Kirchner
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -58,22 +59,24 @@ public:
             , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
             , rr_cut_(element_prod(r_cut_, r_cut_))
             , g_param_(this->size1() * this->size2())
+            , t_param_(g_param_)
     {
         LOG("potential cutoff length: r_c = " << r_cut_sigma_);
 
-        cuda::host::vector<float> param(g_param_.size());
+        cuda::memory::host::vector<float> param(g_param_.size());
         for (size_t i = 0; i < param.size(); ++i) {
             param[i] = rr_cut_.data()[i];
         }
 
-        cuda::copy(param, g_param_);
+        cuda::copy(param.begin(), param.end(), g_param_.begin());
     }
 
-    /** bind textures before kernel invocation */
-    void bind_textures() const
+    /** return gpu potential with textures */
+    gpu_potential_type get_gpu_potential()
     {
-        sharp_wrapper<parent_potential>::param.bind(g_param_);
-        potential_type::bind_textures();
+        // FIXME: tex1Dfetch reads zero when texture is not recreated once in a while
+        t_param_ = cuda::texture<float>(g_param_);
+        return gpu_potential_type(potential_type::get_gpu_potential(), t_param_);
     }
 
     matrix_type const& r_cut() const
@@ -135,7 +138,8 @@ private:
     /** square of cutoff length */
     matrix_type rr_cut_;
     /** adapter parameters at CUDA device */
-    cuda::vector<float> g_param_;
+    cuda::memory::device::vector<float> g_param_;
+    cuda::texture<float> t_param_;
 };
 
 } // namespace truncations

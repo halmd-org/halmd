@@ -1,6 +1,7 @@
 /*
  * Copyright © 2014-2015 Sutapa Roy
  * Copyright © 2014-2015 Felix Höfling
+ * Copyright © 2020      Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -62,11 +63,10 @@ public:
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
-    /** bind textures before kernel invocation */
-    void bind_textures() const
+    /** return gpu potential with textures */
+    gpu_potential_type get_gpu_potential() const
     {
-        planar_wall_wrapper::param_geometry.bind(g_param_geometry_);
-        planar_wall_wrapper::param_potential.bind(g_param_potential_);
+        return gpu_potential_type(t_param_geometry_, t_param_potential_);
     }
 
     scalar_container_type const& offset() const
@@ -131,8 +131,13 @@ private:
     float_type smoothing_;
 
     /** potential parameters at CUDA device */
-    cuda::vector<float4> g_param_geometry_;
-    cuda::vector<float4> g_param_potential_;
+    cuda::memory::device::vector<float4> g_param_geometry_;
+    cuda::memory::device::vector<float4> g_param_potential_;
+
+    /** array of geometry parameters for all walls */
+    cuda::texture<float4> t_param_geometry_;
+    /** array of potential parameters for all particle species */
+    cuda::texture<float4> t_param_potential_;
 
     /** module logger */
     std::shared_ptr<logger> logger_;

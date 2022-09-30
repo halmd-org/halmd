@@ -18,15 +18,10 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <float.h>
-
-#include <halmd/algorithm/gpu/bits.cuh>
 #include <halmd/mdsim/gpu/sorts/hilbert_kernel.hpp>
 #include <halmd/mdsim/sorts/hilbert_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-
-using namespace halmd::algorithm::gpu;
 
 namespace halmd {
 namespace mdsim {
@@ -84,7 +79,7 @@ __global__ void gen_index(unsigned int* g_index)
 } // namespace hilbert_kernel
 
 template <int dimension>
-hilbert_wrapper<dimension> const hilbert_wrapper<dimension>::kernel = {
+hilbert_wrapper<dimension> hilbert_wrapper<dimension>::kernel = {
     hilbert_kernel::depth_
   , hilbert_kernel::map<fixed_vector<float, dimension> >
   , hilbert_kernel::gen_index

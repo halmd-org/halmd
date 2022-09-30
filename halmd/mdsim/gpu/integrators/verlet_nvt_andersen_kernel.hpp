@@ -55,7 +55,7 @@ struct verlet_nvt_andersen_wrapper
       , rng_type
     )> finalize;
 
-    static verlet_nvt_andersen_wrapper const kernel;
+    static verlet_nvt_andersen_wrapper kernel;
 };
 
 } // namespace mdsim

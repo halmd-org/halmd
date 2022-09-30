@@ -41,11 +41,11 @@ struct hilbert_wrapper
     /** generate ascending index sequence */
     cuda::function<void (unsigned int*)> gen_index;
 
-    static hilbert_wrapper const kernel;
+    static hilbert_wrapper kernel;
 };
 
 template <int dimension>
-hilbert_wrapper<dimension> const& get_hilbert_kernel()
+hilbert_wrapper<dimension>& get_hilbert_kernel()
 {
     return hilbert_wrapper<dimension>::kernel;
 }

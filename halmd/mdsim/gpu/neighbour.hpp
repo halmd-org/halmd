@@ -40,7 +40,7 @@ namespace gpu {
 class neighbour
 {
 public:
-    typedef cuda::vector<unsigned int> array_type;
+    typedef cuda::memory::device::vector<unsigned int> array_type;
 
     virtual ~neighbour() {}
     /** Lua bindings */
@@ -51,6 +51,8 @@ public:
     virtual unsigned int size() const = 0;
     /** neighbour list stride */
     virtual unsigned int stride() const = 0;
+    /** wether the list is transposed to be able to use multiple threads per particle */
+    virtual bool unroll_force_loop() const = 0;
 };
 
 } // namespace gpu

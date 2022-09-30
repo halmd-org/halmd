@@ -83,9 +83,6 @@ private:
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef typename random_type::rng_type rng_type;
     typedef boltzmann_wrapper<dimension, float_type, rng_type> wrapper_type;
-    typedef typename wrapper_type::gaussian_impl_type gaussian_impl_type;
-
-    static gaussian_impl_type get_gaussian_impl(int threads);
 
     /** system state */
     std::shared_ptr<particle_type> particle_;
@@ -93,16 +90,14 @@ private:
     std::shared_ptr<random_type> random_;
     /** module logger */
     std::shared_ptr<logger> logger_;
-    /** generate Maxwell-Boltzmann distribution */
-    gaussian_impl_type const gaussian_impl_;
     /** temperature */
     float_type temp_;
     /** block sum of momentum */
     dsfloat_cuda_vector<gpu_vector_type> g_mv_;
     /** block sum of kinetic energy without 1/2 */
-    cuda::vector<dsfloat> g_mv2_;
+    cuda::memory::device::vector<dsfloat> g_mv2_;
     /** block sum of mass */
-    cuda::vector<dsfloat> g_m_;
+    cuda::memory::device::vector<dsfloat> g_m_;
 
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;

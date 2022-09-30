@@ -21,20 +21,16 @@
 #ifndef HALMD_MDSIM_SORTS_HILBERT_KERNEL_HPP
 #define HALMD_MDSIM_SORTS_HILBERT_KERNEL_HPP
 
-#include <boost/mpl/equal_to.hpp>
-#include <boost/mpl/int.hpp>
-#include <boost/utility/enable_if.hpp>
-#ifdef __CUDACC__
-# include <cuda_runtime.h> // signbit
-#else
+#include <type_traits>
+
+#ifndef __CUDACC__
 # include <boost/math/special_functions/sign.hpp> // std::signbit is not portable
-# include <cmath>
 # include <algorithm>
 #endif
 
 #include <halmd/config.hpp>
 #ifdef __CUDACC__
-# include <halmd/algorithm/gpu/bits.cuh> // swap
+# include <halmd/algorithm/gpu/bits/swap.cuh> // swap
 #endif
 
 namespace halmd {
@@ -45,7 +41,7 @@ namespace detail {
 
 // import into detail namespace
 #ifdef __CUDACC__
-using algorithm::gpu::swap;
+using algorithm::gpu::bits::swap;
 #else
 using boost::math::signbit;
 using std::swap;
@@ -73,12 +69,9 @@ inline HALMD_GPU_ENABLED void swap(
  */
 template <typename vector_type>
 HALMD_GPU_ENABLED
-typename boost::enable_if<
-    boost::mpl::equal_to<
-        boost::mpl::int_<vector_type::static_size>
-      , boost::mpl::int_<3>
-    >
-  , unsigned int>::type map(vector_type r, unsigned int depth)
+typename std::enable_if<
+    (vector_type::static_size == 3), unsigned int
+>::type map(vector_type r, unsigned int depth)
 {
     //
     // Jun Wang & Jie Shan, Space-Filling Curve Based Point Clouds Index,
@@ -130,10 +123,6 @@ typename boost::enable_if<
         }
         else if (v == 3 || v == 4) {
             swap(vc, a, c, mask);
-#ifdef USE_HILBERT_ALT_3D
-            swap(vc, b, d, mask);
-            swap(vc, e, g, mask);
-#endif
             swap(vc, f, h, mask);
         }
         else if (v == 5 || v == 6) {
@@ -157,12 +146,9 @@ typename boost::enable_if<
  */
 template <typename vector_type>
 HALMD_GPU_ENABLED
-typename boost::enable_if<
-    boost::mpl::equal_to<
-        boost::mpl::int_<vector_type::static_size>
-      , boost::mpl::int_<2>
-    >
-  , unsigned int>::type map(vector_type r, unsigned int depth)
+typename std::enable_if<
+    (vector_type::static_size == 2), unsigned int
+>::type map(vector_type r, unsigned int depth)
 {
     //
     // Jun Wang & Jie Shan, Space-Filling Curve Based Point Clouds Index,

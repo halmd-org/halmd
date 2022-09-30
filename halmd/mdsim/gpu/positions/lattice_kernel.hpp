@@ -40,11 +40,11 @@ struct lattice_wrapper
 
     cuda::function<void (ptr_type, unsigned int, float, unsigned int, vector_type, shape_type)> lattice;
 
-    static lattice_wrapper const kernel;
+    static lattice_wrapper kernel;
 };
 
 template <typename float_type, typename lattice_type>
-lattice_wrapper<float_type, lattice_type> const& get_lattice_kernel()
+lattice_wrapper<float_type, lattice_type>& get_lattice_kernel()
 {
     return lattice_wrapper<float_type, lattice_type>::kernel;
 }

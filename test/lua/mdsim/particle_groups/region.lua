@@ -18,17 +18,19 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
+local log = halmd.io.log
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 local writers = halmd.io.writers
 
-local function setup(args)
+local function setup(geometry, args)
     local dimension = args.dimension      -- dimension of space
     local np = args.particles             -- number of particles
+    local L = args.box_length             -- edge length of cubic box
 
     local length = {}
     for i = 1, dimension do
-        length[i] = 10
+        length[i] = L
     end
     -- create simulation domain with periodic boundary conditions
     local box = mdsim.box({length = length})
@@ -39,59 +41,69 @@ local function setup(args)
     -- set initial particle positions
     mdsim.positions.lattice({box = box, particle = particle}):set()
 
-    if particle.memory == "gpu" then
-      -- sort particles *once*, as they do not move
-      local sort = mdsim.sorts.hilbert({box = box, particle = particle})
-      sort:order()
-    end
-
-    -- select particles within/not within upper quadrant:
-    -- define geometry first
-    local lowest_corner = {}
-    for i = 1, dimension do
-        lowest_corner[i] = 0
-        length[i] = length[i] / 2
-    end
-    local cuboid = mdsim.geometries.cuboid({lowest_corner = lowest_corner, length = length})
+--    if particle.memory == "gpu" then  -- FIXME why not for host, missing 'binning' - skip sorting at all?
+--      -- sort particles *once*, as they do not move
+--      mdsim.sorts.hilbert({box = box, particle = particle})
+--        : order()
+--    end
 
     -- construct included/excluded particle groups, label is inherited from 'region'
     local group = {}
     group["included"] = mdsim.particle_groups.region({
-        particle = particle, geometry = cuboid, selection = "included"
-      , label = "upper quadrant (included)"
+        particle = particle, geometry = geometry, selection = "included"
+      , label = "included"
     })
     group["excluded"] = mdsim.particle_groups.region({
-        particle = particle, geometry = cuboid, selection = "excluded"
-      , label = "upper quadrant (excluded)"
+        particle = particle, geometry = geometry, selection = "excluded"
+      , label = "excluded"
     })
 
-    return group, cuboid, args
+    return group
 end
 
-local function test(group, cuboid, args)
-    -- check if the total number of particles is correct
-    assert(group["excluded"].size + group["included"].size == args.particles)
-    local lowest_corner = cuboid.lowest_corner
-    local length = cuboid.length
+-- named tabled of test functions
+test = {}
 
-    -- convert to a new particle instance in order to access the positions
-    local particle_exc = group["excluded"]:to_particle()
-    local particle_inc = group["included"]:to_particle()
+--
+-- test cuboid geometry: select upper quadrant of the box
+--
+test["cuboid"] = function(args)
+    local dimension = args.dimension      -- dimension of space
+    local L = args.box_length             -- edge length of cubic box
+
+    -- select particles within/not within upper quadrant:
+    -- define geometry first
+    local length = {}
+    local lowest_corner = {}
+    for i = 1, dimension do
+        lowest_corner[i] = 0
+        length[i] = L / 2
+    end
+    local cuboid = mdsim.geometries.cuboid({lowest_corner = lowest_corner, length = length})
+
+    local group = setup(cuboid, args)
+
+    -- check if the total number of particles is correct
+    log.info(("%d particles included in selection"):format(group["included"].size))
+    log.info(("%d particles excluded from selection"):format(group["excluded"].size))
+    assert(group["excluded"].size + group["included"].size == args.particles)
+
+    -- convert groups to new particle instance in order to access the positions
+    local positions = {}
+    for label, g in pairs(group) do
+        positions[label] = g:to_particle().data.position
+    end
 
     -- for included/excluded check that the particles have been sorted
     -- into the respective group correctly
-    local positions_inc = particle_inc.data.position
-    for i = 1, group["included"].size do
-        local r = positions_inc[i]
+    for i, r in ipairs(positions["included"]) do
         for j = 1, #r do
             local dr = r[j] - lowest_corner[j]
-            assert(dr < length[j] and dr > 0, ("particle #%d not included in selection"):format(i))
+            assert(dr <= length[j] and dr >= 0, ("particle #%d included in selection, but it should not"):format(i))
         end
     end
 
-    local positions_exc = particle_exc.data.position
-    for i = 1, group["excluded"].size do
-        local r = positions_exc[i]
+    for i, r in ipairs(positions["excluded"]) do
         local outside = false
         for j = 1, #r do
             local dr = r[j] - lowest_corner[j]
@@ -99,7 +111,133 @@ local function test(group, cuboid, args)
                 outside = true
             end
         end
-        assert(outside, ("particle #%d not excluded from selection"):format(i))
+        assert(outside, ("particle #%d excluded from selection, but it should not"):format(i))
+    end
+end
+
+--
+-- test spherical geometry: half-sphere placed at the face with x=L/2 of the box
+--
+test["sphere"] = function(args)
+    local dimension = args.dimension      -- dimension of space
+    local L = args.box_length             -- edge length of cubic box
+
+    -- select particles within/not within a sphere that sticks out of the simulation box
+    -- define geometry first
+    local radius = L / 2
+    local centre = { L / 2 }
+    for i = #centre + 1, dimension do
+        centre[i] = 0
+    end
+    local sphere = mdsim.geometries.sphere({centre = centre, radius = radius})
+
+    local group = setup(sphere, args)
+
+    -- check if the total number of particles is correct
+    log.info(("%d particles included in selection"):format(group["included"].size))
+    log.info(("%d particles excluded from selection"):format(group["excluded"].size))
+    assert(group["excluded"].size + group["included"].size == args.particles)
+
+    -- convert groups to new particle instance in order to access the positions
+    local positions = {}
+    for label, g in pairs(group) do
+        positions[label] = g:to_particle().data.position
+    end
+
+    -- for included/excluded check that the particles have been sorted
+    -- into the respective group correctly
+    for i, r in ipairs(positions["included"]) do
+        local distance = 0
+        for j = 1, #r do
+            local dr = r[j] - centre[j]
+            distance = distance + dr * dr
+        end
+        distance = math.sqrt(distance)
+        assert(distance <= radius, ("particle #%d included in selection, but it should not"):format(i))
+    end
+
+    for i, r in ipairs(positions["excluded"]) do
+        local distance = 0
+        for j = 1, #r do
+            local dr = r[j] - centre[j]
+            distance = distance + dr * dr
+        end
+        distance = math.sqrt(distance)
+        assert(distance > radius, ("particle #%d excluded from selection, but it should not"):format(i))
+    end
+end
+
+--
+-- test spherical geometry: half-sphere placed at the face with x=L/2 of the box
+--
+test["cylinder"] = function(args)
+    local dimension = args.dimension      -- dimension of space
+    local L = args.box_length             -- edge length of cubic box
+    local tolerance = 1e-12               -- tolerance when verifying selection criteria
+
+    -- select particles within/not within a cylinder that runs parallel to the
+    -- z=0, x=y diagonal of the simulation box. The cylinder has a fixed width
+    -- of 1.5σ.
+    -- define geometry first
+    local radius = 0.75
+    local axis = { 1, 1 }
+    for i = #axis + 1, dimension do
+        axis[i] = 0
+    end
+    local offset = { math.sqrt(2) * radius }
+    for i = #offset + 1, dimension do
+        offset[i] = 0
+    end
+
+    local cylinder = mdsim.geometries.cylinder({axis = axis, offset = offset, radius = radius})
+
+    local group = setup(cylinder, args)
+
+    -- check if the total number of particles is correct
+    log.info(("%d particles included in selection"):format(group["included"].size))
+    log.info(("%d particles excluded from selection"):format(group["excluded"].size))
+    assert(group["excluded"].size + group["included"].size == args.particles)
+
+    -- convert groups to new particle instance in order to access the positions
+    local positions = {}
+    for label, g in pairs(group) do
+        positions[label] = g:to_particle().data.position
+    end
+
+    -- normalise axis
+    local norm = 0
+    for j = 1, #axis do
+        norm = norm + axis[j] * axis[j]
+    end
+    norm = math.sqrt(norm)
+    for j = 1, #axis do
+        axis[j] = axis[j] / norm
+    end
+
+    -- for included/excluded check that the particles have been sorted
+    -- into the respective group correctly
+    for i, r in ipairs(positions["included"]) do
+        local dr2 = 0
+        local dr_n = 0
+        for j = 1, #r do
+            local dr = r[j] - offset[j]
+            dr2 = dr2 + dr * dr
+            dr_n = dr_n + dr * axis[j]
+        end
+        local distance = math.sqrt(dr2 - dr_n * dr_n)
+        assert(distance <= radius * (1 + tolerance), ("particle #%d included in selection, but it should not"):format(i))
+    end
+
+    for i, r in ipairs(positions["excluded"]) do
+        local dr2 = 0
+        local dr_n = 0
+        for j = 1, #r do
+            local dr = r[j] - offset[j]
+            dr2 = dr2 + dr * dr
+            dr_n = dr_n + dr * axis[j]
+        end
+        local distance = math.sqrt(dr2 - dr_n * dr_n)
+        assert(distance > radius * (1 - tolerance), ("particle #%d excluded from selection, but it should not"):format(i))
     end
 end
 
@@ -109,13 +247,27 @@ end
 function define_args(parser)
     parser:add_argument("output,o", {type = "string", default = "region_test", help = "prefix of output files"})
 
+    parser:add_argument("run_test", {type = "string", help = "run only selected test case"})
     parser:add_argument("particles", {type = "number", default = 10000, help = "number of particles"})
     parser:add_argument("dimension", {type = "number", default = 3, help = "dimension of space"})
+    parser:add_argument("box-length", {type = "number", default = 10, help = "edge length of cubic box"})
 end
 
 --
 -- set up system and perform test
 --
 function main(args)
-    test(setup(args))
+    -- run selected test case or, by default, all tests
+    local test_case = args.run_test
+    local cases = test_case and { test_case } or {"cuboid", "cylinder", "sphere"}
+
+    for i,case in ipairs(cases) do
+        log.info(("Running test case '%s' ..."):format(case))
+        assert(test[case], ("test case '%s' is not registered"):format(case))
+
+        -- call test function
+        test[case](args)
+        log.info(("Test case '%s' finished."):format(case))
+        log.info("")
+    end
 end

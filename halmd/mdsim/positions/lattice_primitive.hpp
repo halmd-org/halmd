@@ -22,7 +22,7 @@
 #ifndef HALMD_MDSIM_POSITIONS_LATTICE_PRIMITIVE_HPP
 #define HALMD_MDSIM_POSITIONS_LATTICE_PRIMITIVE_HPP
 
-#include <boost/utility/enable_if.hpp>
+#include <type_traits>
 
 #include <halmd/config.hpp>
 #include <halmd/utility/multi_index.hpp>
@@ -40,7 +40,7 @@ class close_packed_lattice;
  */
 template <typename Position, typename Shape>
 class close_packed_lattice<Position, Shape
-  , typename boost::enable_if_c<(Position::static_size == 2)>::type>
+  , typename std::enable_if<(Position::static_size == 2)>::type>
 {
 public:
     typedef Position result_type;
@@ -99,7 +99,7 @@ private:
  */
 template <typename Position, typename Shape>
 class close_packed_lattice<Position, Shape
-  , typename boost::enable_if_c<(Position::static_size == 3)>::type>
+  , typename std::enable_if<(Position::static_size == 3)>::type>
 {
 public:
     typedef Position result_type;
@@ -162,7 +162,7 @@ class primitive_lattice;
  */
 template <typename Position, typename Shape>
 class primitive_lattice<Position, Shape
-  , typename boost::enable_if_c<(Position::static_size == 2)>::type>
+  , typename std::enable_if<(Position::static_size == 2)>::type>
 {
 public:
     typedef Position result_type;
@@ -221,7 +221,7 @@ private:
  */
 template <typename Position, typename Shape>
 class primitive_lattice<Position, Shape
-  , typename boost::enable_if_c<(Position::static_size == 3)>::type>
+  , typename std::enable_if<(Position::static_size == 3)>::type>
 {
 public:
     typedef Position result_type;
@@ -281,7 +281,7 @@ private:
  */
 template <typename Position, typename Shape>
 class primitive_lattice<Position, Shape
-  , typename boost::enable_if_c<(Position::static_size == 4)>::type>
+  , typename std::enable_if<(Position::static_size == 4)>::type>
 {
 public:
     typedef Position result_type;
@@ -342,7 +342,7 @@ private:
  */
 template <typename Position, typename Shape>
 class primitive_lattice<Position, Shape
-  , typename boost::enable_if_c<(Position::static_size == 6)>::type>
+  , typename std::enable_if<(Position::static_size == 6)>::type>
 {
 public:
     typedef Position result_type;
