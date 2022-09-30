@@ -162,7 +162,6 @@ inline iterator_type
 set_coefficients(force_type& tabulated, iterator_type const& first)
 {
     typedef typename force_type::coefficient_array_type coefficient_array_type;
-    typedef typename force_type::coefficient_value_type value_type;
 
     coefficient_array_type& coefficients = tabulated.coefficients();
     iterator_type input = first;
@@ -233,7 +232,6 @@ inline iterator_type
 set_virial_coefficients(tabulated_type& tabulated, iterator_type const& first)
 {
     typedef typename tabulated_type::coefficient_array_type coefficient_array_type;
-    typedef typename tabulated_type::coefficient_value_type value_type;
 
     coefficient_array_type& coefficients = tabulated.virial_coefficients();
     iterator_type input = first;

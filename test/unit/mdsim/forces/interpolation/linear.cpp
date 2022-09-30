@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE( linear )
         }
     }
 
-    float_type const eps = std::numeric_limits<float_type>::epsilon();
+//    float_type const eps = std::numeric_limits<float_type>::epsilon();
 
     //std::srand(std::time(0));
     float_type max_eps = 0;

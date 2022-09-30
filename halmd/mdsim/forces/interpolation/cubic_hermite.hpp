@@ -161,8 +161,8 @@ void cubic_hermite<dimension, float_type>::hermite_factors(vector_type const rd
                   , force_vector_type& f
 ) const
 {
-    vector_type h;
-    vector_type hd;
+    vector_type h(0);
+    vector_type hd(0);
 
     // The bitmask gives the information about whether the coefficient
     // is the derivative of the interpolated function in x, y or z
