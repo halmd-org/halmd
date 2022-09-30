@@ -284,6 +284,32 @@ get_stress_tensor(particle_type& particle, particle_group& group)
 }
 
 /**
+ * Compute heat flux.
+ */
+template <typename particle_type>
+fixed_vector<double, particle_type::velocity_type::static_size>
+get_heat_flux(particle_type& particle, particle_group& group)
+{
+
+    typedef particle_group::array_type group_array_type;
+    typedef typename particle_type::stress_pot_type stress_pot_type;
+    unsigned int constexpr dimension = particle_type::velocity_type::static_size;
+    typedef observables::gpu::heat_flux<dimension, dsfloat> accumulator_type;
+
+    group_array_type const& unordered = read_cache(group.unordered());
+
+    unsigned int stride = particle.stress_pot()->capacity() / stress_pot_type::static_size;
+    cuda::texture<float4> t_velocity(*particle.velocity());
+    cuda::texture<float> t_potential(*particle.potential_energy());
+    cuda::texture<float> t_stress_pot(*particle.stress_pot());
+    return reduce(
+        &*unordered.begin()
+      , &*unordered.end()
+      , accumulator_type(t_velocity, t_potential, t_stress_pot, stride)
+    )() / unordered.size();
+
+}
+/**
  * Copy all particles from a group into a given particle instance of the
  * same size as the group
  */

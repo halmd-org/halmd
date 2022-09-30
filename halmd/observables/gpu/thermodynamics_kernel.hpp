@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016  Felix Höfling
+ * Copyright © 2020  Roya Ebrahimi Viand
  * Copyright © 2013  Nicolas Höft
  * Copyright © 2012  Peter Colberg
  *
@@ -398,6 +398,70 @@ private:
     /** texture with velocities */
     cudaTextureObject_t t_velocity_;
     /** texture with stress tensors */
+    cudaTextureObject_t t_stress_pot_;
+};
+
+/**
+ * Compute mean heat flux.
+ */
+template <int dimension, typename float_type>
+class heat_flux
+{
+private:
+    typedef unsigned int size_type;
+    typedef fixed_vector<float_type, dimension> vector_type;
+
+public:
+    /** element pointer type of input array */
+    typedef size_type const* iterator;
+    /**
+     * Initialise heat flux to zero.
+     */
+    heat_flux(
+        cudaTextureObject_t t_velocity
+      , cudaTextureObject_t t_potential
+      , cudaTextureObject_t t_stress_pot
+      , unsigned int stride
+    ) : hf_(0), stride_(stride), t_velocity_(t_velocity), t_potential_(t_potential), t_stress_pot_(t_stress_pot) {}
+    /**
+     * Accumulate heat flux of a particle.
+     */
+    inline HALMD_GPU_ENABLED void operator()(size_type i);
+
+    /**
+     * Accumulate heat flux of another accumulator.
+     */
+    HALMD_GPU_ENABLED void operator()(heat_flux const& acc)
+    {
+        hf_ += acc.hf_;
+    }
+
+    /**
+     * Returns total heat flux.
+     */
+    HALMD_GPU_ENABLED fixed_vector<double, dimension> operator()() const
+    {
+        return fixed_vector<double, dimension>(hf_);
+    }
+
+private:
+    /** sum over heat flux vector */
+    vector_type hf_;
+
+    /**
+     * stride of the stress tensor array in device memory
+     *
+     * Note that the stride is defined by GTDIM in the force kernel, which may
+     * be different in the reduce kernel. Thus we pass the value inside the
+     * accumulation functor.
+     **/
+    unsigned int stride_;
+
+    /** texture with velocities and masses, float4 */
+    cudaTextureObject_t t_velocity_;
+    /** texture with potential energies, float */
+    cudaTextureObject_t t_potential_;
+    /** texture with stress tensors, float */
     cudaTextureObject_t t_stress_pot_;
 };
 

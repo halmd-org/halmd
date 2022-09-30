@@ -151,6 +151,15 @@ wrap_stress_tensor(std::shared_ptr<thermodynamics_type> self)
     };
 }
 
+template <typename thermodynamics_type>
+static std::function<typename thermodynamics_type::vector_type ()>
+wrap_heat_flux(std::shared_ptr<thermodynamics_type> self)
+{
+    return [=]() {
+        return self->heat_flux();
+    };
+}
+
 template <int dimension>
 void thermodynamics<dimension>::luaopen(lua_State* L)
 {
@@ -172,6 +181,7 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
             .property("mean_mass", &wrap_mean_mass<thermodynamics>)
             .property("virial", &wrap_virial<thermodynamics>)
             .property("stress_tensor", &wrap_stress_tensor<thermodynamics>)
+            .property("heat_flux", &wrap_heat_flux<thermodynamics>)
     ];
 }
 

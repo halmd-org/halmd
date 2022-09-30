@@ -183,6 +183,25 @@ thermodynamics<dimension, float_type>::stress_tensor()
 }
 
 template <int dimension, typename float_type>
+typename thermodynamics<dimension, float_type>::vector_type const&
+thermodynamics<dimension, float_type>::heat_flux()
+{
+    cache<size_type> const& group_cache = group_->size();
+    cache<en_pot_array_type> const& en_pot_cache = particle_->potential_energy();
+    cache<velocity_array_type> const& velocity_cache = particle_->velocity();
+    cache<stress_pot_array_type> const& stress_pot_cache = particle_->stress_pot();
+    cache<mass_array_type> const& mass_cache = particle_->mass();
+
+    if (heat_flux_cache_ != std::tie(group_cache, en_pot_cache, velocity_cache, stress_pot_cache, mass_cache)) {
+        LOG_TRACE("acquire heat flux");
+        scoped_timer_type timer(runtime_.heat_flux);
+        heat_flux_ = get_heat_flux(*particle_, *group_);
+        heat_flux_cache_ = std::tie(group_cache, en_pot_cache, velocity_cache, stress_pot_cache, mass_cache);
+    }
+    return heat_flux_; // FIXME It does not contain density. it is per particle without considering volume.
+}
+
+template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -201,6 +220,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                         .def_readonly("en_pot", &runtime::en_pot)
                         .def_readonly("virial", &runtime::virial)
                         .def_readonly("stress_tensor", &runtime::stress_tensor)
+                        .def_readonly("heat_flux", &runtime::heat_flux)
                 ]
                 .def_readonly("runtime", &thermodynamics::runtime_)
 

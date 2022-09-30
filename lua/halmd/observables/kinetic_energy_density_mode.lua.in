@@ -1,0 +1,150 @@
+--
+-- Copyright © 2011-2022  Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+local log      = require("halmd.io.log")
+local clock    = require("halmd.mdsim.clock")
+local utility  = require("halmd.utility")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
+local sampler  = require("halmd.observables.sampler")
+
+-- grab C++ wrappers
+local kinetic_energy_density_mode = assert(libhalmd.observables.kinetic_energy_density_mode)
+
+-- grab standard library
+local assert = assert
+local property = property
+
+---
+-- Kinetic energy density mode
+-- ===========================
+--
+-- The module computes the complex Fourier modes of the kinetic energy density field,
+--
+-- .. math::
+--
+--     \rho(\vec k) = \sum_{j=1}^N \frac{m_j v_j^2}{2} \exp(\text{i} \vec k \cdot \vec r_j) \/.
+--
+-- The auxiliary module :class:`halmd.observables.utility.wavevector` provides
+-- suitable wavevectors that are compatible with the reciprocal lattice of the
+-- periodic simulation box.
+--
+
+---
+-- Construct instance of :class:`halmd.observables.kinetic_energy_density_mode`.
+--
+-- :param table args: keyword arguments
+-- :param args.group:      instance of :mod:`halmd.mdsim.particle_groups`
+-- :param args.wavevector: instance of :class:`halmd.observables.utility.wavevector`
+-- :returns: instance of kinetic energy density mode sampler
+--
+-- .. method:: disconnect()
+--
+--    Disconnect sampler from profiler.
+--
+-- .. attribute:: wavevector
+--
+--    The ``wavevector`` instance passed upon construction.
+--
+-- .. attribute:: label
+--
+--    The label of the underlying particle group.
+--
+-- .. attribute:: count
+--
+--    The particle count :math:`N` of the underlying particle group.
+--
+-- .. class:: writer(args)
+--
+--    Write time series of kinetic energy modes to file.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param args.location: location within file *(optional)*
+--    :param number args.every: sampling interval
+--    :type args.location: string table
+--    :returns: instance of kinetic energy density mode writer
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. It defaults to ``{"structure",
+--    self.label, "kinetic_energy_density_mode"}``.
+--
+--    .. method:: disconnect()
+--
+--       Disconnect density mode writer from observables sampler.
+--
+local M = module(function(args)
+    local group = utility.assert_kwarg(args, "group")
+    local particle = assert(group.particle)
+    local wavevector = utility.assert_kwarg(args, "wavevector")
+
+    -- inherit label from particle group
+    local label = assert(group.label)
+    local logger = log.logger({label = ("kinetic_energy_density_mode (%s)"):format(label)})
+
+    local self = kinetic_energy_density_mode(particle, group, wavevector, logger)
+
+    -- store label and particle count as Lua properties
+    self.label = property(function(self) return label end)
+
+    local count = assert(group.size)
+    self.count = property(function(self) return count end)
+
+    self.writer = function(self, args)
+        local file = utility.assert_kwarg(args, "file")
+        local location = utility.assert_type(
+            args.location or {"structure", assert(self.label), "kinetic_energy_density_mode"}
+          , "table")
+        local every = utility.assert_kwarg(args, "every")
+
+        -- write wavevectors
+        local writer = file:writer{location = location, mode = "truncate"}
+        writer:on_write(wavevector.value, {"wavevector"})
+        writer:write() -- FIXME pass arguments directly to write(), avoiding on_write
+
+        -- write time series of kinetic energy density modes: register acquisitor with writer
+        local group_name = table.remove(location) -- strip off last component
+        local writer = file:writer{location = location, mode = "append"}
+        writer:on_write(self.acquisitor, {group_name})
+
+        -- sequence of signal connections
+        local conn = {}
+        writer.disconnect = utility.signal.disconnect(conn, ("kinetic_energy_density_mode writer (%s)"):format(label))
+
+        -- connect writer to sampler
+        if every > 0 then
+            table.insert(conn, sampler:on_sample(writer.write, every, clock.step))
+        end
+
+        return writer
+    end
+
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, ("kinetic_energy_density_mode (%s)"):format(label))
+
+    -- connect runtime accumulators to module profiler
+    local desc = ("computation of kinetic energy density modes for %s particles"):format(label)
+    table.insert(conn, profiler:on_profile(self.runtime.acquire, desc))
+
+    return self
+end)
+
+return M
