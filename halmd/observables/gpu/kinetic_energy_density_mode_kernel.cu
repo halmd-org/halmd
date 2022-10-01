@@ -20,7 +20,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/utility/enable_if.hpp>
+#include <type_traits>
 
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/gpu/kinetic_energy_density_mode_kernel.hpp>
@@ -36,13 +36,13 @@ namespace kinetic_energy_density_mode_kernel {
 // recursive reduction function,
 // terminate for threads=0
 template <unsigned threads, typename T>
-__device__ typename boost::disable_if_c<threads>::type
+__device__ typename std::enable_if<!threads>::type
 sum_reduce(T*, T*) {}
 
 // reduce two array simultaneously by summation,
 // size of a,b must be at least 2 * threads
 template <unsigned threads, typename T>
-__device__ typename boost::enable_if_c<threads>::type
+__device__ typename std::enable_if<threads>::type
 sum_reduce(T* a, T* b)
 {
     if (TID < threads) {
