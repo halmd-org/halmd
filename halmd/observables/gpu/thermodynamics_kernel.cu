@@ -115,16 +115,16 @@ __device__ void heat_flux<dimension, float_type>::operator()(size_type i)
     float mass;
     tie(v, mass) <<= tex1Dfetch<float4>(t_velocity_, i);
 
-    float p_e = tex1Dfetch<float>(t_potential_, i);
-    stress_pot_diagonal s = mdsim::read_stress_tensor_diagonal<stress_pot_diagonal>(t_stress_pot_, i, stride_);
+    float en_pot = tex1Dfetch<float>(t_potential_, i);
+    stress_pot_diagonal stress_pot = mdsim::read_stress_tensor_diagonal<stress_pot_diagonal>(t_stress_pot_, i, stride_);
 
-    // add trace of the potential part of the stress tensor
-    float vrl = 0;
+    // add trace of the potential part of the stress tensor (per particle)
+    float virial = 0;
     for (int j = 0; j < dimension; ++j) {
-        vrl += s[j];
+        virial += stress_pot[j];
     }
 
-    hf_ += (p_e + 0.5 * mass * inner_prod(v, v) + vrl) * v;
+    heat_flux_ += (en_pot + mass * inner_prod(v, v) / 2 + virial) * v;
 }
 
 template class observables::gpu::kinetic_energy<3, dsfloat>;

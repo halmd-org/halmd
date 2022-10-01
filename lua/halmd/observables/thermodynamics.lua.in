@@ -63,9 +63,9 @@ local h5 = assert(libhalmd.h5)
 -- .. method:: potential_energy()
 --
 --    Returns the mean potential energy per particle:
---    :math:`u_{\text{pot}} = \frac{1}{N} \sum_{i=1}^N U_{\text{tot}}(\vec r_i)`,
---    where :math:`U_{\text{tot}}` denotes the sum of external and pair
---    potentials.
+--    :math:`u_{\text{pot}} = \frac{1}{N} \sum_{i=1}^N U_{\text{tot},i}`\/,
+--    where :math:`U_{\text{tot},i}` denotes the total potential energy of
+--    particle :math:`i` due to external and pair potentials.
 --
 -- .. method:: internal_energy()
 --
@@ -127,7 +127,22 @@ local h5 = assert(libhalmd.h5)
 --        \frac{1}{2}\sum_{j \neq i} \frac{r_{ij\alpha} r_{ij\beta}}{r_{ij}} \, U'(r_{ij})
 --        \right] \/,
 --
---    where :math:`\vec r_{ij} = \vec r_i - \vec r_j` in nearest image convention.
+--    where :math:`U(r)` is the sum of interparticle potentials,
+--    :math:`\vec r_{ij} = \vec r_i - \vec r_j` in nearest image convention,
+--    and :math:`r_{ij} = |\vec r_{ij}|`.
+--
+-- .. method:: heat_flux()
+--
+--    Returns the average heat flux *per particle* (not per volume), computed
+--    from the particle's velocities, their potential energy, and the potential
+--    part of the stress tensor as follows:
+--
+--    .. math::
+--
+--      \vec J = \frac{1}{N} \sum_{i=1}^N \left[
+--          U_{\text{tot},i} + \frac{1}{2} m_i \vec v_i^2
+--          - \frac{1}{2}\sum_{j \neq i} r_{ij} U'(r_{ij})
+--      \right] \vec v_i \/.
 --
 -- .. attribute:: dimension
 --

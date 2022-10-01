@@ -414,6 +414,7 @@ private:
 public:
     /** element pointer type of input array */
     typedef size_type const* iterator;
+
     /**
      * Initialise heat flux to zero.
      */
@@ -422,7 +423,14 @@ public:
       , cudaTextureObject_t t_potential
       , cudaTextureObject_t t_stress_pot
       , unsigned int stride
-    ) : hf_(0), stride_(stride), t_velocity_(t_velocity), t_potential_(t_potential), t_stress_pot_(t_stress_pot) {}
+    )
+      : heat_flux_(0)
+      , stride_(stride)
+      , t_velocity_(t_velocity)
+      , t_potential_(t_potential)
+      , t_stress_pot_(t_stress_pot)
+    {}
+
     /**
      * Accumulate heat flux of a particle.
      */
@@ -433,7 +441,7 @@ public:
      */
     HALMD_GPU_ENABLED void operator()(heat_flux const& acc)
     {
-        hf_ += acc.hf_;
+        heat_flux_ += acc.heat_flux_;
     }
 
     /**
@@ -441,12 +449,12 @@ public:
      */
     HALMD_GPU_ENABLED fixed_vector<double, dimension> operator()() const
     {
-        return fixed_vector<double, dimension>(hf_);
+        return fixed_vector<double, dimension>(heat_flux_);
     }
 
 private:
     /** sum over heat flux vector */
-    vector_type hf_;
+    vector_type heat_flux_;
 
     /**
      * stride of the stress tensor array in device memory

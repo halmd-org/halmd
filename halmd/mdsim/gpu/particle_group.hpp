@@ -290,7 +290,6 @@ template <typename particle_type>
 fixed_vector<double, particle_type::velocity_type::static_size>
 get_heat_flux(particle_type& particle, particle_group& group)
 {
-
     typedef particle_group::array_type group_array_type;
     typedef typename particle_type::stress_pot_type stress_pot_type;
     unsigned int constexpr dimension = particle_type::velocity_type::static_size;
@@ -307,8 +306,8 @@ get_heat_flux(particle_type& particle, particle_group& group)
       , &*unordered.end()
       , accumulator_type(t_velocity, t_potential, t_stress_pot, stride)
     )() / unordered.size();
-
 }
+
 /**
  * Copy all particles from a group into a given particle instance of the
  * same size as the group

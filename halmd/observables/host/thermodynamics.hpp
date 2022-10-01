@@ -156,7 +156,6 @@ private:
     /** mean heat flux per particle */
     vector_type heat_flux_;
 
-
     /** cache observers of mean kinetic energy per particle */
     std::tuple<cache<>, cache<>, cache<>> en_kin_cache_;
     /** cache observers of total force */

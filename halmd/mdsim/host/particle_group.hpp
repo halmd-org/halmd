@@ -110,7 +110,7 @@ double get_mean_en_kin(particle_type const& particle, particle_group& group)
     for (particle_group::size_type i : unordered) {
         mv2 += mass[i] * inner_prod(velocity[i], velocity[i]);
     }
-    return  0.5 * mv2 / unordered.size();
+    return mv2 / (2 * unordered.size());
 }
 
 /**
@@ -269,13 +269,14 @@ get_heat_flux(particle_type& particle, particle_group& group)
 
     fixed_vector<double, particle_type::velocity_type::static_size> sum = 0;
 
+    // add trace of the potential part of the stress tensor (per particle)
     for (particle_group::size_type i : unordered) {
-        double vrl = 0;
+        double virial = 0;
         for (int j = 0; j < dimension; ++j) {
-            vrl += stress_pot[i][j];
+            virial += stress_pot[i][j];
         }
 
-        sum += (en_pot[i] + 0.5 * mass[i] * inner_prod(velocity[i], velocity[i]) + vrl) * velocity[i];
+        sum += (en_pot[i] + mass[i] * inner_prod(velocity[i], velocity[i]) / 2 + virial) * velocity[i];
     }
 
     return sum / unordered.size();
