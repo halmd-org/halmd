@@ -40,7 +40,7 @@ local property = property
 --
 -- .. math::
 --
---     \rho(\vec k) = \sum_{j=1}^N \frac{m_j v_j^2}{2} \exp(\text{i} \vec k \cdot \vec r_j) \/.
+--     \rho(\vec k) = \sum_{j=1}^N \frac{m_j \vec v_j^2}{2} \exp(\text{i} \vec k \cdot \vec r_j) \/.
 --
 -- The auxiliary module :class:`halmd.observables.utility.wavevector` provides
 -- suitable wavevectors that are compatible with the reciprocal lattice of the

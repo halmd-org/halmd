@@ -24,7 +24,7 @@
 #include <halmd/algorithm/gpu/reduction.cuh>
 #include <halmd/algorithm/gpu/transform.cuh>
 #include <halmd/numeric/blas/blas.hpp>
-#include <halmd/observables/gpu/current_density_mode_kernel.hpp>
+#include <halmd/observables/gpu/momentum_density_mode_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
 using namespace halmd::algorithm::gpu;
@@ -32,7 +32,7 @@ using namespace halmd::algorithm::gpu;
 namespace halmd {
 namespace observables {
 namespace gpu {
-namespace current_density_mode_kernel {
+namespace momentum_density_mode_kernel {
 
 // FIXME provide complex data type for CUDA
 
@@ -67,11 +67,13 @@ __global__ void compute(
             // retrieve particle position via index array
             unsigned int idx = g_idx[j];
             vector_type r = g_r[idx];
-            vector_type v = g_v[idx];
+            vector_type v;
+            float mass;
+            tie(v, mass) <<= g_v[idx];
 
             float q_r = inner_prod(q, r);
-            sin_ += v[0] * sin(q_r); // FIXME make the component '0' of v an input
-            cos_ += v[0] * cos(q_r);
+            sin_ += mass * v[0] * sin(q_r); // FIXME make the component '0' of v an input
+            cos_ += mass * v[0] * cos(q_r);
         }
 
         // accumulate results within block
@@ -120,13 +122,13 @@ __global__ void finalise(
 } // namespace density_mode_kernel
 
 template <int dimension>
-current_density_mode_wrapper<dimension> current_density_mode_wrapper<dimension>::kernel = {
-    current_density_mode_kernel::compute<fixed_vector<float, dimension> >
-  , current_density_mode_kernel::finalise
+momentum_density_mode_wrapper<dimension> momentum_density_mode_wrapper<dimension>::kernel = {
+    momentum_density_mode_kernel::compute<fixed_vector<float, dimension> >
+  , momentum_density_mode_kernel::finalise
 };
 
-template class current_density_mode_wrapper<3>;
-template class current_density_mode_wrapper<2>;
+template class momentum_density_mode_wrapper<3>;
+template class momentum_density_mode_wrapper<2>;
 
 } // namespace gpu
 } // namespace observables

@@ -19,7 +19,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/observables/gpu/current_density_mode.hpp>
+#include <halmd/observables/gpu/momentum_density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace std;
@@ -29,7 +29,7 @@ namespace observables {
 namespace gpu {
 
 template <int dimension, typename float_type>
-current_density_mode<dimension, float_type>::current_density_mode(
+momentum_density_mode<dimension, float_type>::momentum_density_mode(
     shared_ptr<particle_type const> particle
   , shared_ptr<particle_group_type> particle_group
   , shared_ptr<wavevector_type const> wavevector
@@ -71,24 +71,22 @@ current_density_mode<dimension, float_type>::current_density_mode(
 }
 
 /**
- * Acquire sample of all density modes from particle group
+ * Acquire sample of all momentum density modes from particle group
  */
 template <int dimension, typename float_type>
-shared_ptr<typename current_density_mode<dimension, float_type>::result_type const>
-current_density_mode<dimension, float_type>::acquire()
+shared_ptr<typename momentum_density_mode<dimension, float_type>::result_type const>
+momentum_density_mode<dimension, float_type>::acquire()
 {
     // check validity of caches
     auto const& group_cache  = particle_group_->ordered();
     auto const& position_cache = particle_->position();
     auto const& velocity_cache = particle_->velocity();
 
-
     if (group_cache_ != group_cache || position_cache_ != position_cache || velocity_cache_ != velocity_cache) {
         // obtain read access to input caches
         auto const& group = read_cache(group_cache);
         auto const& position = read_cache(position_cache);
         auto const& velocity = read_cache(velocity_cache);
-
 
         LOG_TRACE("acquire sample");
 
@@ -99,7 +97,7 @@ current_density_mode<dimension, float_type>::acquire()
         // to track the update via std::weak_ptr.
         result_ = make_shared<result_type>(nq_);
 
-        // compute density modes
+        // compute momentum density modes
         try {
             cuda::texture<gpu_vector_type> t_wavevector(g_wavevector_);
 
@@ -122,7 +120,7 @@ current_density_mode<dimension, float_type>::acquire()
             wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, nq_, dim_.blocks_per_grid());
         }
         catch (cuda::error const&) {
-            LOG_ERROR("failed to compute density modes on GPU");
+            LOG_ERROR("failed to compute momentum density modes on GPU");
             throw;
         }
 
@@ -144,7 +142,7 @@ current_density_mode<dimension, float_type>::acquire()
 }
 
 template <int dimension, typename float_type>
-void current_density_mode<dimension, float_type>::luaopen(lua_State* L)
+void momentum_density_mode<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -153,17 +151,17 @@ void current_density_mode<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<current_density_mode>()
-                    .property("acquisitor", &current_density_mode::acquisitor)
-                    .property("wavevector", &current_density_mode::wavevector)
+                class_<momentum_density_mode>()
+                    .property("acquisitor", &momentum_density_mode::acquisitor)
+                    .property("wavevector", &momentum_density_mode::wavevector)
                     .scope
                     [
                         class_<runtime>("runtime")
                             .def_readonly("acquire", &runtime::acquire)
                     ]
-                    .def_readonly("runtime", &current_density_mode::runtime_)
+                    .def_readonly("runtime", &momentum_density_mode::runtime_)
             ]
-          , def("current_density_mode", &make_shared<current_density_mode
+          , def("momentum_density_mode", &make_shared<momentum_density_mode
               , shared_ptr<particle_type const>
               , shared_ptr<particle_group_type>
               , shared_ptr<wavevector_type const>
@@ -173,27 +171,27 @@ void current_density_mode<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_observables_gpu_current_density_mode(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_observables_gpu_momentum_density_mode(lua_State* L)
 {
 #ifdef USE_GPU_SINGLE_PRECISION
-    current_density_mode<3, float>::luaopen(L);
-    current_density_mode<2, float>::luaopen(L);
+    momentum_density_mode<3, float>::luaopen(L);
+    momentum_density_mode<2, float>::luaopen(L);
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-    current_density_mode<3, dsfloat>::luaopen(L);
-    current_density_mode<2, dsfloat>::luaopen(L);
+    momentum_density_mode<3, dsfloat>::luaopen(L);
+    momentum_density_mode<2, dsfloat>::luaopen(L);
 #endif
     return 0;
 }
 
 // explicit instantiation
 #ifdef USE_GPU_SINGLE_PRECISION
-template class current_density_mode<3, float>;
-template class current_density_mode<2, float>;
+template class momentum_density_mode<3, float>;
+template class momentum_density_mode<2, float>;
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-template class current_density_mode<3, dsfloat>;
-template class current_density_mode<2, dsfloat>;
+template class momentum_density_mode<3, dsfloat>;
+template class momentum_density_mode<2, dsfloat>;
 #endif
 
 }  // namespace gpu

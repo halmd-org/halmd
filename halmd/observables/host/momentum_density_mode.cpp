@@ -19,7 +19,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/observables/host/current_density_mode.hpp>
+#include <halmd/observables/host/momentum_density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace std;
@@ -29,7 +29,7 @@ namespace observables {
 namespace host {
 
 template <int dimension, typename float_type>
-current_density_mode<dimension, float_type>::current_density_mode(
+momentum_density_mode<dimension, float_type>::momentum_density_mode(
     shared_ptr<particle_type const> particle
   , shared_ptr<particle_group_type> particle_group
   , shared_ptr<wavevector_type const> wavevector
@@ -43,24 +43,26 @@ current_density_mode<dimension, float_type>::current_density_mode(
 {}
 
 /**
- * Acquire density modes from particle positions
+ * Acquire momentum density modes from particle positions
  */
 template <int dimension, typename float_type>
-shared_ptr<typename current_density_mode<dimension, float_type>::result_type const>
-current_density_mode<dimension, float_type>::acquire()
+shared_ptr<typename momentum_density_mode<dimension, float_type>::result_type const>
+momentum_density_mode<dimension, float_type>::acquire()
 {
     // check validity of caches
     auto const& group_cache  = particle_group_->ordered();
     auto const& position_cache = particle_->position();
     auto const& velocity_cache = particle_->velocity();
+    auto const& mass_cache = particle_->mass();
 
-
-    if (group_cache_ != group_cache || position_cache_ != position_cache || velocity_cache_ != velocity_cache) {
+    if (group_cache_ != group_cache || position_cache_ != position_cache
+     || velocity_cache_ != velocity_cache || mass_cache_ != mass_cache
+    ) {
         // obtain read access to input caches
         auto const& group = read_cache(group_cache);
         auto const& position = read_cache(position_cache);
         auto const& velocity = read_cache(velocity_cache);
-
+        auto const& mass = read_cache(mass_cache);
 
         LOG_TRACE("acquire sample");
 
@@ -73,7 +75,7 @@ current_density_mode<dimension, float_type>::acquire()
         // to track the update via std::weak_ptr.
         result_ = make_shared<result_type>(wavevector.size());
 
-        // compute density modes
+        // compute momentum density modes
         // initialise result array
         fill(begin(*result_), end(*result_), 0);
 
@@ -82,12 +84,13 @@ current_density_mode<dimension, float_type>::acquire()
         for (auto i : group) {
             vector_type const& r = position[i];
             vector_type const& v = velocity[i];
+            float_type m = mass[i];
             // 2nd loop: iterate over wavevectors
             typedef typename result_type::value_type mode_type;
             auto rho_q = begin(*result_);
             for (auto const& q : wavevector) {
                 float_type q_r = inner_prod(static_cast<vector_type>(q), r);
-                *rho_q++ += mode_type({{ v[0] * cos(q_r), -v[0] * sin(q_r) }});
+                *rho_q++ += mode_type({{ m * v[0] * cos(q_r), -v[0] * sin(q_r) }});
             }
         }
 
@@ -95,13 +98,14 @@ current_density_mode<dimension, float_type>::acquire()
         group_cache_ = group_cache;
         position_cache_ = position_cache;
         velocity_cache_ = velocity_cache;
+        mass_cache_ = mass_cache;
    }
 
     return result_;
 }
 
 template <int dimension, typename float_type>
-void current_density_mode<dimension, float_type>::luaopen(lua_State* L)
+void momentum_density_mode<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -110,17 +114,17 @@ void current_density_mode<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                class_<current_density_mode>()
-                    .property("acquisitor", &current_density_mode::acquisitor)
-                    .property("wavevector", &current_density_mode::wavevector)
+                class_<momentum_density_mode>()
+                    .property("acquisitor", &momentum_density_mode::acquisitor)
+                    .property("wavevector", &momentum_density_mode::wavevector)
                     .scope
                     [
                         class_<runtime>("runtime")
                             .def_readonly("acquire", &runtime::acquire)
                     ]
-                    .def_readonly("runtime", &current_density_mode::runtime_)
+                    .def_readonly("runtime", &momentum_density_mode::runtime_)
             ]
-          , def("current_density_mode", &make_shared<current_density_mode
+          , def("momentum_density_mode", &make_shared<momentum_density_mode
               , shared_ptr<particle_type const>
               , shared_ptr<particle_group_type>
               , shared_ptr<wavevector_type const>
@@ -130,25 +134,25 @@ void current_density_mode<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_observables_host_current_density_mode(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_observables_host_momentum_density_mode(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
-    current_density_mode<3, double>::luaopen(L);
-    current_density_mode<2, double>::luaopen(L);
+    momentum_density_mode<3, double>::luaopen(L);
+    momentum_density_mode<2, double>::luaopen(L);
 #else
-    current_density_mode<3, float>::luaopen(L);
-    current_density_mode<2, float>::luaopen(L);
+    momentum_density_mode<3, float>::luaopen(L);
+    momentum_density_mode<2, float>::luaopen(L);
 #endif
     return 0;
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class current_density_mode<3, double>;
-template class current_density_mode<2, double>;
+template class momentum_density_mode<3, double>;
+template class momentum_density_mode<2, double>;
 #else
-template class current_density_mode<3, float>;
-template class current_density_mode<2, float>;
+template class momentum_density_mode<3, float>;
+template class momentum_density_mode<2, float>;
 #endif
 
 }  // namespace host

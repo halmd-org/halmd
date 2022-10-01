@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_GPU_CURRENT_DENSITY_MODE_KERNEL_CUH
-#define HALMD_OBSERVABLES_GPU_CURRENT_DENSITY_MODE_KERNEL_CUH
+#ifndef HALMD_OBSERVABLES_GPU_MOMENTUM_DENSITY_MODE_KERNEL_CUH
+#define HALMD_OBSERVABLES_GPU_MOMENTUM_DENSITY_MODE_KERNEL_CUH
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -30,7 +30,7 @@ namespace observables {
 namespace gpu {
 
 template <int dimension>
-struct current_density_mode_wrapper
+struct momentum_density_mode_wrapper
 {
     typedef typename mdsim::type_traits<dimension, float>::gpu::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
@@ -46,17 +46,17 @@ struct current_density_mode_wrapper
     /** finalise computation by summing block sums per wavevector */
     cuda::function<void (float const*, float const*, float*, float*, int, int)> finalise;
 
-    static current_density_mode_wrapper kernel;
+    static momentum_density_mode_wrapper kernel;
 };
 
 template <int dimension>
-current_density_mode_wrapper<dimension> const& get_current_density_mode_kernel()
+momentum_density_mode_wrapper<dimension> const& get_momentum_density_mode_kernel()
 {
-    return current_density_mode_wrapper<dimension>::kernel;
+    return momentum_density_mode_wrapper<dimension>::kernel;
 }
 
 } // namespace observables
 } // namespace gpu
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_GPU_CURRENT_DENSITY_MODE_KERNEL_CUH */
+#endif /* ! HALMD_OBSERVABLES_GPU_MOMENTUM_DENSITY_MODE_KERNEL_CUH */

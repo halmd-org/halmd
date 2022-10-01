@@ -26,25 +26,30 @@ local profiler = require("halmd.utility.profiler")
 local sampler  = require("halmd.observables.sampler")
 
 -- grab C++ wrappers
-local current_density_mode = assert(libhalmd.observables.current_density_mode)
+local momentum_density_mode = assert(libhalmd.observables.momentum_density_mode)
 
 -- grab standard library
 local assert = assert
 local property = property
 
 ---
--- Current density mode
--- ====================
+-- Momentum density mode
+-- =====================
 --
--- The module computes the complex Fourier modes of the particle density field,
+-- The module computes the complex Fourier modes of the momentum density field,
 --
 -- .. math::
 --
---     \rho(\vec k) = \sum_{n=1}^N v_n \exp(\text{i} \vec k \cdot \vec r_n) \/.
+--     j_x(\vec k) = \sum_{j=1}^N m_j \vec v_{j,x} \exp(\text{i} \vec k \cdot \vec r_j) \/.
 --
 -- The auxiliary module :class:`halmd.observables.utility.wavevector` provides
 -- suitable wavevectors that are compatible with the reciprocal lattice of the
 -- periodic simulation box.
+--
+-- .. Note::
+--
+--   Currently, only the component along the :math:`x`-axis (first Cartesian
+--   component) is computed.
 --
 
 ---
@@ -97,9 +102,9 @@ local M = module(function(args)
 
     -- inherit label from particle group
     local label = assert(group.label)
-    local logger = log.logger({label = ("current_density_mode (%s)"):format(label)})
+    local logger = log.logger({label = ("momentum_density_mode (%s)"):format(label)})
 
-    local self = current_density_mode(particle, group, wavevector, logger)
+    local self = momentum_density_mode(particle, group, wavevector, logger)
 
     -- store label and particle count as Lua properties
     self.label = property(function(self) return label end)
@@ -110,7 +115,7 @@ local M = module(function(args)
     self.writer = function(self, args)
         local file = utility.assert_kwarg(args, "file")
         local location = utility.assert_type(
-            args.location or {"structure", assert(self.label), "current_density_mode"}
+            args.location or {"structure", assert(self.label), "momentum_density_mode"}
           , "table")
         local every = utility.assert_kwarg(args, "every")
 
@@ -126,7 +131,7 @@ local M = module(function(args)
 
         -- sequence of signal connections
         local conn = {}
-        writer.disconnect = utility.signal.disconnect(conn, ("current_density_mode writer (%s)"):format(label))
+        writer.disconnect = utility.signal.disconnect(conn, ("momentum_density_mode writer (%s)"):format(label))
 
         -- connect writer to sampler
         if every > 0 then
@@ -138,10 +143,10 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-    self.disconnect = utility.signal.disconnect(conn, ("current_density_mode (%s)"):format(label))
+    self.disconnect = utility.signal.disconnect(conn, ("momentum_density_mode (%s)"):format(label))
 
     -- connect runtime accumulators to module profiler
-    local desc = ("computation of density modes for %s particles"):format(label)
+    local desc = ("computation of momentum density modes for %s particles"):format(label)
     table.insert(conn, profiler:on_profile(self.runtime.acquire, desc))
 
     return self
