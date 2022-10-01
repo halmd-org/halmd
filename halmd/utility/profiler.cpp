@@ -84,6 +84,10 @@ profiler::profiler()
 
 connection profiler::on_profile(std::shared_ptr<accumulator_type> acc, std::string const& desc)
 {
+    if (!acc) {
+        LOG_ERROR("invalid profiling timer on '" + desc + "'");
+        throw std::bad_function_call();
+    }
     return accumulators_.connect(make_pair(acc, desc));
 }
 
