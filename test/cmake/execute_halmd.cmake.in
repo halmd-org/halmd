@@ -33,7 +33,7 @@ macro(execute_halmd)
   )
 
   if(NOT ${OUTPUT_PREFIX}_STATUS STREQUAL "0")
-    message(SEND_ERROR "halmd execution failed")
+    message(FATAL_ERROR "halmd execution failed")
   endif()
 
 endmacro()
