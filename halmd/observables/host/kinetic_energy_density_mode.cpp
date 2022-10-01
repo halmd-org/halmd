@@ -43,7 +43,7 @@ kinetic_energy_density_mode<dimension, float_type>::kinetic_energy_density_mode(
 {}
 
 /**
- * Acquire density modes from particle positions
+ * Acquire kinetic energy density modes from particle positions
  */
 template <int dimension, typename float_type>
 shared_ptr<typename kinetic_energy_density_mode<dimension, float_type>::result_type const>
@@ -75,7 +75,7 @@ kinetic_energy_density_mode<dimension, float_type>::acquire()
         // to track the update via std::weak_ptr.
         result_ = make_shared<result_type>(wavevector.size());
 
-        // compute density modes
+        // compute kinetic energy density modes
         // initialise result array
         fill(begin(*result_), end(*result_), 0);
 

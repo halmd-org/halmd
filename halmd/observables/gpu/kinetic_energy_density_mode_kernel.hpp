@@ -35,7 +35,7 @@ struct kinetic_energy_density_mode_wrapper
     typedef typename mdsim::type_traits<dimension, float>::gpu::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
-    /** compute density modes of kinetic energy for all particles of a single species */
+    /** compute kinetic energy density modes of kinetic energy for all particles of a single species */
     cuda::function<void (
         cudaTextureObject_t
       , float4 const*

@@ -71,7 +71,7 @@ kinetic_energy_density_mode<dimension, float_type>::kinetic_energy_density_mode(
 }
 
 /**
- * Acquire sample of all density modes from particle group
+ * Acquire sample of all kinetic energy density modes from particle group
  */
 template <int dimension, typename float_type>
 shared_ptr<typename kinetic_energy_density_mode<dimension, float_type>::result_type const>
@@ -97,7 +97,7 @@ kinetic_energy_density_mode<dimension, float_type>::acquire()
         // to track the update via std::weak_ptr.
         result_ = make_shared<result_type>(nq_);
 
-        // compute density modes
+        // compute kinetic energy density modes
         try {
             cuda::texture<gpu_vector_type> t_wavevector(g_wavevector_);
             wrapper_type::kernel.compute.configure(dim_.grid, dim_.block);
@@ -119,7 +119,7 @@ kinetic_energy_density_mode<dimension, float_type>::acquire()
             wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, nq_, dim_.blocks_per_grid());
         }
         catch (cuda::error const&) {
-            LOG_ERROR("failed to compute density modes on GPU");
+            LOG_ERROR("failed to compute kinetic energy density modes on GPU");
             throw;
         }
 

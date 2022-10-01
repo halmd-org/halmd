@@ -67,7 +67,7 @@ public:
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>("kinetic_energy_density_mode")
     );
 
-    /** Compute current density modes from particle group.
+    /** Compute kinetic energy density modes from particle group.
      *
      * The result is re-computed only if the particle positions have been
      * modified. In this case, the data array managed by std::shared_ptr is
@@ -113,7 +113,7 @@ private:
     /** logger instance */
     std::shared_ptr<logger> logger_;
 
-    /** result for the density modes */
+    /** result for the kinetic energy density modes */
     std::shared_ptr<result_type> result_;
     /** cache observer for particle positions */
     cache<> position_cache_;
