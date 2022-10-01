@@ -28,14 +28,16 @@ local writers = halmd.io.writers
 local utility = halmd.observables.utility
 
 local function flatten(list)
-  if type(list) ~= "table" then return {list} end
-  local flat_list = {}
-  for _, elem in ipairs(list) do
+    if type(list) ~= "table" then return {list} end
+
+    local flat_list = {}
+    for _, elem in ipairs(list) do
     for _, val in ipairs(flatten(elem)) do
-      flat_list[#flat_list + 1] = val
+        flat_list[#flat_list + 1] = val
     end
-  end
-  return flat_list
+    end
+
+    return flat_list
 end
 
 local function generate_configuration(args)
@@ -43,7 +45,6 @@ local function generate_configuration(args)
     local box       = args.box
     local sigma     = args.sigma
     local excluded  = args.excluded_volume
-    --local obstacles = args.obstacles
 
     local edges = box.length
     local nspecies = #particles
@@ -55,11 +56,12 @@ local function generate_configuration(args)
 
     local cell_length = numeric.max(flatten(sigma))
 
-    log.info("Placing particles at random positions..")
+    log.info("Placing particles at random positions.")
 
     if not excluded then
-        excluded = halmd.mdsim.positions.excluded_volume{box = box, cell_length = cell_length}
+        excluded = halmd.mdsim.positions.excluded_volume({box = box, cell_length = cell_length})
     end
+
     local A = 0
     local B = 0
     local obstacles = {}
@@ -75,14 +77,15 @@ local function generate_configuration(args)
                 -- generate position
                 local r = {}
 
-                r[1] = edges[1] / (math.floor (edges[1] / diameter)) * (i-1)
+                r[1] = edges[1] / (math.floor (edges[1] / diameter)) * (i - 1)
 
                 r[2] = edges[2] / (math.floor (edges[2] / diameter)) * A
-                if i%edges[1] == 0 then
+                if i % edges[1] == 0 then
                      A = A + 1
                 end
+
                 r[3] = edges[3] / (math.floor (edges[3] / diameter)) * B
-                if i%(edges[1]*edges[2]) == 0 then
+                if i % (edges[1] * edges[2]) == 0 then
                      B = B + 1
                 end
 
@@ -112,13 +115,6 @@ function write_coefficients(file, tabulated_force)
     writer:write()
 end
 
---function test_read_coefficients(path)
---    local interpolation = mdsim.forces.interpolation.cubic_hermite({box = box, nknots = nknots, precision = "double"})
---    local tabulated_force = mdsim.forces.tabulated({particle = particle_test, box = box, interpolation = interpolation})
---    local file = readers.h5md({path = path})
---    tabulated_force:read_coefficients({file = file, location = {"parameters/halmd", "AdResS"}})
---end
--------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------
 
 function main()
@@ -141,32 +137,27 @@ function main()
     local configuration = generate_configuration({particles = {nparticles}, sigma = sigma, box = box})
     particle.data["position"] = configuration.positions
 
---Initial Species
-    local species = {}
-    for i = 1, nparticles do table.insert(species, 0) end
-    particle.data["species"] = species
-
 --Initial Velocities
-    local boltzmann = mdsim.velocities.boltzmann({particle = particle, temperature = temperature})
-    boltzmann:set()
+    mdsim.velocities.boltzmann({particle = particle, temperature = temperature})
+      : set()
 
 --POTENTIAL
      local potential = math.cos
      local potential_derivatives = math.sin
      local coefficients = {}
-     local dx = box.length[1] / (nknots[1]-1)
-     local T_1 = 2 * 3.14 / period
+     local dx = box.length[1] / (nknots[1] - 1)
+     local T_1 = 2 * math.pi / period
 
-     for i = 1, 8*nknots[1]*nknots[2]*nknots[3], 8 do
+     for i = 1, 8 * nknots[1] * nknots[2] * nknots[3], 8 do
 
-         local j = (i-1)/8 + 1
-         local residue = j-math.floor(j/nknots[1])*nknots[1]
+         local j = (i - 1) / 8 + 1
+         local residue = j - math.floor(j / nknots[1]) * nknots[1]
          if residue == 0 then
             residue = nknots[1]
          end
 
-         coefficients[i]   = amplitude*potential( T_1 * dx * ( residue - 1 ) )
-         coefficients[i+1] = -amplitude * T_1 * potential_derivatives( T_1 * dx * ( residue - 1) )
+         coefficients[i]   =  amplitude * potential(T_1 * dx * (residue - 1))
+         coefficients[i+1] = -amplitude * T_1 * potential_derivatives(T_1 * dx * (residue - 1))
          coefficients[i+2] = 0
          coefficients[i+3] = 0
          coefficients[i+4] = 0
@@ -180,9 +171,13 @@ function main()
     local virial_interpolation = mdsim.forces.interpolation.linear({box = box, nknots = nknots, precision = "single"})
 
 --FORCE IMPLEMENTATION
-    local tabulated_force = mdsim.forces.tabulated_external({particle = particle, box = box, interpolation = interpolation, virial_interpolation = virial_interpolation})
+    local tabulated_force = mdsim.forces.tabulated_external({
+        particle = particle, box = box
+      , interpolation = interpolation
+      , virial_interpolation = virial_interpolation
+    })
 
-    --Reading Coefficients
+    -- reading coefficients
     --local file = halmd.io.readers.h5md({path = "coefficients.h5"})
     tabulated_force:set_coefficients(coefficients)
 
@@ -200,23 +195,22 @@ function main()
     local phase_space = halmd.observables.phase_space({box = box, group = particle_group})
 
     -- write trajectory of particle groups to H5MD file
-    phase_space:writer({file = file, fields = {"position", "velocity", "mass", "species"}, every = 100})
+    phase_space:writer({file = file, fields = {"position", "species"}, every = 100})
 
     -- Sample macroscopic state variables
-    local msv = halmd.observables.thermodynamics({box = box, group = particle_group})
-    msv:writer({file = file, every = 100})
+    halmd.observables.thermodynamics({box = box, group = particle_group})
+      : writer({file = file, every = 100})
 
 --RUN
     -- sample initial state
     halmd.observables.sampler:sample()
 
-    local integrator = halmd.mdsim.integrators.verlet_nvt_boltzmann({box = box, particle = particle, timestep = timestep, temperature = temperature, rate = 2})
-
-    -- estimate remaining runtime
-    local runtime = halmd.observables.runtime_estimate({steps = steps, first = 10, interval = 900, sample = 60})
+    halmd.mdsim.integrators.verlet_nvt_boltzmann({
+        box = box, particle = particle
+      , timestep = timestep
+      , temperature = temperature, rate = 2
+    })
 
     -- run simulation
     halmd.observables.sampler:run(steps)
-
-    halmd.utility.profiler:profile()
 end
