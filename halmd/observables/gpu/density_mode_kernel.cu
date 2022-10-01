@@ -44,7 +44,7 @@ namespace density_mode_kernel {
  */
 template <typename vector_type, typename coalesced_vector_type>
 __global__ void compute(
-    cudaTextureObject_t wavevector
+    cudaTextureObject_t t_wavevector
   , coalesced_vector_type const* g_r
   , unsigned int const* g_idx, int npart
   , float* g_sin_block, float* g_cos_block, int nq
@@ -57,7 +57,7 @@ __global__ void compute(
 
     // outer loop over wavevectors
     for (int i=0; i < nq; i++) {
-        vector_type q = tex1Dfetch<coalesced_vector_type>(wavevector, i);
+        vector_type q = tex1Dfetch<coalesced_vector_type>(t_wavevector, i);
         sin_ = 0;
         cos_ = 0;
         for (int j = GTID; j < npart; j += GTDIM) {

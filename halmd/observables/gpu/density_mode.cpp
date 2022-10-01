@@ -44,7 +44,7 @@ density_mode<dimension, float_type>::density_mode(
   , nq_(wavevector_->value().size())
   , dim_(50, 512)
     // memory allocation
-  , g_q_(nq_)
+  , g_wavevector_(nq_)
   , g_sin_block_(nq_ * dim_.blocks_per_grid()), g_cos_block_(nq_ * dim_.blocks_per_grid())
   , g_sin_(nq_), g_cos_(nq_)
   , h_sin_(nq_), h_cos_(nq_)
@@ -58,11 +58,11 @@ density_mode<dimension, float_type>::density_mode(
         // cast from fixed_vector<double, ...> to fixed_vector<float, ...>
         // and finally to gpu_vector_type (float4 or float2)
         auto const& q = wavevector_->value();
-        cuda::memory::host::vector<gpu_vector_type> h_q(nq_);
+        cuda::memory::host::vector<gpu_vector_type> h_wavevector(nq_);
         for (unsigned int i = 0; i < q.size(); ++i) {
-            h_q[i] = static_cast<vector_type>(q[i]);
+            h_wavevector[i] = static_cast<vector_type>(q[i]);
         }
-        cuda::copy(h_q.begin(), h_q.end(), g_q_.begin());
+        cuda::copy(h_wavevector.begin(), h_wavevector.end(), g_wavevector_.begin());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy wavevectors to device");
@@ -97,7 +97,7 @@ density_mode<dimension, float_type>::acquire()
 
         // compute density modes
         try {
-            cuda::texture<gpu_vector_type> t_wavevector(g_q_);
+            cuda::texture<gpu_vector_type> t_wavevector(g_wavevector_);
 
             wrapper_type::kernel.compute.configure(dim_.grid, dim_.block);
             // compute exp(i q·r) for all wavevector/particle pairs and perform block sums

@@ -127,7 +127,7 @@ private:
     /** grid and block dimensions for CUDA calls */
     cuda::config const dim_;
     /** wavevectors */
-    cuda::memory::device::vector<gpu_vector_type> g_q_;
+    cuda::memory::device::vector<gpu_vector_type> g_wavevector_;
     /** block sums of sin(q r) for each wavevector on the device */
     cuda::memory::device::vector<float> g_sin_block_;
     /** block sums of cos(q r) for each wavevector on the device */
