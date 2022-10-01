@@ -1,6 +1,7 @@
 /*
- * Copyright © 2008-2011 Peter Colberg
+ * Copyright © 2021      Jaslo Ziska
  * Copyright © 2014      Nicolas Höft
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -36,16 +37,12 @@ struct from_binning_wrapper
     typedef fixed_vector<float, dimension> vector_type;
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
 
-    /** (cutoff lengths + neighbour list skin)² */
-    cuda::texture<float> rr_cut_skin;
-    /** positions, IDs of particle1 */
-    cuda::texture<float4> r1;
-    /** positions, IDs of particle2 */
-    cuda::texture<float4> r2;
-
     /** update neighbour lists */
-    cuda::function<void (
-        int*
+    typedef cuda::function<void (
+        cudaTextureObject_t // (cutoff lengths + neighbour list skin)²
+      , cudaTextureObject_t // positions, IDs of particle1
+      , cudaTextureObject_t // positions, IDs of particle2
+      , int*
       , unsigned int*
       , unsigned int
       , unsigned int
@@ -56,11 +53,13 @@ struct from_binning_wrapper
       , unsigned int
       , cell_size_type
       , vector_type
-    )> update_neighbours;
+    )> update_neighbours_function_type;
 
     /** update neighbour lists that uses a 'naive' implementation */
-    cuda::function<void (
-        int*
+    typedef cuda::function<void (
+        cudaTextureObject_t // (cutoff lengths + neighbour list skin)²
+      , cudaTextureObject_t // positions, IDs of particle2
+      , int*
       , float4 const*
       , unsigned int
       , bool
@@ -74,7 +73,16 @@ struct from_binning_wrapper
       , vector_type
       , unsigned int
       , vector_type
-    )> update_neighbours_naive;
+    )> update_neighbours_naive_function_type;
+
+    struct functions
+    {
+        update_neighbours_function_type update_neighbours;
+        update_neighbours_naive_function_type update_neighbours_naive;
+    };
+
+    functions unroll_force_loop;
+    functions normal;
 
     static from_binning_wrapper kernel;
 };

@@ -28,6 +28,7 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 #include <halmd/utility/gpu/configure_kernel.hpp>
+#include <halmd/utility/gpu/device.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -58,7 +59,7 @@ binning<dimension, float_type>::binning(
   // allocate parameters
   , r_skin_(skin)
   , r_cut_max_(*std::max_element(r_cut.data().begin(), r_cut.data().end()))
-  , device_properties_(cuda::device::get())
+  , device_properties_(device::get())
 {
     LOG("initial cell occupancy: " << occupancy)
 
@@ -173,7 +174,7 @@ void binning<dimension, float_type>::update()
     do {
         scoped_timer_type timer(runtime_.update);
 
-        auto const* kernel = &binning_wrapper<dimension>::kernel;
+        auto* kernel = &binning_wrapper<dimension>::kernel;
         unsigned int nparticle = particle_->nparticle();
 
         // compute cell indices for particle positions
@@ -188,18 +189,19 @@ void binning<dimension, float_type>::update()
         // generate permutation
         configure_kernel(kernel->gen_index, particle_->dim(), true);
         kernel->gen_index(g_cell_permutation_, nparticle);
-        radix_sort(g_cell_index_.begin(), g_cell_index_.end(), g_cell_permutation_.begin());
+        radix_sort(g_cell_index_.begin(), g_cell_index_.end(),
+            g_cell_permutation_.begin());
 
         // compute global cell offsets in sorted particle list
-        cuda::memset(g_cell_offset_, 0xFF);
+        cuda::memset(g_cell_offset_.begin(), g_cell_offset_.end(), 0xFF);
         configure_kernel(kernel->find_cell_offset, particle_->dim(), true);
         kernel->find_cell_offset(g_cell_index_, g_cell_offset_, nparticle);
 
         // assign particles to cells
-        cuda::vector<int> g_ret(1);
-        cuda::host::vector<int> h_ret(1);
-        cuda::memset(g_ret, EXIT_SUCCESS);
-        cuda::configure(dim_cell_.grid, dim_cell_.block);
+        cuda::memory::device::vector<int> g_ret(1);
+        cuda::memory::host::vector<int> h_ret(1);
+        cuda::memset(g_ret.begin(), g_ret.end(), EXIT_SUCCESS);
+        kernel->assign_cells.configure(dim_cell_.grid, dim_cell_.block);
         kernel->assign_cells(
             g_ret
           , g_cell_index_
@@ -209,7 +211,7 @@ void binning<dimension, float_type>::update()
           , nparticle
           , cell_size_
         );
-        cuda::copy(g_ret, h_ret);
+        cuda::copy(g_ret.begin(), g_ret.end(), h_ret.begin());
         overcrowded = h_ret.front() != EXIT_SUCCESS;
         if (overcrowded) {
             LOG("overcrowded placeholders in cell list update, increase cell size");

@@ -25,26 +25,13 @@
 #include <halmd/config.hpp>
 
 #include <algorithm>
-#include <boost/type_traits/is_convertible.hpp>
-#include <boost/utility/enable_if.hpp>
 #include <cassert>
 #include <initializer_list>
 #include <type_traits>
 
 // CUDA vector types for host compiler
 #ifdef HALMD_WITH_GPU
-/* Disable warning for CUDA 5.5 headers emitted by Clang:
- *   /usr/local/cuda-5.5/include/cuda_runtime.h:225:33: warning: function
- *   'cudaMallocHost' is not needed and will not be emitted [-Wunneeded-internal-declaration]
- */
-# if (defined(__clang__) && __clang_major__ >= 3 && __clang_minor__ > 2)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wunneeded-internal-declaration"
-#  include <cuda_runtime.h>
-#  pragma GCC diagnostic pop
-# else
-#  include <cuda_runtime.h>
-# endif
+# include <cuda_runtime.h>
 #endif
 
 #include <halmd/numeric/blas/detail/array.hpp>
@@ -96,7 +83,7 @@ struct fixed_vector<float, 6>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 6> const& v,
-      typename boost::enable_if<boost::is_convertible<U, float> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, float>::value>::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -199,7 +186,7 @@ struct fixed_vector<unsigned int, 6>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 6> const& v,
-      typename boost::enable_if<boost::is_convertible<U, unsigned int> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, unsigned int>::value>::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -302,7 +289,7 @@ struct fixed_vector<int, 6>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 6> const& v,
-      typename boost::enable_if<boost::is_convertible<U, int> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, int>::value>::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -394,7 +381,7 @@ struct fixed_vector<dsfloat, 6> : fixed_array<dsfloat, 6>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(U const& s,
-      typename boost::enable_if<boost::is_convertible<U, dsfloat> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, dsfloat>::value>::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = s;
@@ -406,7 +393,7 @@ struct fixed_vector<dsfloat, 6> : fixed_array<dsfloat, 6>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(fixed_vector<U, 6> const& v,
-      typename boost::enable_if<boost::is_convertible<U, dsfloat> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, dsfloat>::value>::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -460,7 +447,7 @@ struct fixed_vector<double, 6>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 6> const& v,
-      typename boost::enable_if<boost::is_convertible<U, double> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, double>::value>::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);

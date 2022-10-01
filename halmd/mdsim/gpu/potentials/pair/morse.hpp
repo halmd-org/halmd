@@ -1,6 +1,7 @@
 /*
  * Copyright © 2008-2013 Felix Höfling
  * Copyright © 2008-2010 Peter Colberg
+ * Copyright © 2020      Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -54,10 +55,12 @@ public:
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
-    /** bind textures before kernel invocation */
-    void bind_textures() const
+    /** return gpu potential with texture */
+    gpu_potential_type get_gpu_potential()
     {
-        morse_wrapper::param.bind(g_param_);
+        // FIXME: tex1Dfetch reads zero when texture is not recreated once in a while
+        t_param_ = cuda::texture<float4>(g_param_);
+        return gpu_potential_type(t_param_);
     }
 
     matrix_type const& epsilon() const
@@ -103,7 +106,9 @@ private:
     /** position of potential well in units of sigma */
     matrix_type r_min_sigma_;
     /** potential parameters at CUDA device */
-    cuda::vector<float4> g_param_;
+    cuda::memory::device::vector<float4> g_param_;
+    /** array of potential parameters for all combinations of particle types */
+    cuda::texture<float4> t_param_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

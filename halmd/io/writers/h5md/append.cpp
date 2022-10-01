@@ -225,7 +225,9 @@ wrap_write(std::shared_ptr<append> self)
  */
 void append::luaopen(lua_State* L)
 {
+    using namespace boost::placeholders;
     using namespace luaponte;
+
     module(L, "libhalmd")
     [
         namespace_("io")

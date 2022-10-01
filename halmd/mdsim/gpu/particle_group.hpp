@@ -29,6 +29,7 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_group_kernel.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/gpu/configure_kernel.hpp>
 
@@ -50,9 +51,9 @@ namespace gpu {
 class particle_group
 {
 public:
-    typedef cuda::vector<unsigned int> array_type;
+    typedef cuda::memory::device::vector<unsigned int> array_type;
     typedef array_type::value_type size_type;
-    typedef cuda::host::vector<size_type> host_array_type;
+    typedef cuda::memory::host::vector<size_type> host_array_type;
 
     virtual ~particle_group() {}
 
@@ -106,8 +107,8 @@ get_ordered(particle_group& group, iterator_type const& first)
 {
     typedef particle_group::array_type array_type;
     array_type const& g_ordered = read_cache(group.ordered());
-    cuda::host::vector<array_type::value_type> h_ordered(g_ordered.size());
-    cuda::copy(g_ordered, h_ordered);
+    cuda::memory::host::vector<array_type::value_type> h_ordered(g_ordered.size());
+    cuda::copy(g_ordered.begin(), g_ordered.end(), h_ordered.begin());
     return std::copy(h_ordered.begin(), h_ordered.end(), first);
 }
 
@@ -120,8 +121,8 @@ get_unordered(particle_group& group, iterator_type const& first)
 {
     typedef particle_group::array_type array_type;
     array_type const& g_unordered = read_cache(group.unordered());
-    cuda::host::vector<array_type::value_type> h_unordered(g_unordered.size());
-    cuda::copy(g_unordered, h_unordered);
+    cuda::memory::host::vector<array_type::value_type> h_unordered(g_unordered.size());
+    cuda::copy(g_unordered.begin(), g_unordered.end(), h_unordered.begin());
     return std::copy(h_unordered.begin(), h_unordered.end(), first);
 }
 
@@ -136,8 +137,8 @@ double get_mean_en_kin(particle_type const& particle, particle_group& group)
     typedef observables::gpu::kinetic_energy<dimension, dsfloat> accumulator_type;
 
     group_array_type const& unordered = read_cache(group.unordered());
-    accumulator_type::get().bind(*particle.velocity());
-    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())() / unordered.size();
+    cuda::texture<float4> texture(*particle.velocity());
+    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(texture))() / unordered.size();
 }
 
 /**
@@ -154,13 +155,17 @@ get_r_cm(particle_type const& particle, particle_group& group, box_type const& b
 
     group_array_type const& unordered = read_cache(group.unordered());
 
-    accumulator_type::get_position().bind(*particle.position());
-    accumulator_type::get_image().bind(*particle.image());
-    accumulator_type::get_velocity().bind(*particle.velocity());
+    cuda::texture<float4> t_position(*particle.position());
+    cuda::texture<typename accumulator_type::coalesced_vector_type> t_image(*particle.image());
+    cuda::texture<float4> t_velocity(*particle.velocity());
     return reduce(
         std::make_tuple(&*unordered.begin(), static_cast<position_type>(box.length()))
       , std::make_tuple(&*unordered.end())
-      , accumulator_type()
+      , accumulator_type(
+            t_position
+          , t_image
+          , t_velocity
+        )
    )();
 }
 
@@ -177,10 +182,10 @@ get_v_cm_and_mean_mass(particle_type const& particle, particle_group& group)
 
     group_array_type const& unordered = read_cache(group.unordered());
 
-    accumulator_type::get().bind(*particle.velocity());
+    cuda::texture<float4> texture(*particle.velocity());
     fixed_vector<double, dimension> mv;
     double m;
-    std::tie(mv, m) = reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())();
+    std::tie(mv, m) = reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(texture))();
     return std::make_tuple(mv / m, m / unordered.size());
 }
 
@@ -207,8 +212,8 @@ get_total_force(particle_type& particle, particle_group& group)
 
     group_array_type const& unordered = read_cache(group.unordered());
 
-    accumulator_type::get().bind(*particle.force());
-    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())();
+    cuda::texture<typename accumulator_type::gpu_force_type> texture(*particle.force());
+    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(texture))();
 }
 
 /**
@@ -222,8 +227,8 @@ double get_mean_en_pot(particle_type& particle, particle_group& group)
 
     group_array_type const& unordered = read_cache(group.unordered());
 
-    accumulator_type::get().bind(*particle.potential_energy());
-    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())() / unordered.size();
+    cuda::texture<float> texture(*particle.potential_energy());
+    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(texture))() / unordered.size();
 }
 
 /**
@@ -240,8 +245,8 @@ double get_mean_virial(particle_type& particle, particle_group& group)
     group_array_type const& unordered = read_cache(group.unordered());
 
     unsigned int stride = particle.stress_pot()->capacity() / stress_pot_type::static_size;
-    accumulator_type::get().bind(*particle.stress_pot());
-    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(stride))() / unordered.size();
+    cuda::texture<float> texture(*particle.stress_pot());
+    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(texture, stride))() / unordered.size();
 }
 
 /**
@@ -264,12 +269,46 @@ get_stress_tensor(particle_type& particle, particle_group& group)
     stress_pot_array_type const& stress_pot = read_cache(particle.stress_pot());
 
     unsigned int stride = stress_pot.capacity() / stress_pot_type::static_size;
-    accumulator_type::get_stress_pot().bind(stress_pot);
-    accumulator_type::get_velocity().bind(*particle.velocity());
+    cuda::texture<float> t_stress_pot(stress_pot);
+    cuda::texture<float4> t_velocity(*particle.velocity());
 
-    return stress_tensor_type(reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(stride))());
+    return stress_tensor_type(reduce(
+        &*unordered.begin()
+      , &*unordered.end()
+      , accumulator_type(
+            t_velocity
+          , t_stress_pot
+          , stride
+        )
+    )());
 }
 
+/**
+ * Compute heat flux.
+ */
+template <typename particle_type>
+fixed_vector<double, particle_type::velocity_type::static_size>
+get_heat_flux(particle_type& particle, particle_group& group)
+{
+
+    typedef particle_group::array_type group_array_type;
+    typedef typename particle_type::stress_pot_type stress_pot_type;
+    unsigned int constexpr dimension = particle_type::velocity_type::static_size;
+    typedef observables::gpu::heat_flux<dimension, dsfloat> accumulator_type;
+
+    group_array_type const& unordered = read_cache(group.unordered());
+
+    unsigned int stride = particle.stress_pot()->capacity() / stress_pot_type::static_size;
+    cuda::texture<float4> t_velocity(*particle.velocity());
+    cuda::texture<float> t_potential(*particle.potential_energy());
+    cuda::texture<float> t_stress_pot(*particle.stress_pot());
+    return reduce(
+        &*unordered.begin()
+      , &*unordered.end()
+      , accumulator_type(t_velocity, t_potential, t_stress_pot, stride)
+    )() / unordered.size();
+
+}
 /**
  * Copy all particles from a group into a given particle instance of the
  * same size as the group
@@ -277,8 +316,10 @@ get_stress_tensor(particle_type& particle, particle_group& group)
 template <typename particle_type>
 void particle_group_to_particle(particle_type const& particle_src, particle_group& group, particle_type& particle_dst)
 {
-    typedef typename particle_type::float_type float_type;
     enum { dimension = particle_type::force_type::static_size };
+
+    typedef typename particle_type::float_type float_type;
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type aligned_vector_type;
 
     if(*group.size() != particle_dst.nparticle()) {
         LOG_TRACE("group size: " << *group.size() << ", destination particle size: " << particle_dst.nparticle());
@@ -290,13 +331,18 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
     auto image    = make_cache_mutable(particle_dst.image());
     auto velocity = make_cache_mutable(particle_dst.velocity());
 
-    particle_group_wrapper<dimension, float_type>::kernel.r.bind(read_cache(particle_src.position()));
-    particle_group_wrapper<dimension, float_type>::kernel.image.bind(read_cache(particle_src.image()));
-    particle_group_wrapper<dimension, float_type>::kernel.v.bind(read_cache(particle_src.velocity()));
+    cuda::texture<float4> t_r(read_cache(particle_src.position()));
+    cuda::texture<aligned_vector_type> t_image(read_cache(particle_src.image()));
+    cuda::texture<float4> t_v(read_cache(particle_src.velocity()));
 
-    configure_kernel(particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle, ordered.size());
+    configure_kernel(particle_group_wrapper<dimension, float_type>::kernel
+        .particle_group_to_particle, ordered.size());
+
     particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle(
-        &*ordered.begin()
+        t_r
+      , t_image
+      , t_v
+      , &*ordered.begin()
       , position->data()
       , &*image->begin()
       , velocity->data()

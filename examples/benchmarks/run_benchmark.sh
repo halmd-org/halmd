@@ -44,11 +44,12 @@ SCRIPT="${SCRIPT_DIR}/${BENCHMARK_NAME}/run_benchmark.lua"
 OUTPUT="${BENCHMARK_NAME}/benchmark_${BENCHMARK_TAG}"
 
 # run benchmark
-halmd ${HALMD_OPTIONS} "${SCRIPT}" \
+halmd "${SCRIPT}" \
+  --verbose \
   --trajectory "${INPUT_FILE}" \
   --output "${OUTPUT}" \
   --count "${COUNT}" \
-  --verbose
+  ${HALMD_OPTIONS}
 
 # print results
 /bin/bash ${SCRIPT_DIR}/print_timings.sh "${OUTPUT}.log"

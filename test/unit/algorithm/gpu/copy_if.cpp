@@ -73,7 +73,7 @@ void test_ ## t()
 
 TEST_CASE_TYPE_PREDICATE( copy_integer )
 {
-    cuda::host::vector<T> h_v(
+    cuda::memory::host::vector<T> h_v(
         boost::make_counting_iterator(0)
       , boost::make_counting_iterator(12345679)
     );
@@ -81,8 +81,8 @@ TEST_CASE_TYPE_PREDICATE( copy_integer )
         halmd::demangled_name<predicate_type>()
     );
 
-    cuda::vector<T> g_v_in(h_v.size());
-    cuda::vector<T> g_v_out(h_v.size());
+    cuda::memory::device::vector<T> g_v_in(h_v.size());
+    cuda::memory::device::vector<T> g_v_out(h_v.size());
     cuda::copy(h_v.begin(), h_v.end(), g_v_in.begin());
 
     predicate_type pred;
@@ -90,7 +90,7 @@ TEST_CASE_TYPE_PREDICATE( copy_integer )
     std::size_t out_len = last_output - g_v_out.begin();
 
     BOOST_TEST_MESSAGE("CUDA copied " << out_len << " elements");
-    cuda::host::vector<T> h_out(out_len);
+    cuda::memory::host::vector<T> h_out(out_len);
     cuda::copy(g_v_out.begin(), g_v_out.begin() + out_len, h_out.begin());
 
     std::vector<T> h_reference(h_v.size());
@@ -112,15 +112,15 @@ TEST_CASE_TYPE_PREDICATE( performance )
 {
     BOOST_TEST_MESSAGE( "running " << halmd::demangled_name<predicate_type>() );
 
-    cuda::host::vector<T> h_v(
+    cuda::memory::host::vector<T> h_v(
         boost::make_counting_iterator(0)
       , boost::make_counting_iterator(12345679)
     );
     auto engine = std::default_random_engine{};
     std::shuffle(std::begin(h_v), std::end(h_v), engine);
 
-    cuda::vector<T> g_v_in(h_v.size());
-    cuda::vector<T> g_v_out(h_v.size());
+    cuda::memory::device::vector<T> g_v_in(h_v.size());
+    cuda::memory::device::vector<T> g_v_out(h_v.size());
     cuda::copy(h_v.begin(), h_v.end(), g_v_in.begin());
 
     predicate_type predicate;

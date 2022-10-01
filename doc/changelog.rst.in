@@ -3,6 +3,41 @@
 Changelog
 *********
 
+Snapshot (master branch)
+========================
+
+**Breaking changes**
+
+*These changes do not break simulation scripts, they affect only the build process*
+
+* increase minimal required versions of the CUDA SDK to 9.0, of GCC to 5.0, and
+  of the Boost C++ library to 1.61, require a C++14 compiler *(Jaslo Ziska)*
+
+* remove unused CMake switches and parameters for build variants: FORCE_DSFUN,
+  HILBERT_ALT_3D, DEVICE_SCALE *(Jaslo Ziska)*
+
+**Improvements**
+
+* New force algorithm to speed up calculation of truncated pair forces in case
+  of small particle numbers. In such situations, GPU utilisation is increased
+  by unrolling the loop over neighbour lists and processing it in parallel
+  within a thread warp.  The algorithm is selected upon construction of the
+  :mod:`neighbour <halmd.mdsim.neighbour>` module *(Jaslo Ziska)*
+* benchmark of the Kob-Andersen mixture: add a version for a tiny system,
+  decrease skin width and increase neighbour list occupancy  *(Felix Höfling)*
+* support CUDA SDK 11 and Nvidida GPUs Tesla A40 and A100 *(Jaslo Ziska)*
+
+**Internal changes**
+
+* algorithm/gpu/reduce: new CUDA kernel based on warp shuffle intrinsics *(Jaslo Ziska)*
+
+* make C++14 the new language standard *(Jaslo Ziska)*
+
+* update shipped CUB library to version 1.9.10-1  *(Jaslo Ziska)*
+
+* increase default GPU target architecture to compute capability 6.1 *(Felix Höfling)*
+
+
 Version 1.0.1
 =============
 
@@ -15,9 +50,12 @@ Version 1.0.1
 **Improvements**
 
 * documentation: minor amendments and corrections *(Felix Höfling)*
+
 * some improvements to example scripts *(Felix Höfling)*
+
 * :ref:`benchmarks <benchmarks>`: optimise neighbour list parameters, add
   results for RTX 2080 Super *(Felix Höfling)*
+
 * improve stability of build process *(Jaslo Ziska, Felix Höfling)*
 
 

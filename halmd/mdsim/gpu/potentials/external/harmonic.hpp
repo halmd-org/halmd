@@ -1,5 +1,6 @@
 /*
  * Copyright © 2014 Felix Höfling
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -53,10 +54,10 @@ public:
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
-    /** bind textures before kernel invocation */
-    void bind_textures() const
+    /** return gpu potential with texture */
+    gpu_potential_type get_gpu_potential() const
     {
-        harmonic_wrapper::param.bind(g_param_);
+        return gpu_potential_type(t_param_);
     }
 
     scalar_container_type const& stiffness() const
@@ -85,7 +86,9 @@ private:
     /** position of potential minimum in MD units */
     vector_container_type offset_;
     /** potential parameters at CUDA device */
-    cuda::vector<float4> g_param_;
+    cuda::memory::device::vector<float4> g_param_;
+    /** array of potential parameters for all particle species */
+    cuda::texture<float4> t_param_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

@@ -72,8 +72,8 @@ private:
         utility::profiler::accumulator_type map;
     };
 
-    void map(cuda::vector<unsigned int>& g_map);
-    void permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index);
+    void map(cuda::memory::device::vector<unsigned int>& g_map);
+    void permutation(cuda::memory::device::vector<unsigned int>& g_map, cuda::memory::device::vector<unsigned int>& g_index);
 
     std::shared_ptr<particle_type> particle_;
     /** simulation box */

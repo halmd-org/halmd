@@ -62,7 +62,7 @@ function main(args)
     -- define velocity-Verlet integrator with Andersen thermostat
     local integrator = mdsim.integrators.verlet_nvt_andersen({
         box = box, particle = particle
-      , timestep = timestep, temperature = temperature, rate = 0.1
+      , timestep = timestep, temperature = temperature, rate = 2
     })
 
     -- H5MD file writer

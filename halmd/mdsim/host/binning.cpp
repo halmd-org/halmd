@@ -19,7 +19,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <exception>
 
 #include <halmd/mdsim/host/binning.hpp>

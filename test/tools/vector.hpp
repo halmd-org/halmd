@@ -35,9 +35,9 @@ std::vector<T> get_host_vector(std::vector<T> const& v)
 
 #ifdef HALMD_WITH_GPU
 template <typename T>
-cuda::host::vector<T> get_host_vector(cuda::vector<T> const& g_v)
+cuda::memory::host::vector<T> get_host_vector(cuda::memory::device::vector<T> const& g_v)
 {
-    cuda::host::vector<T> v(g_v.size());
+    cuda::memory::host::vector<T> v(g_v.size());
     cuda::copy(g_v.begin(), g_v.end(), v.begin());
     return v;
 }

@@ -76,7 +76,7 @@ std::shared_ptr<particle_array_gpu<T>> particle_array_gpu<T>::cast(std::shared_p
 }
 
 cuda::config get_default_config(size_t n) {
-    cuda::device::properties prop(cuda::device::get());
+    cuda::device::properties prop(device::get());
     size_t block_size = 128;
     size_t grid_size = n / block_size;
     while (grid_size > prop.max_grid_size().x && block_size <= prop.max_threads_per_block()/2) {
@@ -92,20 +92,20 @@ cuda::config get_default_config(size_t n) {
 template<typename T>
 struct particle_array_gpu_helper
 {
-    static cuda::host::vector<uint8_t> get_host_memory(
+    static cuda::memory::host::vector<uint8_t> get_host_memory(
       cache<typename particle_array_gpu<T>::gpu_vector_type> const& data
     )
     {
-        cuda::host::vector<uint8_t> mem(data->size() * sizeof(T));
+        cuda::memory::host::vector<uint8_t> mem(data->size() * sizeof(T));
         return mem;
     }
 
-    static cuda::host::vector<uint8_t> get_host_data(
+    static cuda::memory::host::vector<uint8_t> get_host_data(
       cache<typename particle_array_gpu<T>::gpu_vector_type> const& data
     )
     {
         auto const& g_input = read_cache(data);
-        cuda::host::vector<uint8_t> mem(g_input.size() * sizeof(T));
+        cuda::memory::host::vector<uint8_t> mem(g_input.size() * sizeof(T));
         mem.reserve(g_input.capacity() * sizeof(T));
         cuda::copy(g_input.begin(), g_input.begin() + g_input.capacity(), reinterpret_cast<T*>(&*mem.begin()));
         return mem;
@@ -113,7 +113,7 @@ struct particle_array_gpu_helper
 
     static void set_host_data(
       cache<typename particle_array_gpu<T>::gpu_vector_type>& data
-    , cuda::host::vector<uint8_t> const& mem
+    , cuda::memory::host::vector<uint8_t> const& mem
     )
     {
         auto output = make_cache_mutable(data);
@@ -171,31 +171,31 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     typedef typename type_traits<dimension, dsfloat>::gpu::vector_type T;
     typedef typename particle_array_gpu<T>::base_value_type base_value_type;
 
-    static cuda::host::vector<uint8_t> get_host_memory(
+    static cuda::memory::host::vector<uint8_t> get_host_memory(
       cache<typename particle_array_gpu<T>::gpu_vector_type> const& data
     )
     {
-        cuda::host::vector<uint8_t> mem(data->size() * sizeof(base_value_type));
+        cuda::memory::host::vector<uint8_t> mem(data->size() * sizeof(base_value_type));
         mem.reserve(data->size() * 2);
         return mem;
     }
 
-    static cuda::host::vector<uint8_t> get_host_data(
+    static cuda::memory::host::vector<uint8_t> get_host_data(
       cache<typename particle_array_gpu<T>::gpu_vector_type> const& data
     )
     {
-        cuda::vector<base_value_type> const& g_input = read_cache(data);
-        cuda::host::vector<uint8_t> mem(g_input.size() * sizeof(base_value_type));
+        cuda::memory::device::vector<base_value_type> const& g_input = read_cache(data);
+        cuda::memory::host::vector<uint8_t> mem(g_input.size() * sizeof(base_value_type));
         mem.reserve(g_input.capacity() * sizeof(base_value_type));
         cuda::copy(g_input.begin(), g_input.begin() + g_input.capacity(), reinterpret_cast<base_value_type*>(&*mem.begin()));
         return mem;
     }
 
     static void set_host_data(
-      cache<typename particle_array_gpu<T>::gpu_vector_type>& data, cuda::host::vector<uint8_t> const& mem
+      cache<typename particle_array_gpu<T>::gpu_vector_type>& data, cuda::memory::host::vector<uint8_t> const& mem
     )
     {
-        cuda::vector<base_value_type> &output = *make_cache_mutable(data);
+        cuda::memory::device::vector<base_value_type> &output = *make_cache_mutable(data);
         auto ptr = reinterpret_cast<base_value_type const*>(&*mem.begin());
         cuda::copy(ptr, ptr + (mem.capacity() / sizeof (base_value_type)), output.begin());
     }
@@ -217,7 +217,7 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     , unsigned int nparticle
     )
     {
-        cuda::vector<base_value_type> &output = *make_cache_mutable(data);
+        cuda::memory::device::vector<base_value_type> &output = *make_cache_mutable(data);
         cuda::memset(output.begin(), output.begin() + output.capacity(), 0);
     }
 
@@ -235,20 +235,20 @@ struct particle_array_gpu_helper<dsfloat> : particle_array_gpu_helper<fixed_vect
 #endif // USE_GPU_DOUBLE_SINGLE_PRECISION
 
 template<typename T>
-cuda::host::vector<uint8_t> particle_array_gpu<T>::get_host_memory() const
+cuda::memory::host::vector<uint8_t> particle_array_gpu<T>::get_host_memory() const
 {
     return particle_array_gpu_helper<T>::get_host_memory(data_);
 }
 
 template<typename T>
-cuda::host::vector<uint8_t> particle_array_gpu<T>::get_host_data() const
+cuda::memory::host::vector<uint8_t> particle_array_gpu<T>::get_host_data() const
 {
     update_function_();
     return particle_array_gpu_helper<T>::get_host_data(data_);
 }
 
 template<typename T>
-void particle_array_gpu<T>::set_host_data(cuda::host::vector<uint8_t> const& mem)
+void particle_array_gpu<T>::set_host_data(cuda::memory::host::vector<uint8_t> const& mem)
 {
     return particle_array_gpu_helper<T>::set_host_data(data_, mem);
 }

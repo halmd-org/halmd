@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2020       Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -24,8 +25,6 @@
 #include <halmd/mdsim/gpu/potentials/pair/power_law_kernel.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/truncations/truncations.cuh>
 #include <halmd/numeric/blas/blas.hpp>
-#include <halmd/numeric/pow.hpp>  // std::pow is not a device function
-#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -34,31 +33,22 @@ namespace potentials {
 namespace pair {
 namespace power_law_kernel {
 
-/** array of potential parameters for all combinations of particle types */
-static texture<float4> param_;
-
-HALMD_GPU_ENABLED power_law::power_law(
+__device__ void power_law::fetch_param(
     unsigned int type1, unsigned int type2
   , unsigned int ntype1, unsigned int ntype2
 )
-  : pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
-{}
-
-template <typename float_type>
-HALMD_GPU_ENABLED tuple<float_type, float_type> power_law::operator()(float_type rr) const
 {
-    return compute(rr, pair_[SIGMA2], pair_[EPSILON], static_cast<unsigned short>(pair_[INDEX]));
+    pair_ = tex1Dfetch<float4>(t_param_, type1 * ntype2 + type2);
 }
 
 } // namespace power_law_kernel
 
-cuda::texture<float4> power_law_wrapper::param = power_law_kernel::param_;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(power_law_kernel::power_law);
 
 template class adapters::hard_core_wrapper<power_law_kernel::power_law>;
 HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(
-  adapters::hard_core_kernel::hard_core<power_law_kernel::power_law>
-  );
+    adapters::hard_core_kernel::hard_core<power_law_kernel::power_law>
+);
 
 } // namespace pair
 } // namespace potentials

@@ -1,5 +1,6 @@
 /*
- * Copyright © 2012-2016 Felix Höfling
+ * Copyright © 2020      Roya Ebrahimi Viand
+ * Copyright © 2012-2013 Felix Höfling
  * Copyright © 2013-2015 Nicolas Höft
  * Copyright © 2012      Peter Colberg
  *
@@ -248,6 +249,36 @@ get_stress_tensor(particle_type& particle, particle_group& group)
         stress_tensor += static_cast<stress_tensor_type>(stress_pot[i]) + stress_kin;
     }
     return stress_tensor;
+}
+
+/**
+ * Compute heat flux.
+ */
+template <typename particle_type>
+fixed_vector<double, particle_type::velocity_type::static_size>
+get_heat_flux(particle_type& particle, particle_group& group)
+{
+
+    enum { dimension = particle_type::force_type::static_size };
+
+    auto const& unordered = read_cache(group.unordered());
+    auto const& en_pot = read_cache(particle.potential_energy());
+    auto const& velocity = read_cache(particle.velocity());
+    auto const& stress_pot = read_cache(particle.stress_pot());
+    typename particle_type::mass_array_type const& mass = *particle.mass();
+
+    fixed_vector<double, particle_type::velocity_type::static_size> sum = 0;
+
+    for (particle_group::size_type i : unordered) {
+        double vrl = 0;
+        for (int j = 0; j < dimension; ++j) {
+            vrl += stress_pot[i][j];
+        }
+
+        sum += (en_pot[i] + 0.5 * mass[i] * inner_prod(velocity[i], velocity[i]) + vrl) * velocity[i];
+    }
+
+    return sum / unordered.size();
 }
 
 /**

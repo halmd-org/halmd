@@ -228,6 +228,7 @@ local M = module(function(args)
           , internal_energy = true
           , stress_tensor = true
           , virial = true
+          , heat_flux = true
           , pressure = true
         }
 
@@ -259,8 +260,17 @@ local M = module(function(args)
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, ("thermodynamics (%s)"):format(label))
 
-    -- connect runtime accumulators to module profiler
-    halmd.observables.thermodynamics.profile(self, conn)
+    -- connect thermodynamics to profiler
+    local runtime = assert(self.runtime)
+
+    table.insert(conn, profiler:on_profile(runtime.en_kin, "compute kinetic-energy"))
+    table.insert(conn, profiler:on_profile(runtime.v_cm, "compute centre-of-mass velocity"))
+    table.insert(conn, profiler:on_profile(runtime.r_cm, "compute centre-of-mass"))
+    table.insert(conn, profiler:on_profile(runtime.mean_mass, "compute mean-mass"))
+    table.insert(conn, profiler:on_profile(runtime.mean_mass, "compute potential-energy"))
+    table.insert(conn, profiler:on_profile(runtime.virial, "compute virial"))
+    table.insert(conn, profiler:on_profile(runtime.stress_tensor, "compute stress_tensor"))
+    table.insert(conn, profiler:on_profile(runtime.heat_flux, "compute heat_flux"))
 
     return self
 end)
@@ -284,8 +294,7 @@ function M.profile(self, conn)
     profile("en_pot"       , "potential energy"       )
     profile("virial"       , "virial"                 )
     profile("stress_tensor", "stress tensor"          )
-
-    return conn
+    profile("heat_flux"    , "heat flux"              )
 end
 
 return M

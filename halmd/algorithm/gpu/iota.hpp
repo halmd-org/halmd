@@ -50,7 +50,8 @@ iota(
 {
     unsigned int constexpr threads = 128;
     unsigned int const size = last - first;
-    cuda::configure((size + threads - 1) / threads, threads);
+    detail::iota_kernel::get().iota.configure((size + threads - 1) / threads,
+        threads);
     detail::iota_kernel::get().iota(&*first, size, value);
     cuda::thread::synchronize();
 }

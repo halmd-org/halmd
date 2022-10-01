@@ -166,7 +166,7 @@ void lattice<dimension, float_type>::fcc(
     }
 
     try {
-        auto const& lattice_kernel = get_lattice_kernel<float_type, lattice_type>().lattice;
+        auto& lattice_kernel = get_lattice_kernel<float_type, lattice_type>().lattice;
         configure_kernel(lattice_kernel, particle_->dim(), false);
         lattice_kernel(first, npart, a, skip, offset, n);
         cuda::thread::synchronize();

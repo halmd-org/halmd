@@ -25,13 +25,8 @@
 #include <halmd/config.hpp>
 
 #include <algorithm>
-#include <boost/mpl/and.hpp>
-#include <boost/mpl/int.hpp>
-#include <boost/mpl/greater.hpp>
-#include <boost/type_traits/is_convertible.hpp>
-#include <boost/type_traits/is_floating_point.hpp>
-#include <boost/type_traits/is_integral.hpp>
-#include <boost/utility/enable_if.hpp>
+#include <type_traits>
+
 #ifndef __CUDACC__
 # include <cmath>
 # include <iostream>
@@ -39,18 +34,7 @@
 
 // CUDA vector types for host compiler
 #ifdef HALMD_WITH_GPU
-/* Disable warning for CUDA 5.5 headers emitted by Clang:
- *   /usr/local/cuda-5.5/include/cuda_runtime.h:225:33: warning: function
- *   'cudaMallocHost' is not needed and will not be emitted [-Wunneeded-internal-declaration]
- */
-# if (defined(__clang__) && __clang_major__ >= 3 && __clang_minor__ > 2)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wunneeded-internal-declaration"
-#  include <cuda_runtime.h>
-#  pragma GCC diagnostic pop
-# else
-#  include <cuda_runtime.h>
-# endif
+# include <cuda_runtime.h>
 #endif
 
 #include <halmd/numeric/blas/detail/vector.hpp>
@@ -66,7 +50,7 @@ namespace detail {
  */
 template <size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U <= L), void>::type
 split(fixed_vector<dsfloat, N> const& v, fixed_vector<float, N>& hi, fixed_vector<float, N>& lo)
 {
     tie(hi[L], lo[L]) = split(v[L]);
@@ -74,7 +58,7 @@ split(fixed_vector<dsfloat, N> const& v, fixed_vector<float, N>& hi, fixed_vecto
 
 template <size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U > L), void>::type
 split(fixed_vector<dsfloat, N> const& v, fixed_vector<float, N>& hi, fixed_vector<float, N>& lo)
 {
     split<N, L, (L + U) / 2>(v, hi, lo);
@@ -96,7 +80,7 @@ split(fixed_vector<dsfloat, N> const& v)
  */
 template <typename T, typename S, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U <= L), void>::type
 operator+=(fixed_vector<T, N>& v, fixed_vector<S, N> const& w)
 {
     v[L] += static_cast<T>(w[L]);
@@ -104,7 +88,7 @@ operator+=(fixed_vector<T, N>& v, fixed_vector<S, N> const& w)
 
 template <typename T, typename S, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U > L), void>::type
 operator+=(fixed_vector<T, N>& v, fixed_vector<S, N> const& w)
 {
     operator+=<T, S, N, L, (L + U) / 2>(v, w);
@@ -113,7 +97,7 @@ operator+=(fixed_vector<T, N>& v, fixed_vector<S, N> const& w)
 
 template <typename T, typename S, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_convertible<S, T>, fixed_vector<T, N>&>::type
+typename std::enable_if<std::is_convertible<S, T>::value, fixed_vector<T, N>&>::type
 operator+=(fixed_vector<T, N>& v, fixed_vector<S, N> const& w)
 {
     operator+=<T, S, N, 0, N - 1>(v, w);
@@ -125,7 +109,7 @@ operator+=(fixed_vector<T, N>& v, fixed_vector<S, N> const& w)
  */
 template <typename T, typename S, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U <= L), void>::type
 operator-=(fixed_vector<T, N>& v, fixed_vector<S, N> const& w)
 {
     v[L] -= static_cast<T>(w[L]);
@@ -133,7 +117,7 @@ operator-=(fixed_vector<T, N>& v, fixed_vector<S, N> const& w)
 
 template <typename T, typename S, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U > L), void>::type
 operator-=(fixed_vector<T, N>& v, fixed_vector<S, N> const& w)
 {
     operator-=<T, S, N, L, (L + U) / 2>(v, w);
@@ -142,7 +126,7 @@ operator-=(fixed_vector<T, N>& v, fixed_vector<S, N> const& w)
 
 template <typename T, typename S, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_convertible<S, T>, fixed_vector<T, N>&>::type
+typename std::enable_if<std::is_convertible<S, T>::value, fixed_vector<T, N>&>::type
 operator-=(fixed_vector<T, N>& v, fixed_vector<S, N> const& w)
 {
     operator-=<T, S, N, 0, N - 1>(v, w);
@@ -154,7 +138,7 @@ operator-=(fixed_vector<T, N>& v, fixed_vector<S, N> const& w)
  */
 template <typename T, typename S, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U <= L), void>::type
 operator*=(fixed_vector<T, N>& v, S const& s)
 {
     v[L] *= static_cast<T>(s);
@@ -162,7 +146,7 @@ operator*=(fixed_vector<T, N>& v, S const& s)
 
 template <typename T, typename S, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U > L), void>::type
 operator*=(fixed_vector<T, N>& v, S const& s)
 {
     operator*=<T, S, N, L, (L + U) / 2>(v, s);
@@ -171,7 +155,7 @@ operator*=(fixed_vector<T, N>& v, S const& s)
 
 template <typename T, typename S, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_convertible<S, T>, fixed_vector<T, N>&>::type
+typename std::enable_if<std::is_convertible<S, T>::value, fixed_vector<T, N>&>::type
 operator*=(fixed_vector<T, N>& v, S const& s)
 {
     operator*=<T, S, N, 0, N - 1>(v, s);
@@ -183,7 +167,7 @@ operator*=(fixed_vector<T, N>& v, S const& s)
  */
 template <typename T, typename S, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U <= L), void>::type
 operator/=(fixed_vector<T, N>& v, S const& s)
 {
     v[L] /= static_cast<T>(s);
@@ -191,7 +175,7 @@ operator/=(fixed_vector<T, N>& v, S const& s)
 
 template <typename T, typename S, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U > L), void>::type
 operator/=(fixed_vector<T, N>& v, S const& s)
 {
     operator/=<T, S, N, L, (L + U) / 2>(v, s);
@@ -200,7 +184,7 @@ operator/=(fixed_vector<T, N>& v, S const& s)
 
 template <typename T, typename S, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_convertible<S, T>, fixed_vector<T, N>&>::type
+typename std::enable_if<std::is_convertible<S, T>::value, fixed_vector<T, N>&>::type
 operator/=(fixed_vector<T, N>& v, S const& s)
 {
     operator/=<T, S, N, 0, N - 1>(v, s);
@@ -212,7 +196,7 @@ operator/=(fixed_vector<T, N>& v, S const& s)
  */
 template <typename T, typename S, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U <= L), void>::type
 operator%=(fixed_vector<T, N>& v, S const& s)
 {
     v[L] %= static_cast<T>(s);
@@ -220,7 +204,7 @@ operator%=(fixed_vector<T, N>& v, S const& s)
 
 template <typename T, typename S, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U > L), void>::type
 operator%=(fixed_vector<T, N>& v, S const& s)
 {
     operator%=<T, S, N, L, (L + U) / 2>(v, s);
@@ -229,7 +213,7 @@ operator%=(fixed_vector<T, N>& v, S const& s)
 
 template <typename T, typename S, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::and_<boost::is_integral<T>, boost::is_integral<S> >, fixed_vector<T, N>&>::type
+typename std::enable_if<std::is_integral<T>::value && std::is_integral<S>::value, fixed_vector<T, N>&>::type
 operator%=(fixed_vector<T, N>& v, S const& s)
 {
     operator%=<T, S, N, 0, N - 1>(v, s);
@@ -263,7 +247,7 @@ fixed_vector<T, N> operator-(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
  */
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U <= L), void>::type
 operator-(fixed_vector<T, N>& v)
 {
     v[L] = -v[L];
@@ -271,7 +255,7 @@ operator-(fixed_vector<T, N>& v)
 
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U > L), void>::type
 operator-(fixed_vector<T, N>& v)
 {
     operator-<T, N, L, (L + U) / 2>(v);
@@ -291,7 +275,7 @@ fixed_vector<T, N> operator-(fixed_vector<T, N> v)
  */
 template <typename T, typename S, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_convertible<S, T>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_convertible<S, T>::value, fixed_vector<T, N>>::type
 operator*(fixed_vector<T, N> v, S const& s)
 {
     v *= s;
@@ -303,7 +287,7 @@ operator*(fixed_vector<T, N> v, S const& s)
  */
 template <typename T, typename S, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_convertible<S, T>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_convertible<S, T>::value, fixed_vector<T, N>>::type
 operator*(S const& s, fixed_vector<T, N> v)
 {
     v *= s;
@@ -315,7 +299,7 @@ operator*(S const& s, fixed_vector<T, N> v)
  */
 template <typename T, typename S, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_convertible<S, T>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_convertible<S, T>::value, fixed_vector<T, N>>::type
 operator/(fixed_vector<T, N> v, S const& s)
 {
     v /= s;
@@ -327,7 +311,7 @@ operator/(fixed_vector<T, N> v, S const& s)
  */
 template <typename T, typename S, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::and_<boost::is_integral<T>, boost::is_integral<S> >, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_integral<T>::value && std::is_integral<S>::value, fixed_vector<T, N>>::type
 operator%(fixed_vector<T, N> v, S const& s)
 {
     v %= s;
@@ -340,7 +324,7 @@ operator%(fixed_vector<T, N> v, S const& s)
  */
 template <typename T, typename S, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, bool>::type
+typename std::enable_if<(U <= L), bool>::type
 operator==(fixed_vector<T, N> const& v, fixed_vector<S, N> const& w)
 {
     return v[L] == static_cast<T>(w[L]);
@@ -348,7 +332,7 @@ operator==(fixed_vector<T, N> const& v, fixed_vector<S, N> const& w)
 
 template <typename T, typename S, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, bool>::type
+typename std::enable_if<(U > L), bool>::type
 operator==(fixed_vector<T, N> const& v, fixed_vector<S, N> const& w)
 {
     return
@@ -358,7 +342,7 @@ operator==(fixed_vector<T, N> const& v, fixed_vector<S, N> const& w)
 
 template <typename T, typename S, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_convertible<S, T>, bool>::type
+typename std::enable_if<std::is_convertible<S, T>::value, bool>::type
 operator==(fixed_vector<T, N> const& v, fixed_vector<S, N> const& w)
 {
     return operator==<T, S, N, 0, N - 1>(v, w);
@@ -369,7 +353,7 @@ operator==(fixed_vector<T, N> const& v, fixed_vector<S, N> const& w)
  */
 template <typename T, size_t N, size_t L, size_t S>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<S>, boost::mpl::int_<L> >, T>::type
+typename std::enable_if<(S <= L), T>::type
 inner_prod(fixed_vector<T, N> const& v, fixed_vector<T, N> const& w)
 {
     return v[L] * w[L];
@@ -377,7 +361,7 @@ inner_prod(fixed_vector<T, N> const& v, fixed_vector<T, N> const& w)
 
 template <typename T, size_t N, size_t L, size_t S>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<S>, boost::mpl::int_<L> >, T>::type
+typename std::enable_if<(S > L), T>::type
 inner_prod(fixed_vector<T, N> const& v, fixed_vector<T, N> const& w)
 {
     return inner_prod<T, N, L, (L + S) / 2>(v, w) + inner_prod<T, N, (L + S) / 2 + 1, S>(v, w);
@@ -395,7 +379,7 @@ T inner_prod(fixed_vector<T, N> const& v, fixed_vector<T, N> const& w)
  */
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U <= L), void>::type
 element_prod(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 {
     v[L] *= w[L];
@@ -403,7 +387,7 @@ element_prod(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U > L), void>::type
 element_prod(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 {
     element_prod<T, N, L, (L + U) / 2>(v, w);
@@ -423,7 +407,7 @@ fixed_vector<T, N> element_prod(fixed_vector<T, N> v, fixed_vector<T, N> const& 
  */
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U <= L), void>::type
 element_div(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 {
     v[L] /= w[L];
@@ -431,7 +415,7 @@ element_div(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U > L), void>::type
 element_div(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 {
     element_div<T, N, L, (L + U) / 2>(v, w);
@@ -451,7 +435,7 @@ fixed_vector<T, N> element_div(fixed_vector<T, N> v, fixed_vector<T, N> const& w
  */
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U <= L), void>::type
 element_mod(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 {
     v[L] %= w[L];
@@ -459,7 +443,7 @@ element_mod(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U > L), void>::type
 element_mod(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 {
     element_mod<T, N, L, (L + U) / 2>(v, w);
@@ -468,7 +452,7 @@ element_mod(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_integral<T>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_integral<T>::value, fixed_vector<T, N> >::type
 element_mod(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
 {
     element_mod<T, N, 0, N - 1>(v, w);
@@ -480,7 +464,7 @@ element_mod(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
  */
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U <= L), void>::type
 element_min(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 {
     HALMD_GPU_USING(::min, std::min);
@@ -489,7 +473,7 @@ element_min(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U > L), void>::type
 element_min(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 {
     element_min<T, N, L, (L + U) / 2>(v, w);
@@ -509,7 +493,7 @@ fixed_vector<T, N> element_min(fixed_vector<T, N> v, fixed_vector<T, N> const& w
  */
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U <= L), void>::type
 element_max(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 {
     HALMD_GPU_USING(::max, std::max);
@@ -518,7 +502,7 @@ element_max(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, void>::type
+typename std::enable_if<(U > L), void>::type
 element_max(fixed_vector<T, N>& v, fixed_vector<T, N> const& w)
 {
     element_max<T, N, L, (L + U) / 2>(v, w);
@@ -538,7 +522,7 @@ fixed_vector<T, N> element_max(fixed_vector<T, N> v, fixed_vector<T, N> const& w
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_same<T, double>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_same<T, double>::value, fixed_vector<T, N> >::type
 floor(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -552,7 +536,7 @@ floor(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_same<T, float>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_same<T, float>::value, fixed_vector<T, N> >::type
 floor(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -566,7 +550,7 @@ floor(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_same<T, double>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_same<T, double>::value, fixed_vector<T, N> >::type
 ceil(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -580,7 +564,7 @@ ceil(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_same<T, float>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_same<T, float>::value, fixed_vector<T, N> >::type
 ceil(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -594,7 +578,7 @@ ceil(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_floating_point<T>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_floating_point<T>::value, fixed_vector<T, N> >::type
 sqrt(fixed_vector<T, N> v)
 {
     HALMD_GPU_USING(::sqrt, std::sqrt);
@@ -609,7 +593,7 @@ sqrt(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_floating_point<T>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_floating_point<T>::value, fixed_vector<T, N> >::type
 cos(fixed_vector<T, N> v)
 {
     HALMD_GPU_USING(::cos, std::cos);
@@ -624,7 +608,7 @@ cos(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_floating_point<T>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_floating_point<T>::value, fixed_vector<T, N> >::type
 sin(fixed_vector<T, N> v)
 {
     HALMD_GPU_USING(::sin, std::sin);
@@ -639,7 +623,7 @@ sin(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_floating_point<T>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_floating_point<T>::value, fixed_vector<T, N> >::type
 fabs(fixed_vector<T, N> v)
 {
     HALMD_GPU_USING(::fabs, std::fabs);
@@ -679,7 +663,7 @@ remainder(fixed_vector<float, N> v, fixed_vector<float, N> const& w)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_floating_point<T>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_floating_point<T>::value, fixed_vector<T, N> >::type
 fmod(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
 {
     HALMD_GPU_USING(::fmod, std::fmod);
@@ -694,7 +678,7 @@ fmod(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_same<T, double>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_same<T, double>::value, fixed_vector<T, N> >::type
 rint(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -705,7 +689,7 @@ rint(fixed_vector<T, N> v)
 
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_same<T, float>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_same<T, float>::value, fixed_vector<T, N> >::type
 rint(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -719,7 +703,7 @@ rint(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_same<T, double>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_same<T, double>::value, fixed_vector<T, N> >::type
 round(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -730,7 +714,7 @@ round(fixed_vector<T, N> v)
 
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_same<T, float>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_same<T, float>::value, fixed_vector<T, N> >::type
 round(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {

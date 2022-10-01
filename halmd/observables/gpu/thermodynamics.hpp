@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2016 Felix Höfling
+ * Copyright © 2020      Roya Ebrahimi Viand
+ * Copyright © 2010-2012 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2010-2012 Peter Colberg
  *
@@ -113,6 +114,11 @@ public:
      */
     virtual stress_tensor_type const& stress_tensor();
 
+    /**
+     * Compute mean heat flux per particle.
+     */
+    virtual vector_type const& heat_flux();
+
 private:
     typedef typename particle_type::size_type size_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
@@ -146,6 +152,8 @@ private:
     double virial_;
     /** mean stress tensor elements per particle */
     stress_tensor_type stress_tensor_;
+    /** mean heat_flux per particle */
+    vector_type heat_flux_;
 
     /** cache observers of mean kinetic energy per particle */
     std::tuple<cache<>, cache<>> en_kin_cache_;
@@ -161,6 +169,8 @@ private:
     std::tuple<cache<>, cache<>> virial_cache_;
     /** cache observers of mean stress tensor elements per particle */
     std::tuple<cache<>, cache<>, cache<>> stress_tensor_cache_;
+    /** cache observers of mean heat_flux per particle */
+    std::tuple<cache<>, cache<>, cache<>, cache<>> heat_flux_cache_;
 
     typedef halmd::utility::profiler::accumulator_type accumulator_type;
     typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
@@ -174,6 +184,7 @@ private:
         accumulator_type en_pot;
         accumulator_type virial;
         accumulator_type stress_tensor;
+        accumulator_type heat_flux;
     };
 
     /** profiling runtime accumulators */

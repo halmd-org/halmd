@@ -2,17 +2,21 @@ set(CMAKE_BUILD_TYPE_INIT "Release")
 
 if(DEFINED CMAKE_CXX_COMPILER_ID)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-
-    # HALMD requires a C++11 compiler, e.g. GCC 4.7.
-    # Remove -DNDEBUG from RelWithDebInfo to enable assert() and LOG_DEBUG/LOG_TRACE.
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.7)
-      message(FATAL_ERROR "Minimal supported version of GCC compiler is 4.7")
+    # HALMD requires a C++14 compiler, e.g. GCC 5.
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.0)
+      message(FATAL_ERROR "Minimal supported version of GCC compiler is 5.0")
     endif()
-    set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+
+    # Remove -DNDEBUG from RelWithDebInfo to enable assert() and LOG_DEBUG/LOG_TRACE.
+    set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++14 -pedantic")
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # HALMD requires a C++14 compiler, e.g. Clang 3.4.
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.4)
+      message(FATAL_ERROR "Minimal supported version of Clang compiler is 3.4")
+    endif()
 
     # Clang versions >= 3.9.1 issue warnings if a template specialization is
     # declared, but not defined in a compilation unit.
@@ -20,9 +24,9 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
     # units. This paradigm conforms to the C++ standards and is intended,
     # therefore the warnings are disabled.
     if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "3.9.1")
-      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic -Wno-undefined-var-template")
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++14 -pedantic -Wno-undefined-var-template")
     else()
-      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++14 -pedantic")
     endif()
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
@@ -55,7 +59,7 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
 endif()
 
 if(DEFINED CMAKE_CUDA_COMPILER_ID)
-  if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVCC")
+  if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
 
     # Compile for CUDA compute capability 3.5 (Kepler), and generate PTX 3.5 code
     # as well as binary code for this target. (The sm_XX parameter is adjusted
@@ -68,19 +72,7 @@ if(DEFINED CMAKE_CUDA_COMPILER_ID)
     # which brings only non-IEEE-compliant, single-precision floating-point
     # arithmetics. So we consider it safe to disable IEEE-compliance, which
     # has (small) performance penalties.
-    #
-    # CUDA versions starting from 6.5 do not support comute version 1.2 anymore,
-    # and 2.0 was deprecated in CUDA 9.0, so in these cases the default compute
-    # version is raised to 3.5 (Kepler) regardless.
-
-    #
-    # the following flags must be duplicated in /CMakeLists.txt for CMake without native CUDA support
-    #
-    if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 6.5)
-      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_12 -code=compute_12")
-    else()
-      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_35 -code=compute_35,sm_35 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true")
-    endif()
+    set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -arch=compute_60 -code=compute_60,sm_61 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true")
 
   else()
     message(WARNING "Unsupported CUDA compiler: ${CMAKE_CUDA_COMPILER_ID}")

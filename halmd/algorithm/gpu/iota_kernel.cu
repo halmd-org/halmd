@@ -35,7 +35,7 @@ iota(unsigned int* g_output, unsigned int size, unsigned int value)
     }
 }
 
-iota_kernel const iota_kernel::kernel = {
+iota_kernel iota_kernel::kernel = {
     &detail::iota
 };
 

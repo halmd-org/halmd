@@ -24,14 +24,11 @@
 
 #include <halmd/config.hpp>
 
-#include <boost/type_traits/is_convertible.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/type_traits/has_multiplies.hpp>
-#include <boost/utility/enable_if.hpp>
 #ifndef __CUDACC__
 # include <cmath>
 # include <stdint.h>
 #endif
+#include <type_traits>
 
 namespace halmd {
 namespace numeric {
@@ -45,9 +42,7 @@ namespace detail {
 // simple multiplication.
 //
 template <typename T>
-inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::has_multiplies<T>, T>::type
-element_prod(T const& v, T const& w)
+inline HALMD_GPU_ENABLED T element_prod(T const& v, T const& w)
 {
     return v * w;
 }
@@ -79,14 +74,14 @@ public:
     template <typename U>
     HALMD_GPU_ENABLED accumulator(
         accumulator<U> const& acc
-      , typename boost::enable_if<boost::is_convertible<U, T> >::type* dummy = 0
+      , typename std::enable_if<std::is_convertible<U, T>::value>::type* dummy = 0
     ) : n_(acc.n_), m_(acc.m_), v_(acc.v_) {}
 
     /**
      * Add value to accumulator.
      */
     template <typename V>
-    HALMD_GPU_ENABLED typename boost::enable_if<boost::is_convertible<V, T>, void>::type
+    HALMD_GPU_ENABLED typename std::enable_if<std::is_convertible<V, T>::value, void>::type
     operator()(V const& value)
     {
         //

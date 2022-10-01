@@ -1,5 +1,6 @@
 /*
  * Copyright © 2014 Felix Höfling
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -48,6 +49,7 @@ harmonic<dimension, float_type>::harmonic(
   : stiffness_(stiffness)
   , offset_(offset)
   , g_param_(stiffness.size())
+  , t_param_(g_param_)
   , logger_(logger)
 {
     // check parameter size
@@ -59,11 +61,11 @@ harmonic<dimension, float_type>::harmonic(
     LOG("potential offset: r₀ = " << offset_);
 
     // merge parameters in a single array and copy to device
-    cuda::host::vector<float4> param(g_param_.size());
+    cuda::memory::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         param[i] <<= tie(offset_[i], stiffness_[i]);
     }
-    cuda::copy(param, g_param_);
+    cuda::copy(param.begin(), param.end(), g_param_.begin());
 }
 
 template <int dimension, typename float_type>

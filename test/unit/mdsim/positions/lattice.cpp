@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE lattice
 #include <boost/test/unit_test.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <cmath>
@@ -44,6 +44,7 @@
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/utility/gpu/device.hpp>
+# include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
@@ -125,6 +126,8 @@ static vector_type wrap_element_min(vector_type const& v, vector_type const& w)
 template <typename modules_type>
 void lattice<modules_type>::test()
 {
+    using namespace boost::placeholders;
+
     typedef typename modules_type::vector_type vector_type;
     typedef typename modules_type::slab_type slab_type;
     BOOST_TEST_MESSAGE("#particles: " << npart << ", #unit cells: " << ncell <<
@@ -274,18 +277,18 @@ struct gpu_modules
 };
 
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( lattice_gpu_float_2d, device ) {
+BOOST_FIXTURE_TEST_CASE( lattice_gpu_float_2d, set_cuda_device ) {
     lattice<gpu_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( lattice_gpu_float_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( lattice_gpu_float_3d, set_cuda_device ) {
     lattice<gpu_modules<3, float> >().test();
 }
 # endif
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( lattice_gpu_dsfloat_2d, device ) {
+BOOST_FIXTURE_TEST_CASE( lattice_gpu_dsfloat_2d, set_cuda_device ) {
     lattice<gpu_modules<2, dsfloat> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( lattice_gpu_dsfloat_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( lattice_gpu_dsfloat_3d, set_cuda_device ) {
     lattice<gpu_modules<3, dsfloat> >().test();
 }
 # endif

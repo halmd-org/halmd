@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_ALGORITHM_GPU_BITS_CUH
-#define HALMD_ALGORITHM_GPU_BITS_CUH
+#ifndef HALMD_ALGORITHM_GPU_BITS_SWAP_CUH
+#define HALMD_ALGORITHM_GPU_BITS_SWAP_CUH
 
 //
 // Bits and pieces used in GPU algorithms
@@ -28,6 +28,7 @@
 namespace halmd {
 namespace algorithm {
 namespace gpu {
+namespace bits {
 
 /**
  * swap arguments
@@ -41,8 +42,9 @@ __device__ __host__ void swap(T& a, T& b)
 }
 
 
-} // namespace algorithm
+} // namespace bits
 } // namespace gpu
+} // namespace algorithm
 } // namespace halmd
 
-#endif /* ! HALMD_ALGORITHM_GPU_BITS_CUH */
+#endif /* ! HALMD_ALGORITHM_GPU_BITS_SWAP_CUH */

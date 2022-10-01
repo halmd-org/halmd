@@ -81,6 +81,7 @@ public:
       , matrix_type const& r_cut
       , double skin
       , double cell_occupancy = defaults::occupancy()
+      , bool unroll_force_loop = false
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -127,6 +128,11 @@ public:
         return stride_;
     }
 
+    virtual bool unroll_force_loop() const
+    {
+        return unroll_force_loop_;
+    }
+
 private:
     typedef typename particle_type::position_array_type position_array_type;
     typedef typename particle_type::reverse_id_array_type reverse_id_array_type;
@@ -156,9 +162,11 @@ private:
     /** (cutoff lengths + neighbour list skin)² */
     matrix_type rr_cut_skin_;
     /** (cutoff lengths + neighbour list skin)² */
-    cuda::vector<float> g_rr_cut_skin_;
+    cuda::memory::device::vector<float> g_rr_cut_skin_;
     /** FIXME average desired cell occupancy */
     float nu_cell_;
+    /** transpose list */
+    bool unroll_force_loop_;
     /** neighbour lists */
     cache<array_type> g_neighbour_;
     /** cache observer for neighbour list update */
@@ -167,6 +175,7 @@ private:
     unsigned int size_;
     /** neighbour list stride */
     unsigned int stride_;
+
     /** profiling runtime accumulators */
     runtime runtime_;
     /** signal emitted before neighbour list update */
