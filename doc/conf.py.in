@@ -186,7 +186,7 @@ latex_elements = {
 'pointsize': '11pt',
 
 # Additional stuff for the LaTeX preamble.
-#'preamble': '',
+'preamble': '\\renewcommand\\vec[1]{\\boldsymbol #1}'
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -229,7 +229,7 @@ imgmath_dvipng = '@DVIPNG_CONVERTER@'
 #imgmath_latex_args = []
 
 # Additional LaTeX code to put into the preamble.
-#imgmath_latex_preamble = ''
+imgmath_latex_preamble = '\\renewcommand\\vec[1]{\\boldsymbol #1}'
 
 # Additional arguments to give to dvipng, as a list.
 #imgmath_dvipng_args = ['-gamma 1.5', '-D 110']
