@@ -105,7 +105,7 @@ local h5 = assert(libhalmd.h5)
 --
 -- .. method:: virial()
 --
---    Returns mean virial per particle as computed from the trace of the
+--    Returns the mean virial per particle as computed from the trace of the
 --    potential part of the stress tensor:
 --
 --    .. math::
@@ -133,9 +133,9 @@ local h5 = assert(libhalmd.h5)
 --
 -- .. method:: heat_flux()
 --
---    Returns the average heat flux *per particle* (not per volume), computed
---    from the particle's velocities, their potential energy, and the potential
---    part of the stress tensor as follows:
+--    Returns the mean heat flux per particle, computed from the particles'
+--    velocities, their potential energy, and the potential part of the stress
+--    tensor as follows:
 --
 --    .. math::
 --
@@ -143,6 +143,18 @@ local h5 = assert(libhalmd.h5)
 --          U_{\text{tot},i} + \frac{1}{2} m_i \vec v_i^2
 --          - \frac{1}{2}\sum_{j \neq i} r_{ij} U'(r_{ij})
 --      \right] \vec v_i \/.
+--
+--    .. note::
+--
+--      The above formula seems to be an incorrect simplification of the actual
+--      expression for the heat flux [#Irv50]_ [#Sur19]_:
+--
+--      .. math::
+--
+--        \vec J = \frac{1}{N} \sum_{i=1}^N \left[
+--            \left(U_{\text{tot},i} + \frac{1}{2} m_i \vec v_i^2\right) \vec v_i
+--            - \frac{1}{2}\sum_{j \neq i} \frac{\vec r_{ij}}{r_{ij}} \, U'(r_{ij}) \, (\vec r_{ij} \cdot \vec v_i)
+--        \right] .
 --
 -- .. attribute:: dimension
 --
@@ -182,6 +194,12 @@ local h5 = assert(libhalmd.h5)
 --    .. method:: disconnect()
 --
 --       Disconnect thermodynamics writer from observables sampler.
+--
+--    .. rubric:: References
+--
+--    .. [#Irv50] J. H. Irving and J. G. Kirkwood, `J. Chem. Phys. 18, 817 <https://doi.org/10.1063/1.1747782>`_ (1950).
+--
+--    .. [#Sur19] D. Surblys *et al.*, `Phys. Rev. E 99, 051301(R) <https://doi.org/10.1103/PhysRevE.99.051301>`_ (2019).
 --
 local M = module(function(args)
     local group = utility.assert_kwarg(args, "group")
