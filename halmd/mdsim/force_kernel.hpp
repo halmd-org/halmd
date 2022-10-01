@@ -31,17 +31,36 @@ namespace mdsim {
 /**
  * Diagonal and off-diagonal elements of distance tensor
  */
+
+template <typename float_type>
+HALMD_GPU_ENABLED typename type_traits<3, float_type>::stress_tensor_type
+make_stress_tensor(fixed_vector<float_type, 3> const& r, fixed_vector<float_type, 3> const& f)
+{
+    typename type_traits<3, float_type>::stress_tensor_type v;
+    v[0] = r[0] * f[0];
+    v[1] = r[1] * f[1];
+    v[2] = r[2] * f[2];
+    v[3] = r[0] * f[1];
+    v[4] = r[0] * f[2];
+    v[5] = r[1] * f[2];
+    return v;
+}
+
 template <typename float_type>
 HALMD_GPU_ENABLED typename type_traits<3, float_type>::stress_tensor_type
 make_stress_tensor(fixed_vector<float_type, 3> const& r)
 {
-    typename type_traits<3, float_type>::stress_tensor_type v;
-    v[0] = r[0] * r[0];
-    v[1] = r[1] * r[1];
-    v[2] = r[2] * r[2];
-    v[3] = r[0] * r[1];
-    v[4] = r[0] * r[2];
-    v[5] = r[1] * r[2];
+    return make_stress_tensor(r, r);
+}
+
+template <typename float_type>
+HALMD_GPU_ENABLED typename type_traits<2, float_type>::stress_tensor_type
+make_stress_tensor(fixed_vector<float_type, 2> const& r, fixed_vector<float_type, 2> const& f)
+{
+    typename type_traits<2, float_type>::stress_tensor_type v;
+    v[0] = r[0] * f[0];
+    v[1] = r[1] * f[1];
+    v[2] = r[0] * f[1];
     return v;
 }
 
@@ -49,13 +68,8 @@ template <typename float_type>
 HALMD_GPU_ENABLED typename type_traits<2, float_type>::stress_tensor_type
 make_stress_tensor(fixed_vector<float_type, 2> const& r)
 {
-    typename type_traits<2, float_type>::stress_tensor_type v;
-    v[0] = r[0] * r[0];
-    v[1] = r[1] * r[1];
-    v[2] = r[0] * r[1];
-    return v;
+    return make_stress_tensor(r, r);
 }
-
 
 /**
  * In GPU memory, the stress tensor contribution from each particle is stored

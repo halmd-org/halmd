@@ -522,12 +522,25 @@ fixed_vector<T, N> element_max(fixed_vector<T, N> v, fixed_vector<T, N> const& w
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename std::enable_if<std::is_floating_point<T>::value, fixed_vector<T, N>>::type
+typename std::enable_if<std::is_same<T, double>::value, fixed_vector<T, N> >::type
 floor(fixed_vector<T, N> v)
 {
-    HALMD_GPU_USING(::floor, std::floor);
     for (size_t i = 0; i < N; ++i) {
-        v[i] = floor(v[i]);
+        v[i] = ::floor(v[i]);
+    }
+    return v;
+}
+
+/**
+ * Elementwise round to nearest integer not greater than argument
+ */
+template <typename T, size_t N>
+inline HALMD_GPU_ENABLED
+typename std::enable_if<std::is_same<T, float>::value, fixed_vector<T, N> >::type
+floor(fixed_vector<T, N> v)
+{
+    for (size_t i = 0; i < N; ++i) {
+        v[i] = ::floorf(v[i]);
     }
     return v;
 }
@@ -537,12 +550,25 @@ floor(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename std::enable_if<std::is_floating_point<T>::value, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_same<T, double>::value, fixed_vector<T, N> >::type
 ceil(fixed_vector<T, N> v)
 {
-    HALMD_GPU_USING(::ceil, std::ceil);
     for (size_t i = 0; i < N; ++i) {
-        v[i] = ceil(v[i]);
+        v[i] = ::ceil(v[i]);
+    }
+    return v;
+}
+
+/**
+ * Elementwise round to nearest integer not less argument
+ */
+template <typename T, size_t N>
+inline HALMD_GPU_ENABLED
+typename std::enable_if<std::is_same<T, float>::value, fixed_vector<T, N> >::type
+ceil(fixed_vector<T, N> v)
+{
+    for (size_t i = 0; i < N; ++i) {
+        v[i] = ::ceilf(v[i]);
     }
     return v;
 }

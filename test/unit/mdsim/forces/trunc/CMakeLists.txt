@@ -13,6 +13,7 @@ if(HALMD_WITH_pair_lennard_jones)
   endif()
   target_link_libraries(test_unit_mdsim_forces_trunc_smooth_r4
     halmd_mdsim_host_potentials_pair_lennard_jones
+    halmd_mdsim
     ${HALMD_TEST_LIBRARIES}
   )
   add_test(unit/mdsim/forces/trunc/smooth_r4/host
