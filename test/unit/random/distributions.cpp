@@ -64,26 +64,27 @@ void test_rand48_gpu( unsigned long n )
     unsigned seed = time(NULL);
     using halmd::random::gpu::rand48;
 
-    BOOST_TEST_MESSAGE("generate " << n << " uniformly distributed random numbers on the GPU");
-
     try {
+        cuda::memory::device::vector<float> g_array(n);
+        cuda::memory::host::vector<float> h_array(n);
+
+        BOOST_TEST_MESSAGE("generate " << n << " uniformly distributed random numbers on the GPU");
+
         // seed GPU random number generator
         rand48 rng(BLOCKS, THREADS);
         rng.seed(seed);
 
         // parallel GPU rand48
-        cuda::memory::device::vector<float> g_array(n);
         halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform.configure(
             rng.dim.grid, rng.dim.block);
         halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform(
             g_array, g_array.size(), rng.rng());
         cuda::thread::synchronize();
 
-        cuda::memory::host::vector<float> h_array(n);
         cuda::copy(g_array.begin(), g_array.end(), h_array.begin());
 
         halmd::accumulator<double> a;
-        for (unsigned long i=0; i < n; i++) {
+        for (unsigned long i = 0; i < n; i++) {
             a(h_array[i]);
          }
 
@@ -101,6 +102,43 @@ void test_rand48_gpu( unsigned long n )
         val = 1./12;
         tol = 1 * std::sqrt(1. / (n - 1) * (1./5));
         BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
+
+        // test Gaussian distribution
+        BOOST_TEST_MESSAGE("generate " << n << " normally distributed random numbers on the GPU");
+
+        // parallel GPU rand48
+        halmd::random::gpu::get_random_kernel<rand48::rng_type>().normal.configure(
+            rng.dim.grid, rng.dim.block);
+        halmd::random::gpu::get_random_kernel<rand48::rng_type>().normal(
+            g_array, g_array.size(), 0, 1, rng.rng());
+        cuda::thread::synchronize();
+
+        cuda::copy(g_array.begin(), g_array.end(), h_array.begin());
+
+        a = halmd::accumulator<double>();
+        halmd::accumulator<double> a3, a4;
+        for (unsigned long i = 0; i < n; ++i) {
+            double x = h_array[i];
+
+            a(x);
+            a3(x * x * x);
+            a4(x * x * x * x);
+         }
+
+        // mean = 0, std = 1
+        BOOST_CHECK_EQUAL(count(a), n);
+        tol = 4.5 * sigma(a) / std::sqrt(n - 1.);     // tolerance = 4.5 sigma (passes in 99.999% of all cases)
+        BOOST_CHECK_SMALL(mean(a), tol);
+        val = 1;
+        tol = 4.5 * std::sqrt( 1. / (n - 1) * 2);     // <X⁴> = 3 <X²>² = 3 ⇒ Var(X²) = 2
+        BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
+
+        // higher moments
+        tol = 4.5 * sigma(a3) / std::sqrt(n - 1.);    // <X³> = 0
+        BOOST_CHECK_SMALL(mean(a3), tol);
+        val = 3;                                     // <X⁴> = 3
+        tol = 4.5 * sigma(a4) / std::sqrt(n - 1.);
+        BOOST_CHECK_CLOSE_FRACTION(mean(a4), val, tol / val);
 
         // TODO: Kolmogorov-Smirnov test
         // see Knuth, vol. 2, ch. 3.3.B
@@ -129,7 +167,7 @@ void test_host_random( unsigned long n )
     BOOST_TEST_MESSAGE("generate " << n << " uniformly distributed random numbers on the host");
 
     halmd::accumulator<double> a;
-    for (unsigned i=0; i < n; i++) {
+    for (unsigned long i = 0; i < n; i++) {
         a(rng.uniform<double>());
     }
 
@@ -153,14 +191,17 @@ void test_host_random( unsigned long n )
 
     a = halmd::accumulator<double>();
     halmd::accumulator<double> a3, a4;
-    for (unsigned i=0; i < n; i++) {
-        // FIXME y is unused due to impractical host::random::normal design
+    for (unsigned long i = 0; i < n; i += 2) {
         double x, y;
         std::tie(x, y) = rng.normal(1.0);
         a(x);
+        a(y);
         double x2 = x * x;
+        double y2 = y * y;
         a3(x * x2);
+        a3(y * y2);
         a4(x2 * x2);
+        a4(y2 * y2);
     }
 
     // mean = 0, std = 1
