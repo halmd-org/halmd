@@ -225,6 +225,7 @@ HALMD_TEST_INIT( init_unit_test_suite )
     using namespace boost::unit_test::framework;
 
     std::vector<unsigned long> counts;
+    counts.push_back(1000);
     counts.push_back(10000);
     counts.push_back(100000);
     counts.push_back(1000000);

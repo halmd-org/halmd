@@ -67,8 +67,14 @@ __global__ void normal(float* v, unsigned int len, float mean, float sigma, Rng 
 {
     typename Rng::state_type state = rng[GTID];
 
-    for (unsigned int k = GTID; k < len; k += 2 * GTDIM) {
-        tie(v[k], v[k + GTID]) = normal(rng, state, mean, sigma);
+    for (unsigned int k = 2 * GTID; k < len - 1; k += 2 * GTDIM) {
+        tie(v[k], v[k + 1]) = normal(rng, state, mean, sigma);
+    }
+
+    // if len is odd we need to still write the last element (in the first thread)
+    if (GTID == 0 && len % 2 == 1) {
+        float discard;
+        tie(v[len - 1], discard) = normal(rng, state, mean, sigma);
     }
 
     rng[GTID] = state;
