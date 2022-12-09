@@ -34,6 +34,7 @@
 #ifdef HALMD_WITH_GPU
 # include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/random/gpu/random_kernel.hpp>
+# include <halmd/random/gpu/mrg32k3a.hpp>
 # include <halmd/random/gpu/rand48.hpp>
 # include <test/tools/cuda.hpp>
 #endif
@@ -60,10 +61,9 @@ const unsigned THREADS = 128;
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
-void test_gpu_rand48_uniform(unsigned long n)
+template <typename Rng>
+void test_gpu_uniform(unsigned long n)
 {
-    using halmd::random::gpu::rand48;
-
     unsigned int seed = time(nullptr);
     double val, tol;
 
@@ -74,12 +74,13 @@ void test_gpu_rand48_uniform(unsigned long n)
         BOOST_TEST_MESSAGE("generate " << n << " uniformly distributed random numbers on the GPU");
 
         // seed GPU random number generator
-        rand48 rng(BLOCKS, THREADS);
+        Rng rng(BLOCKS, THREADS);
         rng.seed(seed);
 
         // parallel GPU rand48
-        halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform.configure(rng.dim.grid, rng.dim.block);
-        halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform(g_array, g_array.size(), rng.rng());
+        auto kernel = halmd::random::gpu::get_random_kernel<typename Rng::rng_type>();
+        kernel.uniform.configure(rng.dim.grid, rng.dim.block);
+        kernel.uniform(g_array, g_array.size(), rng.rng());
         cuda::thread::synchronize();
 
         cuda::copy(g_array.begin(), g_array.end(), h_array.begin());
@@ -112,10 +113,9 @@ void test_gpu_rand48_uniform(unsigned long n)
     }
 }
 
-void test_gpu_rand48_normal(unsigned long n)
+template <typename Rng>
+void test_gpu_normal(unsigned long n)
 {
-    using halmd::random::gpu::rand48;
-
     unsigned int seed = time(nullptr);
     double val, tol;
 
@@ -126,12 +126,13 @@ void test_gpu_rand48_normal(unsigned long n)
         BOOST_TEST_MESSAGE("generate " << n << " normally distributed random numbers on the GPU");
 
         // seed GPU random number generator
-        rand48 rng(BLOCKS, THREADS);
+        Rng rng(BLOCKS, THREADS);
         rng.seed(seed);
 
         // parallel GPU rand48
-        halmd::random::gpu::get_random_kernel<rand48::rng_type>().normal.configure(rng.dim.grid, rng.dim.block);
-        halmd::random::gpu::get_random_kernel<rand48::rng_type>().normal(g_array, g_array.size(), 0, 1, rng.rng());
+        auto kernel = halmd::random::gpu::get_random_kernel<typename Rng::rng_type>();
+        kernel.normal.configure(rng.dim.grid, rng.dim.block);
+        kernel.normal(g_array, g_array.size(), 0, 1, rng.rng());
         cuda::thread::synchronize();
 
         cuda::copy(g_array.begin(), g_array.end(), h_array.begin());
@@ -267,7 +268,17 @@ HALMD_TEST_INIT( init_unit_test_suite )
     master_test_suite().add(BOOST_PARAM_TEST_CASE(&test_host_uniform, counts.begin(), counts.end()-2));
     master_test_suite().add(BOOST_PARAM_TEST_CASE(&test_host_normal, counts.begin(), counts.end()-2));
 #ifdef HALMD_WITH_GPU
-    master_test_suite().add(BOOST_PARAM_TEST_CASE(&test_gpu_rand48_uniform, counts.begin(), counts.end()));
-    master_test_suite().add(BOOST_PARAM_TEST_CASE(&test_gpu_rand48_normal, counts.begin(), counts.end()));
+    master_test_suite().add(BOOST_PARAM_TEST_CASE(
+        &test_gpu_uniform<halmd::random::gpu::rand48>, counts.begin(), counts.end()
+    ));
+    master_test_suite().add(BOOST_PARAM_TEST_CASE(
+        &test_gpu_uniform<halmd::random::gpu::mrg32k3a>, counts.begin(), counts.end()
+    ));
+    master_test_suite().add(BOOST_PARAM_TEST_CASE(
+        &test_gpu_normal<halmd::random::gpu::rand48>, counts.begin(), counts.end()
+    ));
+    master_test_suite().add(BOOST_PARAM_TEST_CASE(
+        &test_gpu_normal<halmd::random::gpu::mrg32k3a>, counts.begin(), counts.end()
+    ));
 #endif
 }
