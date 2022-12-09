@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010  Felix Höfling
+ * Copyright © 2022  Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -43,11 +44,6 @@
 // test random number generators in combination with accumulator class
 //
 
-#ifdef HALMD_WITH_GPU
-
-const unsigned BLOCKS = 64;
-const unsigned THREADS = 128;
-
 struct stochastic_test
 {
     stochastic_test()
@@ -55,14 +51,21 @@ struct stochastic_test
         BOOST_TEST_MESSAGE("This test has a stochastic outcome. It shall fail less than once in 10000 passes.");
     }
 };
-
-BOOST_GLOBAL_FIXTURE( set_cuda_device );
 BOOST_GLOBAL_FIXTURE( stochastic_test );
 
-void test_rand48_gpu( unsigned long n )
+#ifdef HALMD_WITH_GPU
+
+const unsigned BLOCKS = 64;
+const unsigned THREADS = 128;
+
+BOOST_GLOBAL_FIXTURE( set_cuda_device );
+
+void test_gpu_rand48_uniform(unsigned long n)
 {
-    unsigned seed = time(NULL);
     using halmd::random::gpu::rand48;
+
+    unsigned int seed = time(nullptr);
+    double val, tol;
 
     try {
         cuda::memory::device::vector<float> g_array(n);
@@ -75,10 +78,8 @@ void test_rand48_gpu( unsigned long n )
         rng.seed(seed);
 
         // parallel GPU rand48
-        halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform.configure(
-            rng.dim.grid, rng.dim.block);
-        halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform(
-            g_array, g_array.size(), rng.rng());
+        halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform.configure(rng.dim.grid, rng.dim.block);
+        halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform(g_array, g_array.size(), rng.rng());
         cuda::thread::synchronize();
 
         cuda::copy(g_array.begin(), g_array.end(), h_array.begin());
@@ -94,29 +95,48 @@ void test_rand48_gpu( unsigned long n )
         // mean = 1/2, variance = 1/12, N-th moment is 1/(N+1)
         // use tolerance = 4.5 sigma, so the test passes with 99.999% probability
         // (assuming a normal distribution of the measured value, which is true for large n)
-        double val = 0.5;
-        double tol = 4.5 * sigma(a) / std::sqrt(n - 1.);
+        val = 0.5;
+        tol = 4.5 * sigma(a) / std::sqrt(n - 1.);
         BOOST_CHECK_CLOSE_FRACTION(mean(a), val, tol / val);
 
         // Var(ΣX^2/N) = E(X^4)/N
         val = 1./12;
         tol = 1 * std::sqrt(1. / (n - 1) * (1./5));
         BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
+    }
+    catch (cuda::error const& e) {
+        BOOST_FAIL("(CUDA error) " << e.what());
+    }
+    catch (std::exception const& e) {
+        BOOST_FAIL(e.what());
+    }
+}
 
-        // test Gaussian distribution
+void test_gpu_rand48_normal(unsigned long n)
+{
+    using halmd::random::gpu::rand48;
+
+    unsigned int seed = time(nullptr);
+    double val, tol;
+
+    try {
+        cuda::memory::device::vector<float> g_array(n);
+        cuda::memory::host::vector<float> h_array(n);
+
         BOOST_TEST_MESSAGE("generate " << n << " normally distributed random numbers on the GPU");
 
+        // seed GPU random number generator
+        rand48 rng(BLOCKS, THREADS);
+        rng.seed(seed);
+
         // parallel GPU rand48
-        halmd::random::gpu::get_random_kernel<rand48::rng_type>().normal.configure(
-            rng.dim.grid, rng.dim.block);
-        halmd::random::gpu::get_random_kernel<rand48::rng_type>().normal(
-            g_array, g_array.size(), 0, 1, rng.rng());
+        halmd::random::gpu::get_random_kernel<rand48::rng_type>().normal.configure(rng.dim.grid, rng.dim.block);
+        halmd::random::gpu::get_random_kernel<rand48::rng_type>().normal(g_array, g_array.size(), 0, 1, rng.rng());
         cuda::thread::synchronize();
 
         cuda::copy(g_array.begin(), g_array.end(), h_array.begin());
 
-        a = halmd::accumulator<double>();
-        halmd::accumulator<double> a3, a4;
+        halmd::accumulator<double> a, a3, a4;
         for (unsigned long i = 0; i < n; ++i) {
             double x = h_array[i];
 
@@ -125,8 +145,10 @@ void test_rand48_gpu( unsigned long n )
             a4(x * x * x * x);
          }
 
-        // mean = 0, std = 1
+        // check count, mean, and variance
         BOOST_CHECK_EQUAL(count(a), n);
+
+        // mean = 0, std = 1
         tol = 4.5 * sigma(a) / std::sqrt(n - 1.);     // tolerance = 4.5 sigma (passes in 99.999% of all cases)
         BOOST_CHECK_SMALL(mean(a), tol);
         val = 1;
@@ -154,11 +176,12 @@ void test_rand48_gpu( unsigned long n )
 
 #endif /* HALMD_WITH_GPU */
 
-void test_host_random( unsigned long n )
+void test_host_uniform(unsigned long n)
 {
     typedef halmd::random::host::random RandomNumberGenerator;
 
-    unsigned seed = time(NULL);
+    unsigned int seed = time(nullptr);
+    double val, tol;
 
     // seed host random number generator
     RandomNumberGenerator rng(seed);
@@ -177,20 +200,29 @@ void test_host_random( unsigned long n )
     // mean = 1/2, variance = 1/12, N-th moment is 1/(N+1)
     // use tolerance = 4.5 sigma, so the test passes with 99.999% probability
     // (assuming a normal distribution of the measured value, which is true for large n)
-    double val = 0.5;
-    double tol = 4.5 * sigma(a) / std::sqrt(n - 1.);
+    val = 0.5;
+    tol = 4.5 * sigma(a) / std::sqrt(n - 1.);
     BOOST_CHECK_CLOSE_FRACTION(mean(a), val, tol / val);
 
     // Var(ΣX^2/N) = E(X^4)/N
     val = 1./12;
     tol = 1 * std::sqrt(1. / (n - 1) * (1./5));
     BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
+}
 
-    // test Gaussian distribution
+void test_host_normal(unsigned long n)
+{
+    typedef halmd::random::host::random RandomNumberGenerator;
+
+    unsigned int seed = time(nullptr);
+    double val, tol;
+
+    // seed host random number generator
+    RandomNumberGenerator rng(seed);
+
     BOOST_TEST_MESSAGE("generate " << n << " normally distributed random numbers on the host");
 
-    a = halmd::accumulator<double>();
-    halmd::accumulator<double> a3, a4;
+    halmd::accumulator<double> a, a3, a4;
     for (unsigned long i = 0; i < n; i += 2) {
         double x, y;
         std::tie(x, y) = rng.normal(1.0);
@@ -232,10 +264,10 @@ HALMD_TEST_INIT( init_unit_test_suite )
     counts.push_back(10000000);
     counts.push_back(100000000);
 
-    master_test_suite().add(
-        BOOST_PARAM_TEST_CASE(&test_host_random, counts.begin(), counts.end()-2));
+    master_test_suite().add(BOOST_PARAM_TEST_CASE(&test_host_uniform, counts.begin(), counts.end()-2));
+    master_test_suite().add(BOOST_PARAM_TEST_CASE(&test_host_normal, counts.begin(), counts.end()-2));
 #ifdef HALMD_WITH_GPU
-    master_test_suite().add(
-        BOOST_PARAM_TEST_CASE(&test_rand48_gpu, counts.begin(), counts.end()));
+    master_test_suite().add(BOOST_PARAM_TEST_CASE(&test_gpu_rand48_uniform, counts.begin(), counts.end()));
+    master_test_suite().add(BOOST_PARAM_TEST_CASE(&test_gpu_rand48_normal, counts.begin(), counts.end()));
 #endif
 }
