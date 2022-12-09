@@ -51,13 +51,15 @@ public:
     {}
 
     /**
-     * setup kernel with seed 
+     * setup kernel with seed
      */
     void seed(unsigned int value)
     {
-        cuda::configure(dim.grid, dim.block);
+        auto kernel = get_mrg32k3a_kernel();
+
+        kernel.seed.configure(dim.grid, dim.block);
         // initialize generator with seed
-        get_mrg32k3a_kernel().seed(g_state_, value);
+        kernel.seed(g_state_, value);
 
         rng_.g_state = g_state_.data();
     }
@@ -70,7 +72,7 @@ public:
     }
 
 private:
-    cuda::vector<curandStateMRG32k3a> g_state_;
+    cuda::memory::device::vector<rng_type::state_type> g_state_;
     mrg32k3a_rng rng_;
 };
 

@@ -33,12 +33,14 @@ namespace gpu {
  */
 struct mrg32k3a_wrapper
 {
-    cuda::function<void (curandStateMRG32k3a*, uint)> seed;
-    static mrg32k3a_wrapper const kernel;
+    typedef mrg32k3a_rng rng_type;
+
+    cuda::function<void (rng_type::state_type*, unsigned int)> seed;
+    static mrg32k3a_wrapper kernel;
 };
 
 // syntactic sugar
-inline mrg32k3a_wrapper const& get_mrg32k3a_kernel()
+inline mrg32k3a_wrapper& get_mrg32k3a_kernel()
 {
     return mrg32k3a_wrapper::kernel;
 }

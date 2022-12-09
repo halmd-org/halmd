@@ -56,7 +56,7 @@ __global__ void seed(curandStateMRG32k3a *state, uint seed)
 /**
  * CUDA C++ wrappers
  */
-mrg32k3a_wrapper const mrg32k3a_wrapper::kernel = {
+mrg32k3a_wrapper mrg32k3a_wrapper::kernel = {
   mrg32k3a_kernel::seed
 };
 
