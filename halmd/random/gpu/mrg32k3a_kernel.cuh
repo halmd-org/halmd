@@ -18,19 +18,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-//
-// This is a parallel version of the Unix rand48 generator for CUDA.
-// It is based on the rand48 generator of the GNU Scientific Library.
-// The file rng/rand48.c was written by James Theiler and Brian Gough
-// and is licensed under the GPL v3 or later.
-//
-
 #ifndef HALMD_RANDOM_GPU_MRG32K3A_KERNEL_CUH
 #define HALMD_RANDOM_GPU_MRG32K3A_KERNEL_CUH
 
 #include <curand_kernel.h>
+
 #include <halmd/config.hpp>
-#include <halmd/numeric/mp/uint48.hpp>
 
 namespace halmd {
 namespace random {
@@ -55,7 +48,7 @@ struct mrg32k3a_rng
 inline __device__ float uniform(mrg32k3a_rng const& rng, mrg32k3a_rng::state_type& state)
 {
     double variate = curand_uniform(&state);
-    return (float) variate;
+    return static_cast<float>(variate);
 }
 
 /**
@@ -64,7 +57,7 @@ inline __device__ float uniform(mrg32k3a_rng const& rng, mrg32k3a_rng::state_typ
 inline __device__ unsigned int get(mrg32k3a_rng const& rng, mrg32k3a_rng::state_type& state)
 {
     unsigned int variate = curand(&state);
-    return variate ;
+    return variate;
 }
 
 } // namespace random

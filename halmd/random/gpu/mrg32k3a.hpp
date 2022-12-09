@@ -21,9 +21,6 @@
 #ifndef HALMD_RANDOM_GPU_MRG32K3A_HPP
 #define HALMD_RANDOM_GPU_MRG32K3A_HPP
 
-#include <algorithm>
-#include <iostream>
-
 #include <halmd/random/gpu/mrg32k3a_kernel.hpp>
 
 namespace halmd {

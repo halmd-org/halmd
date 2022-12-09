@@ -22,6 +22,7 @@
 #define HALMD_RANDOM_GPU_MRG32K3A_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+
 #include <halmd/random/gpu/mrg32k3a_kernel.cuh>
 
 namespace halmd {
