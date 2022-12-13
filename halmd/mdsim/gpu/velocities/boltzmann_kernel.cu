@@ -161,10 +161,14 @@ boltzmann_wrapper<dimension, float_type, rng_type> boltzmann_wrapper<dimension, 
 };
 
 #ifdef USE_GPU_SINGLE_PRECISION
+template class boltzmann_wrapper<3, float, random::gpu::mrg32k3a_rng>;
+template class boltzmann_wrapper<2, float, random::gpu::mrg32k3a_rng>;
 template class boltzmann_wrapper<3, float, random::gpu::rand48_rng>;
 template class boltzmann_wrapper<2, float, random::gpu::rand48_rng>;
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class boltzmann_wrapper<3, dsfloat, random::gpu::mrg32k3a_rng>;
+template class boltzmann_wrapper<2, dsfloat, random::gpu::mrg32k3a_rng>;
 template class boltzmann_wrapper<3, dsfloat, random::gpu::rand48_rng>;
 template class boltzmann_wrapper<2, dsfloat, random::gpu::rand48_rng>;
 #endif

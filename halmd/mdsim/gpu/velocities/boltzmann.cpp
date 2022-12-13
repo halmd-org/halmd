@@ -141,10 +141,14 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_velocities_boltzmann(lua_State* L)
 {
 #ifdef USE_GPU_SINGLE_PRECISION
+    boltzmann<3, float, random::gpu::mrg32k3a>::luaopen(L);
+    boltzmann<2, float, random::gpu::mrg32k3a>::luaopen(L);
     boltzmann<3, float, random::gpu::rand48>::luaopen(L);
     boltzmann<2, float, random::gpu::rand48>::luaopen(L);
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    boltzmann<3, dsfloat, random::gpu::mrg32k3a>::luaopen(L);
+    boltzmann<2, dsfloat, random::gpu::mrg32k3a>::luaopen(L);
     boltzmann<3, dsfloat, random::gpu::rand48>::luaopen(L);
     boltzmann<2, dsfloat, random::gpu::rand48>::luaopen(L);
 #endif
@@ -153,10 +157,14 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_velocities_boltzmann(lua_State* L)
 
 // explicit instantiation
 #ifdef USE_GPU_SINGLE_PRECISION
+template class boltzmann<3, float, random::gpu::mrg32k3a>;
+template class boltzmann<2, float, random::gpu::mrg32k3a>;
 template class boltzmann<3, float, random::gpu::rand48>;
 template class boltzmann<2, float, random::gpu::rand48>;
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class boltzmann<3, dsfloat, random::gpu::mrg32k3a>;
+template class boltzmann<2, dsfloat, random::gpu::mrg32k3a>;
 template class boltzmann<3, dsfloat, random::gpu::rand48>;
 template class boltzmann<2, dsfloat, random::gpu::rand48>;
 #endif
