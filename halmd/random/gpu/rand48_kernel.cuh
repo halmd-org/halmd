@@ -56,17 +56,6 @@ struct rand48_rng
 };
 
 /**
- * returns uniform random number in [0.0, 1.0)
- */
-inline __device__ float uniform(rand48_rng const& rng, rand48_rng::state_type& state)
-{
-    uint48 const a = rng.a, c = rng.c;
-    float variate = state.z / 65536.f + state.y / 4294967296.f;
-    state = muladd(a, state, c);
-    return variate;
-}
-
-/**
  * returns random integer in [0, 2^32-1]
  */
 inline __device__ unsigned int get(rand48_rng const& rng, rand48_rng::state_type& state)

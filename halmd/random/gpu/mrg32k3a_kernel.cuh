@@ -43,15 +43,6 @@ struct mrg32k3a_rng
 };
 
 /**
- * returns uniform random number in [0.0, 1.0)
- */
-inline __device__ float uniform(mrg32k3a_rng const& rng, mrg32k3a_rng::state_type& state)
-{
-    double variate = curand_uniform(&state);
-    return static_cast<float>(variate);
-}
-
-/**
  * returns random integer in [0, 2^32-1]
  */
 inline __device__ unsigned int get(mrg32k3a_rng const& rng, mrg32k3a_rng::state_type& state)
