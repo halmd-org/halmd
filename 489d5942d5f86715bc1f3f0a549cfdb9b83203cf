@@ -1,0 +1,113 @@
+Return-path: <manuel@dibak.de>
+Delivery-date: Fri, 13 Jan 2023 08:32:49 +0100
+Received: from deliver1.zedat.fu-berlin.de ([130.133.4.79])
+          by mbox4.zedat.fu-berlin.de (Exim 4.95)
+          for hoefling@zedat.fu-berlin.de with esmtps (TLS1.2)
+          tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+          (envelope-from <manuel@dibak.de>)
+          id 1pGEYT-003eIw-NJ; Fri, 13 Jan 2023 08:32:49 +0100
+Received: from dispatch2.zedat.fu-berlin.de ([130.133.4.71])
+          by deliver1.zedat.fu-berlin.de (Exim 4.95)
+          for hoefling@zedat.fu-berlin.de with esmtps (TLS1.2)
+          tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+          (envelope-from <manuel@dibak.de>)
+          id 1pGEYT-0042LU-M6; Fri, 13 Jan 2023 08:32:49 +0100
+Received: from dispatch1.zedat.fu-berlin.de ([130.133.4.70])
+          by dispatch2.zedat.fu-berlin.de (Exim 4.95)
+          for hoefling@zedat.fu-berlin.de with esmtps (TLS1.2)
+          tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+          (envelope-from <manuel@dibak.de>)
+          id 1pGEYJ-000Gly-78; Fri, 13 Jan 2023 08:32:39 +0100
+Received: from inpost1.zedat.fu-berlin.de ([130.133.4.68])
+          by dispatch1.zedat.fu-berlin.de (Exim 4.95)
+          for hoefling@zedat.fu-berlin.de with esmtps (TLS1.2)
+          tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+          (envelope-from <manuel@dibak.de>)
+          id 1pGEYG-003pNm-R4; Fri, 13 Jan 2023 08:32:36 +0100
+Received: from outpost1.zedat.fu-berlin.de ([130.133.4.66])
+          by inpost1.zedat.fu-berlin.de (Exim 4.95)
+          for hoefling@zedat.fu-berlin.de with esmtps (TLS1.3)
+          tls TLS_AES_256_GCM_SHA384
+          (envelope-from <manuel@dibak.de>)
+          id 1pGEYG-000zly-Od; Fri, 13 Jan 2023 08:32:36 +0100
+Received: from relay1.zedat.fu-berlin.de ([130.133.4.67])
+          by outpost.zedat.fu-berlin.de (Exim 4.95)
+          for hoefling@zedat.fu-berlin.de with esmtps (TLS1.3)
+          tls TLS_AES_256_GCM_SHA384
+          (envelope-from <manuel@dibak.de>)
+          id 1pGEYG-000YJP-Ml; Fri, 13 Jan 2023 08:32:36 +0100
+Received: from mout.kundenserver.de ([212.227.126.130])
+          by relay1.zedat.fu-berlin.de (Exim 4.95)
+          for f.hoefling@fu-berlin.de with esmtps (TLS1.3)
+          tls TLS_AES_256_GCM_SHA384
+          (envelope-from <manuel@dibak.de>)
+          id 1pGEYG-000LH9-Jv; Fri, 13 Jan 2023 08:32:36 +0100
+Received: from [192.168.0.228] ([95.91.209.217]) by mrelayeu.kundenserver.de
+ (mreue011 [212.227.15.167]) with ESMTPSA (Nemesis) id
+ 1MSswA-1pBNxF0ZKA-00UKzP for <f.hoefling@fu-berlin.de>; Fri, 13 Jan 2023
+ 08:32:19 +0100
+Message-ID: <c3acab3c-52fa-e073-7ab6-e95ef2d3de8e@dibak.de>
+Date: Fri, 13 Jan 2023 08:32:18 +0100
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.13.0
+Subject: =?UTF-8?Q?Re=3a_Lizenz_f=c3=bcr_Deine_HALMD-Beitr=c3=a4ge?=
+Content-Language: de-DE
+To: =?UTF-8?Q?Felix_H=c3=b6fling?= <f.hoefling@fu-berlin.de>
+References: <1672821944028.385385404.157826687@fu-berlin.de>
+From: Manuel Dibak <manuel@dibak.de>
+In-Reply-To: <1672821944028.385385404.157826687@fu-berlin.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Provags-ID: V03:K1:J465y3QseQ4arb2dNdfAqX/nn5dJG8Oza9PhQjwsCcJBuEkTiuz
+ U//UM/9UE7byZOxGKLs6lqQZVOtS+p2vlC/cL/ai6IfrmoQG9AiZPwmL3Hgr4L4rKzZL3bE
+ WESXsOZYK7pWOl/fZlpIOC0Htrvt6BgsPJgs/LzMXiN1urP/bGuzHh8OtYOzQPQIB1x0ix2
+ nJ72b+gu0sSKJKctVZT1g==
+UI-OutboundReport: notjunk:1;M01:P0:xKs8HwEfzCE=;Tfv7865CtKCy2w0Vo+zy06PFP9W
+ l8iaNLCiOCT/5RciknQULhjN8gItzmJBIWdnbsPCrF+W16YNlDcp0VHxS117hwRpjq8xdVvX5
+ Pw3HM6uNMU20+0lZb77XX9S3VvCFG2WNJzuNdA7J7vQb3BE6CQvQE1yr08ore+sBt9dqlY85l
+ 6qMzFzDOLGlRzdZH/rFfCZ6N0AkxGBleKUqh+aqo2zUKaNBoBaHD9XSqCLs08r4VqdjIvWSfO
+ +mGiZ/TJibOLnfzgMHmGoRQVddeRZNyubTOasMlJdAxHyRjXqop2vchD0kg4aziE/4ffqSprg
+ 2h8vQ4dc1nBpGgxzwPi9BRmfmhYHEBgjqn6JDTdM8thCjShbNpK1WtiNx+qkCHdte/9kTugEP
+ Js1ZHnwpfRW/NYDMHZaLO/tYgGTH4pT/qTtElX7dVT6WnPkuJKd1ZTNXJwDaqMIyAxHMTIct7
+ xIs9XNISgQm2GkpYjOqVNBJy+iIPQVUFw1Kr97zvFYov7IV2ihueOLWGpPJr/SMJMPj2VXSFA
+ cCk+Zgz2XEDGtnzD0bSfL690I29RlVvJCNfC+2Rbp+i08YM/Rt15/0RRH/gxc/nhetd5c+9Ub
+ L2B997qQuhJ1IYh55Je/DywgIg4c1EcwZceCJMdR45mUAT9R3W24pp7wiJG4ziuiRKACC1U31
+ daomQ7KwI1Z7b7JYwAMVVnR+ON6OM08QOvA4Ulqguw==
+X-Originating-IP: 212.227.126.130
+X-purgate: clean
+X-purgate-type: clean
+X-purgate-ID: 151147::1673595156-819964E9-CE11446A/0/0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000146, version=1.2.4
+X-Spam-Flag: NO
+X-Spam-Status: No, score=0.2 required=5.0 tests=NICE_REPLY_A,RCVD_IN_MSPIKE_H2,
+	RCVD_IN_SCIENTIFICSPAM,SPF_HELO_NONE,SPF_NONE
+X-Spam-Checker-Version: SpamAssassin 3.4.6 on Kiribati.ZEDAT.FU-Berlin.DE
+
+Lieber Felix,
+
+mir geht es soweit ganz gut. Ich bin etwas mehr als einem Jahr bei
+Zalando und der Anfang war durchaus eine Herausforderung, aber
+inzwischen komme ich gut zurecht.
+Wie geht es Dir?
+
+Der Lizenzänderung stimme ich gerne zu. Es würde mich freuen, wenn meine
+Beiträge jemandem nützlich sind.
+
+Viele Grüße und Dir ebenso alles Gute für das neue Jahr
+Manuel
+
+On 1/4/23 09:56, Felix Höfling wrote:
+> Lieber Manuel,
+>
+> es ist ja schon etwas her seit unseren gemeinsamen Projekten. Wie geht es Dir? Hast Du einen guten Start ins "echte" Leben (außerhalb der Uni) gehabt?
+>
+> Ich schreibe wegen Deiner Beiträge zu HAL's MD-Software, die sind bisher noch nicht veröffentlicht und wir würden sie gern mit in den master-Branch aufnehmen. Ein Student hat hier in den letzten Monaten viel aufgeräumt und sortiert. Jetzt hat sich leider ein juristisches Problem ergeben: als Du Deine Feature-Branches abgezweigt hattest, war HALMD noch unter GPL-Lizenz, folglich sind alle Deine Beiträge unter der GPL. Etwas später hatten wir dann die Lizenz auf die LGPL aufgeweicht (ursprünglich, um HALMD als MD-Engine in ReaDDy verwenden zu können, doch soweit kam es nie.). Damit sind Deine Features jetzt von der Lizenz her inkompatibel und damit unbrauchbar (nach der Gesetzen der Free Software Foundation), was irgendwie schade ist.
+>
+> Meine Frage: stimmst Du einer Veröffentlichung Deiner Beiträge zu HALMD unter der LGPL-Lizenz Version 3 zu? Das würde uns das Leben etwas leichter machen.
+> Viele Grüße und alles Gute für 2023!
+>
+>
+> Felix
+>
+>
