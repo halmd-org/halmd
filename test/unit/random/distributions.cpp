@@ -68,21 +68,24 @@ void test_gpu_uniform(unsigned long n)
     double val, tol;
 
     try {
-        cuda::memory::device::vector<float> g_array(n);
-        cuda::memory::host::vector<float> h_array(n);
-
-        BOOST_TEST_MESSAGE("generate " << n << " uniformly distributed random numbers on the GPU");
+        BOOST_TEST_MESSAGE("seed random number generator with " << seed);
 
         // seed GPU random number generator
         Rng rng(BLOCKS, THREADS);
         rng.seed(seed);
 
-        // parallel GPU rand48
+        // allocate GPU memory
+        cuda::memory::device::vector<float> g_array(n);
+
+        BOOST_TEST_MESSAGE("generate " << n << " uniformly distributed random numbers on the GPU");
+
+        // generate pseudo-random numbers in parallel
         auto kernel = halmd::random::gpu::get_random_kernel<typename Rng::rng_type>();
         kernel.uniform.configure(rng.dim.grid, rng.dim.block);
         kernel.uniform(g_array, g_array.size(), rng.rng());
         cuda::thread::synchronize();
 
+        cuda::memory::host::vector<float> h_array(n);
         cuda::copy(g_array.begin(), g_array.end(), h_array.begin());
 
         halmd::accumulator<double> a;
@@ -97,12 +100,12 @@ void test_gpu_uniform(unsigned long n)
         // use tolerance = 4.5 sigma, so the test passes with 99.999% probability
         // (assuming a normal distribution of the measured value, which is true for large n)
         val = 0.5;
-        tol = 4.5 * sigma(a) / std::sqrt(n - 1.);
+        tol = 4.5 * sigma(a) / std::sqrt(n - 1);
         BOOST_CHECK_CLOSE_FRACTION(mean(a), val, tol / val);
 
         // Var(ΣX^2/N) = E(X^4)/N
-        val = 1./12;
-        tol = 1 * std::sqrt(1. / (n - 1) * (1./5));
+        val = 1. / 12;
+        tol = 1 * std::sqrt(1. / (n - 1) * (1. / 5));
         BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
     }
     catch (cuda::error const& e) {
@@ -120,21 +123,24 @@ void test_gpu_normal(unsigned long n)
     double val, tol;
 
     try {
-        cuda::memory::device::vector<float> g_array(n);
-        cuda::memory::host::vector<float> h_array(n);
-
-        BOOST_TEST_MESSAGE("generate " << n << " normally distributed random numbers on the GPU");
+        BOOST_TEST_MESSAGE("seed random number generator with " << seed);
 
         // seed GPU random number generator
         Rng rng(BLOCKS, THREADS);
         rng.seed(seed);
 
-        // parallel GPU rand48
+        // allocate GPU memory
+        cuda::memory::device::vector<float> g_array(n);
+
+        BOOST_TEST_MESSAGE("generate " << n << " normally distributed random numbers on the GPU");
+
+        // generate pseudo-random numbers in parallel
         auto kernel = halmd::random::gpu::get_random_kernel<typename Rng::rng_type>();
         kernel.normal.configure(rng.dim.grid, rng.dim.block);
         kernel.normal(g_array, g_array.size(), 0, 1, rng.rng());
         cuda::thread::synchronize();
 
+        cuda::memory::host::vector<float> h_array(n);
         cuda::copy(g_array.begin(), g_array.end(), h_array.begin());
 
         halmd::accumulator<double> a, a3, a4;
@@ -144,28 +150,32 @@ void test_gpu_normal(unsigned long n)
             a(x);
             a3(x * x * x);
             a4(x * x * x * x);
-         }
+        }
 
         // check count, mean, and variance
         BOOST_CHECK_EQUAL(count(a), n);
 
         // mean = 0, std = 1
-        tol = 4.5 * sigma(a) / std::sqrt(n - 1.);     // tolerance = 4.5 sigma (passes in 99.999% of all cases)
+        tol = 4.5 * sigma(a) / std::sqrt(n - 1) ;     // tolerance = 4.5 sigma (passes in 99.999% of all cases)
         BOOST_CHECK_SMALL(mean(a), tol);
         val = 1;
         tol = 4.5 * std::sqrt( 1. / (n - 1) * 2);     // <X⁴> = 3 <X²>² = 3 ⇒ Var(X²) = 2
         BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
 
         // higher moments
-        tol = 4.5 * sigma(a3) / std::sqrt(n - 1.);    // <X³> = 0
+        tol = 4.5 * sigma(a3) / std::sqrt(n - 1);     // <X³> = 0
         BOOST_CHECK_SMALL(mean(a3), tol);
-        val = 3;                                     // <X⁴> = 3
-        tol = 4.5 * sigma(a4) / std::sqrt(n - 1.);
+        val = 3;                                      // <X⁴> = 3
+        tol = 4.5 * sigma(a4) / std::sqrt(n - 1);
         BOOST_CHECK_CLOSE_FRACTION(mean(a4), val, tol / val);
 
         // TODO: Kolmogorov-Smirnov test
         // see Knuth, vol. 2, ch. 3.3.B
         // lookup algorithm without sorting by Gonzalez et al.
+        //
+        // FH: testing the moments is already rather sensitive (and presumably
+        // better in this context than the KS test), testing for correlations
+        // may be more useful
     }
     catch (cuda::error const& e) {
         BOOST_FAIL("(CUDA error) " << e.what());
@@ -202,12 +212,12 @@ void test_host_uniform(unsigned long n)
     // use tolerance = 4.5 sigma, so the test passes with 99.999% probability
     // (assuming a normal distribution of the measured value, which is true for large n)
     val = 0.5;
-    tol = 4.5 * sigma(a) / std::sqrt(n - 1.);
+    tol = 4.5 * sigma(a) / std::sqrt(n - 1);
     BOOST_CHECK_CLOSE_FRACTION(mean(a), val, tol / val);
 
     // Var(ΣX^2/N) = E(X^4)/N
-    val = 1./12;
-    tol = 1 * std::sqrt(1. / (n - 1) * (1./5));
+    val = 1. / 12;
+    tol = 1 * std::sqrt(1. / (n - 1) * (1. / 5));
     BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
 }
 
@@ -239,17 +249,17 @@ void test_host_normal(unsigned long n)
 
     // mean = 0, std = 1
     BOOST_CHECK_EQUAL(count(a), n);
-    tol = 4.5 * sigma(a) / std::sqrt(n - 1.);     // tolerance = 4.5 sigma (passes in 99.999% of all cases)
+    tol = 4.5 * sigma(a) / std::sqrt(n - 1);      // tolerance = 4.5 sigma (passes in 99.999% of all cases)
     BOOST_CHECK_SMALL(mean(a), tol);
     val = 1;
     tol = 4.5 * std::sqrt( 1. / (n - 1) * 2);     // <X⁴> = 3 <X²>² = 3 ⇒ Var(X²) = 2
     BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
 
     // higher moments
-    tol = 4.5 * sigma(a3) / std::sqrt(n - 1.);    // <X³> = 0
+    tol = 4.5 * sigma(a3) / std::sqrt(n - 1);     // <X³> = 0
     BOOST_CHECK_SMALL(mean(a3), tol);
-    val = 3;                                     // <X⁴> = 3
-    tol = 4.5 * sigma(a4) / std::sqrt(n - 1.);
+    val = 3;                                      // <X⁴> = 3
+    tol = 4.5 * sigma(a4) / std::sqrt(n - 1);
     BOOST_CHECK_CLOSE_FRACTION(mean(a4), val, tol / val);
 }
 
@@ -265,9 +275,13 @@ HALMD_TEST_INIT( init_unit_test_suite )
     counts.push_back(10000000);
     counts.push_back(100000000);
 
-    master_test_suite().add(BOOST_PARAM_TEST_CASE(&test_host_uniform, counts.begin(), counts.end()-2));
-    master_test_suite().add(BOOST_PARAM_TEST_CASE(&test_host_normal, counts.begin(), counts.end()-2));
+    // skip the largest test sizes for the serial host implementation
+    master_test_suite().add(BOOST_PARAM_TEST_CASE(&test_host_uniform, counts.begin(), counts.end() - 2));
+    master_test_suite().add(BOOST_PARAM_TEST_CASE(&test_host_normal, counts.begin(), counts.end() - 2));
+
 #ifdef HALMD_WITH_GPU
+    // FIXME add label (or the like) for the RNG engine,
+    // matching the type within <...> in a --run_test filter does not seem to be possible
     master_test_suite().add(BOOST_PARAM_TEST_CASE(
         &test_gpu_uniform<halmd::random::gpu::rand48>, counts.begin(), counts.end()
     ));

@@ -39,8 +39,12 @@ end
 -- Random Numbers
 -- ==============
 --
--- This module provides pseudo-random number generators and random
--- distributions.
+-- This module provides pseudo-random number generators (RNGs) and random
+-- distributions. Supported generators are:
+--
+--   * Mersenne-Twister *MT19937* for the host CPU,
+--   * L’Ecuyer’s *MRG32k3a* for the GPU, and
+--   * a POSIX implementation of *rand48* for the GPU.
 --
 
 -- keep random number generators as singleton instances
@@ -50,7 +54,7 @@ local M = {}
 -- Get pseudo-random number generator.
 --
 -- :param table args: keyword arguments
--- :param string args.algorithm: RNG algorithm (*default:* ``mt19937`` on host and ``rand48`` on gpu)
+-- :param string args.algorithm: RNG algorithm (*default:* ``mt19937`` for the host and ``rand48`` for the GPU)
 -- :param string args.memory: ``host`` or ``gpu`` (*default:* compute device)
 -- :param number args.seed: initial seed value *(optional)*
 --
@@ -58,9 +62,11 @@ local M = {}
 --
 -- The first call for each memory argument constructs a singleton instance of
 -- the pseudo-random number generator, which is returned in subsequent calls.
+-- Unrelated RNG instances are constructed for the host CPU and the GPU.
 --
--- The argument ``algorithm`` specifies the RNG algorithm used and is either ``mt19937`` (host), ``rand48`` (gpu)
--- or ``MRG32k3a`` (gpu).
+-- The argument ``algorithm`` specifies the RNG algorithm used and is either
+-- ``mt19937`` if ``memory`` equals ``host`` and ``MRG32k3a`` or ``rand48`` if
+-- ``memory`` is ``gpu``.
 --
 -- If the argument ``seed`` is omitted, the initial seed is obtained from the
 -- system's random device, e.g., ``/dev/urandom`` on Linux.
