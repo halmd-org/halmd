@@ -54,7 +54,7 @@ local M = {}
 -- Get pseudo-random number generator.
 --
 -- :param table args: keyword arguments
--- :param string args.algorithm: RNG algorithm (*default:* ``mt19937`` for the host and ``rand48`` for the GPU)
+-- :param string args.algorithm: RNG algorithm (*default:* ``mt19937`` for the host and ``MRG32k3a`` for the GPU)
 -- :param string args.memory: ``host`` or ``gpu`` (*default:* compute device)
 -- :param number args.seed: initial seed value *(optional)*
 --
@@ -64,9 +64,9 @@ local M = {}
 -- the pseudo-random number generator, which is returned in subsequent calls.
 -- Unrelated RNG instances are constructed for the host CPU and the GPU.
 --
--- The argument ``algorithm`` specifies the RNG algorithm used and is either
--- ``mt19937`` if ``memory`` equals ``host`` and ``MRG32k3a`` or ``rand48`` if
--- ``memory`` is ``gpu``.
+-- The argument ``algorithm`` specifies the RNG algorithm to be used and is
+-- either ``mt19937`` if ``memory`` equals ``host`` and ``MRG32k3a`` or
+-- ``rand48`` if ``memory`` is ``gpu``.
 --
 -- If the argument ``seed`` is omitted, the initial seed is obtained from the
 -- system's random device, e.g., ``/dev/urandom`` on Linux.
@@ -89,7 +89,7 @@ function M.generator(args)
     if seed then
         utility.assert_type(seed, "number")
     end
-    local algorithm = args and args.algorithm or (memory == "gpu" and "rand48" or "mt19937")
+    local algorithm = args and args.algorithm or (memory == "gpu" and "MRG32k3a" or "mt19937")
 
     -- retrieve singleton instance if it exists
     local self = M[algorithm]
