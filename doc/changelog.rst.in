@@ -3,8 +3,8 @@
 Changelog
 *********
 
-Snapshot (master branch)
-========================
+Version 1.1.0
+=============
 
 **Breaking changes**
 
@@ -16,15 +16,24 @@ Snapshot (master branch)
 * remove unused CMake switches and parameters for build variants: FORCE_DSFUN,
   HILBERT_ALT_3D, DEVICE_SCALE *(Jaslo Ziska)*
 
+**New features**
+
+* add :mod:`cylinder geometry <halmd.mdsim.geometries.cylinder>` as a predicate
+  for the particle group :mod:`region <halmd.mdsim.particle_groups.region>`.
+  This enables the selection of particles inside or outside of a cylindrical
+  domain of the simulation box. *(Felix Höfling)*
+
 **Improvements**
 
-* New force algorithm to speed up calculation of truncated pair forces in case
+* new force algorithm to speed up calculation of truncated pair forces in case
   of small particle numbers. In such situations, GPU utilisation is increased
   by unrolling the loop over neighbour lists and processing it in parallel
   within a thread warp.  The algorithm is selected upon construction of the
   :mod:`neighbour <halmd.mdsim.neighbour>` module *(Jaslo Ziska)*
+
 * benchmark of the Kob-Andersen mixture: add a version for a tiny system,
   decrease skin width and increase neighbour list occupancy  *(Felix Höfling)*
+
 * support CUDA SDK 11 and Nvidida GPUs Tesla A40 and A100 *(Jaslo Ziska)*
 
 **Internal changes**
