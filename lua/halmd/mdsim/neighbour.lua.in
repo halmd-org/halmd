@@ -221,8 +221,8 @@ local M = module(function(args)
         -- module.
         if not neighbours.is_binning_compatible(binning[1], binning[2]) then
             binning = nil
-            log.info("binning parameters incompatible with neighbour list algorithm")
-            log.info("fall back to 'neighbours.from_particle'")
+            log.message("binning parameters incompatible with neighbour list algorithm")
+            log.message("fall back to 'neighbours.from_particle'")
         end
     end
 
