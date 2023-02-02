@@ -58,7 +58,7 @@ density_mode<dimension, float_type>::acquire()
         auto const& group = read_cache(group_cache);
         auto const& position = read_cache(position_cache);
 
-        LOG_TRACE("acquire sample");
+        LOG_DEBUG("acquire sample");
 
         scoped_timer_type timer(runtime_.acquire);
 

@@ -118,7 +118,7 @@ wavevector<dimension>::wavevector(
         wavenumber_.erase(q_it);
     }
 
-    LOG_DEBUG("total number of wavevectors found: " << wavevector_.size());
+    LOG_INFO("total number of wavevectors found: " << wavevector_.size());
 }
 
 template <int dimension>
@@ -159,7 +159,7 @@ wavevector<dimension>::wavevector(
     // max_n[j] = 0 implies q[j] = 0 below.
     max_n = element_prod(max_n, static_cast<index_type>(filter_));
 
-    LOG_DEBUG("grid points per dimension: " << (2 * max_n + index_type(1)));
+    LOG_INFO("grid points per dimension: " << (2 * max_n + index_type(1)));
 #ifndef NDEBUG
     ostringstream s;
     copy(begin(wavenumber_), end(wavenumber_), ostream_iterator<double>(s, " "));

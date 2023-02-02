@@ -94,7 +94,7 @@ cuda::config compute_kernel_dimensions(
                 if (c < factor * cost) {
                     cost = c;
                     warps_per_block = w;
-                    LOG_TRACE("update: warps: " << w << ", cost: " << c);
+                    LOG_DEBUG("update: warps: " << w << ", cost: " << c);
                 }
             }
         }
@@ -138,7 +138,7 @@ cuda::config configure_kernel(
 {
     dim = compute_kernel_dimensions(k, dim, fixed_total_threads, smem_per_thread);
 
-    LOG_TRACE("Configuring CUDA kernel for " << dim.blocks_per_grid() << " blocks of " << dim.threads_per_block() << " threads each");
+    LOG_DEBUG("Configuring CUDA kernel for " << dim.blocks_per_grid() << " blocks of " << dim.threads_per_block() << " threads each");
     k.configure(dim.grid, dim.block, smem_per_thread * dim.threads_per_block());
 
     return dim;

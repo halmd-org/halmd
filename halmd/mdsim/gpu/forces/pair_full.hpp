@@ -211,7 +211,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
     position_array_type const& position2 = read_cache(particle2_->position());
     auto force = make_cache_mutable(particle1_->mutable_force());
 
-    LOG_TRACE("compute forces");
+    LOG_DEBUG("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -242,7 +242,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
     auto en_pot = make_cache_mutable(particle1_->mutable_potential_energy());
     auto stress_pot = make_cache_mutable(particle1_->mutable_stress_pot());
 
-    LOG_TRACE("compute forces with auxiliary variables");
+    LOG_DEBUG("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute_aux);
 

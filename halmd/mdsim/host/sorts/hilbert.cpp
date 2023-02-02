@@ -90,7 +90,7 @@ hilbert<dimension, float_type>::hilbert(
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::order()
 {
-    LOG_TRACE("order particles after Hilbert space-filling curve");
+    LOG_DEBUG("order particles after Hilbert space-filling curve");
     {
         scoped_timer_type timer(runtime_.order);
         std::vector<unsigned int> index;

@@ -43,8 +43,8 @@ random<RandomNumberGenerator>::random(
   : rng_(blocks, threads)
 {
     LOG("random number generator type: " << rng_.name());
-    LOG_DEBUG("number of CUDA execution blocks: " << blocks);
-    LOG_DEBUG("number of CUDA execution threads per block: " << threads);
+    LOG_INFO("number of CUDA execution blocks: " << blocks);
+    LOG_INFO("number of CUDA execution threads per block: " << threads);
     random::seed(seed);
 }
 

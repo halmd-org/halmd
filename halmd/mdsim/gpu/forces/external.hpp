@@ -196,7 +196,7 @@ inline void external<dimension, float_type, potential_type>::compute_()
     position_array_type const& position = read_cache(particle_->position());
     auto force = make_cache_mutable(particle_->mutable_force());
 
-    LOG_TRACE("compute forces");
+    LOG_DEBUG("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -221,7 +221,7 @@ inline void external<dimension, float_type, potential_type>::compute_aux_()
     auto en_pot = make_cache_mutable(particle_->mutable_potential_energy());
     auto stress_pot = make_cache_mutable(particle_->mutable_stress_pot());
 
-    LOG_TRACE("compute forces with auxiliary variables");
+    LOG_DEBUG("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute_aux);
 

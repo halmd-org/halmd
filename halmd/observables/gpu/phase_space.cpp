@@ -142,7 +142,7 @@ public:
             auto const& data = host_cache_->acquire();                      // read particle data through host cache
             auto const& group = particle_group_->ordered_host_cached();
 
-            LOG_TRACE("updating sample");
+            LOG_DEBUG("updating sample");
 
             sample_ = std::make_shared<sample_type>(group.size());
             auto& sample_data = sample_->data();

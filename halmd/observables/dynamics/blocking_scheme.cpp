@@ -125,7 +125,7 @@ void blocking_scheme::sample()
 {
     on_prepend_sample_();
 
-    LOG_TRACE("append sample(s)");
+    LOG_DEBUG("append sample(s)");
 
     // check time step is same as upon construction
     if (clock_->timestep() != timestep_) {
@@ -172,7 +172,7 @@ void blocking_scheme::process(unsigned int level)
 {
     // call all registered correlation modules
     // and correlate block data with first entry
-    LOG_TRACE("compute correlations at blocking level " << level << " from step " << origin_[level]);
+    LOG_DEBUG("compute correlations at blocking level " << level << " from step " << origin_[level]);
     for (std::shared_ptr<correlation_base> tcf : tcf_) {
         tcf->compute(level);
     }

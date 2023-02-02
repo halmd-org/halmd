@@ -57,7 +57,7 @@ public:
     /** Aquire a new sample and add this to the total sum */
     void sample()
     {
-        LOG_TRACE("acquire sample");
+        LOG_DEBUG("acquire sample");
         acc_(sample_());
     }
 
@@ -95,7 +95,7 @@ public:
     /** reset the sum and number of samples to zero. */
     void reset()
     {
-        LOG_TRACE("reset accumulator");
+        LOG_DEBUG("reset accumulator");
         acc_.reset();
     }
 

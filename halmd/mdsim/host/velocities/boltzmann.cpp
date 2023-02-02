@@ -55,7 +55,7 @@ void boltzmann<dimension, float_type>::set()
 {
     scoped_timer_type timer(runtime_.set);
 
-    LOG_TRACE("assign Boltzmann-distributed velocities");
+    LOG_DEBUG("assign Boltzmann-distributed velocities");
 
     auto velocity = make_cache_mutable(particle_->velocity());
     mass_array_type const& mass = read_cache(particle_->mass());
@@ -92,7 +92,7 @@ void boltzmann<dimension, float_type>::set()
     }
 
     fixed_vector<double, dimension> v_cm = mv / m;
-    LOG_TRACE("shift velocities by " << -v_cm);
+    LOG_DEBUG("shift velocities by " << -v_cm);
     shift_velocity(*particle_, -v_cm);
 }
 

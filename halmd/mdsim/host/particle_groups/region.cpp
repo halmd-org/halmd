@@ -61,7 +61,7 @@ void region<dimension, float_type, geometry_type>::update_()
     if (position_cache != mask_cache_) {
         auto const& position = read_cache(position_cache);
 
-        LOG_TRACE("update selection mask for region");
+        LOG_DEBUG("update selection mask for region");
         scoped_timer_type timer(runtime_.update_mask);
 
         auto mask = make_cache_mutable(mask_);
@@ -107,7 +107,7 @@ region<dimension, float_type, geometry_type>::ordered() // ID order
 //        auto const& id = read_cache(particle_->id());
 
         LOG_WARNING("sorting selection of particle indices not yet implemented");
-//        LOG_TRACE("sorting selection of particle indices");
+//        LOG_DEBUG("sorting selection of particle indices");
         scoped_timer_type timer(runtime_.sort_selection);
 
         auto ordered = make_cache_mutable(ordered_);
