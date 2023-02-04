@@ -32,6 +32,5 @@ local module = require("halmd.utility.module")
 --    :glob:
 --
 --    *
---    adapters/index
 --
 return module.loader("halmd.mdsim.potentials.pair")

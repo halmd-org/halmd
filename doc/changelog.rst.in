@@ -18,7 +18,7 @@ Version 1.1.0
 
 **New features**
 
-* add :mod:`cylinder geometry <halmd.mdsim.geometries.cylinder>` as a predicate
+* add :mod:`cylinder <halmd.mdsim.geometries.cylinder>` geometry as a predicate
   for the particle group :mod:`region <halmd.mdsim.particle_groups.region>`.
   This enables the selection of particles inside or outside of a cylindrical
   domain of the simulation box. *(Felix Höfling)*

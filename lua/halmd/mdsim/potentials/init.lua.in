@@ -32,5 +32,6 @@ local module = require("halmd.utility.module")
 --
 --    external/index
 --    pair/index
+--    pair/adapters/index
 --
 return module.loader("halmd.mdsim.potentials")
