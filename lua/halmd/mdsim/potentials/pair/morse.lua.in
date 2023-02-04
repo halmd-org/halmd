@@ -36,7 +36,7 @@ local adapters          = require("halmd.mdsim.potentials.pair.adapters")
 -- .. math::
 --
 --    U_\text{Morse}\left(r_{ij}\right) = \epsilon_{ij} \left(
---        1 - e^{r_{ij}/\sigma_{ij} - r_{\text{min},ij}}
+--        1 - e^{-r_{ij}/\sigma_{ij} + r_{\text{min},ij}}
 --    \right)^2 - \epsilon_{ij}
 --
 -- for the interaction between two particles of species :math:`i` and :math:`j`.
