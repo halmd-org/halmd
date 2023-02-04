@@ -49,7 +49,7 @@ using namespace boost;
 using namespace halmd;
 using namespace std;
 
-/** test modified Lennard-Jones potential
+/** test the (truncated and shifted) modified Lennard-Jones potential
  *
  *  The host module is a conventional functor which can be tested directly. For
  *  the GPU module, we use the pair_trunc force module in two dimensions to

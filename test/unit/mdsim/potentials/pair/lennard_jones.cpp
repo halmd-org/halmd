@@ -251,7 +251,7 @@ struct make_potential<mdsim::gpu::potentials::pair::truncations::smooth_r4<base_
 
 /**
  * The tolerance for the GPU tests can be overridden for a specific
- * kind of potential trunctation.
+ * kind of potential truncation.
  *
  * This is necessary as the subtraction in the force_shifted potential
  * truncation is ill-conditioned.
