@@ -136,3 +136,37 @@ if(${HALMD_WITH_pair_power_law})
     endif()
   endif()
 endif()
+
+if(${HALMD_WITH_pair_morse})
+  add_executable(test_unit_mdsim_potentials_pair_morse
+    morse.cpp
+  )
+  if(HALMD_WITH_GPU)
+    target_link_libraries(test_unit_mdsim_potentials_pair_morse
+      halmd_mdsim_gpu_potentials_pair_morse
+      halmd_mdsim_gpu
+      halmd_algorithm_gpu
+      halmd_utility_gpu
+    )
+  endif()
+  target_link_libraries(test_unit_mdsim_potentials_pair_morse
+    halmd_mdsim_host_potentials_pair_morse
+    halmd_mdsim
+    ${HALMD_TEST_LIBRARIES}
+  )
+  add_test(unit/mdsim/potentials/pair/morse/host
+    test_unit_mdsim_potentials_pair_morse --run_test=morse_host --log_level=test_suite
+  )
+  if(HALMD_WITH_GPU)
+    if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+      halmd_add_gpu_test(unit/mdsim/potentials/pair/morse/gpu/float
+        test_unit_mdsim_potentials_pair_morse --run_test=morse_gpu_float --log_level=test_suite
+      )
+    endif()
+    if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+      halmd_add_gpu_test(unit/mdsim/potentials/pair/morse/gpu/dsfloat
+        test_unit_mdsim_potentials_pair_morse --run_test=morse_gpu_dsfloat --log_level=test_suite
+      )
+    endif()
+  endif()
+endif()
