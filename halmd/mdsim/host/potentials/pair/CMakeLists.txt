@@ -1,4 +1,10 @@
 halmd_add_potential(
+  halmd_mdsim_host_potentials_pair_custom
+  pair custom
+  custom.cpp
+)
+
+halmd_add_potential(
   halmd_mdsim_host_potentials_pair_lennard_jones
   pair lennard_jones
   lennard_jones.cpp

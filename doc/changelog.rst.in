@@ -18,6 +18,9 @@ Version 1.1.0
 
 **New features**
 
+* add a :mod:`custom <halmd.mdsim.potentials.pair.custom>` pair potential as a
+  template to be easily adjusted for user-specific pair potentials. *(Felix Höfing)*
+
 * add :mod:`cylinder <halmd.mdsim.geometries.cylinder>` geometry as a predicate
   for the particle group :mod:`region <halmd.mdsim.particle_groups.region>`.
   This enables the selection of particles inside or outside of a cylindrical

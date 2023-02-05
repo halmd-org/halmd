@@ -1,4 +1,11 @@
 halmd_add_potential(
+  halmd_mdsim_gpu_potentials_pair_custom
+  pair custom
+  custom.cpp
+  custom_kernel.cu
+)
+
+halmd_add_potential(
   halmd_mdsim_gpu_potentials_pair_lennard_jones
   pair lennard_jones
   lennard_jones.cpp

@@ -1,3 +1,37 @@
+if(${HALMD_WITH_pair_custom})
+  add_executable(test_unit_mdsim_potentials_pair_custom
+    custom.cpp
+  )
+  if(HALMD_WITH_GPU)
+    target_link_libraries(test_unit_mdsim_potentials_pair_custom
+      halmd_mdsim_gpu_potentials_pair_custom
+      halmd_mdsim_gpu
+      halmd_algorithm_gpu
+      halmd_utility_gpu
+    )
+  endif()
+  target_link_libraries(test_unit_mdsim_potentials_pair_custom
+    halmd_mdsim_host_potentials_pair_custom
+    halmd_mdsim
+    ${HALMD_TEST_LIBRARIES}
+  )
+  add_test(unit/mdsim/potentials/pair/custom/host
+    test_unit_mdsim_potentials_pair_custom --run_test=custom_host --log_level=test_suite
+  )
+  if(HALMD_WITH_GPU)
+    if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+      halmd_add_gpu_test(unit/mdsim/potentials/pair/custom/gpu/float
+        test_unit_mdsim_potentials_pair_custom --run_test=custom_gpu_float --log_level=test_suite
+      )
+    endif()
+    if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+      halmd_add_gpu_test(unit/mdsim/potentials/pair/custom/gpu/dsfloat
+        test_unit_mdsim_potentials_pair_custom --run_test=custom_gpu_dsfloat --log_level=test_suite
+      )
+    endif()
+  endif()
+endif()
+
 if(${HALMD_WITH_pair_lennard_jones})
   foreach(truncation ${HALMD_PAIR_POTENTIAL_TRUNCATIONS})
 
