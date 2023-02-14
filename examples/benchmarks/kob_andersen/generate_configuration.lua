@@ -31,7 +31,7 @@ local utility = halmd.utility
 -- Setup and run simulation
 --
 function main(args)
-    local nparticle = args.tiny and 4096 or 256000  -- total number of particles
+    local nparticle = args.tiny and 4000 or 256000  -- total number of particles
     local concentration = 0.8 -- concentration of A particles
     local density = 1.2       -- number density
     local temperature = 0.7   -- heat bath temperature
