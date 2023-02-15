@@ -2,6 +2,7 @@
 -- Copyright © 2013-2023 Felix Höfling
 -- Copyright © 2014      Nicolas Höft
 -- Copyright © 2011      Peter Colberg
+-- Copyright © 2023      Viktor Skoblin
 --
 -- This file is part of HALMD.
 --
@@ -162,6 +163,158 @@ function M.diag(m)
         t[i] = m[i][i]
     end
     return t
+end
+
+---
+-- Add two vectors elementwisely
+--
+--:param table t1: n-dimensional vector
+--:param table t2: n-dimensional vector
+--:returns: elementwise sum of two vectors
+--
+function M.add(t1, t2)
+    assert (#t1 == #t2)
+    local result = {}
+    for i, x in ipairs(t1) do
+        result[i] = t1[i] + t2[i]
+    end
+    return result
+end
+
+---
+-- Subtract two vectors elementwisely
+--
+--:param table t1: n-dimensional vector
+--:param table t2: n-dimensional vector
+--:returns: elementwise difference of two vectors
+--
+function M.subtract(t1, t2)
+    assert (#t1 == #t2)
+    local result = {}
+    for i, x in ipairs(t1) do
+        result[i] = t1[i] - t2[i]
+    end
+    return result
+end
+
+---
+-- Add a scalar value to all elements of a vector
+--
+--:param table t: n-dimensional vector
+--:param number a: the scalar to add
+--:returns: table with values bigger by a.
+--
+function M.add_scalar(t, a)
+    local result = {}
+    for i, x in ipairs(t) do
+        result[i] = x + a
+    end
+    return result
+end
+
+---
+-- Subtract a scalar value from all elements of a vector
+--
+--:param table t: n-dimensional vector
+--:param number a: the scalar to subtract
+--:returns: table with values less by a.
+--
+function M.subtract_scalar(t, a)
+    local result = {}
+    for i, x in ipairs(t) do
+        result[i] = x - a
+    end
+    return result
+end
+
+---
+-- Multiply two vectors elementwisely
+--
+--:param table t1: n-dimensional vector
+--:param table t2: n-dimensional vector
+--:returns: elementwise product of two vectors
+--
+function M.multiply(t1, t2)
+    assert (#t1 == #t2)
+    local result = {}
+    for i, x in ipairs(t1) do
+        result[i] = t1[i] * t2[i]
+    end
+    return result
+end
+
+---
+-- Multiply all elements of a vector with the same scalar
+--
+--:param number a: the scalar factor
+--:param table t: n-dimensional vector
+--:returns: table with values multiplied by a
+--
+function M.multiply_scalar(a, t)
+    local result = {}
+    for i, x in ipairs(t) do
+        result[i] = a * x
+    end
+    return result
+end
+
+---
+-- Divide two vectors elementwisely
+--
+--:param table t1: n-dimensional vector
+--:param table t2: n-dimensional vector
+--:returns: elementwise division of two vectors
+--
+function M.divide(t1, t2)
+    assert (#t1 == #t2)
+    local result = {}
+    for i, x in ipairs(t1) do
+        result[i] = t1[i] / t2[i]
+    end
+    return result
+end
+
+---
+-- Divide all elements of a vector by the same scalar value
+--
+--:param table t: n-dimensional vector
+--:param number a: the scalar divisor
+--:returns: table with values divided by a
+--
+function M.divide_scalar(t, a)
+    local result = {}
+    for i, x in ipairs(t) do
+        result[i] = x / a
+    end
+    return result
+end
+
+---
+-- Get 1-norm of a vector
+--
+--:param table t: n-dimensional vector
+--:returns: 1-norm of the vector
+--
+function M.norm_1(t)
+    local result = 0
+    for i, x in ipairs(t) do
+        result = result + math.abs(x)
+    end
+    return result
+end
+
+---
+-- Get 2-norm of a vector
+--
+--:param table t: n-dimensional vector
+--:returns: 2-norm of the vector
+--
+function M.norm_2(t)
+    local result = 0
+    for i, x in ipairs(t) do
+        result = result + x * x
+    end
+    return math.sqrt(result)
 end
 
 ---
