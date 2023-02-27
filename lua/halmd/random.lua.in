@@ -108,6 +108,9 @@ function M.generator(args)
         M[algorithm] = self
     end
 
+    -- store memory location
+    self.memory = property(function(self) return memory end)
+
     return self
 end
 

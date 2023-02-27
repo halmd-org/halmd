@@ -54,6 +54,7 @@ local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_anderse
 -- :param number args.temperature: temperature of heat bath
 -- :param number args.rate: collision rate
 -- :param number args.timestep: integration timestep (defaults to :attr:`halmd.mdsim.clock.timestep`)
+-- :param args.rng: instance of :class:`halmd.random.generator` (defaults to default generator for current device)
 --
 -- .. method:: set_timestep(timestep)
 --
@@ -109,7 +110,8 @@ local M = module(function(args)
     else
         timestep = assert(clock.timestep)
     end
-    local rng = random.generator({memory = particle.memory})
+    local rng = args and args.rng or random.generator({memory = particle.memory})
+    assert(rng.memory == particle.memory)
     local logger = log.logger({label = "verlet_nvt_andersen"})
 
     -- construct instance

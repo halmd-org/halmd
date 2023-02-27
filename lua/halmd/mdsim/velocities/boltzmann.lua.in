@@ -56,6 +56,7 @@ local boltzmann = assert(libhalmd.mdsim.velocities.boltzmann)
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param number args.temperature: temperature of distribution
+-- :param args.rng: instance of :class:`halmd.random.generator` (defaults to default generator for current device)
 --
 -- .. method:: set()
 --
@@ -69,8 +70,9 @@ local boltzmann = assert(libhalmd.mdsim.velocities.boltzmann)
 local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
     local temperature = utility.assert_kwarg(args, "temperature")
+    local rng = args and args.rng or random.generator({memory = particle.memory})
+    assert(rng.memory == particle.memory)
 
-    local rng = random.generator({memory = particle.memory})
     local label = assert(particle.label)
     local logger = log.logger({label = ("boltzmann (%s)"):format(label)})
 

@@ -59,6 +59,7 @@ local function round(x) return math.floor(x + 0.5) end
 -- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
 -- :param number args.temperature: temperature of Boltzmann distribution
 -- :param number args.rate: nominal coupling rate
+-- :param args.rng: instance of :class:`halmd.random.generator` (defaults to default generator for current device)
 --
 -- .. method:: set_timestep(timestep)
 --
@@ -123,8 +124,8 @@ local M = module(function(args)
     else
         timestep = assert(clock.timestep)
     end
-
-    local rng = random.generator({memory = particle.memory})
+    local rng = args and args.rng or random.generator({memory = particle.memory})
+    assert(rng.memory == particle.memory)
     local logger = log.logger({label = "verlet_nvt_boltzmann"})
 
     local self = verlet(particle, box, timestep, logger)
