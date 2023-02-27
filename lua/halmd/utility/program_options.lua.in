@@ -588,8 +588,6 @@ function argument_parser.action.substitute_date_time(args, key, value)
 end
 
 ---
--- .. class:: halmd.utility.program_options.argument_parser.action
---
 --    .. method:: substitute_environment(args, key, value)
 --
 --       Action that substitutes environment variables.

@@ -28,6 +28,7 @@ local timer_service = assert(libhalmd.utility.timer_service)
 -- The timer service emits periodic signals with intervals in real time.
 --
 -- .. method:: on_periodic(slot, interval)
+--    :noindex:
 --
 --    Connect function to call periodically at given interval.
 --
