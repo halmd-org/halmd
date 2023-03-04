@@ -1,5 +1,5 @@
 --
--- Copyright © 2013-2014 Felix Höfling
+-- Copyright © 2013-2023 Felix Höfling
 -- Copyright © 2014      Nicolas Höft
 -- Copyright © 2011      Peter Colberg
 --
@@ -200,5 +200,46 @@ function M.multi_index_to_offset(index, dims)
     end
     return offset
 end
+
+---
+-- Assert that two floating-point numbers are very close.
+--
+-- Given two floating point numbers :math:`a` and :math:`b` and a tolerance
+-- :math:`\epsilon > 0`, the routine asserts that
+--
+-- .. math::
+--
+--     |a - b| < \epsilon \min(|a|, |b|)
+--
+-- :param number value1: value of :math:`a`
+-- :param number value2: value of :math:`b`
+-- :param number tolerance: value of :math:`\epsilon` *(default: `numeric.limits.double.epsilon`)*
+-- :param number level: call stack level for error message *(default: 2)*
+--
+-- :returns: `value1`
+--
+function M.assert_close(value1, value2, tolerance, level)
+    local tolerance = tolerance or M.limits.double.epsilon
+    local level = level or 2
+
+    local abs = math.abs
+    local left = abs(value1 - value2)
+    local right = tolerance * math.min(abs(value1), abs(value2))
+    if left >= right then
+        error(("difference (%g) exceeds tolerance (%g)"):format(left, right), level + 1)
+    end
+    return var
+end
+
+---
+-- Provide floating-point limits, along the lines of std::numeric_limits in C++:
+--
+-- `limits.double.epsilon` = 2.2204460492503131e-16
+--
+M.limits = {
+    double = {
+        epsilon = 2.2204460492503131e-16    -- DBL_EPSILON
+    }
+}
 
 return M
