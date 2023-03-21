@@ -25,6 +25,10 @@
 #include <halmd/random/gpu/rand48_kernel.cuh>
 #include <halmd/random/gpu/mrg32k3a_kernel.cuh>
 
+namespace halmd {
+namespace random {
+namespace gpu {
+
 /**
  * Returns uniform random number in [0.0, 1.0)
  *
@@ -39,5 +43,9 @@ inline __device__ float uniform(rng_type const& rng, typename rng_type::state_ty
     float result = static_cast<float>(variate >> 8) / 16777216.f;
     return result;
 }
+
+} // namespace random
+} // namespace gpu
+} // namespace halmd
 
 #endif /* ! HALMD_RANDOM_GPU_RANDOM_KERNEL_CUH */
