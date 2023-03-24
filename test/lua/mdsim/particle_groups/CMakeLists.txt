@@ -39,4 +39,3 @@ halmd_add_test(lua/particle_groups/region_species/host/2d
 halmd_add_test(lua/particle_groups/region_species/host/3d
   ${HALMD_EXECUTABLE} ${DISABLE_GPU} ${CMAKE_CURRENT_SOURCE_DIR}/region_species.lua --verbose --dimension 3
 )
-
