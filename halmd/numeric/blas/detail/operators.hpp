@@ -392,14 +392,14 @@ T inner_prod(fixed_vector<T, N> const& v, fixed_vector<T, N> const& w)
 
 /**
  * Cross product
+ *
+ * This function actually computes the wedge product which is equivalent to the cross product in 3d.
  */
 template <typename T>
 inline HALMD_GPU_ENABLED
 T cross_prod(fixed_vector<T, 2> const& a, fixed_vector<T, 2> const& b)
 {
-    T c;
-    c = a[0]*b[1] - a[1]*b[0];
-    return c;
+    return a[0] * b[1] - a[1] * b[0];
 }
 
 template <typename T>
@@ -407,9 +407,9 @@ inline HALMD_GPU_ENABLED
 fixed_vector<T, 3> cross_prod(fixed_vector<T, 3> const& a, fixed_vector<T, 3> const& b)
 {
     fixed_vector<T, 3> c;
-    c[0] = a[1]*b[2] - a[2]*b[1];
-    c[1] = a[2]*b[0] - a[0]*b[2];
-    c[2] = a[0]*b[1] - a[1]*b[0];
+    c[0] = a[1] * b[2] - a[2] * b[1];
+    c[1] = a[2] * b[0] - a[0] * b[2];
+    c[2] = a[0] * b[1] - a[1] * b[0];
     return c;
 }
 
