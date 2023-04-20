@@ -29,7 +29,7 @@ using namespace halmd::observables::gpu::dynamics;
 
 namespace halmd {
 
-template class reduction_kernel<tagged_particle<orientational_autocorrelation<3, float>, dsfloat> >;
-template class reduction_kernel<tagged_particle<orientational_autocorrelation<2, float>, dsfloat> >;
+template class reduction_kernel<tagged_particle<orientational_autocorrelation<3, float>, dsfloat>>;
+template class reduction_kernel<tagged_particle<orientational_autocorrelation<2, float>, dsfloat>>;
 
 } // namespace halmd

@@ -32,8 +32,8 @@ namespace observables {
 namespace gpu {
 namespace dynamics {
 
-template <int dimension, typename float_type>
-orientational_autocorrelation<dimension, float_type>::orientational_autocorrelation(
+template <int dimension, typename data_type>
+orientational_autocorrelation<dimension, data_type>::orientational_autocorrelation(
     unsigned int blocks
   , unsigned int threads
 )
@@ -42,25 +42,25 @@ orientational_autocorrelation<dimension, float_type>::orientational_autocorrelat
 {
 }
 
-template <int dimension, typename float_type>
-unsigned int orientational_autocorrelation<dimension, float_type>::defaults::blocks() {
+template <int dimension, typename data_type>
+unsigned int orientational_autocorrelation<dimension, data_type>::defaults::blocks() {
     return 32;
 }
 
-template <int dimension, typename float_type>
-unsigned int orientational_autocorrelation<dimension, float_type>::defaults::threads() {
+template <int dimension, typename data_type>
+unsigned int orientational_autocorrelation<dimension, data_type>::defaults::threads() {
     return 32 << DEVICE_SCALE;
 }
 
-template <int dimension, typename float_type>
-void orientational_autocorrelation<dimension, float_type>::operator() (
+template <int dimension, typename data_type>
+void orientational_autocorrelation<dimension, data_type>::operator() (
     sample_type const& first
   , sample_type const& second
   , accumulator<result_type>& result
 )
 {
-    typename sample_type::orientation_array_type const& orientation1 = first.orientation();
-    typename sample_type::orientation_array_type const& orientation2 = second.orientation();
+    auto const& orientation1 = first.data();
+    auto const& orientation2 = second.data();
     accumulator<result_type> acc = compute_ocf_(
         std::make_tuple(&*orientation1.begin(), &*orientation2.begin())
       , std::make_tuple(&*orientation1.end())
@@ -75,8 +75,8 @@ select_tcf_by_acquire(std::function<std::shared_ptr<typename tcf_type::sample_ty
     return std::make_shared<tcf_type>();
 }
 
-template <int dimension, typename float_type>
-void orientational_autocorrelation<dimension, float_type>::luaopen(lua_State* L)
+template <int dimension, typename data_type>
+void orientational_autocorrelation<dimension, data_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -95,26 +95,25 @@ void orientational_autocorrelation<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_observables_gpu_dynamics_orientational_autocorrelation(lua_State* L)
 {
-    orientational_autocorrelation<3, float>::luaopen(L);
-    orientational_autocorrelation<2, float>::luaopen(L);
-    observables::dynamics::correlation<orientational_autocorrelation<3, float> >::luaopen(L);
-    observables::dynamics::correlation<orientational_autocorrelation<2, float> >::luaopen(L);
+    orientational_autocorrelation<3, float4>::luaopen(L);
+    orientational_autocorrelation<2, float4>::luaopen(L);
+    observables::dynamics::correlation<orientational_autocorrelation<3, float4>>::luaopen(L);
+    observables::dynamics::correlation<orientational_autocorrelation<2, float4>>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
-template class orientational_autocorrelation<3, float>;
-template class orientational_autocorrelation<2, float>;
+template class orientational_autocorrelation<3, float4>;
+template class orientational_autocorrelation<2, float4>;
 
 } // namespace dynamics
 } // namespace gpu
 
-namespace dynamics
-{
+namespace dynamics {
 
 // explicit instantiation
-template class correlation<gpu::dynamics::orientational_autocorrelation<3, float> >;
-template class correlation<gpu::dynamics::orientational_autocorrelation<2, float> >;
+template class correlation<gpu::dynamics::orientational_autocorrelation<3, float4>>;
+template class correlation<gpu::dynamics::orientational_autocorrelation<2, float4>>;
 
 } // namespace dynamics
 } // namespace observables

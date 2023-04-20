@@ -19,9 +19,6 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <memory>
-#include <stdexcept>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/host/dynamics/orientational_autocorrelation.hpp>
@@ -32,7 +29,13 @@ namespace observables {
 namespace host {
 namespace dynamics {
 
-
+/**
+ * Compute orientation autocorrelation of two orientation sample vectors.
+ *
+ * @param first particles velocities of one species at time t1
+ * @param second particles velocities of one species at time t2
+ * @returns accumulated velocity autocorrelation
+ */
 template <int dimension, typename float_type>
 void orientational_autocorrelation<dimension, float_type>::operator() (
     sample_type const& first
@@ -40,14 +43,12 @@ void orientational_autocorrelation<dimension, float_type>::operator() (
   , accumulator<result_type>& result
 )
 {
-    typename sample_type::orientation_array_type::const_iterator r1, r2, end = first.orientation().end();
-    typename sample_type::orientation_array_type const& orientation1 = first.orientation();
-    typename sample_type::orientation_array_type const& orientation2 = second.orientation();
     accumulator<result_type> acc;
+    typename sample_type::array_type::const_iterator u1, u2, end = first.data().end();
 
-    for (r1 = orientation1.begin(), r2 = orientation2.begin(); r1 != end; ++r1, ++r2) {
-        // accumulate orientational correlation 
-        acc(correlate_function_type()(*r1, *r2));
+    for (u1 = first.data().begin(), u2 = second.data().begin(); u1 != end; ++u1, ++u2) {
+        // accumulate orientational correlation
+        acc(correlate_function_type()(*u1, *u2));
     }
     result(acc);
 }
@@ -79,10 +80,14 @@ void orientational_autocorrelation<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_orientational_autocorrelation(lua_State* L)
 {
+    orientational_autocorrelation<3, double>::luaopen(L);
+    orientational_autocorrelation<2, double>::luaopen(L);
     orientational_autocorrelation<3, float>::luaopen(L);
     orientational_autocorrelation<2, float>::luaopen(L);
-    observables::dynamics::correlation<orientational_autocorrelation<3, float> >::luaopen(L);
-    observables::dynamics::correlation<orientational_autocorrelation<2, float> >::luaopen(L);
+    observables::dynamics::correlation<orientational_autocorrelation<3, double>>::luaopen(L);
+    observables::dynamics::correlation<orientational_autocorrelation<2, double>>::luaopen(L);
+    observables::dynamics::correlation<orientational_autocorrelation<3, float>>::luaopen(L);
+    observables::dynamics::correlation<orientational_autocorrelation<2, float>>::luaopen(L);
     return 0;
 }
 
@@ -93,16 +98,15 @@ template class orientational_autocorrelation<3, float>;
 template class orientational_autocorrelation<2, float>;
 
 } // namespace dynamics
-} // namespace host 
+} // namespace host
 
-namespace dynamics
-{
+namespace dynamics {
 
 // explicit instantiation
-template class correlation<host::dynamics::orientational_autocorrelation<3, double> >;
-template class correlation<host::dynamics::orientational_autocorrelation<2, double> >;
-template class correlation<host::dynamics::orientational_autocorrelation<3, float> >;
-template class correlation<host::dynamics::orientational_autocorrelation<2, float> >;
+template class correlation<host::dynamics::orientational_autocorrelation<3, double>>;
+template class correlation<host::dynamics::orientational_autocorrelation<2, double>>;
+template class correlation<host::dynamics::orientational_autocorrelation<3, float>>;
+template class correlation<host::dynamics::orientational_autocorrelation<2, float>>;
 
 } // namespace dynamics
 } // namespace observables

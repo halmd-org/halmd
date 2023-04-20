@@ -36,10 +36,7 @@ struct orientational_autocorrelation
 
     HALMD_GPU_ENABLED float_type operator()(vector_type const& u1, vector_type const& u2) const
     {
-        // inner product of orientation
-        float_type prod = inner_prod(u1, u2);
-        // return result
-        return prod;
+        return inner_prod(u1, u2);
     }
 };
 

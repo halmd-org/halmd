@@ -24,8 +24,9 @@
 
 #include <lua.hpp>
 
+#include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/dynamics/orientational_autocorrelation.hpp>
-#include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/observables/host/samples/sample.hpp>
 
 namespace halmd {
 namespace observables {
@@ -39,9 +40,8 @@ template <int dimension, typename float_type>
 class orientational_autocorrelation
 {
 public:
-    typedef host::samples::phase_space<dimension, float_type> sample_type;
+    typedef host::samples::sample<dimension, float_type> sample_type;
     typedef double result_type;
-
 
     static void luaopen(lua_State* L);
 

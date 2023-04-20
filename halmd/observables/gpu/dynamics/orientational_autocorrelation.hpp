@@ -27,7 +27,7 @@
 #include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/observables/dynamics/orientational_autocorrelation.hpp>
 #include <halmd/observables/gpu/dynamics/tagged_particle.hpp>
-#include <halmd/observables/gpu/samples/phase_space.hpp>
+#include <halmd/observables/gpu/samples/sample.hpp>
 
 namespace halmd {
 namespace observables {
@@ -37,11 +37,11 @@ namespace dynamics {
 /**
  * Orientational autocorrelation function
  */
-template <int dimension, typename float_type>
+template <int dimension, typename data_type>
 class orientational_autocorrelation
 {
 public:
-    typedef gpu::samples::phase_space<dimension, float_type> sample_type;
+    typedef gpu::samples::sample<dimension, data_type> sample_type;
     typedef double result_type;
 
     struct defaults
@@ -72,7 +72,7 @@ private:
     typedef observables::dynamics::orientational_autocorrelation<dimension, float> correlate_function_type;
 
     /** functor for compuation of mean-quartic displacement */
-    reduction<tagged_particle<correlate_function_type, dsfloat> > compute_ocf_;
+    reduction<tagged_particle<correlate_function_type, dsfloat>> compute_ocf_;
 };
 
 } // namespace dynamics
