@@ -23,6 +23,7 @@
 #define HALMD_MDSIM_GPU_ORIENTATIONS_UNIFORM_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
@@ -30,21 +31,15 @@ namespace mdsim {
 namespace gpu {
 namespace orientations {
 
-template <typename RandomNumberGenerator, int dimension>
+template <int dimension, typename float_type, typename rng_type>
 struct uniform_wrapper
 {
-    //static unsigned int const dimension = vector_type::static_size;
+    typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
 
-    cuda::function<void (float4*, unsigned int, RandomNumberGenerator)> uniform;
+    cuda::function<void (ptr_type, unsigned int, rng_type)> uniform;
 
     static uniform_wrapper const kernel;
 };
-
-template<typename RandomNumberGenerator, int dimension>
-inline uniform_wrapper<RandomNumberGenerator, dimension> const& get_uniform_kernel()
-{
-    return uniform_wrapper<RandomNumberGenerator, dimension>::kernel;
-}
 
 } // namespace mdsim
 } // namespace gpu

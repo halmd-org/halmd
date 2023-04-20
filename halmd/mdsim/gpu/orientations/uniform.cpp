@@ -27,8 +27,6 @@
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace gpu {
@@ -39,24 +37,25 @@ uniform<dimension, float_type, RandomNumberGenerator>::uniform(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<random_type> random
   , std::shared_ptr<logger> logger
-) 
+)
   : particle_(particle)
   , random_(random)
   , logger_(logger)
-    {}
+{}
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void uniform<dimension, float_type, RandomNumberGenerator>::set()
 {
     scoped_timer_type timer(runtime_.set);
+
     auto orientation = make_cache_mutable(particle_->orientation());
-    auto first = &*orientation->begin();
-    auto last = &*orientation->end();
-    size_t npart = last - first;
+    size_t npart = particle_->nparticle();
+
     try {
         cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
-        get_uniform_kernel<rng_type, dimension>().uniform(
-                first, npart, random_->rng().rng() );
+        uniform_wrapper<dimension, float_type, rng_type>::kernel.uniform(
+            orientation->data(), npart, random_->rng().rng()
+        );
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -95,16 +94,34 @@ void uniform<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_orientations_uniform(lua_State* L)
 {
-    uniform<3, float, halmd::random::gpu::rand48>::luaopen(L);
+#ifdef USE_GPU_SINGLE_PRECISION
     uniform<3, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
     uniform<2, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
+    uniform<3, float, halmd::random::gpu::rand48>::luaopen(L);
+    uniform<2, float, halmd::random::gpu::rand48>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    uniform<3, dsfloat, halmd::random::gpu::mrg32k3a>::luaopen(L);
+    uniform<2, dsfloat, halmd::random::gpu::mrg32k3a>::luaopen(L);
+    uniform<3, dsfloat, halmd::random::gpu::rand48>::luaopen(L);
+    uniform<2, dsfloat, halmd::random::gpu::rand48>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
-template class uniform<3, float, halmd::random::gpu::rand48>;
+#ifdef USE_GPU_SINGLE_PRECISION
 template class uniform<3, float, halmd::random::gpu::mrg32k3a>;
 template class uniform<2, float, halmd::random::gpu::mrg32k3a>;
+template class uniform<3, float, halmd::random::gpu::rand48>;
+template class uniform<2, float, halmd::random::gpu::rand48>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class uniform<3, dsfloat, halmd::random::gpu::mrg32k3a>;
+template class uniform<2, dsfloat, halmd::random::gpu::mrg32k3a>;
+template class uniform<3, dsfloat, halmd::random::gpu::rand48>;
+template class uniform<2, dsfloat, halmd::random::gpu::rand48>;
+#endif
 
 } // namespace mdsim
 } // namespace gpu

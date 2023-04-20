@@ -38,7 +38,7 @@ uniform<dimension, float_type>::uniform(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<random_type> random
   , std::shared_ptr<logger> logger
-) 
+)
   : particle_(particle)
   , random_(random)
   , logger_(logger)
@@ -51,11 +51,9 @@ void uniform<dimension, float_type>::set()
     scoped_timer_type timer(runtime_.set);
     auto orientation = make_cache_mutable(particle_->orientation());
 
-    //assigns a random unit-vector efficiently for each particle
-    for (auto& u : *orientation)
-    {
-        random_->unit_vector(u); 
-        
+    // assigns a random unit-vector efficiently for each particle
+    for (auto& u : *orientation) {
+        random_->unit_vector(u);
     }
 }
 
@@ -89,10 +87,10 @@ void uniform<dimension, float_type>::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_mdsim_host_orientations_uniform(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
-    //uniform<2, double>::luaopen(L);
+    uniform<2, double>::luaopen(L);
     uniform<3, double>::luaopen(L);
-#else    
-    //uniform<2, float>::luaopen(L);
+#else
+    uniform<2, float>::luaopen(L);
     uniform<3, float>::luaopen(L);
 #endif
     return 0;
@@ -108,6 +106,6 @@ template class uniform<3, float>;
 #endif
 
 } // namespace mdsim
-} // namespace host 
+} // namespace host
 } // namespace orientations
 } // namespace halmd

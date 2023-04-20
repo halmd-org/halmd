@@ -41,7 +41,7 @@ template <int dimension, typename float_type>
 class uniform
 {
 public:
-    typedef host::particle<dimension, float_type> particle_type;
+    typedef particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef random::host::random random_type;
 
@@ -50,6 +50,7 @@ public:
       , std::shared_ptr<random_type> random
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
       );
+
     static void luaopen(lua_State* L);
 
     void set();

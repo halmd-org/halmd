@@ -23,10 +23,6 @@
 #ifndef HALMD_MDSIM_GPU_ORIENTATIONS_UNIFORM_HPP
 #define HALMD_MDSIM_GPU_ORIENTATIONS_UNIFORM_HPP
 
-#include <lua.hpp>
-#include <memory>
-#include <vector>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/random/gpu/random.hpp>
@@ -41,7 +37,7 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 class uniform
 {
 public:
-    typedef gpu::particle<dimension, float_type> particle_type;
+    typedef particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
     typedef typename RandomNumberGenerator::rng_type rng_type;
@@ -51,6 +47,7 @@ public:
       , std::shared_ptr<random_type> random
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
       );
+
     static void luaopen(lua_State* L);
 
     void set();
