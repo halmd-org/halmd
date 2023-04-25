@@ -21,13 +21,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_ASYMMETRIC_TRUNC_HPP
-#define HALMD_MDSIM_GPU_FORCES_ASYMMETRIC_TRUNC_HPP
+#ifndef HALMD_MDSIM_GPU_FORCES_PAIR_ASYMMETRIC_TRUNC_HPP
+#define HALMD_MDSIM_GPU_FORCES_PAIR_ASYMMETRIC_TRUNC_HPP
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
-#include <halmd/mdsim/gpu/forces/asymmetric_trunc_kernel.hpp>
+#include <halmd/mdsim/gpu/forces/pair_asymmetric_trunc_kernel.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -45,22 +44,23 @@ namespace forces {
 /**
  * class template for modules implementing short ranged potential forces
  */
-template <int dimension, typename float_type, typename potential_type, typename trunc_type = mdsim::forces::trunc::discontinuous>
-class asymmetric_trunc
+template <int dimension, typename float_type, typename potential_type>
+class pair_asymmetric_trunc
 {
 public:
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
     typedef neighbour neighbour_type;
+    typedef halmd::signal<void ()> signal_type;
+    typedef signal_type::slot_function_type slot_function_type;
 
-    asymmetric_trunc(
+    pair_asymmetric_trunc(
         std::shared_ptr<potential_type const> potential
       , std::shared_ptr<particle_type> particle1
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<neighbour_type> neighbour
-      , float_type aux_weight = 1
-      , std::shared_ptr<trunc_type const> trunc = std::make_shared<trunc_type>()
+      , float aux_weight = 1
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -76,6 +76,19 @@ public:
     void apply();
 
     /**
+     * Connect slot functions to signals
+     */
+    connection on_prepend_apply(slot_function_type const& slot)
+    {
+        return on_prepend_apply_.connect(slot);
+    }
+
+    connection on_append_apply(slot_function_type const& slot)
+    {
+        return on_append_apply_.connect(slot);
+    }
+
+    /**
      * Bind class to Lua.
      */
     static void luaopen(lua_State* L);
@@ -87,7 +100,7 @@ private:
     typedef typename particle_type::orientation_type orientation_type;
     typedef typename neighbour_type::array_type neighbour_array_type;
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
-    typedef asymmetric_trunc_wrapper<dimension, gpu_potential_type, trunc_type> gpu_wrapper;
+    typedef pair_asymmetric_trunc_wrapper<dimension, gpu_potential_type> gpu_wrapper;
 
     typedef typename particle_type::force_array_type force_array_type;
     typedef typename particle_type::torque_array_type torque_array_type;
@@ -111,16 +124,18 @@ private:
     /** neighbour lists */
     std::shared_ptr<neighbour_type> neighbour_;
     /** weight for auxiliary variables */
-    float_type aux_weight_;
-    /** smoothing functor */
-    std::shared_ptr<trunc_type const> trunc_;
+    float aux_weight_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
     /** cache observer of force per particle */
-    std::tuple<cache<>, cache<>> force_cache_;
+    std::tuple<cache<>, cache<>, cache<>, cache<>> force_cache_;
     /** cache observer of auxiliary variables */
-    std::tuple<cache<>, cache<>> aux_cache_;
+    std::tuple<cache<>, cache<>, cache<>, cache<>> aux_cache_;
+
+    /** store signal connections */
+    signal_type on_prepend_apply_;
+    signal_type on_append_apply_;
 
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;
@@ -135,15 +150,14 @@ private:
     runtime runtime_;
 };
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-asymmetric_trunc<dimension, float_type, potential_type, trunc_type>::asymmetric_trunc(
+template <int dimension, typename float_type, typename potential_type>
+pair_asymmetric_trunc<dimension, float_type, potential_type>::pair_asymmetric_trunc(
     std::shared_ptr<potential_type const> potential
   , std::shared_ptr<particle_type> particle1
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<neighbour_type> neighbour
-  , float_type aux_weight
-  , std::shared_ptr<trunc_type const> trunc
+  , float aux_weight
   , std::shared_ptr<logger> logger
 )
   : potential_(potential)
@@ -152,7 +166,6 @@ asymmetric_trunc<dimension, float_type, potential_type, trunc_type>::asymmetric_
   , box_(box)
   , neighbour_(neighbour)
   , aux_weight_(aux_weight)
-  , trunc_(trunc)
   , logger_(logger)
 {
     if (std::min(potential_->size1(), potential_->size2()) < std::max(particle1_->nspecies(), particle2_->nspecies())) {
@@ -160,13 +173,15 @@ asymmetric_trunc<dimension, float_type, potential_type, trunc_type>::asymmetric_
     }
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>::check_cache()
+template <int dimension, typename float_type, typename potential_type>
+inline void pair_asymmetric_trunc<dimension, float_type, potential_type>::check_cache()
 {
     cache<position_array_type> const& position1_cache = particle1_->position();
     cache<position_array_type> const& position2_cache = particle2_->position();
+    cache<orientation_array_type> const& orientation1_cache = particle1_->orientation();
+    cache<orientation_array_type> const& orientation2_cache = particle2_->orientation();
 
-    auto current_state = std::tie(position1_cache, position2_cache);
+    auto current_state = std::tie(position1_cache, orientation1_cache, position2_cache, orientation2_cache);
 
     if (force_cache_ != current_state) {
         particle1_->mark_force_dirty();
@@ -177,34 +192,41 @@ inline void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>:
     }
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>::apply()
+template <int dimension, typename float_type, typename potential_type>
+inline void pair_asymmetric_trunc<dimension, float_type, potential_type>::apply()
 {
+    // process slot functions associated with signal
+    on_prepend_apply_();
+
     cache<position_array_type> const& position1_cache = particle1_->position();
     cache<position_array_type> const& position2_cache = particle2_->position();
-
-    auto current_state = std::tie(position1_cache, position2_cache);
+    cache<orientation_array_type> const& orientation1_cache = particle1_->orientation();
+    cache<orientation_array_type> const& orientation2_cache = particle2_->orientation();
+    auto current_state = std::tie(position1_cache, orientation1_cache, position2_cache, orientation2_cache);
 
     if (particle1_->aux_enabled()) {
         compute_aux_();
         force_cache_ = current_state;
         aux_cache_ = force_cache_;
-    }
-    else {
+    } else {
         compute_();
         force_cache_ = current_state;
     }
     particle1_->force_zero_disable();
+
+    // process slot functions associated with signal
+    on_append_apply_();
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>::compute_()
+template <int dimension, typename float_type, typename potential_type>
+inline void pair_asymmetric_trunc<dimension, float_type, potential_type>::compute_()
 {
     position_array_type const& position1 = read_cache(particle1_->position());
-    orientation_array_type const& orientation1 = read_cache(particle1_->orientation());
     position_array_type const& position2 = read_cache(particle2_->position());
+    orientation_array_type const& orientation1 = read_cache(particle1_->orientation());
     orientation_array_type const& orientation2 = read_cache(particle2_->orientation());
     neighbour_array_type const& g_neighbour = read_cache(neighbour_->g_neighbour());
+
     auto force = make_cache_mutable(particle1_->mutable_force());
     auto torque = make_cache_mutable(particle1_->mutable_torque());
 
@@ -218,8 +240,8 @@ inline void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>:
 
     cuda::configure(particle1_->dim().grid, particle1_->dim().block);
     gpu_wrapper::kernel.compute(
-        &*position1.begin()
-      , &*orientation1.begin()
+        position1.data()
+      , orientation1.data()
       , &*force->begin()
       , &*torque->begin()
       , &*g_neighbour.begin()
@@ -230,21 +252,21 @@ inline void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>:
       , particle1_->nspecies()
       , particle2_->nspecies()
       , static_cast<position_type>(box_->length())
-      , *trunc_
       , particle1_->force_zero()
       , 1 // only relevant for kernel.compute_aux()
     );
     cuda::thread::synchronize();
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>::compute_aux_()
+template <int dimension, typename float_type, typename potential_type>
+inline void pair_asymmetric_trunc<dimension, float_type, potential_type>::compute_aux_()
 {
     position_array_type const& position1 = read_cache(particle1_->position());
     position_array_type const& position2 = read_cache(particle2_->position());
     orientation_array_type const& orientation1 = read_cache(particle1_->orientation());
     orientation_array_type const& orientation2 = read_cache(particle2_->orientation());
     neighbour_array_type const& g_neighbour = read_cache(neighbour_->g_neighbour());
+
     auto force = make_cache_mutable(particle1_->mutable_force());
     auto torque = make_cache_mutable(particle1_->mutable_torque());
     auto en_pot = make_cache_mutable(particle1_->mutable_potential_energy());
@@ -258,15 +280,15 @@ inline void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>:
     gpu_wrapper::kernel.u2.bind(orientation2);
     potential_->bind_textures();
 
-    float_type weight = aux_weight_;
+    float weight = aux_weight_;
     if (particle1_ == particle2_) {
         weight /= 2;
     }
 
     cuda::configure(particle1_->dim().grid, particle1_->dim().block);
     gpu_wrapper::kernel.compute_aux(
-        &*position1.begin()
-      , &*orientation2.begin()
+        position1.data()
+      , orientation1.data()
       , &*force->begin()
       , &*torque->begin()
       , &*g_neighbour.begin()
@@ -277,15 +299,14 @@ inline void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>:
       , particle1_->nspecies()
       , particle2_->nspecies()
       , static_cast<position_type>(box_->length())
-      , *trunc_
       , particle1_->force_zero()
       , weight
     );
     cuda::thread::synchronize();
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_State* L)
+template <int dimension, typename float_type, typename potential_type>
+void pair_asymmetric_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -294,25 +315,24 @@ void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>::luaope
         [
             namespace_("forces")
             [
-                class_<asymmetric_trunc>()
-                    .def("check_cache", &asymmetric_trunc::check_cache)
-                    .def("apply", &asymmetric_trunc::apply)
+                class_<pair_asymmetric_trunc>()
+                    .def("check_cache", &pair_asymmetric_trunc::check_cache)
+                    .def("apply", &pair_asymmetric_trunc::apply)
                     .scope
                     [
                         class_<runtime>("runtime")
                             .def_readonly("compute", &runtime::compute)
                             .def_readonly("compute_aux", &runtime::compute_aux)
                     ]
-                    .def_readonly("runtime", &asymmetric_trunc::runtime_)
+                    .def_readonly("runtime", &pair_asymmetric_trunc::runtime_)
 
-              , def("asymmetric_trunc", &std::make_shared<asymmetric_trunc,
+              , def("pair_asymmetric_trunc", &std::make_shared<pair_asymmetric_trunc,
                     std::shared_ptr<potential_type const>
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<neighbour_type>
-                  , float_type
-                  , std::shared_ptr<trunc_type const>
+                  , float
                   , std::shared_ptr<logger>
                 >)
             ]
@@ -325,4 +345,4 @@ void asymmetric_trunc<dimension, float_type, potential_type, trunc_type>::luaope
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_ASYMMETRIC_TRUNC_HPP */
+#endif /* ! HALMD_MDSIM_GPU_FORCES_PAIR_ASYMMETRIC_TRUNC_HPP */

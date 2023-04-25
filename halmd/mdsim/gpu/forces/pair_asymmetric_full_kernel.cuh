@@ -71,10 +71,10 @@ __global__ void compute(
     unsigned int const i = GTID;
 
     // load particle associated with this thread
-    unsigned int type1, nothing;
+    unsigned int type1, mass;
     vector_type r1, u1;
     tie(r1, type1) <<= g_r1[i];
-    tie(u1, nothing) <<= g_u1[i];
+    tie(u1, mass) <<= g_u1[i];
 
     // contribution to potential energy
     float en_pot_ = 0;
@@ -83,7 +83,7 @@ __global__ void compute(
     // force sum
 #ifdef USE_FORCE_DSFUN
     fixed_vector<dsfloat, dimension> f_ = 0;
-    torque_type tau_ = 0;
+    torque_type tau_ = 0; // FIXME: dsfloat torque?
 #else
     vector_type f_ = 0;
     torque_type tau_ = 0;
@@ -94,7 +94,7 @@ __global__ void compute(
         unsigned int type2;
         vector_type r2, u2;
         tie(r2, type2) <<= g_r2[j];
-        tie(u2, nothing) <<= g_u2[j];
+        tie(u2, mass) <<= g_u2[j];
         // pair potential
         potential_type const potential(type1, type2, ntype1, ntype2);
 
@@ -122,6 +122,7 @@ __global__ void compute(
             // potential energy contribution of this particle
             en_pot_ += aux_weight * en_pot;
             // contribution to stress tensor from this particle
+            // FIXME: why is this commented?
             //stress_pot += aux_weight * fval * make_stress_tensor(r);
         }
     }

@@ -19,12 +19,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_ASYMMETRIC_TRUNC_KERNEL_CUH
-#define HALMD_MDSIM_GPU_FORCES_ASYMMETRIC_TRUNC_KERNEL_CUH
+#ifndef HALMD_MDSIM_GPU_FORCES_PAIR_ASYMMETRIC_TRUNC_KERNEL_CUH
+#define HALMD_MDSIM_GPU_FORCES_PAIR_ASYMMETRIC_TRUNC_KERNEL_CUH
 
 #include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
-#include <halmd/mdsim/gpu/forces/asymmetric_trunc_kernel.hpp>
+#include <halmd/mdsim/gpu/forces/pair_asymmetric_trunc_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
@@ -35,11 +35,11 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 namespace forces {
-namespace asymmetric_trunc_kernel {
+namespace pair_asymmetric_trunc_kernel {
 
 /** positions, types */
 static texture<float4> r2_;
-/** orientation, nothing */
+/** orientation, mass */
 static texture<float4> u2_;
 
 /**
@@ -51,7 +51,6 @@ template <
   , typename potential_type
   , typename coalesced_vector_type
   , typename coalesced_pseudo_vector_type
-  , typename trunc_type
 >
 __global__ void compute(
     float4 const* g_r1
@@ -66,7 +65,6 @@ __global__ void compute(
   , unsigned int ntype1
   , unsigned int ntype2
   , vector_type box_length
-  , trunc_type const trunc
   , bool force_zero
   , float aux_weight
 )
@@ -78,19 +76,19 @@ __global__ void compute(
     unsigned int i = GTID;
 
     // load particle associated with this thread
-    unsigned int type1, nothing;
+    unsigned int type1, mass;
     vector_type r1, u1;
     tie(r1, type1) <<= g_r1[i];
-    tie(u1, nothing) <<= g_u1[i];
+    tie(u1, mass) <<= g_u1[i];
 
     // contribution to potential energy
     float en_pot_ = 0;
     // contribution to stress tensor
     stress_tensor_type stress_pot = 0;
-#ifdef USE_FORCE_DSFUN
     // force sum
+#ifdef USE_FORCE_DSFUN
     fixed_vector<dsfloat, dimension> f_ = 0;
-    torque_type tau_ = 0;
+    torque_type tau_ = 0; // FIXME: user dsfloat torque?
 #else
     vector_type f_ = 0;
     torque_type tau_ = 0;
@@ -104,10 +102,10 @@ __global__ void compute(
           break;
       }
       // load particle
-      unsigned int type2, nothing;
+      unsigned int type2;
       vector_type r2, u2;
       tie(r2, type2) <<= tex1Dfetch(r2_, j);
-      tie(u2, nothing) <<= tex1Dfetch(u2_, j);
+      tie(u2, mass) <<= tex1Dfetch(u2_, j);
       // pair potential
       potential_type const potential(type1, type2, ntype1, ntype2);
 
@@ -121,20 +119,19 @@ __global__ void compute(
       if (!potential.within_range(r, u1, u2)) {
           continue;
       }
+
       value_type en_pot;
       vector_type f;
       torque_type tau;
       tie(f, tau, en_pot) = potential(r, u1, u2);
       f_ += f;
       tau_ += tau;
-      // apply smoothing function to force and potential
-      value_type fval = sqrtf( inner_prod(f, f) );
-      //trunc(sqrt(rr), sqrt(potential.rr_cut()), fval, en_pot);
 
       if (do_aux) {
           // potential energy contribution of this particle
           en_pot_ += aux_weight * en_pot;
           // contribution to stress tensor from this particle
+          value_type fval = sqrtf(inner_prod(f, f));
           stress_pot += aux_weight * fval * make_stress_tensor(r);
       }
     }
@@ -152,21 +149,22 @@ __global__ void compute(
     // write results to global memory
     g_f[i] = static_cast<vector_type>(f_);
     g_tau[i] = static_cast<torque_type>(tau_);
+
     if (do_aux) {
         g_en_pot[i] = en_pot_;
         write_stress_tensor(g_stress_pot + i, stress_pot, GTDIM);
     }
 }
 
-} // namespace asymmetric_trunc_kernel
+} // namespace pair_asymmetric_trunc_kernel
 
-template <int dimension, typename potential_type, typename trunc_type>
-asymmetric_trunc_wrapper<dimension, potential_type, trunc_type> const
-asymmetric_trunc_wrapper<dimension, potential_type, trunc_type>::kernel = {
-    asymmetric_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
-  , asymmetric_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
-  , asymmetric_trunc_kernel::r2_
-  , asymmetric_trunc_kernel::u2_
+template <int dimension, typename potential_type>
+pair_asymmetric_trunc_wrapper<dimension, potential_type> const
+pair_asymmetric_trunc_wrapper<dimension, potential_type>::kernel = {
+    pair_asymmetric_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
+  , pair_asymmetric_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
+  , pair_asymmetric_trunc_kernel::r2_
+  , pair_asymmetric_trunc_kernel::u2_
 };
 
 } // namespace mdsim
@@ -174,4 +172,4 @@ asymmetric_trunc_wrapper<dimension, potential_type, trunc_type>::kernel = {
 } // namespace forces
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_ASYMMETRIC_TRUNC_KERNEL_CUH */
+#endif /* ! HALMD_MDSIM_GPU_FORCES_PAIR_ASYMMETRIC_TRUNC_KERNEL_CUH */

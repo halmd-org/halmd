@@ -23,7 +23,6 @@
 #define HALMD_MDSIM_GPU_FORCES_PAIR_ASYMMETRIC_TRUNC_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd {
@@ -31,8 +30,8 @@ namespace mdsim {
 namespace gpu {
 namespace forces {
 
-template <int dimension, typename potential_type, typename smooth_type = mdsim::forces::trunc::discontinuous>
-struct asymmetric_trunc_wrapper
+template <int dimension, typename potential_type>
+struct pair_asymmetric_trunc_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
@@ -52,7 +51,6 @@ struct asymmetric_trunc_wrapper
       , unsigned int
       , unsigned int
       , vector_type
-      , smooth_type const
       , bool
       , float
     )> compute;
@@ -70,16 +68,16 @@ struct asymmetric_trunc_wrapper
       , unsigned int
       , unsigned int
       , vector_type
-      , smooth_type const
       , bool
       , float
     )> compute_aux;
+
     /** positions, types */
     cuda::texture<float4> r2;
     /** orientation, nothing */
     cuda::texture<float4> u2;
 
-    static asymmetric_trunc_wrapper const kernel;
+    static pair_asymmetric_trunc_wrapper const kernel;
 };
 
 } // namespace mdsim

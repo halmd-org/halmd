@@ -34,7 +34,7 @@ local utility           = require("halmd.utility")
 --
 
 -- grab C++ wrappers
-local asymmetric_trunc = assert(libhalmd.mdsim.forces.asymmetric_trunc)
+local pair_asymmetric_trunc = assert(libhalmd.mdsim.forces.pair_asymmetric_trunc)
 local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 
 ---
@@ -121,7 +121,7 @@ local M = module(function(args)
     local neighbour = args.neighbour or neighbour({box = box, particle = particle, r_cut = r_cut})
 
     -- construct force module
-    local self = asymmetric_trunc(potential, particle[1], particle[2], box, neighbour, weight, trunc, logger)
+    local self = pair_asymmetric_trunc(potential, particle[1], particle[2], box, neighbour, weight, trunc, logger)
 
     -- attach potential instance as read-only Lua property
     self.potential = property(function(self)

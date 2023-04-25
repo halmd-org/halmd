@@ -53,7 +53,7 @@ public:
       , std::shared_ptr<particle_type> particle1
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
-      , float_type aux_weight = 1
+      , float aux_weight = 1
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -101,7 +101,7 @@ private:
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** weight for auxiliary variables */
-    float_type aux_weight_;
+    float aux_weight_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
@@ -129,7 +129,7 @@ pair_asymmetric_full<dimension, float_type, potential_type>::pair_asymmetric_ful
   , std::shared_ptr<particle_type> particle1
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
-  , float_type aux_weight
+  , float aux_weight
   , std::shared_ptr<logger> logger
 )
     : potential_(potential)
@@ -148,10 +148,9 @@ template <int dimension, typename float_type, typename potential_type>
 inline void pair_asymmetric_full<dimension, float_type, potential_type>::check_cache()
 {
     cache<position_array_type> const& position1_cache = particle1_->position();
-    cache<orientation_array_type> const& orientation1_cache = particle1_->orientation();
     cache<position_array_type> const& position2_cache = particle2_->position();
+    cache<orientation_array_type> const& orientation1_cache = particle1_->orientation();
     cache<orientation_array_type> const& orientation2_cache = particle2_->orientation();
-
     auto current_state = std::tie(position1_cache, orientation1_cache, position2_cache, orientation2_cache);
 
     if (force_cache_ != current_state ) {
@@ -167,10 +166,9 @@ template <int dimension, typename float_type, typename potential_type>
 inline void pair_asymmetric_full<dimension, float_type, potential_type>::apply()
 {
     cache<position_array_type> const& position1_cache = particle1_->position();
-    cache<orientation_array_type> const& orientation1_cache = particle1_->orientation();
     cache<position_array_type> const& position2_cache = particle2_->position();
+    cache<orientation_array_type> const& orientation1_cache = particle1_->orientation();
     cache<orientation_array_type> const& orientation2_cache = particle2_->orientation();
-
     auto current_state = std::tie(position1_cache, orientation1_cache, position2_cache, orientation2_cache);
 
     if (particle1_->aux_enabled()) {
@@ -188,9 +186,10 @@ template <int dimension, typename float_type, typename potential_type>
 inline void pair_asymmetric_full<dimension, float_type, potential_type>::compute_()
 {
     position_array_type const& position1 = read_cache(particle1_->position());
-    orientation_array_type const& orientation1 = read_cache(particle1_->orientation());
     position_array_type const& position2 = read_cache(particle2_->position());
+    orientation_array_type const& orientation1 = read_cache(particle1_->orientation());
     orientation_array_type const& orientation2 = read_cache(particle2_->orientation());
+
     auto force = make_cache_mutable(particle1_->mutable_force());
     auto torque = make_cache_mutable(particle1_->mutable_torque());
 
@@ -202,10 +201,10 @@ inline void pair_asymmetric_full<dimension, float_type, potential_type>::compute
 
     cuda::configure(particle1_->dim().grid, particle1_->dim().block);
     gpu_wrapper::kernel.compute(
-        &*position1.begin()
-      , &*orientation1.begin()
-      , &*position2.begin()
-      , &*orientation2.begin()
+        position1.data()
+      , orientation1.data()
+      , position2.data()
+      , orientation2.data()
       , particle2_->nparticle()
       , &*force->begin()
       , &*torque->begin()
@@ -227,6 +226,7 @@ inline void pair_asymmetric_full<dimension, float_type, potential_type>::compute
     orientation_array_type const& orientation1 = read_cache(particle1_->orientation());
     position_array_type const& position2 = read_cache(particle2_->position());
     orientation_array_type const& orientation2 = read_cache(particle2_->orientation());
+
     auto force = make_cache_mutable(particle1_->mutable_force());
     auto torque = make_cache_mutable(particle1_->mutable_torque());
     auto en_pot = make_cache_mutable(particle1_->mutable_potential_energy());
@@ -238,17 +238,17 @@ inline void pair_asymmetric_full<dimension, float_type, potential_type>::compute
 
     potential_->bind_textures();
 
-    float_type weight = aux_weight_;
+    float weight = aux_weight_;
     if (particle1_ == particle2_) {
         weight /= 2;
     }
 
     cuda::configure(particle1_->dim().grid, particle1_->dim().block);
     gpu_wrapper::kernel.compute_aux(
-        &*position1.begin()
-      , &*orientation1.begin()
-      , &*position2.begin()
-      , &*orientation2.begin()
+        position1.data()
+      , orientation1.data()
+      , position2.data()
+      , orientation2.data()
       , particle2_->nparticle()
       , &*force->begin()
       , &*torque->begin()
@@ -289,7 +289,7 @@ void pair_asymmetric_full<dimension, float_type, potential_type>::luaopen(lua_St
                 , std::shared_ptr<particle_type>
                 , std::shared_ptr<particle_type const>
                 , std::shared_ptr<box_type const>
-                , float_type
+                , float
                 , std::shared_ptr<logger>
               >)
           ]
