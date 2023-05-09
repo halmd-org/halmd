@@ -95,14 +95,14 @@ void uniform<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_orientations_uniform(lua_State* L)
 {
 #ifdef USE_GPU_SINGLE_PRECISION
-    uniform<3, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
-    uniform<2, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
+    // uniform<3, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
+    // uniform<2, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
     uniform<3, float, halmd::random::gpu::rand48>::luaopen(L);
     uniform<2, float, halmd::random::gpu::rand48>::luaopen(L);
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-    uniform<3, dsfloat, halmd::random::gpu::mrg32k3a>::luaopen(L);
-    uniform<2, dsfloat, halmd::random::gpu::mrg32k3a>::luaopen(L);
+    // uniform<3, dsfloat, halmd::random::gpu::mrg32k3a>::luaopen(L);
+    // uniform<2, dsfloat, halmd::random::gpu::mrg32k3a>::luaopen(L);
     uniform<3, dsfloat, halmd::random::gpu::rand48>::luaopen(L);
     uniform<2, dsfloat, halmd::random::gpu::rand48>::luaopen(L);
 #endif
@@ -111,14 +111,14 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_orientations_uniform(lua_State* L)
 
 // explicit instantiation
 #ifdef USE_GPU_SINGLE_PRECISION
-template class uniform<3, float, halmd::random::gpu::mrg32k3a>;
-template class uniform<2, float, halmd::random::gpu::mrg32k3a>;
+// template class uniform<3, float, halmd::random::gpu::mrg32k3a>;
+// template class uniform<2, float, halmd::random::gpu::mrg32k3a>;
 template class uniform<3, float, halmd::random::gpu::rand48>;
 template class uniform<2, float, halmd::random::gpu::rand48>;
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-template class uniform<3, dsfloat, halmd::random::gpu::mrg32k3a>;
-template class uniform<2, dsfloat, halmd::random::gpu::mrg32k3a>;
+// template class uniform<3, dsfloat, halmd::random::gpu::mrg32k3a>;
+// template class uniform<2, dsfloat, halmd::random::gpu::mrg32k3a>;
 template class uniform<3, dsfloat, halmd::random::gpu::rand48>;
 template class uniform<2, dsfloat, halmd::random::gpu::rand48>;
 #endif
