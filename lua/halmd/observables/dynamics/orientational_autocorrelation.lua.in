@@ -1,0 +1,107 @@
+--
+-- Copyright © 2013 Felix Höfling
+-- Copyright © 2012 Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+local utility = require("halmd.utility")
+local module = require("halmd.utility.module")
+
+---
+-- Orientational autocorrelation
+-- ========================
+--
+
+-- grab C++ wrappers
+local orientational_autocorrelation = assert(libhalmd.observables.dynamics.orientational_autocorrelation)
+
+---
+-- Construct orientational autocorrelation.
+--
+-- :param args: keyword arguments
+-- :param args.phase_space: instance of :class:`halmd.observables.phase_space`
+--
+-- .. method:: acquire()
+--
+--    Acquire phase space sample.
+--
+--    :returns: phase space sample
+--
+-- .. method:: correlate(first, second)
+--
+--    Correlate two phase space samples.
+--
+--    :param first: first phase space sample
+--    :param second: second phase space sample
+--    :returns: orientational-autocorrelation between samples
+--
+-- .. attribute:: desc
+--
+--    Module description.
+--
+-- .. class:: writer(args)
+--
+--    Construct file writer.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param args.location: location within file *(optional)*
+--    :type args.location: string table
+--    :return: file writer as returned by ``file:writer()``.
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. It defaults to ``{"dynamics",
+--    self.label, "orientational_autocorrelation"}``.
+--
+local M = module(function(args)
+    local phase_space = args and args.phase_space
+    if not phase_space then
+        error("missing argument 'phase_space'", 2)
+    end
+    local acquire = assert(phase_space.acquire())
+    local label = assert(phase_space.group.label)
+
+    -- construct instance
+    local self = orientational_autocorrelation(acquire)
+
+    -- attach acquire function as read-only property
+    self.acquire = property(function(self)
+        return acquire
+    end)
+
+    -- attach module description
+    self.desc = property(function(self)
+        return ("orientational autocorrelation of %s particles"):format(label)
+    end)
+
+    -- attach writer function as property
+    self.writer = property(function(self) return function(self, args)
+        local file = utility.assert_kwarg(args, "file")
+        local location = utility.assert_type(
+            args.location or {"dynamics", label, "orientational_autocorrelation"}
+          , "table")
+
+        local writer = file:writer({location = location, mode = "truncate"})
+        return writer
+    end end)
+
+
+    return self
+end)
+
+return M
