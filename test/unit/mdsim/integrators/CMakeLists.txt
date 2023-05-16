@@ -4,17 +4,17 @@ add_executable(test_unit_mdsim_integrators_brownian
   apply_negate.cu
 )
 if(HALMD_WITH_GPU)
-    target_link_libraries(test_unit_mdsim_integrators_brownian
-   halmd_mdsim_gpu_integrators
-   halmd_mdsim_gpu_particle_groups
-   halmd_mdsim_gpu_positions
-   halmd_mdsim_gpu_orientations
-   halmd_mdsim_gpu_velocities
-   halmd_mdsim_gpu
-   halmd_observables_gpu
-   halmd_observables_gpu_dynamics
-   halmd_random_gpu
-   halmd_utility_gpu
+  target_link_libraries(test_unit_mdsim_integrators_brownian
+    halmd_mdsim_gpu_integrators
+    halmd_mdsim_gpu_particle_groups
+    halmd_mdsim_gpu_positions
+    halmd_mdsim_gpu_orientations
+    halmd_mdsim_gpu_velocities
+    halmd_mdsim_gpu
+    halmd_observables_gpu
+    halmd_observables_gpu_dynamics
+    halmd_random_gpu
+    halmd_utility_gpu
   )
 endif()
 target_link_libraries(test_unit_mdsim_integrators_brownian
@@ -30,19 +30,19 @@ target_link_libraries(test_unit_mdsim_integrators_brownian
   halmd_observables_host_dynamics
   halmd_random_host
   ${HALMD_TEST_LIBRARIES}
-  )
-  add_test(unit/mdsim/integrators/brownian/host/2d/overdamped
-    test_unit_mdsim_integrators_brownian --run_test=brownian_host_2d_overdamped --log_level=test_suite
-  )
-  add_test(unit/mdsim/integrators/brownian/host/3d/overdamped
+)
+add_test(unit/mdsim/integrators/brownian/host/2d/overdamped
+  test_unit_mdsim_integrators_brownian --run_test=brownian_host_2d_overdamped --log_level=test_suite
+)
+add_test(unit/mdsim/integrators/brownian/host/3d/overdamped
   test_unit_mdsim_integrators_brownian --run_test=brownian_host_3d_overdamped --log_level=test_suite
-  )
+)
 if(HALMD_WITH_GPU)
-    #add_test(unit/mdsim/integrators/brownian/gpu/2d/linear
-    #test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_2d_linear --log_level=test_suite
-    #)
+  #add_test(unit/mdsim/integrators/brownian/gpu/2d/linear
+  #test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_2d_linear --log_level=test_suite
+  #)
   add_test(unit/mdsim/integrators/brownian/gpu/2d/overdamped
-   test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_2d_overdamped --log_level=test_suite
+    test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_2d_overdamped --log_level=test_suite
   )
   add_test(unit/mdsim/integrators/brownian/gpu/3d/overdamped
     test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_3d_overdamped --log_level=test_suite
