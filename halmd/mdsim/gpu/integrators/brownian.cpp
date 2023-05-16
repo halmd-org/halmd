@@ -82,7 +82,7 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void brownian<dimension, float_type, RandomNumberGenerator>::set_timestep(double timestep)
 {
     timestep_ = timestep;
-    LOG("integration timestep: " << timestep_);
+    LOG("integration timestep: " << float(timestep_));
 }
 
 /**
@@ -92,7 +92,7 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void brownian<dimension, float_type, RandomNumberGenerator>::set_temperature(double temperature)
 {
     temperature_ = temperature;
-    LOG("temperature: " << temperature_);
+    LOG("temperature: " << float(temperature_));
 }
 /**
  * perform Brownian integration: update positions from random distribution
@@ -118,12 +118,12 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
         // the kernel makes use of the random number generator
         cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
         wrapper_type::kernel.integrate(
-            &*position->begin()
-          , &*orientation->begin()
-          , &*image->begin()
-          , &*velocity.begin()
-          , &*force.begin()
-          , &*torque.begin()
+            position->data()
+          , orientation->data()
+          , image->data()
+          , velocity.data()
+          , force.data()
+          , torque.data()
           , timestep_
           , temperature_
           , random_->rng().rng()
@@ -195,18 +195,34 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_brownian(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     brownian<2, float, halmd::random::gpu::rand48>::luaopen(L);
     brownian<3, float, halmd::random::gpu::rand48>::luaopen(L);
     brownian<2, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
     brownian<3, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    brownian<2, dsfloat, halmd::random::gpu::rand48>::luaopen(L);
+    brownian<3, dsfloat, halmd::random::gpu::rand48>::luaopen(L);
+    brownian<2, dsfloat, halmd::random::gpu::mrg32k3a>::luaopen(L);
+    brownian<3, dsfloat, halmd::random::gpu::mrg32k3a>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class brownian<2, float, halmd::random::gpu::rand48>;
 template class brownian<3, float, halmd::random::gpu::rand48>;
 template class brownian<2, float, halmd::random::gpu::mrg32k3a>;
 template class brownian<3, float, halmd::random::gpu::mrg32k3a>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class brownian<2, dsfloat, halmd::random::gpu::rand48>;
+template class brownian<3, dsfloat, halmd::random::gpu::rand48>;
+template class brownian<2, dsfloat, halmd::random::gpu::mrg32k3a>;
+template class brownian<3, dsfloat, halmd::random::gpu::mrg32k3a>;
+#endif
 
 } // namespace integrators
 } // namespace gpu

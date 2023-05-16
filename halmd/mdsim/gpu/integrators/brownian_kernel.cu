@@ -164,13 +164,20 @@ __device__ void update_orientation(
     }
 }
 
-template <int dimension, typename float_type, typename rng_type, typename
-    gpu_vector_type, typename gpu_pseudo_vector_type>
+template <
+    int dimension
+  , typename float_type
+  , typename ptr_type
+  , typename const_ptr_type
+  , typename gpu_vector_type
+  , typename gpu_pseudo_vector_type
+  , typename rng_type
+>
 __global__ void integrate(
-    float4* g_position
-  , float4* g_orientation
+    ptr_type g_position
+  , ptr_type g_orientation
   , gpu_vector_type* g_image
-  , float4 const* g_velocity
+  , const_ptr_type g_velocity
   , gpu_vector_type const* g_force
   , gpu_pseudo_vector_type const* g_torque
   , float timestep
@@ -204,15 +211,9 @@ __global__ void integrate(
     for (uint i = thread; i < nparticle; i += nthread) {
 
         // read in relevant variables
-#ifdef USE_VERLET_DSFUN
-        tie(r, species) <<= tie(g_position[i], g_position[i + nplace]);
-        tie(u, nothing) <<= tie(g_orientation[i], g_orientation[i + nplace]);
-        tie(v, mass)    <<= tie(g_velocity[i], g_velocity[i + nplace]);
-#else
         tie(r, species) <<= g_position[i];
         tie(u, nothing) <<= g_orientation[i];
         tie(v, mass)    <<= g_velocity[i];
-#endif
 
         //normal distribution parameters
         fixed_vector<float, 4> D    = tex1Dfetch(param_, species);
@@ -234,8 +235,7 @@ __global__ void integrate(
         if (dimension % 2 ) {
             if ((cached = !cached)) {
                 tie(eta3, cache) = random::gpu::normal(rng, state, mean, sigma_par);
-            }
-            else{
+            } else{
                 eta3 = cache;
             }
         }
@@ -248,26 +248,16 @@ __global__ void integrate(
         // enforce periodic boundary conditions
         float_vector_type image = box_kernel::reduce_periodic(r, box_length);
 
-
         tie(eta1, eta2) =  random::gpu::normal(rng, state, mean, sigma_rot);
 
         // update orientation last (Ito interpretation)
         update_orientation( D_rot, u, tau, timestep, temp, eta1, eta2,
                 epsilon, sigma_rot);
 
-
-
-
-
-
         // store position, species, image in global memory
-#ifdef USE_VERLET_DSFUN
-        tie(g_position[i], g_position[i + nplace]) <<= tie(r, species);
-        tie(g_orientation[i], g_orientation[i + nplace]) <<= tie(u, nothing);
-#else
         g_position[i] <<= tie(r, species);
         g_orientation[i] <<= tie(u, nothing);
-#endif
+
         if (!(image == float_vector_type(0))) {
             g_image[i] = image + static_cast<float_vector_type>(g_image[i]);
         }
@@ -278,23 +268,28 @@ __global__ void integrate(
 
 } // namespace brownian_kernel
 
-template <int dimension, typename rng_type>
-cuda::texture<float4> brownian_wrapper<dimension, rng_type>::param = brownian_kernel::param_;
+template <int dimension, typename float_type, typename rng_type>
+cuda::texture<float4> brownian_wrapper<dimension, float_type, rng_type>::param = brownian_kernel::param_;
 
-template <int dimension, typename rng_type>
-brownian_wrapper<dimension, rng_type> const brownian_wrapper<dimension, rng_type>::kernel = {
-#ifdef USE_VERLET_DSFUN
-    brownian_kernel::integrate<dimension, dsfloat, rng_type>
-#else
-    brownian_kernel::integrate<dimension, float, rng_type>
-#endif
+template <int dimension, typename float_type, typename rng_type>
+brownian_wrapper<dimension, float_type, rng_type> const
+brownian_wrapper<dimension, float_type, rng_type>::kernel = {
+    brownian_kernel::integrate<dimension, float_type, ptr_type, const_ptr_type>
 };
 
 // explicit instantiation
-template class brownian_wrapper<2, random::gpu::rand48_rng>;
-template class brownian_wrapper<3, random::gpu::rand48_rng>;
-template class brownian_wrapper<2, random::gpu::mrg32k3a_rng>;
-template class brownian_wrapper<3, random::gpu::mrg32k3a_rng>;
+#ifdef USE_GPU_SINGLE_PRECISION
+template class brownian_wrapper<2, float, random::gpu::rand48_rng>;
+template class brownian_wrapper<3, float, random::gpu::rand48_rng>;
+template class brownian_wrapper<2, float, random::gpu::mrg32k3a_rng>;
+template class brownian_wrapper<3, float, random::gpu::mrg32k3a_rng>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class brownian_wrapper<2, dsfloat, random::gpu::rand48_rng>;
+template class brownian_wrapper<3, dsfloat, random::gpu::rand48_rng>;
+template class brownian_wrapper<2, dsfloat, random::gpu::mrg32k3a_rng>;
+template class brownian_wrapper<3, dsfloat, random::gpu::mrg32k3a_rng>;
+#endif
 
 } // namespace integrators
 } // namespace gpu

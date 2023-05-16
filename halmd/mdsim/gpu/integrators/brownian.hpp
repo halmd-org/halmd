@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Manuel Dibak 
+ * Copyright © 2015 Manuel Dibak
  *
  * This file is part of HALMD.
  *
@@ -49,7 +49,7 @@ public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
     typedef typename random_type::rng_type rng_type;
-    typedef brownian_wrapper<dimension, rng_type> wrapper_type;
+    typedef brownian_wrapper<dimension, float_type, rng_type> wrapper_type;
 
     static void luaopen(lua_State* L);
 
@@ -78,10 +78,10 @@ public:
     {
         return temperature_;
     }
-    
+
     void bind_textures() const
     {
-        brownian_wrapper<dimension, rng_type>::param.bind(g_param_);
+        brownian_wrapper<dimension, float_type, rng_type>::param.bind(g_param_);
     }
 private:
     typedef typename particle_type::position_array_type position_array_type;
