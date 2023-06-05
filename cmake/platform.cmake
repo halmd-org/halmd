@@ -61,12 +61,12 @@ endif()
 if(DEFINED CMAKE_CUDA_COMPILER_ID)
   if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
 
-    # Compile for CUDA compute capability 3.5 (Kepler), and generate PTX 3.5 code
+    # Compile for CUDA compute capability 6.0 (Pascal), and generate PTX 6.0 code
     # as well as binary code for this target. (The sm_XX parameter is adjusted
     # best in the build tree after the initial configuration.) This ensures
     # backward and forward compatibility with targets of compute capability ≥
-    # 1.2 through JIT compilation at program startup, while providing binary
-    # code for Kepler GPUs.
+    # 2.0 through JIT compilation at program startup, while providing binary
+    # code for Pascal GPUs (e.g., GeForce GTX 1080).
     #
     # Note that the MD core modules were developed for compute capability 1.2,
     # which brings only non-IEEE-compliant, single-precision floating-point
