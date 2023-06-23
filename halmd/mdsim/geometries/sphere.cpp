@@ -1,5 +1,6 @@
 /*
  * Copyright © 2019 Roya Ebrahimi Viand
+ * Copyright © 2023 Felix Höfling
  * Copyright © 2021 Jaslo Ziska
  *
  * This file is part of HALMD.
@@ -19,12 +20,13 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <string>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/geometries/sphere.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
+
+#include <numeric>
+#include <string>
 
 namespace halmd {
 namespace mdsim {
@@ -46,6 +48,13 @@ void sphere<dimension, float_type>::log(std::shared_ptr<halmd::logger> logger_) 
 }
 
 template <int dimension, typename float_type>
+float_type sphere<dimension, float_type>::volume() const
+{
+    constexpr float_type pi = 4 * std::atan(1);
+    return 4 * pi / 3 * std::pow(radius_, 3);
+}
+
+template <int dimension, typename float_type>
 void sphere<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -57,6 +66,8 @@ void sphere<dimension, float_type>::luaopen(lua_State* L)
             namespace_("geometries")
             [
                 class_<sphere>()
+                    .property("volume", &sphere::volume)
+
               , def(class_name.c_str(), &std::make_shared<sphere
                   , vector_type
                   , float_type
