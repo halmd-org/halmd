@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2014  Felix Höfling
+-- Copyright © 2010-2023  Felix Höfling
 -- Copyright © 2013       Nicolas Höft
 -- Copyright © 2010-2012  Peter Colberg
 --
@@ -45,15 +45,31 @@ local h5 = assert(libhalmd.h5)
 -- :param table args: keyword arguments
 -- :param args.group: instance of :mod:`halmd.mdsim.particle_groups`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
+-- :param args.volume: a number or a nullary function yielding the reference volume (*default:* ``box.volume``)
+--
+-- The argument ``volume`` expects a callable ``function()``, which is used to
+-- query the reference volume of the particle group; the volume may change in
+-- the course of the simulation. If ``group`` refers to the whole simulation
+-- domain ``box.volume`` is passed, which is the default::
+--
+--     volume = function() return box.volume end  -- convert box.volume into a callable, thereby capturing box
+--
+-- For a sub-domain, e.g., if ``group`` is an instance of
+-- :class:`region <halmd.mdsim.particle_groups.region>`, returning a constant
+-- value may be appropriate.
 --
 -- .. method:: particle_number()
 --
 --    Returns the number of particles :math:`N` selected by ``args.group``.
 --
+-- .. method:: volume()
+--
+--    Returns the volume :math:`V` as obtained from the function passed upon
+--    construction.
+--
 -- .. method:: density()
 --
---    Returns the number density :math:`\rho = N / V` using the volume from
---    ``args.box``.
+--    Returns the number density :math:`\rho = N / V`.
 --
 -- .. method:: kinetic_energy()
 --
@@ -172,13 +188,21 @@ local h5 = assert(libhalmd.h5)
 local M = module(function(args)
     local group = utility.assert_kwarg(args, "group")
     local box = utility.assert_kwarg(args, "box")
+    -- query box volume by default
+    local volume = args.volume or function() return box.volume end
+    -- convert a constant volume into a callable yielding this constant
+    if type(volume) == "number" then
+        local value = volume        -- temporary capture to avoid error "unable to make cast"
+        volume = function() return value end
+    end
+    utility.assert_type(volume, "function")
 
     local particle = assert(group.particle)
     local label = assert(group.label)
     local logger = log.logger({label = ("thermodynamics (%s)"):format(label)})
 
     -- construct instance
-    local self = thermodynamics(particle, group, box, logger)
+    local self = thermodynamics(particle, group, box, volume, logger)
 
     self.dimension = property(function(self) return box.dimension end)
     self.group = property(function(self) return group end)

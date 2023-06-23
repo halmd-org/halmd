@@ -110,7 +110,8 @@ function main(args)
         msv = observables.thermodynamics({box = box, group = all_group})
         msv:writer({file = file, every = interval})
 
-        observables.thermodynamics({box = box, group = sphere_group})
+        -- explicitly specify the volume of the particle group
+        observables.thermodynamics({box = box, group = sphere_group, volume = 4 * math.pi / 3 * math.pow(sphere.radius, 3) })
            :writer({file = file, every = interval})
     end
 
