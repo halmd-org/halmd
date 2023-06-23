@@ -3,6 +3,27 @@
 Changelog
 *********
 
+Version 1.0.2
+=============
+
+**Bug fixes**
+
+* external potential :mod:`planar_wall <halmd.mdsim.potentials.external.planar_wall>`:
+  build also a GPU variant for double-single precision, which was missing
+  *(Felix Höfling)*
+
+* computation of thermodynamic observables (e.g., density): allow the user to
+  pass the correct volume when restricting the particle group to a sub-domain of
+  the simulation box *(Felix Höfling)*
+
+**Improvements**
+
+* observables: let :mod:`thermodynamics <halmd.observables.thermodynamics>`
+  write the reference volume by default to the output file *(Felix Höfling)*
+* add function ``volume`` to the :mod:`geometry modules <halmd.mdsim.geometries>`
+  *(Felix Höfling)*
+
+
 Version 1.0.1
 =============
 
