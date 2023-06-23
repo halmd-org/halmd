@@ -203,21 +203,22 @@ local M = module(function(args)
         -- otherwise treat them as normal data fields
         local writer = file:writer{location = location, mode = "truncate"}
         writer.group:write_attribute("dimension", h5.int(), self.dimension) -- always store spatial dimension
+        writer:on_write(self.volume, {"volume"}) -- always store reference volume
 
-        if not group.fluctuating then
-            for k,v in pairs({"particle_number", "density"}) do
+        for k,v in pairs({"particle_number", "density"}) do
+            if not group.fluctuating then
                 writer:on_write(assert(self[v]), {v})
                 -- remove from set of data fields if present
                 if fields[v] ~= nil then
                     fields[v] = nil
                     logger:warning("skip repeated output of " .. v)
                 end
+            else
+                -- append to list of output fields if not already specified by the user
+                if not fields[v] then table.insert(fields, v) end
             end
-            writer:write()
-        else
-            table.insert(fields, "particle_number")
-            table.insert(fields, "density")
         end
+        writer:write()
 
         writer = file:writer{location = location, mode = "append"}
 
