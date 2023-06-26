@@ -25,6 +25,7 @@
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
+#include <cmath>
 #include <numeric>
 #include <string>
 
@@ -50,8 +51,7 @@ void sphere<dimension, float_type>::log(std::shared_ptr<halmd::logger> logger_) 
 template <int dimension, typename float_type>
 float_type sphere<dimension, float_type>::volume() const
 {
-    constexpr float_type pi = 4 * std::atan(1);
-    return 4 * pi / 3 * std::pow(radius_, 3);
+    return 4 * float_type(M_PI) / 3 * std::pow(radius_, 3);
 }
 
 template <int dimension, typename float_type>
