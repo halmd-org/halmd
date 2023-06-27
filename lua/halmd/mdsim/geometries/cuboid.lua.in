@@ -1,4 +1,5 @@
 --
+-- Copyright © 2023      Felix Höfling
 -- Copyright © 2014-2015 Nicolas Höft
 --
 -- This file is part of HALMD.
@@ -62,6 +63,10 @@ local cuboid = {
 -- .. attribute:: length
 --
 --    Edge lengths of cuboid.
+--
+-- .. attribute:: volume
+--
+--    The volume of the cuboid.
 --
 local M = module(function(args)
     utility.assert_type(args, "table")

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2016 Felix Höfling
+ * Copyright © 2010-2023 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2010-2012 Peter Colberg
  *
@@ -32,6 +32,7 @@
 
 #include <lua.hpp>
 
+#include <functional>
 #include <memory>
 #include <tuple>
 
@@ -50,6 +51,7 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::stress_tensor_type stress_tensor_type;
     typedef mdsim::box<dimension> box_type;
+    typedef std::function<double ()> volume_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_group particle_group_type;
 
@@ -59,6 +61,7 @@ public:
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<particle_group_type> group
       , std::shared_ptr<box_type const> box
+      , volume_type volume = nullptr
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -68,7 +71,7 @@ public:
     virtual unsigned int particle_number() const;
 
     /**
-     * Returns volume.
+     * Returns the volume obtained from calling volume_().
      */
     virtual double volume() const;
 
@@ -127,6 +130,8 @@ private:
     std::shared_ptr<particle_group_type> group_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
+    /** reference volume */
+    volume_type volume_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
