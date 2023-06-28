@@ -40,9 +40,9 @@ Physics applications
 * particles interacting via many truncated and untruncated :ref:`potentials
   <potentials>` of the external and pair type (anisotropic and bonded potentials coming soon)
 
-* both two- and three-dimensional systems
+* microcanonical (NVE) and canonical (NVT) ensembles with Hamiltonian and Brownian dynamics  (:ref:`integrators`, optimised multi-stage integrators coming soon)
 
-* microcanonical (NVE) and canonical (NVT) ensembles (:ref:`integrators`)
+* both two- and three-dimensional systems, natively
 
 * with periodic, closed and open boundaries
 
