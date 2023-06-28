@@ -1,17 +1,21 @@
 Introduction
 ************
 
-*HAL’s MD package* is a high-precision molecular dynamics package for
-large-scale simulations of the complex dynamics in inhomogeneous liquids. It
-has been specifically designed to support acceleration through `CUDA
-<http://en.wikipedia.org/wiki/CUDA>`_-enabled graphics processors.
+*HAL’s MD package* is a high-precision molecular dynamics framework for the
+simulation of complex dynamic phenomena in materials research, in a broad
+sense, with a focus on nanofluidics and soft matter.  The software has been
+specifically designed for acceleration through `CUDA
+<http://en.wikipedia.org/wiki/CUDA>`_-enabled graphics processors, with an
+emphasis on both high performance and numerical long-time stability. It shows
+very good scalability from few thousands to millions of particles.
 
 *HAL’s MD package* is maintained and developed by `Felix Höfling
 <http://page.mi.fu-berlin.de/hoefling>`_ and was initially written together
-with Peter Colberg. Special credits go to `Nicolas Höft
-<https://www.starlabs.de>`_ and `Daniel Kirchner
-<https://de.linkedin.com/in/daniel-kirchner-6024b375>`_ for their manifold
-contributions.
+with `Peter Colberg. <https://www.linkedin.com/in/petercolberg>`_
+Special credit goes to `Nicolas Höft <https://www.starlabs.de>`_ and
+`Daniel Kirchner <https://github.com/ekpyron>`_
+for their manifold contributions.
+
 
 .. note::
 
@@ -26,19 +30,21 @@ contributions.
 Physics applications
 ====================
 
-*HAL’s MD package* is designed to study
+*HAL’s MD package* was made to study
 
 * the spatio-temporal dynamics of inhomogeneous and complex liquids
 
-* both two- and three-dimensional systems
+* glass transition, liquid–vapour interfaces, phase separation of binary fluids,
+  confined fluids, porous media, … (active matter coming soon)
 
-* particles interacting via many truncated and untruncated pair
-  :ref:`potentials <potentials>` (bonded and external potentials coming soon)
+* particles interacting via many truncated and untruncated :ref:`potentials
+  <potentials>` of the external and pair type (anisotropic and bonded potentials coming soon)
+
+* both two- and three-dimensional systems
 
 * microcanonical (NVE) and canonical (NVT) ensembles (:ref:`integrators`)
 
-* glass transition, liquid–vapour interfaces, demixing of binary fluids,
-  confined fluids, porous media, …
+* with periodic, closed and open boundaries
 
 
 Features
@@ -54,10 +60,11 @@ Features
 
 * user scripts, which define complex simulation protocols
 
-* online evaluation of :ref:`observables <observables>` including dynamic correlation functions
+* online evaluation of :ref:`observables <observables>` including dynamic
+  correlation functions
 
-* structured, compressed, and portable `H5MD <http://nongnu.org/h5md>`_
-  output files
+* structured, compressed, and portable `H5MD <http://nongnu.org/h5md>`_ output
+  files
 
 * extensibility by the generic and modular design
 
@@ -77,7 +84,7 @@ Technical features
 
 * an integrated, lightweight `Lua <http://lua.org>`_ interpreter
 
-* modern, template-based C++ code taking advantage of `C++14 <http://en.wikipedia.org/wiki/C++11>`_
+* modern, template-based C++ code taking advantage of `C++14 <http://en.wikipedia.org/wiki/C++14>`_
 
 
 Historical footnote
