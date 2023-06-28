@@ -1,6 +1,6 @@
 /*
- * Copyright © 2022 Felix Höfling
- * Copyright © 2021 Jaslo Ziska
+ * Copyright © 2022-2023 Felix Höfling
+ * Copyright © 2021      Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -19,12 +19,13 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <string>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/geometries/cylinder.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
+
+#include <cmath>
+#include <string>
 
 namespace halmd {
 namespace mdsim {
@@ -37,6 +38,7 @@ cylinder<dimension, float_type>::cylinder(vector_type const& axis, vector_type c
   , axis_(axis)
   , offset_(offset)
   , radius2_(radius * radius)
+  , length2_4_(length * length / 4)
 {
     // normalise axis
     float_type norm = norm_2(axis_);
@@ -51,9 +53,16 @@ void cylinder<dimension, float_type>::log(std::shared_ptr<halmd::logger> logger_
 {
     LOG("using cylinder geometry");
     LOG("radius: " << radius_);
+    LOG("length: " << length_);
     LOG("axis vector: " << axis_original_);
     LOG_DEBUG("cylinder axis after normalisation: " << axis_);
     LOG("axis offset: " << offset_);
+}
+
+template <int dimension, typename float_type>
+float_type cuboid<dimension, float_type>::volume() const
+{
+    return float_type(M_PI) * radius_ * radius_ * length_;
 }
 
 template <int dimension, typename float_type>
@@ -68,9 +77,12 @@ void cylinder<dimension, float_type>::luaopen(lua_State* L)
             namespace_("geometries")
             [
                 class_<cylinder>()
+                    .property("volume", &cuboid::volume)
+
               , def(class_name.c_str(), &std::make_shared<cylinder
                   , vector_type const&
                   , vector_type const&
+                  , float_type
                   , float_type
                   >)
             ]
