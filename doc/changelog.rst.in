@@ -28,6 +28,11 @@ Version 1.1.0
 
 **Improvements**
 
+* include the :mod:`Mie <halmd.mdsim.potentials.pair.mie>` potential as a
+  renamed version of the deprecated :mod:`modified_lennard_jones
+  <halmd.mdsim.potentials.pair.modified_lennard_jones>` potential. A
+  transitional module is kept for backwards compatibility. *(Felix Höfling)*
+
 * new force algorithm to speed up calculation of truncated pair forces in case
   of small particle numbers. In such situations, GPU utilisation is increased
   by unrolling the loop over neighbour lists and processing it in parallel
