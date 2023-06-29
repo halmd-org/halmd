@@ -20,7 +20,7 @@
 
 #include <halmd/config.hpp>
 
-#define BOOST_TEST_MODULE modified_lennard_jones
+#define BOOST_TEST_MODULE mie
 #include <boost/test/unit_test.hpp>
 
 #include <boost/foreach.hpp>
@@ -32,12 +32,12 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/potentials/pair/truncations/shifted.hpp>
-#include <halmd/mdsim/host/potentials/pair/modified_lennard_jones.hpp>
+#include <halmd/mdsim/host/potentials/pair/mie.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/potentials/pair/truncations/shifted.hpp>
-# include <halmd/mdsim/gpu/potentials/pair/modified_lennard_jones.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/mie.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
 # include <test/tools/cuda.hpp>
@@ -49,7 +49,7 @@ using namespace boost;
 using namespace halmd;
 using namespace std;
 
-/** test the (truncated and shifted) modified Lennard-Jones potential
+/** test the (truncated and shifted) Mie potential
  *
  *  The host module is a conventional functor which can be tested directly. For
  *  the GPU module, we use the pair_trunc force module in two dimensions to
@@ -58,14 +58,14 @@ using namespace std;
  *  neighbour per particle.
  */
 
-BOOST_AUTO_TEST_CASE( modified_lennard_jones_host )
+BOOST_AUTO_TEST_CASE( mie_host )
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     typedef double float_type;
 #else
     typedef float float_type;
 #endif
-    typedef mdsim::host::potentials::pair::modified_lennard_jones<float_type> base_potential_type;
+    typedef mdsim::host::potentials::pair::mie<float_type> base_potential_type;
     typedef mdsim::host::potentials::pair::truncations::shifted<base_potential_type> potential_type;
     typedef potential_type::matrix_type matrix_type;
     typedef potential_type::uint_matrix_type uint_matrix_type;
@@ -180,18 +180,18 @@ BOOST_AUTO_TEST_CASE( modified_lennard_jones_host )
 #ifdef HALMD_WITH_GPU
 
 template <typename float_type>
-struct modified_lennard_jones
+struct mie
 {
     enum { dimension = 2 };
 
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::gpu::potentials::pair::modified_lennard_jones<float> base_potential_type;
+    typedef mdsim::gpu::potentials::pair::mie<float> base_potential_type;
     typedef mdsim::gpu::potentials::pair::truncations::shifted<base_potential_type> potential_type;
 #ifndef USE_HOST_SINGLE_PRECISION
-    typedef mdsim::host::potentials::pair::modified_lennard_jones<double> base_host_potential_type;
+    typedef mdsim::host::potentials::pair::mie<double> base_host_potential_type;
 #else
-    typedef mdsim::host::potentials::pair::modified_lennard_jones<float> base_host_potential_type;
+    typedef mdsim::host::potentials::pair::mie<float> base_host_potential_type;
 #endif
     typedef mdsim::host::potentials::pair::truncations::shifted<base_host_potential_type> host_potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
@@ -207,12 +207,12 @@ struct modified_lennard_jones
     std::shared_ptr<host_potential_type> host_potential;
     vector<unsigned int> npart_list;
 
-    modified_lennard_jones();
+    mie();
     void test();
 };
 
 template <typename float_type>
-void modified_lennard_jones<float_type>::test()
+void mie<float_type>::test()
 {
     // place particles along the x-axis within one half of the box,
     // put every second particle at the origin
@@ -257,7 +257,7 @@ void modified_lennard_jones<float_type>::test()
 }
 
 template <typename float_type>
-modified_lennard_jones<float_type>::modified_lennard_jones()
+mie<float_type>::mie()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
 
@@ -311,13 +311,13 @@ modified_lennard_jones<float_type>::modified_lennard_jones()
 }
 
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( modified_lennard_jones_gpu_dsfloat, set_cuda_device ) {
-    modified_lennard_jones<dsfloat>().test();
+BOOST_FIXTURE_TEST_CASE( mie_gpu_dsfloat, set_cuda_device ) {
+    mie<dsfloat>().test();
 }
 # endif
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( modified_lennard_jones_gpu_float, set_cuda_device ) {
-    modified_lennard_jones<float>().test();
+BOOST_FIXTURE_TEST_CASE( mie_gpu_float, set_cuda_device ) {
+    mie<float>().test();
 }
 # endif
 #endif // HALMD_WITH_GPU

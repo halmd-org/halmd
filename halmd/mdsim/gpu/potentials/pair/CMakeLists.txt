@@ -19,10 +19,10 @@ if(HALMD_WITH_pair_lennard_jones)
 endif()
 
 halmd_add_potential(
-  halmd_mdsim_gpu_potentials_pair_modified_lennard_jones
-  pair modified_lennard_jones
-  modified_lennard_jones.cpp
-  modified_lennard_jones_kernel.cu
+  halmd_mdsim_gpu_potentials_pair_mie
+  pair mie
+  mie.cpp
+  mie_kernel.cu
 )
 
 halmd_add_potential(

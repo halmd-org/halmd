@@ -71,35 +71,35 @@ if(${HALMD_WITH_pair_lennard_jones})
   endforeach()
 endif()
 
-if(${HALMD_WITH_pair_modified_lennard_jones})
-  add_executable(test_unit_mdsim_potentials_pair_modified_lennard_jones
-    modified_lennard_jones.cpp
+if(${HALMD_WITH_pair_mie})
+  add_executable(test_unit_mdsim_potentials_pair_mie
+    mie.cpp
   )
   if(HALMD_WITH_GPU)
-    target_link_libraries(test_unit_mdsim_potentials_pair_modified_lennard_jones
-      halmd_mdsim_gpu_potentials_pair_modified_lennard_jones
+    target_link_libraries(test_unit_mdsim_potentials_pair_mie
+      halmd_mdsim_gpu_potentials_pair_mie
       halmd_mdsim_gpu
       halmd_algorithm_gpu
       halmd_utility_gpu
     )
   endif()
-  target_link_libraries(test_unit_mdsim_potentials_pair_modified_lennard_jones
-    halmd_mdsim_host_potentials_pair_modified_lennard_jones
+  target_link_libraries(test_unit_mdsim_potentials_pair_mie
+    halmd_mdsim_host_potentials_pair_mie
     halmd_mdsim
     ${HALMD_TEST_LIBRARIES}
   )
-  add_test(unit/mdsim/potentials/pair/modified_lennard_jones/host
-    test_unit_mdsim_potentials_pair_modified_lennard_jones --run_test=modified_lennard_jones_host --log_level=test_suite
+  add_test(unit/mdsim/potentials/pair/mie/host
+    test_unit_mdsim_potentials_pair_mie --run_test=mie_host --log_level=test_suite
   )
   if(HALMD_WITH_GPU)
     if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
-      halmd_add_gpu_test(unit/mdsim/potentials/pair/modified_lennard_jones/gpu/float
-        test_unit_mdsim_potentials_pair_modified_lennard_jones --run_test=modified_lennard_jones_gpu_float --log_level=test_suite
+      halmd_add_gpu_test(unit/mdsim/potentials/pair/mie/gpu/float
+        test_unit_mdsim_potentials_pair_mie --run_test=mie_gpu_float --log_level=test_suite
       )
     endif()
     if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
-      halmd_add_gpu_test(unit/mdsim/potentials/pair/modified_lennard_jones/gpu/dsfloat
-        test_unit_mdsim_potentials_pair_modified_lennard_jones --run_test=modified_lennard_jones_gpu_dsfloat --log_level=test_suite
+      halmd_add_gpu_test(unit/mdsim/potentials/pair/mie/gpu/dsfloat
+        test_unit_mdsim_potentials_pair_mie --run_test=mie_gpu_dsfloat --log_level=test_suite
       )
     endif()
   endif()

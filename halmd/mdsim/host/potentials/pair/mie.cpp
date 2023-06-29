@@ -1,6 +1,6 @@
 /*
  * Copyright © 2008-2013 Felix Höfling
- * Copyright © 2008-2010 Peter Colberg
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,16 +20,16 @@
  */
 
 #include <boost/numeric/ublas/io.hpp>
-#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <cmath>
+#include <exception>
 #include <stdexcept>
 #include <string>
 
-#include <halmd/mdsim/gpu/forces/pair_full.hpp>
-#include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/modified_lennard_jones.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/modified_lennard_jones_kernel.hpp>
-#include <halmd/mdsim/gpu/potentials/pair/truncations/truncations.hpp>
+#include <halmd/io/logger.hpp>
+#include <halmd/mdsim/host/forces/pair_full.hpp>
+#include <halmd/mdsim/host/forces/pair_trunc.hpp>
+#include <halmd/mdsim/host/potentials/pair/mie.hpp>
+#include <halmd/mdsim/host/potentials/pair/truncations/truncations.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost::numeric::ublas;
@@ -37,7 +37,7 @@ using namespace std;
 
 namespace halmd {
 namespace mdsim {
-namespace gpu {
+namespace host {
 namespace potentials {
 namespace pair {
 
@@ -45,7 +45,7 @@ namespace pair {
  * Initialise Lennard-Jones potential parameters
  */
 template <typename float_type>
-modified_lennard_jones<float_type>::modified_lennard_jones(
+mie<float_type>::mie(
     matrix_type const& epsilon
   , matrix_type const& sigma
   , uint_matrix_type const& index_m
@@ -56,10 +56,10 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
   : epsilon_(epsilon)
   , sigma_(check_shape(sigma, epsilon))
   , index_m_(check_shape(index_m, epsilon))
+  , index_m_2_(index_m_ / 2)
   , index_n_(check_shape(index_n, epsilon))
+  , index_n_2_(index_n_ / 2)
   , sigma2_(element_prod(sigma_, sigma_))
-  , g_param_(size1() * size2())
-  , t_param_(g_param_)
   , logger_(logger)
 {
     LOG("potential well depths: ε = " << epsilon_);
@@ -67,7 +67,7 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
     LOG("index of repulsion: m = " << index_m_);
     LOG("index of attraction: n = " << index_n_);
 
-    // check conditions on power low indices (after logging output)
+    // check conditions on power law indices (after logging output)
     for (unsigned i = 0; i < index_m_.size1(); ++i) {
         for (unsigned j = 0; j < index_m_.size2(); ++j) {
             // indices must be even
@@ -79,34 +79,23 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
             }
         }
     }
-
-    cuda::memory::host::vector<float4> param(g_param_.size());
-    for (size_t i = 0; i < param.size(); ++i) {
-        fixed_vector<float, 4> p;
-        p[modified_lennard_jones_kernel::EPSILON] = epsilon_.data()[i];
-        p[modified_lennard_jones_kernel::SIGMA2] = sigma2_.data()[i];
-        p[modified_lennard_jones_kernel::INDEX_M_2] = index_m_.data()[i] / 2;
-        p[modified_lennard_jones_kernel::INDEX_N_2] = index_n_.data()[i] / 2;
-        param[i] = p;
-    }
-    cuda::copy(param.begin(), param.end(), g_param_.begin());
 }
 
 template <typename float_type>
-void modified_lennard_jones<float_type>::luaopen(lua_State* L)
+void mie<float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("gpu")
+            namespace_("host")
             [
                 namespace_("potentials")
                 [
                     namespace_("pair")
                     [
-                        class_<modified_lennard_jones, std::shared_ptr<modified_lennard_jones> >("modified_lennard_jones")
+                        class_<mie, std::shared_ptr<mie> >("mie")
                             .def(constructor<
                                 matrix_type const&
                               , matrix_type const&
@@ -114,10 +103,10 @@ void modified_lennard_jones<float_type>::luaopen(lua_State* L)
                               , uint_matrix_type const&
                               , std::shared_ptr<logger>
                             >())
-                            .property("epsilon", &modified_lennard_jones::epsilon)
-                            .property("sigma", &modified_lennard_jones::sigma)
-                            .property("index_m", &modified_lennard_jones::index_m)
-                            .property("index_n", &modified_lennard_jones::index_n)
+                            .property("epsilon", &mie::epsilon)
+                            .property("sigma", &mie::sigma)
+                            .property("index_m", &mie::index_m)
+                            .property("index_n", &mie::index_n)
                     ]
                 ]
             ]
@@ -125,24 +114,30 @@ void modified_lennard_jones<float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_pair_modified_lennard_jones(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_mie(lua_State* L)
 {
-    modified_lennard_jones<float>::luaopen(L);
-#ifdef USE_GPU_SINGLE_PRECISION
-    forces::pair_full<3, float, modified_lennard_jones<float> >::luaopen(L);
-    forces::pair_full<2, float, modified_lennard_jones<float> >::luaopen(L);
+#ifndef USE_HOST_SINGLE_PRECISION
+    mie<double>::luaopen(L);
+    forces::pair_full<3, double, mie<double> >::luaopen(L);
+    forces::pair_full<2, double, mie<double> >::luaopen(L);
+    truncations::truncations_luaopen<double, mie<double> >(L);
+#else
+    mie<float>::luaopen(L);
+    forces::pair_full<3, float, mie<float> >::luaopen(L);
+    forces::pair_full<2, float, mie<float> >::luaopen(L);
+    truncations::truncations_luaopen<float, mie<float> >(L);
 #endif
-#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-    forces::pair_full<3, dsfloat, modified_lennard_jones<float> >::luaopen(L);
-    forces::pair_full<2, dsfloat, modified_lennard_jones<float> >::luaopen(L);
-#endif
-    truncations::truncations_luaopen<modified_lennard_jones<float> >(L);
     return 0;
 }
 
 // explicit instantiation
-template class modified_lennard_jones<float>;
-HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(modified_lennard_jones<float>)
+#ifndef USE_HOST_SINGLE_PRECISION
+template class mie<double>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(mie<double>)
+#else
+template class mie<float>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(mie<float>)
+#endif
 
 } // namespace pair
 } // namespace potentials
@@ -150,19 +145,17 @@ HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(modified_lennard_jones<f
 namespace forces {
 
 // explicit instantiation of force modules
-#ifdef USE_GPU_SINGLE_PRECISION
-template class pair_full<3, float, potentials::pair::modified_lennard_jones<float> >;
-template class pair_full<2, float, potentials::pair::modified_lennard_jones<float> >;
-HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::modified_lennard_jones<float>)
-#endif
-
-#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-template class pair_full<3, dsfloat, potentials::pair::modified_lennard_jones<float> >;
-template class pair_full<2, dsfloat, potentials::pair::modified_lennard_jones<float> >;
-HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(dsfloat, potentials::pair::modified_lennard_jones<float>)
+#ifndef USE_HOST_SINGLE_PRECISION
+template class pair_full<3, double, potentials::pair::mie<double> >;
+template class pair_full<2, double, potentials::pair::mie<double> >;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(double, potentials::pair::mie<double>)
+#else
+template class pair_full<3, float, potentials::pair::mie<float> >;
+template class pair_full<2, float, potentials::pair::mie<float> >;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::mie<float>)
 #endif
 
 } // namespace forces
-} // namespace gpu
+} // namespace host
 } // namespace mdsim
 } // namespace halmd

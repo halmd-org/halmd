@@ -31,7 +31,7 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace modified_lennard_jones_kernel {
+namespace mie_kernel {
 
 /**
  * indices of potential parameters
@@ -64,13 +64,13 @@ HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(
 /**
  *
  */
-class modified_lennard_jones
+class mie
 {
 public:
     /**
      * Construct Lennard-Jones pair interaction potential.
      */
-    modified_lennard_jones(cudaTextureObject_t t_param) : t_param_(t_param) {}
+    mie(cudaTextureObject_t t_param) : t_param_(t_param) {}
 
     /**
      * Fetch potential parameters from texture cache for particle pair.
@@ -109,9 +109,9 @@ private:
     cudaTextureObject_t t_param_;
 };
 
-} // namespace modified_lennard_jones_kernel
+} // namespace mie_kernel
 
-struct modified_lennard_jones_wrapper {};
+struct mie_wrapper {};
 
 } // namespace pair
 } // namespace potentials
