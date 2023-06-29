@@ -43,7 +43,7 @@ public:
     typedef fixed_vector<float_type, dimension> vector_type;
 
 #ifndef __CUDACC__
-    cylinder(vector_type const& axis, vector_type const& offset, float_type radius, float_type length);
+    cylinder(vector_type const& axis, vector_type const& centre, float_type radius, float_type length);
 
     /**
      * Log geometry information
@@ -79,7 +79,7 @@ private:
 #endif
 
     vector_type axis_;
-    vector_type offset_;
+    vector_type centre_;
     float_type radius2_;            //< squared radius
     float_type length2_4_;          //< length squared divided by 4
 };
@@ -88,7 +88,7 @@ template<int dimension, typename float_type>
 HALMD_GPU_ENABLED bool cylinder<dimension, float_type>::operator()(vector_type const& r) const
 {
     bool inside = true;
-    vector_type const dr = r - offset_;
+    vector_type const dr = r - centre_;
 
     // Pythagorean theorem:
     // the hypotenuse is dr, and the two legs of the triangle are the

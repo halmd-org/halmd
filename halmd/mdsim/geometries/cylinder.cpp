@@ -32,11 +32,11 @@ namespace mdsim {
 namespace geometries {
 
 template <int dimension, typename float_type>
-cylinder<dimension, float_type>::cylinder(vector_type const& axis, vector_type const& offset, float_type radius)
+cylinder<dimension, float_type>::cylinder(vector_type const& axis, vector_type const& centre, float_type radius, float_type length)
   : axis_original_(axis)
   , radius_(radius)
   , axis_(axis)
-  , offset_(offset)
+  , centre_(centre)
   , radius2_(radius * radius)
   , length2_4_(length * length / 4)
 {
@@ -52,15 +52,15 @@ template <int dimension, typename float_type>
 void cylinder<dimension, float_type>::log(std::shared_ptr<halmd::logger> logger_) const
 {
     LOG("using cylinder geometry");
-    LOG("radius: " << radius_);
-    LOG("length: " << length_);
     LOG("axis vector: " << axis_original_);
     LOG_DEBUG("cylinder axis after normalisation: " << axis_);
-    LOG("axis offset: " << offset_);
+    LOG("cylinder centre: " << centre_);
+    LOG("radius: " << radius_);
+    LOG("length: " << length_);
 }
 
 template <int dimension, typename float_type>
-float_type cuboid<dimension, float_type>::volume() const
+float_type cylinder<dimension, float_type>::volume() const
 {
     return float_type(M_PI) * radius_ * radius_ * length_;
 }
@@ -77,7 +77,7 @@ void cylinder<dimension, float_type>::luaopen(lua_State* L)
             namespace_("geometries")
             [
                 class_<cylinder>()
-                    .property("volume", &cuboid::volume)
+                    .property("volume", &cylinder::volume)
 
               , def(class_name.c_str(), &std::make_shared<cylinder
                   , vector_type const&
