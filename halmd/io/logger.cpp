@@ -105,6 +105,8 @@ static inline std::ostream& operator<<(std::ostream& os, logging::severity_level
         os << "TRACE"; break;
       case logging::debug:
         os << "DEBUG"; break;
+      case logging::info:
+        os << "INFO"; break;
       case logging::warning:
         os << "WARNING"; break;
       case logging::error:
