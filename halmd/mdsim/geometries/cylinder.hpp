@@ -72,14 +72,8 @@ public:
     HALMD_GPU_ENABLED bool operator()(vector_type const& r) const;
 
 private:
-#ifndef __CUDACC__
-    vector_type axis_original_;     //< store for logging purposes only
-    float_type radius_;
-    float_type length_;
-#endif
-
-    vector_type axis_;
-    vector_type centre_;
+    vector_type axis_;              //< normalised cylinder axis
+    vector_type centre_;            //< coordinates of cylinder centre
     float_type radius2_;            //< squared radius
     float_type length2_4_;          //< length squared divided by 4
 };
@@ -96,7 +90,7 @@ HALMD_GPU_ENABLED bool cylinder<dimension, float_type>::operator()(vector_type c
     float_type dr2 = inner_prod(dr, dr);
     float_type par = inner_prod(axis_, dr);    // parallel to the axis
 
-    if (dr2 - par * par > radius2_  &&  par * par > length2_4_ ) {
+    if (dr2 - par * par > radius2_  ||  par * par > length2_4_ ) {
         inside = false;
     }
 

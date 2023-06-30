@@ -33,14 +33,13 @@ namespace geometries {
 
 template <int dimension, typename float_type>
 cylinder<dimension, float_type>::cylinder(vector_type const& axis, vector_type const& centre, float_type radius, float_type length)
-  : axis_original_(axis)
-  , radius_(radius)
-  , axis_(axis)
+  : axis_(axis)
   , centre_(centre)
   , radius2_(radius * radius)
   , length2_4_(length * length / 4)
 {
-    // normalise axis
+    // normalise axis, output originally passed parameter to default logger
+    LOG_DEBUG("cylinder axis: " << norm);
     float_type norm = norm_2(axis_);
     if (norm == 0) {
         throw std::invalid_argument("axis of cylinder geometry must be non-zero");
@@ -52,17 +51,16 @@ template <int dimension, typename float_type>
 void cylinder<dimension, float_type>::log(std::shared_ptr<halmd::logger> logger_) const
 {
     LOG("using cylinder geometry");
-    LOG("axis vector: " << axis_original_);
-    LOG_DEBUG("cylinder axis after normalisation: " << axis_);
+    LOG("axis vector (normalised): " << axis_);
     LOG("cylinder centre: " << centre_);
-    LOG("radius: " << radius_);
-    LOG("length: " << length_);
+    LOG("radius: " << sqrt(radius2_));
+    LOG("length: " << sqrt(4 * length2_4_));
 }
 
 template <int dimension, typename float_type>
 float_type cylinder<dimension, float_type>::volume() const
 {
-    return float_type(M_PI) * radius_ * radius_ * length_;
+    return float_type(M_PI) * radius2_ * sqrt(4 * length2_4_);
 }
 
 template <int dimension, typename float_type>

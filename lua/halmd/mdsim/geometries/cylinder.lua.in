@@ -87,7 +87,7 @@ local cylinder = {
 local M = module(function(args)
     utility.assert_type(args, "table")
     local axis = utility.assert_type(utility.assert_kwarg(args, "axis"), "table")
-    local offset = utility.assert_type(utility.assert_kwarg(args, "offset"), "table")
+    local centre = utility.assert_type(utility.assert_kwarg(args, "centre"), "table")
     local radius = utility.assert_type(utility.assert_kwarg(args, "radius"), "number")
     local length = utility.assert_type(utility.assert_kwarg(args, "length"), "number")
     local precision = args.precision or (device.gpu and "single" or "@HALMD_HOST_PRECISION@")
@@ -97,12 +97,12 @@ local M = module(function(args)
     end
 
     -- construct instance
-    local self = cylinder[precision](axis, offset, radius, length)
+    local self = cylinder[precision](axis, centre, radius, length)
 
     -- attach coordinates of cylinder axis as read-only property
     self.axis = property(function(self) return axis end)
-    -- attach coordinates of axis offset as read-only property
-    self.offset = property(function(self) return offset end)
+    -- attach coordinates of cylinder centre as read-only property
+    self.centre = property(function(self) return centre end)
     -- attach cylinder radius as read-only property
     self.radius = property(function(self) return radius end)
     -- attach cylinder length as read-only property

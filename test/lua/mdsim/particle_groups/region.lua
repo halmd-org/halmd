@@ -180,16 +180,17 @@ test["cylinder"] = function(args)
     -- of 1.5σ.
     -- define geometry first
     local radius = 0.75
+    local length = L
     local axis = { 1, 1 }
     for i = #axis + 1, dimension do
         axis[i] = 0
     end
-    local offset = { math.sqrt(2) * radius }
-    for i = #offset + 1, dimension do
-        offset[i] = 0
+    local centre = { math.sqrt(2) * radius }
+    for i = #centre + 1, dimension do
+        centre[i] = 0
     end
 
-    local cylinder = mdsim.geometries.cylinder({axis = axis, offset = offset, radius = radius})
+    local cylinder = mdsim.geometries.cylinder({axis = axis, centre = centre, radius = radius, length = length})
 
     local group = setup(cylinder, args)
 
@@ -220,24 +221,26 @@ test["cylinder"] = function(args)
         local dr2 = 0
         local dr_n = 0
         for j = 1, #r do
-            local dr = r[j] - offset[j]
+            local dr = r[j] - centre[j]
             dr2 = dr2 + dr * dr
             dr_n = dr_n + dr * axis[j]
         end
         local distance = math.sqrt(dr2 - dr_n * dr_n)
-        assert(distance <= radius * (1 + tolerance), ("particle #%d included in selection, but it should not"):format(i))
+        assert(distance <= radius * (1 + tolerance) and math.abs(dr_n) <= length / 2 * (1 + tolerance),
+               ("particle #%d included in selection, but it should not"):format(i))
     end
 
     for i, r in ipairs(positions["excluded"]) do
         local dr2 = 0
         local dr_n = 0
         for j = 1, #r do
-            local dr = r[j] - offset[j]
+            local dr = r[j] - centre[j]
             dr2 = dr2 + dr * dr
             dr_n = dr_n + dr * axis[j]
         end
         local distance = math.sqrt(dr2 - dr_n * dr_n)
-        assert(distance > radius * (1 - tolerance), ("particle #%d excluded from selection, but it should not"):format(i))
+        assert(distance > radius * (1 - tolerance) or math.abs(dr_n) > length / 2 * (1 - tolerance),
+               ("particle #%d excluded from selection, but it should not"):format(i))
     end
 end
 
