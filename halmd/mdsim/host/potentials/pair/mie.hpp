@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2013 Felix Höfling
+ * Copyright © 2008-2023 Felix Höfling
  * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
@@ -38,9 +38,10 @@ namespace pair {
 /**
  * Define Mie potential and its parameters.
  *
- * @f[ U(r) = 4 \epsilon \left[ (r/\sigma)^{-m} - (r/\sigma)^{-n}) \right] @f]
+ * @f[ U(r) = C(m, n) \epsilon \left[ (r/\sigma)^{-m} - (r/\sigma)^{-n}) \right] @f]
  *
- * @f$ m, n @f$ must be even and @f$ m > n @f$.
+ * with prefactor @f$ C(m, n) = \frac{m}{m - n} \left(\frac{m}{n}\right)^{n/(m-n)}$f@.
+ * The exponents @f$ m, n @f$ must be even and @f$ m > n @f$.
  */
 template <typename float_type_>
 class mie
@@ -64,8 +65,8 @@ public:
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$, potential @f$ U(r) @f$
      *
      * @f{eqnarray*}{
-     *   - U'(r) / r &=& 4 r^{-2} \epsilon (\sigma/r)^{n} \left[ m (\sigma/r)^{m-n} - n \right] \\
-     *   U(r) &=& 4 \epsilon (\sigma/r)^{n} \left[ (\sigma/r)^{m-n} - 1 \right]
+     *   - U'(r) / r &=& C(m, n) r^{-2} \epsilon (\sigma/r)^{n} \left[ m (\sigma/r)^{m-n} - n \right] \\
+     *   U(r) &=& C(m, n) \epsilon (\sigma/r)^{n} \left[ (\sigma/r)^{m-n} - 1 \right]
      * @f}
      */
     std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
@@ -76,9 +77,9 @@ public:
         float_type rri = sigma2 / rr;
         float_type rni = pow(rri, n_2);
         float_type rmni = (m_2 - n_2 == n_2) ? rni : pow(rri, m_2 - n_2);
-        float_type eps_rni = epsilon_(a, b) * rni;
-        float_type fval = 8 * rri * eps_rni * (m_2 * rmni - n_2) / sigma2;
-        float_type en_pot = 4 * eps_rni * (rmni - 1);
+        float_type eps_rni = epsilon_C_(a, b) * rni;
+        float_type fval = 2 * rri * eps_rni * (m_2 * rmni - n_2) / sigma2;
+        float_type en_pot = eps_rni * (rmni - 1);
 
         return std::make_tuple(fval, en_pot);
     }
@@ -121,6 +122,8 @@ public:
 private:
     /** potential well depths in MD units */
     matrix_type epsilon_;
+    /** potential well depths times prefactor C(m,n) */
+    matrix_type epsilon_C_;
     /** pair separation in MD units */
     matrix_type sigma_;
     /** power law index of repulsion */

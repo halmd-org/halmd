@@ -35,17 +35,19 @@ local adapters          = require("halmd.mdsim.potentials.pair.adapters")
 --
 -- .. math::
 --
---    U^{(ij)}_\text{Mie}(r) = 4\epsilon_{ij} \left(
+--    U^{(ij)}_\text{Mie}(r) = C(m_{ij}, n_{ij}) \epsilon_{ij} \left(
 --        \left(\frac{\sigma_{ij}}{r}\right)^{m_{ij}}
 --      - \left(\frac{\sigma_{ij}}{r}\right)^{n_{ij}}
 --    \right)
 --
+-- with prefactor :math:`C(m, n) = \dfrac{m}{m - n} \left(\dfrac{m}{n}\right)^{n/(m-n)}`
 -- for the interaction between two particles of species :math:`i` and :math:`j`.
 --
 -- The Mie potential is a generalised :mod:`Lennard-Jones potential
 -- <halmd.mdsim.potentials.pair.lennard_jones>`. The difference is that the
 -- exponents of repulsion, :math:`m_{ij}`, and of attraction, :math:`n_{ij}`,
--- can be specified explicitly.
+-- can be specified explicitly. The prefactor reduces to :math:`C(12, 6) = 4`
+-- in the case of the Lennard-Jones potential.
 --
 
 -- grab C++ wrappers
@@ -64,7 +66,7 @@ end
 -- :param table args.epsilon: matrix with elements :math:`\epsilon_{ij}` (*default:* ``1``)
 -- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (*default:* ``1``)
 -- :param table args.index_repulsion: exponent of repulsive part, :math:`m_{ij}`
--- :param table args.index_attraction: exponent of attractive part, , :math:`n_{ij}`
+-- :param table args.index_attraction: exponent of attractive part, :math:`n_{ij}`
 -- :param number args.species: number of particle species *(optional)*
 -- :param string args.memory: select memory location *(optional)*
 -- :param string args.label: instance label *(optional)*

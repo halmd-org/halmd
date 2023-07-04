@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2013 Felix Höfling
+ * Copyright © 2008-2023 Felix Höfling
  * Copyright © 2008-2010 Peter Colberg
  *
  * This file is part of HALMD.
@@ -54,6 +54,7 @@ mie<float_type>::mie(
 )
   // allocate potential parameters
   : epsilon_(epsilon)
+  , epsilon_C_(epsilon)                             // multiply prefactor below
   , sigma_(check_shape(sigma, epsilon))
   , index_m_(check_shape(index_m, epsilon))
   , index_n_(check_shape(index_n, epsilon))
@@ -80,10 +81,20 @@ mie<float_type>::mie(
         }
     }
 
+    // compute prefactor C(m,n) and multiply with epsilon
+    for (unsigned i = 0; i < index_m_.size1(); ++i) {
+        for (unsigned j = 0; j < index_m_.size2(); ++j) {
+            float_type m = index_m_(i, j);  // promote to floating-point numbers
+            float_type n = index_n_(i, j);
+            epsilon_C_(i, j) *= m / (m - n) * std::pow(m / n, n / (m - n));
+        }
+    }
+
+    // copy parameters to GPU
     cuda::memory::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p;
-        p[mie_kernel::EPSILON] = epsilon_.data()[i];
+        p[mie_kernel::EPSILON_C] = epsilon_C_.data()[i];
         p[mie_kernel::SIGMA2] = sigma2_.data()[i];
         p[mie_kernel::INDEX_M_2] = index_m_.data()[i] / 2;
         p[mie_kernel::INDEX_N_2] = index_n_.data()[i] / 2;
