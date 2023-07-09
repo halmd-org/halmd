@@ -39,7 +39,7 @@ cylinder<dimension, float_type>::cylinder(vector_type const& axis, vector_type c
   , length2_4_(length * length / 4)
 {
     // normalise axis, output originally passed parameter to default logger
-    LOG_DEBUG("cylinder axis: " << norm);
+    LOG_DEBUG("cylinder axis: " << axis_);
     float_type norm = norm_2(axis_);
     if (norm == 0) {
         throw std::invalid_argument("axis of cylinder geometry must be non-zero");
