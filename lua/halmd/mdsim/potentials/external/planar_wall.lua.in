@@ -83,7 +83,7 @@ end
 -- :param matrix args.epsilon: interaction strengths :math:`\varepsilon_i^\alpha` in MD units.
 -- :param matrix args.sigma: interaction ranges :math:`\sigma_i^\alpha` in MD units.
 -- :param matrix args.wetting: wetting parameters :math:`w_i^\alpha` in MD units.
--- :param matrix args.cutoff: cutoff lengths :math:`r_{c,i}^\alpha` in MD units.
+-- :param matrix args.cutoff: cutoff distances :math:`r_{c,i}^\alpha` in MD units.
 -- :param number args.smoothing: smoothing parameter :math:`h` for the :math:`C^2` continuous truncation in MD units.
 -- :param string args.memory: select memory location *(optional)*.
 -- :param string args.label: instance label *(optional)*.
@@ -120,7 +120,7 @@ end
 --
 -- .. attribute:: cutoff
 --
---    Sequence with cutoff length :math:`r_{c,i}^\alpha`.
+--    Sequence with cutoff distances :math:`r_{c,i}^\alpha`.
 --
 -- .. attribute:: smoothing
 --

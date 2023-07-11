@@ -116,7 +116,7 @@ private:
     std::tuple<cache<>, cache<>> neighbour_cache_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
-    /** (cutoff lengths + neighbour list skin)² */
+    /** (cutoff distances + neighbour list skin)² */
     matrix_type rr_cut_skin_;
     /** signal emitted before neighbour list update */
     signal<void ()> on_prepend_update_;

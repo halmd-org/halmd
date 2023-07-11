@@ -125,7 +125,7 @@ private:
     matrix_container_type sigma_;
     /** wetting parameter for wall potential in MD units */
     matrix_container_type wetting_;
-    /** cutoff length for wall potential in MD units */
+    /** cutoff distance for wall potential in MD units */
     matrix_container_type cutoff_;
     /** smoothing parameters for wall potential in MD units */
     float_type smoothing_;

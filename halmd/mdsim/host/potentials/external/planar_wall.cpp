@@ -76,7 +76,7 @@ planar_wall<dimension, float_type>::planar_wall(
     LOG("interaction strength: epsilon = " << epsilon_);
     LOG("interaction range: sigma = " << sigma_);
     LOG("wetting paramter: w = " << wetting_);
-    LOG("cutoff length: rc = " << cutoff_);
+    LOG("cutoff distance: rc = " << cutoff_);
     LOG("smoothing parameter: h = " << smoothing_);
 
     // impose normalisation of surface normals

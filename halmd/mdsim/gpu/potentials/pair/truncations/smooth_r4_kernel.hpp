@@ -38,9 +38,9 @@ namespace smooth_r4_kernel {
  * indices of parameters
  */
 enum {
-    R_CUT       /**< cutoff length */
-  , RR_CUT      /**< square of cutoff length */
-  , EN_CUT      /**< potential energy at cutoff length in MD units */
+    R_CUT       /**< cutoff distance */
+  , RR_CUT      /**< square of cutoff distance */
+  , EN_CUT      /**< potential energy at cutoff distance in MD units */
 };
 
 template <typename parent_kernel>

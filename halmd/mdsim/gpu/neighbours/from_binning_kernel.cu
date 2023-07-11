@@ -148,7 +148,7 @@ __device__ void update_cell_neighbours(
         // squared particle distance
         float rr = inner_prod(dr, dr);
 
-        // enforce cutoff length with neighbour list skin
+        // enforce cutoff distance with neighbour list skin
         float rr_cut_skin = tex1Dfetch<float>(t_rr_cut_skin, type * ntype2 + s_type[i]);
 
         if (rr <= rr_cut_skin && count < neighbour_size) {
@@ -318,7 +318,7 @@ __device__ void update_cell_neighbours_naive(
         // squared particle distance
         float rr = inner_prod(dr, dr);
 
-        // enforce cutoff length with neighbour list skin
+        // enforce cutoff distance with neighbour list skin
         float rr_cut_skin = tex1Dfetch<float>(t_rr_cut_skin, type * ntype2 + type2);
 
         if (rr <= rr_cut_skin && count < neighbour_size) {

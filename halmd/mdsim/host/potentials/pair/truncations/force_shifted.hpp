@@ -64,9 +64,13 @@ public:
                 force_cut_(i,j) *= r_cut_(i,j);
             }
         }
-        LOG("potential cutoff length: r_c = " << r_cut_sigma_);
-        LOG("potential cutoff energy: U = " << en_cut_);
-        LOG("potential cutoff force: F_c = " << force_cut_);
+
+        auto logger_ = std::make_shared<logger>("force_shifted");
+        LOG("apply sharp potential truncation with force and energy shifts");
+        LOG("potential cutoff distance: r_c / σ = " << r_cut_sigma_);
+        LOG_INFO("potential cutoff distance in simulation units: r_c = " << r_cut_);
+        LOG_INFO("potential cutoff energy: U = " << en_cut_);
+        LOG_INFO("potential cutoff force: F_c = " << force_cut_);
     }
 
     bool within_range(float_type rr, unsigned a, unsigned b) const
@@ -136,15 +140,15 @@ public:
     }
 
 private:
-    /** cutoff length in units of sigma */
+    /** cutoff distance in units of sigma */
     matrix_type r_cut_sigma_;
-    /** cutoff length in MD units */
+    /** cutoff distance in MD units */
     matrix_type r_cut_;
-    /** square of cutoff length */
+    /** square of cutoff distance */
     matrix_type rr_cut_;
-    /** potential energy at cutoff length in MD units */
+    /** potential energy at cutoff distance in MD units */
     matrix_type en_cut_;
-    /** force at cutoff length in MD units */
+    /** force at cutoff distance in MD units */
     matrix_type force_cut_;
 };
 

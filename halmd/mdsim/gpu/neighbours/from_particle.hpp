@@ -157,11 +157,11 @@ private:
 
     /** neighbour list skin in MD units */
     float r_skin_;
-    /** maximum cutoff length */
+    /** maximum cutoff distance */
     float r_cut_max_;
-    /** (cutoff lengths + neighbour list skin)² */
+    /** (cutoff distances + neighbour list skin)² */
     matrix_type rr_cut_skin_;
-    /** (cutoff lengths + neighbour list skin)² */
+    /** (cutoff distances + neighbour list skin)² */
     cuda::memory::device::vector<float> g_rr_cut_skin_;
     /** FIXME average desired cell occupancy */
     float nu_cell_;

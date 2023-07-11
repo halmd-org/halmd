@@ -35,7 +35,7 @@ struct from_particle_wrapper
 {
     /** update neighbour lists */
     typedef cuda::function<void (
-        cudaTextureObject_t // (cutoff lengths + neighbour list skin)²
+        cudaTextureObject_t // (cutoff distances + neighbour list skin)²
       , float4 const*
       , unsigned int
       , float4 const*

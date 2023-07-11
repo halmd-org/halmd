@@ -70,8 +70,12 @@ public:
             }
         }
 
-        LOG("potential cutoff length: r_c = " << r_cut_sigma_);
-        LOG("potential cutoff energy: U = " << en_cut_);
+        auto logger_ = std::make_shared<logger>("smooth_r4");
+        LOG("apply smooth potential truncation with energy shift using 4th order algebraic function");
+        LOG("potential cutoff distance: r_c / σ = " << r_cut_sigma_);
+        LOG("potential cutoff smoothing range: h = " << h);
+        LOG_INFO("potential cutoff distance in simulation units: r_c = " << r_cut_);
+        LOG_INFO("potential cutoff energy: U = " << en_cut_);
 
         cuda::memory::host::vector<float4> param(g_param_.size());
         for (size_t i = 0; i < param.size(); ++i) {
@@ -148,13 +152,13 @@ public:
     }
 
 private:
-    /** cutoff length in units of sigma */
+    /** cutoff distance in units of sigma */
     matrix_type r_cut_sigma_;
-    /** cutoff length in MD units */
+    /** cutoff distance in MD units */
     matrix_type r_cut_;
-    /** square of cutoff length */
+    /** square of cutoff distance */
     matrix_type rr_cut_;
-    /** potential energy at cutoff length in MD units */
+    /** potential energy at cutoff distance in MD units */
     matrix_type en_cut_;
     /** smoothing length */
     float_type rri_smooth_;
