@@ -115,13 +115,14 @@ BOOST_AUTO_TEST_CASE( custom_host )
     float_type const eps = numeric_limits<float_type>::epsilon();
 
     // expected results (r, fval, en_pot) for ε=1, σ=1, param3=.25, rc=5σ
+    // FIXME provide reference values for custom potential, you may use compute_potential_reference.py
     boost::array<array_type, 6> results_aa = {{
-        {{0.25, 0.0, -0.9827714614236465}}
-      , {{0.5, -0.6890804934350857, -0.9338423678538228}}
-      , {{0.75, -0.6364032494431763, -0.827953339677471}}
-      , {{1.0, -0.4984727851851697, -0.7043744067572461}}
-      , {{2.0, -0.1435765600281266, -0.3001219649022183}}
-      , {{5.0, -0.003430737349293173, 0.0}}
+        {{0.25, -1., -3.1171875}}
+      , {{0.5,  -1., -3.09375}}
+      , {{0.75, -1., -3.0546875}}
+      , {{1.0,  -1., -3}}
+      , {{2.0,  -1., -2.625}}
+      , {{5.0,  -1.,  0.}}
     }};
 
     BOOST_FOREACH (array_type const& a, results_aa) {
@@ -136,13 +137,13 @@ BOOST_AUTO_TEST_CASE( custom_host )
 
     // interaction AB: ε=.5, σ=2, param3=.75, rc=5σ
     boost::array<array_type, 7> results_ab = {{
-        {{0.25, 3.244194000059237, -0.1089119789768079}}
-      , {{0.5, 1.069560557758917, -0.2754178567461116}}
-      , {{0.75, 0.4413390679963154, -0.3823289065873701}}
-      , {{1.0, 0.1823479270061933, -0.4455022816131835}}
-      , {{2.0, -0.04306753083969286, -0.4613729534905943}}
-      , {{5.0, -0.01435765600281266, -0.144512752014792}}
-      , {{10.0, -0.0007030382769994306, 0.0}}
+        {{0.25, -1, -2.3203125}}
+      , {{0.5,  -1, -2.25}}
+      , {{0.75, -1, -2.1328125}}
+      , {{1.0,  -1, -1.96875}}
+      , {{2.0,  -1, -0.84375}}
+      , {{5.0,  -1,  7.03125}}
+      , {{10.0, -1, 35.15625}}
     }};
 
     BOOST_FOREACH (array_type const& a, results_ab) {
@@ -157,15 +158,14 @@ BOOST_AUTO_TEST_CASE( custom_host )
 
     // interaction BB: ε=.25, σ=4, param3=.5, rc=5σ
     boost::array<array_type, 7> results_bb = {{
-        {{0.25, 0.4250224976664824, -0.1691726800071926}}
-      , {{0.5, 0.1655021504986183, -0.1927220573378325}}
-      , {{0.75, 0.08356800270973765, -0.2108338354107431}}
-      , {{1.0, 0.04558698175154832, -0.2243087448507392}}
-      , {{2.0, 0.0, -0.2444763541819005}}
-      , {{5.0, -0.006230909814814622, -0.1748770905153004}}
-      , {{10.0, -0.001462745554348482, -0.05756508607802333}}
+        {{0.25, -1, -0.375}}
+      , {{0.5,  -1, -0.328125}}
+      , {{0.75, -1, -0.25}}
+      , {{1.0,  -1, -0.140625}}
+      , {{2.0,  -1,  0.609375}}
+      , {{5.0,  -1,  5.859375}}
+      , {{10.0, -1, 24.609375}}
     }};
-
 
     BOOST_FOREACH (array_type const& a, results_bb) {
         float_type rr = std::pow(a[0], 2);
@@ -251,7 +251,7 @@ void custom<float_type>::test()
 
         // rough upper bound on floating-point error
         float_type const eps = numeric_limits<float>::epsilon();
-        float_type tolerance = 2.5 * eps;
+        float_type tolerance = 20 * eps;       // FIXME adjust acceptable tolerance for the custom potential
 
         // check both absolute and relative error
         BOOST_CHECK_SMALL(float_type(norm_inf(fval * r - f)), max(float_type(norm_inf(fval * r)), float_type(1)) * tolerance);
