@@ -423,10 +423,12 @@ void lennard_jones<float_type>::test()
         vector_type f = f_list[i];
 
         // reference values from host module
-        float_type fval, en_pot_;
-        std::tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
-        // the GPU force module stores only a fraction of these values
-        en_pot_ /= 2;
+        float_type fval(0), en_pot_(0);
+        if (host_potential->within_range(inner_prod(r, r), type1, type2)) {
+            std::tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
+            // the GPU force module stores only a fraction of these values
+            en_pot_ /= 2;
+        }
 
         BOOST_CHECK_SMALL(float_type(norm_inf(fval * r - f)), float_type(norm_inf(f)) * tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot_, float_type(en_pot[i]), 4 * tolerance);

@@ -244,10 +244,12 @@ void custom<float_type>::test()
         vector_type f = f_list[i];
 
         // reference values from host module
-        float_type fval, en_pot_;
-        std::tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
-        // the GPU force module stores only a fraction of these values
-        en_pot_ /= 2;
+        float_type fval(0), en_pot_(0);
+        if (host_potential->within_range(inner_prod(r, r), type1, type2)) {
+            std::tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
+            // the GPU force module stores only a fraction of these values
+            en_pot_ /= 2;
+        }
 
         // rough upper bound on floating-point error
         float_type const eps = numeric_limits<float>::epsilon();
@@ -268,13 +270,13 @@ custom<float_type>::custom()
     // set module parameters
     npart_list.push_back(1000);
     npart_list.push_back(2);
-    float box_length = 50;
+    float box_length = 75;
     unsigned int const dimension = box_type::vector_type::static_size;
     boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
     for (unsigned int i = 0; i < dimension; ++i) {
         edges(i, i) = box_length;
     }
-    float cutoff = box_length / 2;
+    float cutoff = box_length / 3;
 
     typedef typename potential_type::matrix_type matrix_type;
     matrix_type cutoff_array(2, 2);
