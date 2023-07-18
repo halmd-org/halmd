@@ -42,43 +42,64 @@ class brownian
 {
 public:
     typedef host::particle<dimension, float_type> particle_type;
-    typedef typename particle_type::vector_type vector_type;
-//    typedef boost::numeric::ublas::vector<float_type> host_vector_type;
-    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef random::host::random random_type;
 
-    static void luaopen(lua_State* L);
+    typedef typename particle_type::vector_type vector_type;
+    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
 
     brownian(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<random_type> random
       , std::shared_ptr<box_type const> box
-      , double timestep
-      , double T
-//      , host_vector_type const& D
-      , matrix_type const& D
+      , float_type timestep
+      , float_type temperature
+      , matrix_type const& diff_const
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
+    /**
+     * Brownian integration step.
+     */
     void integrate();
 
-    //! set integration timestep
+    /**
+     * Set integration time-step.
+     */
     void set_timestep(double timestep);
-    void set_temperature(double temperature);
 
-    //! returns integration timestep
+    /**
+     * Returns integration time-step.
+     */
     double timestep() const
     {
         return timestep_;
     }
+
+    /**
+     * Set temperature of heat bath.
+     */
+    void set_temperature(double temperature);
+
+    /**
+     * Returns temperature of heat bath.
+     */
+    double temperature() const
+    {
+        return temperature_;
+    }
+
+    /**
+     * Bind class to Lua.
+     */
+static void luaopen(lua_State* L);
 
 private:
     typedef typename particle_type::position_array_type position_array_type;
     typedef typename particle_type::image_array_type image_array_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
     typedef typename particle_type::size_type size_type;
-    
+
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;
 
@@ -86,6 +107,21 @@ private:
     {
         accumulator_type integrate;
     };
+
+    void update_displacement(
+        float_type const diff_const
+      , vector_type& r
+      , vector_type const& f
+      , vector_type const& eta
+    );
+
+    void update_orientation(
+        float_type const diff_const
+      , vector_type& u
+      , vector_type const& tau
+      , float_type eta1
+      , float_type eta2
+    );
 
     /**
      * set rng and random seed
@@ -103,26 +139,9 @@ private:
     /** profiling runtime accumulators */
     runtime runtime_;
     /** diffusion constant */
-    //host_vector_type D_;
-    matrix_type D_;
+    matrix_type diff_const_;
     /** module logger */
     std::shared_ptr<logger> logger_;
-    /**random displacement */ 
-    void update_displacement_(
-        float_type const D
-      , vector_type & r
-      , vector_type & u
-      , vector_type & v
-      , vector_type const& f
-      );
-
-
-    /**random orientation*/
-    void update_orientation_(
-        float_type const D_rot
-      , vector_type & u
-      , vector_type const& tau
-      );
 };
 
 } // namespace integrators
