@@ -58,22 +58,34 @@ public:
       , std::shared_ptr<random_type> random
       , std::shared_ptr<box_type const> box
       , double timestep
-      , double T
-      , matrix_type const& D
+      , double temperature
+      , matrix_type const& diff_const
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     void integrate();
-    void set_timestep(double timestep);
-    void set_temperature(double temperature);
 
-    //! returns integration time step
+    /**
+     * Set integration time-step.
+     */
+    void set_timestep(double timestep);
+
+    /**
+     * Set integration time-step.
+     */
+void set_temperature(double temperature);
+
+    /**
+     * Returns integration time-step.
+     */
     double timestep() const
     {
         return timestep_;
     }
 
-    //! returns temperature
+    /**
+     * Set temperature of heat bath.
+     */
     double temperature() const
     {
         return temperature_;
@@ -83,6 +95,7 @@ public:
     {
         brownian_wrapper<dimension, float_type, rng_type>::param.bind(g_param_);
     }
+
 private:
     typedef typename particle_type::position_array_type position_array_type;
     typedef typename particle_type::image_array_type image_array_type;
@@ -98,15 +111,18 @@ private:
         accumulator_type integrate;
     };
 
+    /** system state */
     std::shared_ptr<particle_type> particle_;
+    /** random number generator */
     std::shared_ptr<random_type> random_;
+    /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** integration time-step */
     float_type timestep_;
-    /** temperature */
+    /** temperature of the heat bath */
     float_type temperature_;
     /** diffusion constant */
-    matrix_type D_;
+    matrix_type diff_const_;
     /** diffusion parameters at CUDA device */
     cuda::vector<float4> g_param_;
     /** module logger */

@@ -20,7 +20,6 @@
 
 #include <boost/numeric/ublas/io.hpp>
 #include <memory>
-#include <iostream>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/brownian.hpp>
@@ -41,38 +40,38 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , std::shared_ptr<random_type> random
   , std::shared_ptr<box_type const> box
   , double timestep
-  , double T
-  , matrix_type const& D
+  , double temperature
+  , matrix_type const& diff_const
   , std::shared_ptr<logger> logger
 )
   // dependency injection
   : particle_(particle)
   , random_(random)
   , box_(box)
-  , D_(D)
-  , g_param_(D_.size1())
+  , diff_const_(diff_const)
+  , g_param_(diff_const_.size1())
   , logger_(logger)
 {
-    if (D_.size2() != 4) {
+    if (diff_const_.size2() != 4) {
         throw std::invalid_argument("diffusion matrix has invalid shape: exactly 4 values per species are required");
     }
 
     set_timestep(timestep);
-    set_temperature(T);
+    set_temperature(temperature);
 
     cuda::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p;
-        p[0] = D_(i,0);
-        p[1] = D_(i,1);
-        p[2] = D_(i,2);
-        p[3] = D_(i,3);
+        p[0] = diff_const_(i,0);
+        p[1] = diff_const_(i,1);
+        p[2] = diff_const_(i,2);
+        p[3] = diff_const_(i,3);
         param[i] = p;
     }
 
     cuda::copy(param, g_param_);
 
-    LOG("diffusion constants: " << D_);
+    LOG("diffusion constants: " << diff_const_);
 }
 
 /**
@@ -139,24 +138,6 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
     }
 }
 
-template <typename integrator_type>
-static std::function<void ()>
-wrap_integrate(std::shared_ptr<integrator_type> self)
-{
-    return [=]() {
-        self->integrate();
-    };
-}
-
-template <typename integrator_type>
-static std::function<void ()>
-wrap_finalize(std::shared_ptr<integrator_type> self)
-{
-    return [=]() {
-        self->finalize();
-    };
-}
-
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
@@ -168,10 +149,11 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
             namespace_("integrators")
             [
                 class_<brownian>()
-                    .property("integrate", &wrap_integrate<brownian>)
+                    .def("integrate", &brownian::integrate)
+                    .def("set_timestep", &brownian::set_timestep)
+                    .def("set_temperature", &brownian::set_temperature)
                     .property("timestep", &brownian::timestep)
                     .property("temperature", &brownian::temperature)
-                    .def("set_timestep", &brownian::set_timestep)
                     .scope
                     [
                         class_<runtime>("runtime")
