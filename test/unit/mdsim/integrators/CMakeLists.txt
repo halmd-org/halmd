@@ -9,7 +9,6 @@ if(HALMD_WITH_GPU)
     halmd_mdsim_gpu_particle_groups
     halmd_mdsim_gpu_positions
     halmd_mdsim_gpu_orientations
-    halmd_mdsim_gpu_velocities
     halmd_mdsim_gpu
     halmd_observables_gpu
     halmd_observables_gpu_dynamics
@@ -22,7 +21,6 @@ target_link_libraries(test_unit_mdsim_integrators_brownian
   halmd_mdsim_host_orientations
   halmd_mdsim_host_particle_groups
   halmd_mdsim_host_positions
-  halmd_mdsim_host_velocities
   halmd_mdsim_host
   halmd_mdsim
   halmd_observables_dynamics
@@ -31,21 +29,18 @@ target_link_libraries(test_unit_mdsim_integrators_brownian
   halmd_random_host
   ${HALMD_TEST_LIBRARIES}
 )
-add_test(unit/mdsim/integrators/brownian/host/2d/overdamped
-  test_unit_mdsim_integrators_brownian --run_test=brownian_host_2d_overdamped --log_level=test_suite
+add_test(unit/mdsim/integrators/brownian/free/host/2d
+  test_unit_mdsim_integrators_brownian --run_test=brownian_free_host_2d --log_level=test_suite
 )
-add_test(unit/mdsim/integrators/brownian/host/3d/overdamped
-  test_unit_mdsim_integrators_brownian --run_test=brownian_host_3d_overdamped --log_level=test_suite
+add_test(unit/mdsim/integrators/brownian/free/host/3d
+  test_unit_mdsim_integrators_brownian --run_test=brownian_free_host_3d --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  #add_test(unit/mdsim/integrators/brownian/gpu/2d/linear
-  #test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_2d_linear --log_level=test_suite
-  #)
-  add_test(unit/mdsim/integrators/brownian/gpu/2d/overdamped
-    test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_2d_overdamped --log_level=test_suite
+  add_test(unit/mdsim/integrators/brownian/free/gpu/2d
+    test_unit_mdsim_integrators_brownian --run_test=brownian_free_gpu_2d --log_level=test_suite
   )
-  add_test(unit/mdsim/integrators/brownian/gpu/3d/overdamped
-    test_unit_mdsim_integrators_brownian --run_test=brownian_gpu_3d_overdamped --log_level=test_suite
+  add_test(unit/mdsim/integrators/brownian/free/gpu/3d
+    test_unit_mdsim_integrators_brownian --run_test=brownian_free_gpu_3d --log_level=test_suite
   )
 endif()
 

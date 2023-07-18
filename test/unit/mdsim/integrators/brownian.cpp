@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2023 Jaslo Ziska
  * Copyright © 2015 Manuel Dibak
  *
  * This file is part of HALMD.
@@ -38,7 +39,6 @@
 #include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/orientations/uniform.hpp>
-#include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/dynamics/blocking_scheme.hpp>
 #include <halmd/observables/dynamics/correlation.hpp>
@@ -55,7 +55,6 @@
 # include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/orientations/uniform.hpp>
-# include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/observables/gpu/dynamics/orientational_autocorrelation.hpp>
 # include <halmd/observables/gpu/dynamics/mean_quartic_displacement.hpp>
@@ -65,38 +64,33 @@
 #endif
 #include <test/tools/ctest.hpp>
 
-// needed for writing data to a separate file
-#include <ctime>
-#include <fstream>
-#include <string>
-
 using namespace halmd;
 using namespace std;
 
 template <typename modules_type>
 struct test_brownian
 {
+    typedef mdsim::clock clock_type;
+
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::integrator_type integrator_type;
-    typedef typename integrator_type::matrix_type matrix_type;
+    typedef typename modules_type::orientation_type orientation_type;
     typedef typename modules_type::particle_type particle_type;
     typedef typename modules_type::particle_group_type particle_group_type;
-    typedef typename modules_type::position_type position_type;
-    typedef typename modules_type::orientation_type orientation_type;
-    typedef typename modules_type::random_type random_type;
-    typedef typename modules_type::velocity_type velocity_type;
-    typedef mdsim::clock clock_type;
-    typedef typename modules_type::sample_type sample_type;
     typedef typename modules_type::phase_space_type phase_space_type;
+    typedef typename modules_type::position_type position_type;
+    typedef typename modules_type::random_type random_type;
+    typedef typename modules_type::sample_type sample_type;
+
     typedef typename modules_type::msd_type msd_type;
     typedef typename modules_type::mqd_type mqd_type;
     typedef typename modules_type::ocf_type ocf_type;
 
+    typedef typename integrator_type::matrix_type matrix_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     static unsigned int const dimension = vector_type::static_size;
 
-    typedef typename modules_type::numeric_limits numeric_limits;
     static bool const gpu = modules_type::gpu;
 
     size_t steps;
@@ -112,27 +106,23 @@ struct test_brownian
     fixed_vector<double, dimension> slab;
 
     std::shared_ptr<box_type> box;
-    std::shared_ptr<particle_type> particle;
-    std::shared_ptr<integrator_type> integrator;
-    std::shared_ptr<random_type> random;
-    std::shared_ptr<position_type> position;
-    std::shared_ptr<orientation_type> orientation;
-    std::shared_ptr<velocity_type> velocity;
     std::shared_ptr<clock_type> clock;
+    std::shared_ptr<integrator_type> integrator;
+    std::shared_ptr<orientation_type> orientation;
+    std::shared_ptr<particle_type> particle;
+    std::shared_ptr<particle_group_type> particle_group;
     std::shared_ptr<phase_space_type> phase_space;
-
+    std::shared_ptr<position_type> position;
+    std::shared_ptr<random_type> random;
 
     test_brownian();
     void free_brownian_motion();
 };
 
-/** solve the differential equation @f$ \dot r = v = const @f$ */
+/** solve the differential equation @f$ \dot r = v = const. @f$ */
 template <typename modules_type>
 void test_brownian<modules_type>::free_brownian_motion()
 {
-    // copy initial positions and velocities from particle to host sample
-    std::shared_ptr<sample_type const> initial_sample = phase_space->template acquire<sample_type>("orientation");
-
     // construct blocking scheme module (contains the logic)
     observables::dynamics::blocking_scheme blocking_scheme(
         clock, maximum_lag_time, resolution, block_size, 1, 100
@@ -140,7 +130,14 @@ void test_brownian<modules_type>::free_brownian_motion()
 
     // allocate space for block samples
     auto block_sample = std::make_shared<observables::samples::blocking_scheme<sample_type>>(
-        [=]() { return phase_space->template acquire<sample_type>("orientation"); }, 100, block_size
+        [=]() { return phase_space->template acquire<sample_type>("position"); }
+      , blocking_scheme.count()
+      , blocking_scheme.block_size()
+    );
+    auto block_sample_u = std::make_shared<observables::samples::blocking_scheme<sample_type>>(
+        [=]() { return phase_space->template acquire<sample_type>("orientation"); }
+      , blocking_scheme.count()
+      , blocking_scheme.block_size()
     );
 
     // construct correlation functions and connect to blocking scheme logic
@@ -155,66 +152,31 @@ void test_brownian<modules_type>::free_brownian_motion()
     blocking_scheme.on_correlate(correlation_mqd);
 
     auto correlation_ocf = make_shared<observables::dynamics::correlation<ocf_type>>(
-        make_shared<ocf_type>(), block_sample, block_sample
+        make_shared<ocf_type>(), block_sample_u, block_sample_u
     );
     blocking_scheme.on_correlate(correlation_ocf);
 
     blocking_scheme.on_sample(block_sample);
+    blocking_scheme.on_sample(block_sample_u);
 
-    // perform integration
-    BOOST_TEST_MESSAGE("run Brownian integration for free motion over " << steps << " steps");
-    //if (modules_type::gpu) {
-        //BOOST_TEST_MESSAGE("number of blocks:  " << random->blocks() << "number of threads:  " << random->threads() );
-    //}
+    BOOST_TEST_MESSAGE("run Brownian integrator over " << steps << " steps");
     for (size_t i = 0; i < steps; ++i) {
         integrator->integrate();
         clock->advance();
         blocking_scheme.sample();
     }
-    // blocking_scheme.finalise();
-    BOOST_TEST_MESSAGE("test correlation function of the motion");
+    blocking_scheme.finalise();
 
     auto time = blocking_scheme.time()[0];
     auto msd = correlation_msd->result()[0];
     auto mqd = correlation_mqd->result()[0];
     auto ocf = correlation_ocf->result()[0];
 
-    BOOST_TEST_MESSAGE("check if msd is close to 6 D t");
-    double max_deviation = 0;
-
-    for (size_t i = 0; i < time.size(); ++i) {
-      //BOOST_TEST_MESSAGE(abs(mean(msd[i])- 6 * time[i]) - 6 * error_of_mean(msd[i])  );
-      //BOOST_CHECK_CLOSE(mean(msd[i]), 6 * time[i], 6 * error_of_mean(msd[i]));
-      max_deviation = std::max(abs(mean(msd[i]) - 6 * time[i]), max_deviation);
-
-     BOOST_TEST_MESSAGE( time[i] << " " << mean(msd[i]) <<  "  " << mean(msd[i]) / time[i] << "  " << 6 * time[i] << "  " << error_of_mean(msd[i]) << "  " << mean(ocf[i]) << "  " << (3 * mean(mqd[i])   / (5 * mean(msd[i]) * mean(msd[i]))-1) ); // << "  " << (3 * error_of_mean(mqd[i])   / (5 * pow(mean(msd[i]), 2))) + (6 * mean(mqd[i]) * error_of_mean(mqd[i])  / (5 * pow(mean(msd[i]), 3))));
+    for (size_t i = 0; i < size_t(maximum_lag_time / timestep); ++i) {
+        BOOST_CHECK_CLOSE_FRACTION(mean(msd[i]), 2 * dimension * D(0, 0) * time[i], 4.5 * abs(error_of_mean(msd[i])));
+        // BOOST_CHECK_CLOSE_FRACTION(mean(mqd[i]), 60 * time[i] * time[i], 4.5 * 120 * time[i] * error_of_mean(mqd[i])); // TODO: value for 2D
+        BOOST_CHECK_SMALL(mean(ocf[i]) - expf(-(dimension - 1.) * D(0, 2) * time[i]), 4.5 * abs(error_of_mean(ocf[i])));
     }
-    BOOST_TEST_MESSAGE("Maximum deviation  " << max_deviation);
-
-
-    // begin writing data to a separate file
-    string dim = to_string(dimension);
-    time_t now = std::time(0);   // get time now
-    tm * ltm = localtime( & now );
-    char buffer [80];
-    string prefix;
-    if (modules_type::gpu) {
-        prefix = "gpu_" + dim + "d_";
-
-    } else{
-        prefix = "host_" + dim + "d_";
-    }
-    std::strftime(buffer, 80, "%F-%X.dat", ltm);
-    string filename;
-    filename = prefix + buffer;
-    std::ofstream myfile;
-    myfile.open (prefix+buffer);
-
-    for (size_t i = 0; i < time.size(); ++i) {
-     myfile << time[i] << " " << mean(msd[i]) <<  "  " << mean(msd[i]) / time[i] << "  " << 6 * time[i] << "  " << error_of_mean(msd[i]) << "  " << mean(ocf[i]) << "  " << (3 * mean(mqd[i])   / (5 * mean(msd[i]) * mean(msd[i]))-1) << endl; // << "  " << (3 * error_of_mean(mqd[i])   / (5 * pow(mean(msd[i]), 2))) + (6 * mean(mqd[i]) * error_of_mean(mqd[i])  / (5 * pow(mean(msd[i]), 3))));
-    }
-
-    myfile.close();
 }
 
 /**
@@ -223,29 +185,24 @@ void test_brownian<modules_type>::free_brownian_motion()
 template <typename modules_type>
 test_brownian<modules_type>::test_brownian()
 {
-    BOOST_TEST_MESSAGE("initialise simulation modules");
     typedef fixed_vector<double, dimension> vector_type;
 
-    // SET TEST PARAMETERS
-    // small, but typical timestep
-    timestep = 0.001;
-    maximum_lag_time = 10;
+    timestep = 0.01;
+    maximum_lag_time = 7;
 
     // run for as many steps as possible, wrap around the box for about 10 times
     // adjusted so total simulation length is constant when timestep changes
-    steps = 1 * maximum_lag_time / timestep;
+    steps = (gpu ? 1 : 100) * maximum_lag_time / timestep;
     resolution = 0.01;
     block_size = 10000;
 
-    // SET MODULE PARAMETERS
     // a low density implies large values of the position vectors
     density = 1e-6;
-    // the temperature defines the average velocities
     temp = 1;
     // optimize filling of fcc lattice, use only few particles on the host
-    npart = gpu ? 5 : 108;
+    npart = gpu ? 2500 : 5;
+
     box_ratios = (dimension == 3) ? vector_type{1., 2., 1.01} : vector_type{1., 2.};
-    //unsigned int seed = 1;
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
     double volume = npart / density;
     double edge_length = pow(volume / det, 1. / dimension);
@@ -264,26 +221,19 @@ test_brownian<modules_type>::test_brownian()
     // create modules
 
     particle = std::make_shared<particle_type>(npart, 1);
+    particle_group = std::make_shared<particle_group_type>(particle);
     box = std::make_shared<box_type>(edges);
-    random = std::make_shared<random_type>(365324873);
+    random = std::make_shared<random_type>();
     integrator = std::make_shared<integrator_type>(particle, random, box, timestep, temp, D);
     position = std::make_shared<position_type>(particle, box, slab);
     orientation = std::make_shared<orientation_type>(particle, random);
-    velocity = std::make_shared<velocity_type>(particle, random, temp);
     clock = std::make_shared<clock_type>();
     clock->set_timestep(integrator->timestep());
-    std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
-    // phase_space = std::make_shared<phase_space_type>(particle, particle_group, box, clock);
     phase_space = std::make_shared<phase_space_type>(particle, particle_group, box);
 
-    // set positions and velocities
-    BOOST_TEST_MESSAGE("position particles on lattice");
+    // set positions and orientations
     position->set();
-    BOOST_TEST_MESSAGE("position orientation uniformly");
     orientation->set();
-    BOOST_TEST_MESSAGE("set particle velocities");
-    velocity->set();
-    BOOST_TEST_MESSAGE("using timestep  " << integrator->timestep());
 }
 
 /**
@@ -299,33 +249,14 @@ struct host_modules
     typedef halmd::random::host::random random_type;
     typedef mdsim::host::orientations::uniform<dimension, float_type> orientation_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
-    typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
     typedef observables::host::samples::sample<dimension, float_type> sample_type;
     typedef observables::host::phase_space<dimension, float_type> phase_space_type;
     typedef observables::host::dynamics::mean_square_displacement<dimension, float_type> msd_type;
     typedef observables::host::dynamics::mean_quartic_displacement<dimension, float_type> mqd_type;
     typedef observables::host::dynamics::orientational_autocorrelation<dimension, float_type> ocf_type;
 
-    typedef typename std::numeric_limits<float_type> numeric_limits;
-
     static bool const gpu = false;
-
-    static void set_velocity(std::shared_ptr<particle_type> particle);
 };
-
-/** host specific helper function: set particle velocity to v = -r */
-template <int dimension, typename float_type>
-void host_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_type> particle)
-{
-    // copy -r[i] to v[i]
-    auto const& position = read_cache(particle->position());
-    auto velocity = make_cache_mutable(particle->velocity());
-    std::transform(
-        position.begin(), position.end()
-      , velocity->begin()
-      , negate<typename particle_type::vector_type>()
-    );
-}
 
 #ifdef HALMD_WITH_GPU
 
@@ -342,7 +273,6 @@ struct gpu_modules
     typedef mdsim::gpu::integrators::brownian<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
     typedef mdsim::gpu::orientations::uniform<dimension, float_type, halmd::random::gpu::rand48> orientation_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
-    typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
     typedef observables::gpu::samples::sample<dimension, float4> sample_type;
     typedef observables::gpu::phase_space<dimension, float_type> phase_space_type;
     typedef observables::gpu::dynamics::mean_square_displacement<dimension, float4> msd_type;
@@ -350,86 +280,40 @@ struct gpu_modules
     typedef observables::gpu::dynamics::orientational_autocorrelation<dimension, float4> ocf_type;
 
     static bool const gpu = true;
-
-#ifndef USE_VERLET_DSFUN
-    typedef typename std::numeric_limits<float_type> numeric_limits;
-#else
-    // FIXME define numeric_limits for dsfloat
-    // see, e.g., http://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
-    struct numeric_limits {
-        static float_type epsilon() { return std::pow(float_type(2), -44); }
-        static float_type min() { return std::numeric_limits<float>::min(); }
-    };
-#endif
-
-    static void set_velocity(std::shared_ptr<particle_type> particle);
 };
-
-/** GPU specific helper function: set particle velocity to v = -r */
-template <int dimension, typename float_type>
-void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_type> particle)
-{
-    using namespace algorithm::gpu;
-    typedef typename particle_type::vector_type vector_type;
-    typedef apply_wrapper<negate_, vector_type, float4, vector_type, float4> apply_negate_wrapper;
-
-    auto const& position = read_cache(particle->position());
-    auto velocity = make_cache_mutable(particle->velocity());
-
-    // copy -g_r[i] to g_v[i]
-    //
-    // The kernel wrapper is declared in algorithm/gpu/apply_kernel.hpp
-    // and the CUDA kernel is instantiated in apply_negate.cu.
-    //
-    // If the arrays are stored as two subsequent float4 arrays for
-    // double-single representation, we the negation is applied to both floats
-    // independently (in correspondence to the definition of operator- for
-    // dsfloat).
-    //
-    // Caveat: overwrites particle tags in g_v (which are not used anyway)
-    try {
-        cuda::configure(particle->dim.grid, particle->dim.block);
-        apply_negate_wrapper::kernel.apply(&*position.begin(), &*velocity->begin(), position.capacity());
-        cuda::thread::synchronize();
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("copying negated positions to velocities on GPU failed");
-        throw;
-    }
-}
 
 #endif // HALMD_WITH_GPU
 
 #ifndef USE_HOST_SINGLE_PRECISION
-BOOST_AUTO_TEST_CASE(brownian_host_2d_overdamped) {
+BOOST_AUTO_TEST_CASE(brownian_free_host_2d) {
     test_brownian<host_modules<2, double>>().free_brownian_motion();
 }
-BOOST_AUTO_TEST_CASE(brownian_host_3d_overdamped) {
+BOOST_AUTO_TEST_CASE(brownian_free_host_3d) {
     test_brownian<host_modules<3, double>>().free_brownian_motion();
 }
 #else
-BOOST_AUTO_TEST_CASE(brownian_host_2d_overdamped) {
+BOOST_AUTO_TEST_CASE(brownian_free_host_2d) {
     test_brownian<host_modules<2, float>>().free_brownian_motion();
 }
-BOOST_AUTO_TEST_CASE(brownian_host_3d_overdamped) {
+BOOST_AUTO_TEST_CASE(brownian_free_host_3d) {
     test_brownian<host_modules<3, float>>().free_brownian_motion();
 }
 #endif
 
 #ifdef HALMD_WITH_GPU
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE(brownian_gpu_2d_overdamped, device) {
+BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_2d, device) {
     test_brownian<gpu_modules<2, float>>().free_brownian_motion();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_gpu_3d_overdamped, device) {
+BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_3d, device) {
     test_brownian<gpu_modules<3, float>>().free_brownian_motion();
 }
 # endif
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE(brownian_gpu_2d_overdamped, device) {
+BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_2d, device) {
     test_brownian<gpu_modules<2, dsfloat>>().free_brownian_motion();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_gpu_3d_overdamped, device) {
+BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_3d, device) {
     test_brownian<gpu_modules<3, dsfloat>>().free_brownian_motion();
 }
 # endif
