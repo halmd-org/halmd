@@ -130,9 +130,9 @@ __device__ void update_orientation(
     omega /= omega_abs;
     // Ω = eta1 * e1 + eta2 * e2
     // => Ω × u = (eta1 * e1 × u + eta2  * e2 × u) = eta2 * e1 - eta1 * e2
-    u = (1 - cos(omega_abs)) * inner_prod(omega, u) * omega +
-        cos(omega_abs) * u +
-        sin(omega_abs) * cross_prod(omega, u);
+    u = (1 - __cosf(omega_abs)) * inner_prod(omega, u) * omega +
+        __cosf(omega_abs) * u +
+        __sinf(omega_abs) * cross_prod(omega, u);
 
     // ensure normalization
     if ((float) norm_2(u) != 0){

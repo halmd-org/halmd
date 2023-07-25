@@ -9,6 +9,7 @@ if(HALMD_WITH_GPU)
     halmd_mdsim_gpu_particle_groups
     halmd_mdsim_gpu_positions
     halmd_mdsim_gpu_orientations
+    halmd_mdsim_gpu_potentials_external_harmonic
     halmd_mdsim_gpu
     halmd_observables_gpu
     halmd_observables_gpu_dynamics
@@ -21,6 +22,7 @@ target_link_libraries(test_unit_mdsim_integrators_brownian
   halmd_mdsim_host_orientations
   halmd_mdsim_host_particle_groups
   halmd_mdsim_host_positions
+  halmd_mdsim_host_potentials_external_harmonic
   halmd_mdsim_host
   halmd_mdsim
   halmd_observables_dynamics
@@ -35,12 +37,24 @@ add_test(unit/mdsim/integrators/brownian/free/host/2d
 add_test(unit/mdsim/integrators/brownian/free/host/3d
   test_unit_mdsim_integrators_brownian --run_test=brownian_free_host_3d --log_level=test_suite
 )
+add_test(unit/mdsim/integrators/brownian/harmonic/host/2d
+  test_unit_mdsim_integrators_brownian --run_test=brownian_harmonic_host_2d --log_level=test_suite
+)
+add_test(unit/mdsim/integrators/brownian/harmonic/host/3d
+  test_unit_mdsim_integrators_brownian --run_test=brownian_harmonic_host_3d --log_level=test_suite
+)
 if(HALMD_WITH_GPU)
   add_test(unit/mdsim/integrators/brownian/free/gpu/2d
     test_unit_mdsim_integrators_brownian --run_test=brownian_free_gpu_2d --log_level=test_suite
   )
   add_test(unit/mdsim/integrators/brownian/free/gpu/3d
     test_unit_mdsim_integrators_brownian --run_test=brownian_free_gpu_3d --log_level=test_suite
+  )
+  add_test(unit/mdsim/integrators/brownian/harmonic/gpu/2d
+    test_unit_mdsim_integrators_brownian --run_test=brownian_harmonic_gpu_2d --log_level=test_suite
+  )
+  add_test(unit/mdsim/integrators/brownian/harmonic/gpu/3d
+    test_unit_mdsim_integrators_brownian --run_test=brownian_harmonic_gpu_3d --log_level=test_suite
   )
 endif()
 
