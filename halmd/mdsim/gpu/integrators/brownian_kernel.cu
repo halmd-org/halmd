@@ -139,6 +139,8 @@ __device__ void update_orientation(
 
 template <
     int dimension
+  , bool use_position
+  , bool use_orientation
   , typename float_type
   , typename ptr_type
   , typename const_ptr_type
@@ -184,62 +186,75 @@ __global__ void integrate(
     typename rng_type::state_type state = rng[thread];
 
     for (unsigned int i = thread; i < nparticle; i += nthread) {
-        // read in relevant variables
+        // read position (do this either way because we need the species)
         tie(r, species) <<= g_position[i];
-        tie(u, mass) <<= g_orientation[i];
 
-        // normal distribution parameters
+        // diffusion constants (we will need at least one of those)
         fixed_vector<float, 2> diff_const = tex1Dfetch(param_, species);
-        float_type const diff_const_disp  = diff_const[0];
-        float_type const diff_const_rot   = diff_const[1];
-        float_type const sigma_disp = sqrtf(2 * diff_const_disp * timestep );
-        float_type const sigma_rot  = sqrtf(2 * diff_const_rot * timestep );
 
-        vector_type f   = static_cast<float_vector_type>(g_force[i]);
-        torque_type tau = static_cast<float_torque_type>(g_torque[i]);
+        if (use_position) {
+            vector_type f = static_cast<float_vector_type>(g_force[i]);
 
-        // draw random numbers
-        float_type eta1, eta2, eta3;
-        tie(eta1, eta2) =  random::gpu::normal(rng, state, 0, sigma_disp);
-        if (dimension % 2 == 1) {
-            if (rng_disp_cached) {
-                eta3 = rng_disp_cache;
-            } else {
-                tie(eta3, rng_disp_cache) = random::gpu::normal(rng, state, 0, sigma_disp);
+            float_type const diff_const_disp = diff_const[0];
+            float_type const sigma_disp = sqrtf(2 * diff_const_disp * timestep);
+
+            // draw random numbers
+            float_type eta1, eta2, eta3;
+            tie(eta1, eta2) =  random::gpu::normal(rng, state, 0, sigma_disp);
+            if (dimension % 2 == 1) {
+                if (rng_disp_cached) {
+                    eta3 = rng_disp_cache;
+                } else {
+                    tie(eta3, rng_disp_cache) = random::gpu::normal(rng, state, 0, sigma_disp);
+                }
+                rng_disp_cached = !rng_disp_cached;
             }
-            rng_disp_cached = !rng_disp_cached;
-        }
 
-        // Brownian integration
-        update_displacement<dimension, float_type, vector_type>(
-            diff_const_disp, r, u, f, timestep, temp, eta1, eta2, eta3
-        );
+            // Brownian integration
+            update_displacement<dimension, float_type, vector_type>(
+                diff_const_disp, r, u, f, timestep, temp, eta1, eta2, eta3
+            );
 
-        // enforce periodic boundary conditions
-        float_vector_type image = box_kernel::reduce_periodic(r, box_length);
+            // enforce periodic boundary conditions
+            float_vector_type image = box_kernel::reduce_periodic(r, box_length);
 
-        if (dimension == 2) {
-            if (rng_rot_cached) {
-                eta1 = rng_rot_cache;
-            } else {
-                tie(eta1, rng_rot_cache) =  random::gpu::normal(rng, state, 0, sigma_rot);
+            // store position and image (do this here because the orientation doesn't change the position or species)
+            g_position[i] <<= tie(r, species);
+            if (!(image == float_vector_type(0))) {
+                g_image[i] = image + static_cast<float_vector_type>(g_image[i]);
             }
-            rng_rot_cached = !rng_rot_cached;
-        } else {
-            tie(eta1, eta2) =  random::gpu::normal(rng, state, 0, sigma_rot);
+        }
+        if (use_orientation) {
+            float_type const diff_const_rot = diff_const[1];
+            float_type const sigma_rot= sqrtf(2 * diff_const_rot * timestep);
+
+            torque_type tau = static_cast<float_torque_type>(g_torque[i]);
+
+            // load orientation (and mass which we don't need)
+            tie(u, mass) <<= g_orientation[i];
+
+            // draw random numbers
+            float_type eta1, eta2, eta3;
+            if (dimension == 2) {
+                if (rng_rot_cached) {
+                    eta1 = rng_rot_cache;
+                } else {
+                    tie(eta1, rng_rot_cache) =  random::gpu::normal(rng, state, 0, sigma_rot);
+                }
+                rng_rot_cached = !rng_rot_cached;
+            } else {
+                tie(eta1, eta2) =  random::gpu::normal(rng, state, 0, sigma_rot);
+            }
+
+            // update orientation after position! (Ito interpretation)
+            update_orientation(diff_const_rot, u, tau, timestep, temp, eta1, eta2);
+
+            // store orientation
+            g_orientation[i] <<= tie(u, mass);
         }
 
-        // update orientation last (Ito interpretation)
-        update_orientation(diff_const_rot, u, tau, timestep, temp, eta1, eta2);
-
-        // store position, species, image in global memory
-        g_position[i] <<= tie(r, species);
-        g_orientation[i] <<= tie(u, mass);
-
-        if (!(image == float_vector_type(0))) {
-            g_image[i] = image + static_cast<float_vector_type>(g_image[i]);
-        }
     }
+
     // store random number generator state in global device memory
     rng[thread] = state;
 }
@@ -252,7 +267,9 @@ cuda::texture<float2> brownian_wrapper<dimension, float_type, rng_type>::param =
 template <int dimension, typename float_type, typename rng_type>
 brownian_wrapper<dimension, float_type, rng_type> const
 brownian_wrapper<dimension, float_type, rng_type>::kernel = {
-    brownian_kernel::integrate<dimension, float_type, ptr_type, const_ptr_type>
+    brownian_kernel::integrate<dimension, true, false, float_type, ptr_type, const_ptr_type>
+  , brownian_kernel::integrate<dimension, false, true, float_type, ptr_type, const_ptr_type>
+  , brownian_kernel::integrate<dimension, true, true, float_type, ptr_type, const_ptr_type>
 };
 
 // explicit instantiation

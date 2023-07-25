@@ -46,12 +46,14 @@ brownian<dimension, float_type>::brownian(
   , float_type timestep
   , float_type temperature
   , matrix_type const& diff_const
+  , integration_degrees degrees
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
   , random_(random)
   , box_(box)
   , diff_const_(diff_const)
+  , degrees_(degrees)
   , logger_(logger)
 {
     if (diff_const_.size1() != particle->nspecies()) {
@@ -228,55 +230,59 @@ void brownian<dimension, float_type>::integrate()
     bool rng_rot_cached = false;
 
     for (size_type i = 0 ; i < nparticle; ++i) {
-        vector_type f = force[i];
-        torque_type tau = torque[i];
         unsigned int s = species[i];
-
-        vector_type& r = (*position)[i];
-        vector_type& u = (*orientation)[i];
-
-        float_type const diff_const_perp = diff_const_(s, 0);
-        float_type const diff_const_rot = diff_const_(s, 1);
-        float_type sigma_disp = sqrt(2 * timestep_ * diff_const_perp);
-        float_type sigma_rot = sqrt(2 * timestep_ * diff_const_rot);
 
         // In the following do not generate the random numbers in the update_...() functions because we need to
         // cache the second random number (when an odd number of random numbers are required) for the next iteration of
         // the loop.
+        if (degrees_ & integrate_position) {
+            vector_type f = force[i];
+            vector_type& r = (*position)[i];
 
-        // integrate positions
-        vector_type dr;
-        std::tie(dr[0], dr[1]) = random_->normal(sigma_disp);
-        if (dimension % 2 == 1) {
-            if (rng_disp_cached) {
-                dr[2] = rng_disp_cache;
-            } else {
-                std::tie(dr[2], rng_disp_cache) = random_->normal(sigma_disp);
+            float_type const diff_const_perp = diff_const_(s, 0);
+            float_type sigma_disp = sqrt(2 * timestep_ * diff_const_perp);
+
+            // integrate positions
+            vector_type dr;
+            std::tie(dr[0], dr[1]) = random_->normal(sigma_disp);
+            if (dimension % 2 == 1) {
+                if (rng_disp_cached) {
+                    dr[2] = rng_disp_cache;
+                } else {
+                    std::tie(dr[2], rng_disp_cache) = random_->normal(sigma_disp);
+                }
+                rng_disp_cached = !rng_disp_cached;
             }
-            rng_disp_cached = !rng_disp_cached;
+
+            update_displacement(diff_const_perp, r, f, dr);
+
+            // enforce periodic boundary conditions
+            (*image)[i] += box_->reduce_periodic(r);
         }
+        if (degrees_ & integrate_orientation) {
+            torque_type tau = torque[i];
+            vector_type& u = (*orientation)[i];
 
-        update_displacement(diff_const_perp, r, f, dr);
+            float_type const diff_const_rot = diff_const_(s, 1);
+            float_type sigma_rot = sqrt(2 * timestep_ * diff_const_rot);
 
-        // enforce periodic boundary conditions
-        (*image)[i] += box_->reduce_periodic(r);
+            // update orientation last (Ito interpretation)
+            if (dimension == 2) {
+                float_type eta;
+                if (rng_rot_cached) {
+                    eta = rng_rot_cache;
+                } else {
+                    std::tie(eta, rng_rot_cache) = random_->normal(sigma_rot);
+                }
+                rng_rot_cached = !rng_rot_cached;
 
-        // update orientation last (Ito interpretation)
-        if (dimension == 2) {
-            float_type eta;
-            if (rng_rot_cached) {
-                eta = rng_rot_cache;
+                update_orientation(diff_const_rot, u, tau, eta, float_type(0));
             } else {
-                std::tie(eta, rng_rot_cache) = random_->normal(sigma_rot);
+                float_type eta1, eta2;
+                std::tie(eta1, eta2) = random_->normal(sigma_rot);
+
+                update_orientation(diff_const_rot, u, tau, eta1, eta2);
             }
-            rng_rot_cached = !rng_rot_cached;
-
-            update_orientation(diff_const_rot, u, tau, eta, float_type(0));
-        } else {
-            float_type eta1, eta2;
-            std::tie(eta1, eta2) = random_->normal(sigma_rot);
-
-            update_orientation(diff_const_rot, u, tau, eta1, eta2);
         }
     }
 }
@@ -303,6 +309,12 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
                             .def_readonly("integrate", &runtime::integrate)
                     ]
                     .def_readonly("runtime", &brownian::runtime_)
+                    .enum_("degrees")
+                    [
+                        value("position", integrate_position)
+                      , value("orientation", integrate_orientation)
+                      , value("both", integrate_both)
+                    ]
 
               , def("brownian", &std::make_shared<brownian
                   , std::shared_ptr<particle_type>
@@ -311,6 +323,7 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
                   , double
                   , double
                   , matrix_type const&
+                  , integration_degrees
                   , std::shared_ptr<logger>
                 >)
             ]

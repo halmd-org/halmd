@@ -47,6 +47,13 @@ local utility           = require("halmd.utility")
 -- grab C++ wrappers
 local brownian = assert(libhalmd.mdsim.integrators.brownian)
 
+-- degrees of freedom to integrate
+local integrate_degrees = {
+    position    = assert(brownian.integrate_position),
+    orientation = assert(brownian.integrate_orientation),
+    both        = assert(brownian.integrate_both),
+}
+
 ---
 -- Construct Brownian integrator
 --
@@ -79,9 +86,13 @@ local brownian = assert(libhalmd.mdsim.integrators.brownian)
 --
 --    Temperature of heat bath.
 --
--- .. attribute:: D
+-- .. attribute:: diff_const
 --
---    Diffusion parameters of shape (D_par, D_perp, D_rot, propulsion strength)
+--    Diffusion parameters of shape (diff_const_disp, diff_const_rot)
+--
+-- .. attribute:: degrees
+--
+--    Which degrees of freedom to integrate (can be either "position", "orientation" or "both")
 --
 -- .. method:: disconnect()
 --
@@ -97,7 +108,7 @@ local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
     local box = utility.assert_kwarg(args, "box")
     local temperature = utility.assert_kwarg(args, "temperature")
-    local D = utility.assert_kwarg(args, "D")-- utility.assert_kwarg(args, "D")
+    local diff_const = utility.assert_kwarg(args, "diff_const")
     local timestep = args.timestep
     if timestep then
         clock:set_timestep(timestep)
@@ -105,10 +116,14 @@ local M = module(function(args)
         timestep = assert(clock.timestep)
     end
     local rng = random.generator({memory = particle.memory})
+    local degrees = integrate_degrees[args and args.degrees or "position"]
+    if not degrees then
+        error(("undefined degrees to integrate '%s'"):format(args.degrees), 2)
+    end
     local logger = log.logger({label = "brownian"})
 
     -- construct instance
-    local self = brownian(particle, rng, box, timestep, temperature, D, logger)
+    local self = brownian(particle, rng, box, timestep, temperature, diff_const, degrees, logger)
 
     -- capture C++ method set_timestep
     local set_timestep = assert(self.set_timestep)

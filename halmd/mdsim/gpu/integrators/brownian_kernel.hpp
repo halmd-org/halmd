@@ -42,7 +42,7 @@ struct brownian_wrapper
 
     static cuda::texture<float2> param;
 
-    cuda::function <void (
+    typedef cuda::function <void (
         ptr_type
       , ptr_type
       , coalesced_vector_type*
@@ -55,7 +55,11 @@ struct brownian_wrapper
       , unsigned int
       , unsigned int
       , vector_type
-    )> integrate;
+    )> integrate_kernel_type;
+
+    integrate_kernel_type integrate_position;
+    integrate_kernel_type integrate_orientation;
+    integrate_kernel_type integrate_both;
 
     static brownian_wrapper const kernel;
 };

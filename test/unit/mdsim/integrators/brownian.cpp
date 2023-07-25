@@ -225,7 +225,9 @@ brownian_free<modules_type>::brownian_free()
     particle_group = std::make_shared<particle_group_type>(particle);
     box = std::make_shared<box_type>(edges);
     random = std::make_shared<random_type>();
-    integrator = std::make_shared<integrator_type>(particle, random, box, timestep, temperature, diff_const);
+    integrator = std::make_shared<integrator_type>(
+        particle, random, box, timestep, temperature, diff_const, integrator_type::integrate_both
+    );
     position = std::make_shared<position_type>(particle, box, slab);
     orientation = std::make_shared<orientation_type>(particle, random);
     clock = std::make_shared<clock_type>();

@@ -42,6 +42,7 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , double timestep
   , double temperature
   , matrix_type const& diff_const
+  , integration_degrees degrees
   , std::shared_ptr<logger> logger
 )
   // dependency injection
@@ -50,6 +51,7 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , box_(box)
   , diff_const_(diff_const)
   , g_param_(diff_const_.size1())
+  , degrees_(degrees)
   , logger_(logger)
 {
     if (diff_const_.size1() != particle->nspecies()) {
@@ -61,6 +63,16 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
 
     set_timestep(timestep);
     set_temperature(temperature);
+
+    if (degrees_ == integrate_position) {
+        integrate_kernel = wrapper_type::kernel.integrate_position;
+    } else if (degrees_ == integrate_orientation) {
+        integrate_kernel = wrapper_type::kernel.integrate_orientation;
+    } else if (degrees_ == integrate_both) {
+        integrate_kernel = wrapper_type::kernel.integrate_both;
+    } else {
+        throw std::invalid_argument("invalid argument degrees");
+    }
 
     cuda::host::vector<float2> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
@@ -116,7 +128,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
         cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
-        wrapper_type::kernel.integrate(
+        integrate_kernel(
             position->data()
           , orientation->data()
           , image->data()
@@ -160,6 +172,12 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
                             .def_readonly("integrate", &runtime::integrate)
                     ]
                     .def_readonly("runtime", &brownian::runtime_)
+                    .enum_("degrees")
+                    [
+                        value("position", integrate_position)
+                      , value("orientation", integrate_orientation)
+                      , value("both", integrate_both)
+                    ]
 
               , def("brownian", &std::make_shared<brownian
                   , std::shared_ptr<particle_type>
@@ -168,6 +186,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
                   , double
                   , double
                   , matrix_type const&
+                  , integration_degrees
                   , std::shared_ptr<logger>
                 >)
             ]
