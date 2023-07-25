@@ -46,6 +46,7 @@ public:
     typedef random::host::random random_type;
 
     typedef typename particle_type::vector_type vector_type;
+    typedef typename particle_type::torque_type torque_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
 
     brownian(
@@ -118,7 +119,7 @@ private:
     void update_orientation(
         float_type const diff_const
       , vector_type& u
-      , vector_type const& tau
+      , torque_type const& tau
       , float_type eta1
       , float_type eta2
     );

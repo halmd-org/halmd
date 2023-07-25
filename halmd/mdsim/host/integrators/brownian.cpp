@@ -108,7 +108,7 @@ template<typename float_type>
 void update_orientation_impl(
     float_type const diff_const
   , fixed_vector<float_type, 2>& u
-  , fixed_vector<float_type, 2> const& tau
+  , float_type const& tau
   , float_type timestep
   , float_type temperature
   , float_type eta
@@ -119,7 +119,7 @@ void update_orientation_impl(
     float_type epsilon = std::numeric_limits<float_type>::epsilon();
 
     // the 2d case is just diffusion of orientation angle
-    float_type omega = eta + tau[0] * diff_const * timestep / temperature;
+    float_type omega = eta + tau * diff_const * timestep / temperature;
 
     // rotate by omega
     fixed_vector<float_type, 2> e;
@@ -192,7 +192,7 @@ template <int dimension, typename float_type>
 void brownian<dimension, float_type>::update_orientation(
     float_type const diff_const
   , vector_type& u
-  , vector_type const& tau
+  , torque_type const& tau
   , float_type eta1
   , float_type eta2
 )
@@ -229,7 +229,7 @@ void brownian<dimension, float_type>::integrate()
 
     for (size_type i = 0 ; i < nparticle; ++i) {
         vector_type f = force[i];
-        vector_type tau = torque[i];
+        torque_type tau = torque[i];
         unsigned int s = species[i];
 
         vector_type& r = (*position)[i];

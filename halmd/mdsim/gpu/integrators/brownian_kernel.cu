@@ -69,7 +69,7 @@ template <typename float_type>
 __device__ void update_orientation(
     float_type const diff_const
   , fixed_vector<float_type, 2>& u
-  , fixed_vector<float_type, 2> const& tau
+  , float_type const& tau
   , float timestep
   , float temperature
   , float_type eta
@@ -84,7 +84,7 @@ __device__ void update_orientation(
     e[1] = u[0];
 
     // first term is the random torque, second is the systematic torque
-    float_type omega = eta + tau[0] * diff_const * timestep / temperature;
+    float_type omega = eta + tau * diff_const * timestep / temperature;
 
     u = __cosf(omega) * u + __sinf(omega) * e;
 
@@ -163,6 +163,8 @@ __global__ void integrate(
 {
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef fixed_vector<float, dimension> float_vector_type;
+    typedef typename type_traits<dimension, float_type>::pseudo_vector_type torque_type;
+    typedef typename type_traits<dimension, float>::pseudo_vector_type float_torque_type;
 
     // kernel execution parameters
     unsigned int const thread = GTID;
@@ -194,8 +196,7 @@ __global__ void integrate(
         float_type const sigma_rot  = sqrtf(2 * diff_const_rot * timestep );
 
         vector_type f   = static_cast<float_vector_type>(g_force[i]);
-        // TODO: torque type
-        vector_type tau = static_cast<float_vector_type>(g_torque[i]);
+        torque_type tau = static_cast<float_torque_type>(g_torque[i]);
 
         // draw random numbers
         float_type eta1, eta2, eta3;
