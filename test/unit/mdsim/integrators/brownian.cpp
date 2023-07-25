@@ -178,7 +178,7 @@ void brownian_free<modules_type>::test()
     for (size_t i = 0; i < size_t(maximum_lag_time / timestep); ++i) {
         BOOST_CHECK_CLOSE_FRACTION(mean(msd[i]), 2 * dimension * diff_const(0, 0) * time[i], 4.5 * abs(error_of_mean(msd[i])));
         // BOOST_CHECK_CLOSE_FRACTION(mean(mqd[i]), 60 * time[i] * time[i], 4.5 * 120 * time[i] * error_of_mean(mqd[i])); // TODO: value for 2D
-        BOOST_CHECK_SMALL(mean(ocf[i]) - expf(-(dimension - 1.) * diff_const(0, 2) * time[i]), 4.5 * abs(error_of_mean(ocf[i])));
+        BOOST_CHECK_SMALL(mean(ocf[i]) - expf(-(dimension - 1.) * diff_const(0, 1) * time[i]), 4.5 * abs(error_of_mean(ocf[i])));
     }
 }
 
@@ -216,13 +216,10 @@ brownian_free<modules_type>::brownian_free()
     slab = 1;
 
     //  DIFFUSION CONSTANT
-    //  @param1 perpendicular to motion
-    //  @param2 in direction of motion
-    //  @param3 rotational
-    //  @param4 active motion (propulsion strength)
-    diff_const = typename integrator_type::matrix_type(1, 4);
-    diff_const <<= 1.0, 1.0, 1.0, 0.0;
-    // create modules
+    //  @param1 displacement
+    //  @param2 rotational
+    diff_const = typename integrator_type::matrix_type(1, 2);
+    diff_const <<= 1.0, 1.0;
 
     particle = std::make_shared<particle_type>(npart, 1);
     particle_group = std::make_shared<particle_group_type>(particle);
@@ -334,7 +331,7 @@ void brownian_harmonic<modules_type>::test()
         BOOST_TEST_MESSAGE(time[i] << ": " << mean(msd[i]));
         BOOST_CHECK_CLOSE_FRACTION(
             mean(msd[i])
-          , 2 * dimension * temperature / stiffness(0) * (1 - expf(-diff_const(0) / temperature * stiffness(0) * time[i]))
+          , 2 * dimension * temperature / stiffness(0) * (1 - expf(-diff_const(0,0) / temperature * stiffness(0) * time[i]))
           , 4.5 * abs(error_of_mean(msd[i]))
         );
     }
@@ -362,12 +359,10 @@ brownian_harmonic<modules_type>::brownian_harmonic()
     }
 
     // diffusion constant
-    // @param1 perpendicular to motion
-    // @param2 in direction of motion
-    // @param3 rotational
-    // @param4 active motion (propulsion strength)
-    diff_const = typename integrator_type::matrix_type(1, 4);
-    diff_const <<= 1.0, 1.0, 1.0, 0.0;
+    // @param1 displacement
+    // @param2 rotational
+    diff_const = typename integrator_type::matrix_type(1, 2);
+    diff_const <<= 1.0, 1.0;
 
     stiffness = typename potential_type::scalar_container_type(1);
     stiffness <<= 1.;
@@ -375,7 +370,6 @@ brownian_harmonic<modules_type>::brownian_harmonic()
     typename potential_type::vector_container_type offset(1);
     offset <<= typename potential_type::vector_type(0);
 
-    // create modules
     particle = std::make_shared<particle_type>(npart, 1);
     particle_group = std::make_shared<particle_group_type>(particle);
     box = std::make_shared<box_type>(edges);

@@ -54,8 +54,11 @@ brownian<dimension, float_type>::brownian(
   , diff_const_(diff_const)
   , logger_(logger)
 {
-    if (diff_const_.size2() != 4) {
-        throw std::invalid_argument("diffusion matrix has invalid shape: exactly 4 values per species are required");
+    if (diff_const_.size1() != particle->nspecies()) {
+        throw std::invalid_argument("diffusion matrix has invalid shape: exactly the number of species are required");
+    }
+    if (diff_const_.size2() != 2) {
+        throw std::invalid_argument("diffusion matrix has invalid shape: exactly 2 values per species are required");
     }
 
     set_timestep(timestep);
@@ -233,7 +236,7 @@ void brownian<dimension, float_type>::integrate()
         vector_type& u = (*orientation)[i];
 
         float_type const diff_const_perp = diff_const_(s, 0);
-        float_type const diff_const_rot = diff_const_(s, 2);
+        float_type const diff_const_rot = diff_const_(s, 1);
         float_type sigma_disp = sqrt(2 * timestep_ * diff_const_perp);
         float_type sigma_rot = sqrt(2 * timestep_ * diff_const_rot);
 

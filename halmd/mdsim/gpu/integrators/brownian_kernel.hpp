@@ -40,7 +40,7 @@ struct brownian_wrapper
     typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
     typedef typename type_traits<4, float_type>::gpu::const_ptr_type const_ptr_type;
 
-    static cuda::texture<float4> param;
+    static cuda::texture<float2> param;
 
     cuda::function <void (
         ptr_type

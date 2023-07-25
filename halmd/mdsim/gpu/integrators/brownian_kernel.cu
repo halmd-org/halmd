@@ -34,13 +34,11 @@ namespace integrators {
 namespace brownian_kernel {
 
 /**array of diffusion constants */
-static texture<float4> param_;
+static texture<float2> param_;
 
 template <int dimension, typename float_type, typename vector_type>
 __device__ void update_displacement(
-    float_type const diff_const_par
-  , float_type const diff_const_perp
-  , float_type const prop_strength
+    float_type const diff_const
   , vector_type& r
   , vector_type const& u
   , vector_type const& f
@@ -62,15 +60,14 @@ __device__ void update_displacement(
 
     // systeatic part
     float_type f_u = inner_prod(f, u);
-    dr_s = (timestep * f_u * diff_const_par / temperature + prop_strength * timestep) * u +
-        (timestep * diff_const_perp / temperature) * (f - f_u * u);
+    dr_s = diff_const * f * timestep / temperature;
 
     r += dr_r + dr_s;
 }
 
 template <typename float_type>
 __device__ void update_orientation(
-    float_type const diff_const_rot
+    float_type const diff_const
   , fixed_vector<float_type, 2>& u
   , fixed_vector<float_type, 2> const& tau
   , float timestep
@@ -87,7 +84,7 @@ __device__ void update_orientation(
     e[1] = u[0];
 
     // first term is the random torque, second is the systematic torque
-    float_type omega = eta + tau[0] * diff_const_rot * timestep / temperature;
+    float_type omega = eta + tau[0] * diff_const * timestep / temperature;
 
     u = __cosf(omega) * u + __sinf(omega) * e;
 
@@ -99,7 +96,7 @@ __device__ void update_orientation(
 
 template <typename float_type>
 __device__ void update_orientation(
-    float_type const diff_const_rot
+    float_type const diff_const
   , fixed_vector<float_type, 3>& u
   , fixed_vector<float_type, 3> const& tau
   , float timestep
@@ -125,7 +122,7 @@ __device__ void update_orientation(
     e2 /= norm_2(e2);
 
     // first two terms are the random angular velocity, the lst part is the systematic torque
-    fixed_vector<float_type, 3> omega = eta1 * e1 + eta2 * e2 + tau * diff_const_rot * timestep / temp ;
+    fixed_vector<float_type, 3> omega = eta1 * e1 + eta2 * e2 + tau * diff_const * timestep / temp ;
     float omega_abs = norm_2(omega);
     omega /= omega_abs;
     // Ω = eta1 * e1 + eta2 * e2
@@ -190,13 +187,10 @@ __global__ void integrate(
         tie(u, mass) <<= g_orientation[i];
 
         // normal distribution parameters
-        fixed_vector<float, 4> diff_const = tex1Dfetch(param_, species);
-        float_type const diff_const_perp  = diff_const[0];
-        float_type const diff_const_par   = diff_const[1];
-        float_type const diff_const_rot   = diff_const[2];
-        float_type const prop_str   = diff_const[3];
-        float_type const sigma_perp = sqrtf(2 * diff_const_perp * timestep );
-        float_type const sigma_par  = sqrtf(2 * diff_const_par * timestep );
+        fixed_vector<float, 2> diff_const = tex1Dfetch(param_, species);
+        float_type const diff_const_disp  = diff_const[0];
+        float_type const diff_const_rot   = diff_const[1];
+        float_type const sigma_disp = sqrtf(2 * diff_const_disp * timestep );
         float_type const sigma_rot  = sqrtf(2 * diff_const_rot * timestep );
 
         vector_type f   = static_cast<float_vector_type>(g_force[i]);
@@ -205,19 +199,19 @@ __global__ void integrate(
 
         // draw random numbers
         float_type eta1, eta2, eta3;
-        tie(eta1, eta2) =  random::gpu::normal(rng, state, 0, sigma_perp);
+        tie(eta1, eta2) =  random::gpu::normal(rng, state, 0, sigma_disp);
         if (dimension % 2 == 1) {
             if (rng_disp_cached) {
                 eta3 = rng_disp_cache;
             } else {
-                tie(eta3, rng_disp_cache) = random::gpu::normal(rng, state, 0, sigma_par);
+                tie(eta3, rng_disp_cache) = random::gpu::normal(rng, state, 0, sigma_disp);
             }
             rng_disp_cached = !rng_disp_cached;
         }
 
         // Brownian integration
         update_displacement<dimension, float_type, vector_type>(
-            diff_const_par, diff_const_perp, prop_str, r, u, f, timestep, temp, eta1, eta2, eta3
+            diff_const_disp, r, u, f, timestep, temp, eta1, eta2, eta3
         );
 
         // enforce periodic boundary conditions
@@ -252,7 +246,7 @@ __global__ void integrate(
 } // namespace brownian_kernel
 
 template <int dimension, typename float_type, typename rng_type>
-cuda::texture<float4> brownian_wrapper<dimension, float_type, rng_type>::param = brownian_kernel::param_;
+cuda::texture<float2> brownian_wrapper<dimension, float_type, rng_type>::param = brownian_kernel::param_;
 
 template <int dimension, typename float_type, typename rng_type>
 brownian_wrapper<dimension, float_type, rng_type> const

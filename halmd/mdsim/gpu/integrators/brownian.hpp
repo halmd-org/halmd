@@ -124,7 +124,7 @@ private:
     /** diffusion constant */
     matrix_type diff_const_;
     /** diffusion parameters at CUDA device */
-    cuda::vector<float4> g_param_;
+    cuda::vector<float2> g_param_;
     /** module logger */
     std::shared_ptr<logger> logger_;
     /** profiling runtime accumulators */

@@ -52,23 +52,23 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , g_param_(diff_const_.size1())
   , logger_(logger)
 {
-    if (diff_const_.size2() != 4) {
-        throw std::invalid_argument("diffusion matrix has invalid shape: exactly 4 values per species are required");
+    if (diff_const_.size1() != particle->nspecies()) {
+        throw std::invalid_argument("diffusion matrix has invalid shape: exactly the number of species are required");
+    }
+    if (diff_const_.size2() != 2) {
+        throw std::invalid_argument("diffusion matrix has invalid shape: exactly 2 values per species are required");
     }
 
     set_timestep(timestep);
     set_temperature(temperature);
 
-    cuda::host::vector<float4> param(g_param_.size());
+    cuda::host::vector<float2> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
-        fixed_vector<float, 4> p;
+        fixed_vector<float, 2> p;
         p[0] = diff_const_(i,0);
         p[1] = diff_const_(i,1);
-        p[2] = diff_const_(i,2);
-        p[3] = diff_const_(i,3);
         param[i] = p;
     }
-
     cuda::copy(param, g_param_);
 
     LOG("diffusion constants: " << diff_const_);
