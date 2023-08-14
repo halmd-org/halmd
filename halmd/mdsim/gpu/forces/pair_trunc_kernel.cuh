@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2021       Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -21,6 +22,7 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
 #define HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
 
+#include <halmd/algorithm/gpu/reduction.cuh>
 #include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
@@ -36,20 +38,134 @@ namespace gpu {
 namespace forces {
 namespace pair_trunc_kernel {
 
-/** positions, types */
-static texture<float4> r2_;
+using namespace halmd::algorithm::gpu;
+
+static unsigned int const nparallel_particles = 32;
 
 /**
  * Compute pair forces, potential energy, and stress tensor for all particles
  */
 template <
-    bool do_aux               //< compute auxiliary variables in addition to force
+    bool do_aux             //< compute auxiliary variables in addition to force
+  , typename vector_type
+  , typename potential_type
+  , typename gpu_vector_type
+>
+__global__ void compute_unroll_force_loop(
+    potential_type potential
+  , float4 const* g_r1
+  , cudaTextureObject_t t_r2
+  , gpu_vector_type* g_f
+  , unsigned int const* g_neighbour
+  , unsigned int neighbour_size
+  , float* g_en_pot
+  , float* g_stress_pot
+  , unsigned int ntype1
+  , unsigned int ntype2
+  , vector_type box_length
+  , bool force_zero
+  , float aux_weight
+)
+{
+    enum { dimension = vector_type::static_size };
+    typedef typename vector_type::value_type value_type;
+    typedef typename type_traits<dimension, float>::stress_tensor_type stress_tensor_type;
+
+    unsigned int i = GTID / nparallel_particles;
+
+    // load particle associated with this thread
+    unsigned int type1;
+    vector_type r1;
+    tie(r1, type1) <<= g_r1[i];
+
+    // force sum
+    fixed_vector<dsfloat, dimension> f = 0;
+
+    // contribution to potential energy
+    float en_pot_ = 0;
+    // contribution to stress tensor
+    stress_tensor_type stress_pot = 0;
+
+    for (int k = GTID % nparallel_particles; k < neighbour_size; k += nparallel_particles) {
+        // coalesced read from neighbour list
+        unsigned int j = g_neighbour[i * neighbour_size + k];
+        // skip placeholder particles
+        if (j == particle_kernel::placeholder) {
+            break;
+        }
+
+        // load particle
+        unsigned int type2;
+        vector_type r2;
+        tie(r2, type2) <<= tex1Dfetch<float4>(t_r2, j);
+        // fetch pair potential
+        potential.fetch_param(type1, type2, ntype1, ntype2);
+
+        // particle distance vector
+        vector_type r = r1 - r2;
+        // enforce periodic boundary conditions
+        box_kernel::reduce_periodic(r, box_length);
+        // squared particle distance
+        value_type rr = inner_prod(r, r);
+        // enforce cutoff distance
+        if (!potential.within_range(rr)) {
+            continue;
+        }
+
+        value_type fval, en_pot;
+        tie(fval, en_pot) = potential(rr);
+
+        // force from other particle acting on this particle
+        f += fval * r;
+        if (do_aux) {
+            // potential energy contribution of this particle
+            en_pot_ += aux_weight * en_pot;
+            // contribution to stress tensor from this particle
+            stress_pot += aux_weight * fval * make_stress_tensor(r);
+        }
+    }
+
+    if (!do_aux) {
+        reduce_warp<sum_>(f);
+    } else {
+        reduce_warp<ternary_sum_>(f, en_pot_, stress_pot);
+    }
+
+    // exit all threads except the first one in each warp (the one with the result of reduce)
+    if (TID % nparallel_particles != 0) {
+        return;
+    }
+
+    // add old force and auxiliary variables if not zero
+    if (!force_zero) {
+        f += static_cast<vector_type>(g_f[i]);
+        if (do_aux) {
+            en_pot_ += g_en_pot[i];
+            stress_pot += read_stress_tensor<stress_tensor_type>(g_stress_pot + i, GTDIM / nparallel_particles);
+        }
+    }
+    // write results to global memory
+    g_f[i] = static_cast<vector_type>(f);
+
+    if (do_aux) {
+        g_en_pot[i] = en_pot_;
+        write_stress_tensor(g_stress_pot + i, stress_pot, GTDIM / nparallel_particles);
+    }
+}
+
+/**
+ * Compute pair forces, potential energy, and stress tensor for all particles
+ */
+template <
+    bool do_aux             //< compute auxiliary variables in addition to force
   , typename vector_type
   , typename potential_type
   , typename gpu_vector_type
 >
 __global__ void compute(
-    float4 const* g_r1
+    potential_type potential
+  , float4 const* g_r1
+  , cudaTextureObject_t t_r2
   , gpu_vector_type* g_f
   , unsigned int const* g_neighbour
   , unsigned int neighbour_size
@@ -66,6 +182,7 @@ __global__ void compute(
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type value_type;
     typedef typename type_traits<dimension, float>::stress_tensor_type stress_tensor_type;
+
     unsigned int i = GTID;
 
     // load particle associated with this thread
@@ -73,16 +190,13 @@ __global__ void compute(
     vector_type r1;
     tie(r1, type1) <<= g_r1[i];
 
+    // force sum
+    fixed_vector<dsfloat, dimension> f = 0;
+
     // contribution to potential energy
     float en_pot_ = 0;
     // contribution to stress tensor
     stress_tensor_type stress_pot = 0;
-#ifdef USE_FORCE_DSFUN
-    // force sum
-    fixed_vector<dsfloat, dimension> f = 0;
-#else
-    vector_type f = 0;
-#endif
 
     for (unsigned int k = 0; k < neighbour_size; ++k) {
         // coalesced read from neighbour list
@@ -95,9 +209,9 @@ __global__ void compute(
         // load particle
         unsigned int type2;
         vector_type r2;
-        tie(r2, type2) <<= tex1Dfetch(r2_, j);
-        // pair potential
-        potential_type const potential(type1, type2, ntype1, ntype2);
+        tie(r2, type2) <<= tex1Dfetch<float4>(t_r2, j);
+        // fetch pair potential
+        potential.fetch_param(type1, type2, ntype1, ntype2);
 
         // particle distance vector
         vector_type r = r1 - r2;
@@ -105,7 +219,7 @@ __global__ void compute(
         box_kernel::reduce_periodic(r, box_length);
         // squared particle distance
         value_type rr = inner_prod(r, r);
-        // enforce cutoff length
+        // enforce cutoff distance
         if (!potential.within_range(rr)) {
             continue;
         }
@@ -143,11 +257,13 @@ __global__ void compute(
 } // namespace pair_trunc_kernel
 
 template <int dimension, typename potential_type>
-pair_trunc_wrapper<dimension, potential_type> const
+pair_trunc_wrapper<dimension, potential_type>
 pair_trunc_wrapper<dimension, potential_type>::kernel = {
-    pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
+    pair_trunc_kernel::nparallel_particles
+  , pair_trunc_kernel::compute_unroll_force_loop<false, fixed_vector<float, dimension>, potential_type>
+  , pair_trunc_kernel::compute_unroll_force_loop<true, fixed_vector<float, dimension>, potential_type>
+  , pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
-  , pair_trunc_kernel::r2_
 };
 
 } // namespace mdsim

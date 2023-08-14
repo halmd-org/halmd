@@ -68,7 +68,7 @@ __global__ void lattice(
 } // namespace lattice_kernel
 
 template <typename float_type, typename lattice_type>
-lattice_wrapper<float_type, lattice_type> const lattice_wrapper<float_type, lattice_type>::kernel = {
+lattice_wrapper<float_type, lattice_type> lattice_wrapper<float_type, lattice_type>::kernel = {
     lattice_kernel::lattice<ptr_type, fixed_vector<float_type, dimension>, lattice_type>
 };
 

@@ -70,12 +70,12 @@ static __global__ void converter_two(float4* g_input, float4* g_output, U* g_u, 
 }
 
 template <typename U, typename V>
-float_kernel<U, V> const float_kernel<U, V>::kernel = {
+float_kernel<U, V> float_kernel<U, V>::kernel = {
     &::converter_one
 };
 
 template <typename U, typename V>
-double_kernel<U, V> const double_kernel<U, V>::kernel = {
+double_kernel<U, V> double_kernel<U, V>::kernel = {
     &::converter_two
 };
 

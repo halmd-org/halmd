@@ -22,7 +22,7 @@
 #define TEST_UNIT_UTILITY_LUA_EXCEPTION_FIXTURE_HPP
 
 #include <tuple>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 107100
 # include <boost/test/tools/output_test_stream.hpp>
@@ -116,41 +116,49 @@ struct function_exception_fixture : lua_test_fixture
 
     static std::function<void (int)> wrap_throw_exception1()
     {
+        using namespace boost::placeholders;
         return boost::bind(&throw_exception1, _1);
     }
 
     static std::function<void (int, int)> wrap_throw_exception2()
     {
+        using namespace boost::placeholders;
         return boost::bind(&throw_exception2, _1, _2);
     }
 
     static std::function<void (int, int, int)> wrap_throw_exception3()
     {
+        using namespace boost::placeholders;
         return boost::bind(&throw_exception3, _1, _2, _3);
     }
 
     static std::function<void (int, int, int, int)> wrap_throw_exception4()
     {
+        using namespace boost::placeholders;
         return boost::bind(&throw_exception4, _1, _2, _3, _4);
     }
 
     static std::function<void (int, int, int, int, int)> wrap_throw_exception5()
     {
+        using namespace boost::placeholders;
         return boost::bind(&throw_exception5, _1, _2, _3, _4, _5);
     }
 
     static std::function<void (int, int, int, int, int, int)> wrap_throw_exception6()
     {
+        using namespace boost::placeholders;
         return boost::bind(&throw_exception6, _1, _2, _3, _4, _5, _6);
     }
 
     static std::function<void (int, int, int, int, int, int, int)> wrap_throw_exception7()
     {
+        using namespace boost::placeholders;
         return boost::bind(&throw_exception7, _1, _2, _3, _4, _5, _6, _7);
     }
 
     static std::function<void (int, int, int, int, int, int, int, int)> wrap_throw_exception8()
     {
+        using namespace boost::placeholders;
         return boost::bind(&throw_exception8, _1, _2, _3, _4, _5, _6, _7, _8);
     }
 

@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010-2013 Felix Höfling
+ * Copyright © 2021      Jaslo Ziska
  * Copyright © 2016      Sutapa Roy
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
@@ -55,7 +56,7 @@ public:
     typedef signal_type::slot_function_type slot_function_type;
 
     pair_trunc(
-        std::shared_ptr<potential_type const> potential
+        std::shared_ptr<potential_type> potential
       , std::shared_ptr<particle_type> particle1
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
@@ -111,7 +112,7 @@ private:
     void compute_aux_();
 
     /** pair potential */
-    std::shared_ptr<potential_type const> potential_;
+    std::shared_ptr<potential_type> potential_;
     /** state of first system */
     std::shared_ptr<particle_type> particle1_;
     /** state of second system */
@@ -149,7 +150,7 @@ private:
 
 template <int dimension, typename float_type, typename potential_type>
 pair_trunc<dimension, float_type, potential_type>::pair_trunc(
-    std::shared_ptr<potential_type const> potential
+    std::shared_ptr<potential_type> potential
   , std::shared_ptr<particle_type> particle1
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
@@ -222,28 +223,52 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
     neighbour_array_type const& g_neighbour = read_cache(neighbour_->g_neighbour());
     auto force = make_cache_mutable(particle1_->mutable_force());
 
-    LOG_TRACE("compute forces");
+    cuda::texture<float4> t_r2(position2);
+
+    LOG_DEBUG("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
 
-    gpu_wrapper::kernel.r2.bind(position2);
-    potential_->bind_textures();
-
-    configure_kernel(gpu_wrapper::kernel.compute, particle1_->dim(), true);
-    gpu_wrapper::kernel.compute(
-        position1.data()
-      , &*force->begin()
-      , &*g_neighbour.begin()
-      , neighbour_->size()
-      , neighbour_->stride()
-      , nullptr
-      , nullptr
-      , particle1_->nspecies()
-      , particle2_->nspecies()
-      , static_cast<position_type>(box_->length())
-      , particle1_->force_zero()
-      , 1 // only relevant for kernel.compute_aux()
-    );
+    if (neighbour_->unroll_force_loop()) {
+        configure_kernel(
+            gpu_wrapper::kernel.compute_unroll_force_loop
+          , particle1_->array_size() * gpu_wrapper::kernel.nparallel_particles
+          , true
+        );
+        gpu_wrapper::kernel.compute_unroll_force_loop(
+            potential_->get_gpu_potential()
+          , position1.data()
+          , t_r2
+          , force->data()
+          , g_neighbour.data()
+          , neighbour_->size()
+          , nullptr
+          , nullptr
+          , particle1_->nspecies()
+          , particle2_->nspecies()
+          , static_cast<position_type>(box_->length())
+          , particle1_->force_zero()
+          , 1 // only relevant for kernel.compute_aux()
+        );
+    } else {
+        configure_kernel(gpu_wrapper::kernel.compute, particle1_->dim(), true);
+        gpu_wrapper::kernel.compute(
+            potential_->get_gpu_potential()
+          , position1.data()
+          , t_r2
+          , force->data()
+          , g_neighbour.data()
+          , neighbour_->size()
+          , neighbour_->stride()
+          , nullptr
+          , nullptr
+          , particle1_->nspecies()
+          , particle2_->nspecies()
+          , static_cast<position_type>(box_->length())
+          , particle1_->force_zero()
+          , 1 // only relevant for kernel.compute_aux()
+        );
+    }
     cuda::thread::synchronize();
 }
 
@@ -257,33 +282,57 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
     auto en_pot = make_cache_mutable(particle1_->mutable_potential_energy());
     auto stress_pot = make_cache_mutable(particle1_->mutable_stress_pot());
 
-    LOG_TRACE("compute forces with auxiliary variables");
+    cuda::texture<float4> t_r2(position2);
+
+    LOG_DEBUG("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute_aux);
-
-    gpu_wrapper::kernel.r2.bind(position2);
-    potential_->bind_textures();
 
     float weight = aux_weight_;
     if (particle1_ == particle2_) {
         weight /= 2;
     }
 
-    configure_kernel(gpu_wrapper::kernel.compute_aux, particle1_->dim(), true);
-    gpu_wrapper::kernel.compute_aux(
-        position1.data()
-      , &*force->begin()
-      , &*g_neighbour.begin()
-      , neighbour_->size()
-      , neighbour_->stride()
-      , &*en_pot->begin()
-      , &*stress_pot->begin()
-      , particle1_->nspecies()
-      , particle2_->nspecies()
-      , static_cast<position_type>(box_->length())
-      , particle1_->force_zero()
-      , weight
-    );
+    if (neighbour_->unroll_force_loop()) {
+        configure_kernel(
+            gpu_wrapper::kernel.compute_aux_unroll_force_loop
+          , particle1_->array_size() * gpu_wrapper::kernel.nparallel_particles
+          , true
+        );
+        gpu_wrapper::kernel.compute_aux_unroll_force_loop(
+            potential_->get_gpu_potential()
+          , position1.data()
+          , t_r2
+          , force->data()
+          , g_neighbour.data()
+          , neighbour_->size()
+          , &*en_pot->begin()
+          , &*stress_pot->begin()
+          , particle1_->nspecies()
+          , particle2_->nspecies()
+          , static_cast<position_type>(box_->length())
+          , particle1_->force_zero()
+          , weight
+        );
+    } else {
+        configure_kernel(gpu_wrapper::kernel.compute_aux, particle1_->dim(), true);
+        gpu_wrapper::kernel.compute_aux(
+            potential_->get_gpu_potential()
+          , position1.data()
+          , t_r2
+          , force->data()
+          , g_neighbour.data()
+          , neighbour_->size()
+          , neighbour_->stride()
+          , &*en_pot->begin()
+          , &*stress_pot->begin()
+          , particle1_->nspecies()
+          , particle2_->nspecies()
+          , static_cast<position_type>(box_->length())
+          , particle1_->force_zero()
+          , weight
+        );
+    }
     cuda::thread::synchronize();
 }
 
@@ -311,7 +360,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                     .def_readonly("runtime", &pair_trunc::runtime_)
 
               , def("pair_trunc", &std::make_shared<pair_trunc,
-                    std::shared_ptr<potential_type const>
+                    std::shared_ptr<potential_type>
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>

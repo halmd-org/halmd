@@ -68,7 +68,7 @@ id_range<particle_type>::ordered()
     auto const& reverse_id_cache = particle_->reverse_id();
 
     if (ordered_cache_ != reverse_id_cache) {
-        LOG_TRACE("ordered sequence of particle indices");
+        LOG_DEBUG("ordered sequence of particle indices");
 
         auto const& reverse_id = read_cache(reverse_id_cache);
         auto ordered = make_cache_mutable(ordered_);
@@ -89,7 +89,7 @@ id_range<particle_type>::unordered()
 {
     auto const& reverse_id_cache = particle_->reverse_id();
     if (unordered_cache_ != reverse_id_cache) {
-        LOG_TRACE("unordered sequence of particle indices");
+        LOG_DEBUG("unordered sequence of particle indices");
         auto const& reverse_id = read_cache(reverse_id_cache);
         auto unordered = make_cache_mutable(unordered_);
         std::copy(

@@ -34,8 +34,8 @@ semilog_grid::semilog_grid(
   , unsigned int decimation
 )
 {
-    LOG_DEBUG("construct semi-logarithmically spaced grid");
-    LOG_DEBUG("start: " << start << ", stop: " << stop << ", decimation: " << decimation);
+    LOG_INFO("construct semi-logarithmically spaced grid");
+    LOG_INFO("start: " << start << ", stop: " << stop << ", decimation: " << decimation);
 
     // set up semi-linearly spaced grid
     double h = start;

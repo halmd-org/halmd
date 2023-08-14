@@ -77,7 +77,7 @@ __global__ void integrate(
 } // namespace euler_kernel
 
 template <int dimension, typename float_type>
-euler_wrapper<dimension, float_type> const euler_wrapper<dimension, float_type>::kernel = {
+euler_wrapper<dimension, float_type> euler_wrapper<dimension, float_type>::kernel = {
     euler_kernel::integrate<dimension, float_type, ptr_type, const_ptr_type>
 };
 

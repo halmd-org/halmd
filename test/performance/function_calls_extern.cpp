@@ -18,7 +18,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <test/performance/function_calls_extern.hpp>
 
@@ -35,7 +35,7 @@ using namespace std;
  */
 __attribute__((noinline)) std::function<void (double)> bind_noop()
 {
-    return bind(&noop, _1);
+    return bind(&noop, boost::placeholders::_1);
 }
 
 /**

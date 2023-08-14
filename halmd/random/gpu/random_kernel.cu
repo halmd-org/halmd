@@ -81,7 +81,7 @@ __global__ void normal(float* v, unsigned int len, float mean, float sigma, Rng 
  * CUDA C++ wrappers
  */
 template <typename Rng>
-random_wrapper<Rng> const random_wrapper<Rng>::kernel = {
+random_wrapper<Rng> random_wrapper<Rng>::kernel = {
     random_kernel::uniform<Rng>
   , random_kernel::get<Rng>
   , random_kernel::normal<Rng>

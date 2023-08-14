@@ -55,13 +55,14 @@ power_law<float_type>::power_law(
   , index_(check_shape(index, epsilon))
   , sigma2_(element_prod(sigma_, sigma_))
   , g_param_(size1() * size2())
+  , t_param_(g_param_)
   , logger_(logger)
 {
     LOG("interaction strength: ε = " << epsilon_);
     LOG("interaction range: σ = " << sigma_);
     LOG("power law index: n = " << index_);
 
-    cuda::host::vector<float4> param(g_param_.size());
+    cuda::memory::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p(0); // initialise unused elements as well
         p[power_law_kernel::EPSILON] = epsilon_.data()[i];
@@ -69,7 +70,7 @@ power_law<float_type>::power_law(
         p[power_law_kernel::INDEX] = index_.data()[i];
         param[i] = p;
     }
-    cuda::copy(param, g_param_);
+    cuda::copy(param.begin(), param.end(), g_param_.begin());
 }
 
 template <typename float_type>

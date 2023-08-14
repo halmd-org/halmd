@@ -124,7 +124,7 @@ __global__ void rescale(ptr_type g_velocity, float_type scale)
 } // namespace verlet_nvt_hoover_kernel
 
 template <int dimension, typename float_type>
-verlet_nvt_hoover_wrapper<dimension, float_type> const
+verlet_nvt_hoover_wrapper<dimension, float_type>
 verlet_nvt_hoover_wrapper<dimension, float_type>::kernel = {
     verlet_nvt_hoover_kernel::integrate<dimension, float_type, ptr_type>
   , verlet_nvt_hoover_kernel::finalize<dimension, float_type, ptr_type>

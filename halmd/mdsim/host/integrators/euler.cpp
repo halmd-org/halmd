@@ -70,7 +70,7 @@ void euler<dimension, float_type>::integrate()
     velocity_array_type const& velocity = read_cache(particle_->velocity());
     size_type nparticle = particle_->nparticle();
 
-    LOG_TRACE("update positions")
+    LOG_DEBUG("update positions")
     scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the velocity!

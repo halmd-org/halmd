@@ -154,7 +154,7 @@ void lattice<dimension, float_type>::fcc(
     // insert a vacancy every 'skip' sites
     unsigned int skip = (N - npart) ? static_cast<unsigned int>(ceil(static_cast<double>(N) / (N - npart))) : 0;
     if (skip) {
-        LOG_DEBUG("insert a vacancy at every " << skip << "th site");
+        LOG_INFO("insert a vacancy at every " << skip << "th site");
     }
 
     lattice_type const lattice(n);

@@ -21,12 +21,9 @@
 #ifndef HALMD_NUMERIC_BLAS_DETAIL_CUDA_VECTOR_CONVERTER_HPP
 #define HALMD_NUMERIC_BLAS_DETAIL_CUDA_VECTOR_CONVERTER_HPP
 
+#include <type_traits>
+
 #include <halmd/config.hpp>
-
-#include <boost/mpl/and.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
-
 #include <halmd/numeric/blas/detail/vector.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/tuple.hpp>
@@ -70,12 +67,11 @@ inline int __float_as_int(float value)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<float, 3> const>
-      , boost::is_same<V const, int const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<float, 3> const>::value &&
+    std::is_same<V const, int const>::value
+>::type
 operator<<=(T& left, tuple<U&, V&> right)
 {
     fixed_vector<float, 3> u;
@@ -95,12 +91,11 @@ operator<<=(T& left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<float, 3> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<float, 3>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(T& left, tuple<U, V> right)
 {
     fixed_vector<float, 3> u;
@@ -118,12 +113,11 @@ operator<<=(T& left, tuple<U, V> right)
  * Unpack float4 into tuple of fixed_vector<float, 3> and int.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<float, 3> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<float, 3>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<U&, V&> left, T const& right)
 {
     fixed_vector<float, 3> u;
@@ -140,12 +134,11 @@ operator<<=(tuple<U&, V&> left, T const& right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<float, 2> const>
-      , boost::is_same<V const, int const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<float, 2> const>::value &&
+    std::is_same<V const, int const>::value
+>::type
 operator<<=(T& left, tuple<U&, V&> right)
 {
     fixed_vector<float, 2> u;
@@ -165,12 +158,11 @@ operator<<=(T& left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<float, 2> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<float, 2>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(T& left, tuple<U, V> right)
 {
     fixed_vector<float, 2> u;
@@ -188,12 +180,11 @@ operator<<=(T& left, tuple<U, V> right)
  * Unpack float4 into tuple of fixed_vector<float, 2> and int.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<float, 2> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<float, 2>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<U&, V&> left, T const& right)
 {
     fixed_vector<float, 2> u;
@@ -209,12 +200,11 @@ operator<<=(tuple<U&, V&> left, T const& right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<float, 3> const>
-      , boost::is_same<V const, unsigned int const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<float, 3> const>::value &&
+    std::is_same<V const, unsigned int const>::value
+>::type
 operator<<=(T& left, tuple<U&, V&> right)
 {
     fixed_vector<float, 3> u;
@@ -234,12 +224,11 @@ operator<<=(T& left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<float, 3> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<float, 3>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(T& left, tuple<U, V> right)
 {
     fixed_vector<float, 3> u;
@@ -257,12 +246,11 @@ operator<<=(T& left, tuple<U, V> right)
  * Unpack float4 into tuple of fixed_vector<float, 3> and unsigned int.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<float, 3> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<float, 3>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<U&, V&> left, T const& right)
 {
     fixed_vector<float, 3> u;
@@ -279,12 +267,11 @@ operator<<=(tuple<U&, V&> left, T const& right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<float, 2> const>
-      , boost::is_same<V const, unsigned int const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<float, 2> const>::value &&
+    std::is_same<V const, unsigned int const>::value
+>::type
 operator<<=(T& left, tuple<U&, V&> right)
 {
     fixed_vector<float, 2> u;
@@ -304,12 +291,11 @@ operator<<=(T& left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<float, 2> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<float, 2>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(T& left, tuple<U, V> right)
 {
     fixed_vector<float, 2> u;
@@ -327,12 +313,11 @@ operator<<=(T& left, tuple<U, V> right)
  * Unpack float4 into tuple of fixed_vector<float, 2> and unsigned int.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<float, 2> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<float, 2>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<U&, V&> left, T const& right)
 {
     fixed_vector<float, 2> u;
@@ -348,12 +333,11 @@ operator<<=(tuple<U&, V&> left, T const& right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<float, 3> const>
-      , boost::is_same<V const, float const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<float, 3> const>::value &&
+    std::is_same<V const, float const>::value
+>::type
 operator<<=(T& left, tuple<U&, V&> right)
 {
     fixed_vector<float, 3> u;
@@ -373,12 +357,11 @@ operator<<=(T& left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<float, 3> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<float, 3>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(T& left, tuple<U, V> right)
 {
     fixed_vector<float, 3> u;
@@ -396,12 +379,11 @@ operator<<=(T& left, tuple<U, V> right)
  * Unpack float4 into tuple of fixed_vector<float, 3> and float.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<float, 3> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<float, 3>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<U&, V&> left, T const& right)
 {
     fixed_vector<float, 3> u;
@@ -418,12 +400,11 @@ operator<<=(tuple<U&, V&> left, T const& right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<float, 2> const>
-      , boost::is_same<V const, float const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<float, 2> const>::value &&
+    std::is_same<V const, float const>::value
+>::type
 operator<<=(T& left, tuple<U&, V&> right)
 {
     fixed_vector<float, 2> u;
@@ -443,12 +424,11 @@ operator<<=(T& left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<float, 2> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<float, 2>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(T& left, tuple<U, V> right)
 {
     fixed_vector<float, 2> u;
@@ -466,12 +446,11 @@ operator<<=(T& left, tuple<U, V> right)
  * Unpack float4 into tuple of fixed_vector<float, 2> and float.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<float, 2> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<float, 2>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<U&, V&> left, T const& right)
 {
     fixed_vector<float, 2> u;
@@ -487,12 +466,11 @@ operator<<=(tuple<U&, V&> left, T const& right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<double, 3> const>
-      , boost::is_same<V const, int const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<double, 3> const>::value &&
+    std::is_same<V const, int const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 3> u;
@@ -512,12 +490,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 3> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 3>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<double, 3> u;
@@ -537,12 +514,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<double, 3> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<double, 3>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -561,12 +537,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 3> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 3>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -585,12 +560,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<double, 2> const>
-      , boost::is_same<V const, int const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<double, 2> const>::value &&
+    std::is_same<V const, int const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 2> u;
@@ -610,12 +584,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 2> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 2>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<double, 2> u;
@@ -635,12 +608,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<double, 2> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<double, 2>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -658,12 +630,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 2> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 2>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -681,12 +652,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<double, 3> const>
-      , boost::is_same<V const, unsigned int const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<double, 3> const>::value &&
+    std::is_same<V const, unsigned int const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 3> u;
@@ -706,12 +676,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 3> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 3>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<double, 3> u;
@@ -731,12 +700,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<double, 3> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<double, 3>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -755,12 +723,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 3> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 3>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -779,12 +746,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<double, 2> const>
-      , boost::is_same<V const, unsigned int const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<double, 2> const>::value &&
+    std::is_same<V const, unsigned int const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 2> u;
@@ -804,12 +770,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 2> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 2>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<double, 2> u;
@@ -829,12 +794,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<double, 2> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<double, 2>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -852,12 +816,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 2> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 2>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -875,12 +838,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<double, 3> const>
-      , boost::is_same<V const, float const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<double, 3> const>::value &&
+    std::is_same<V const, float const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 3> u;
@@ -900,12 +862,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 3> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 3>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<double, 3> u;
@@ -925,12 +886,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<double, 3> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<double, 3>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -949,12 +909,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 3> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 3>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -973,12 +932,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<double, 2> const>
-      , boost::is_same<V const, float const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<double, 2> const>::value &&
+    std::is_same<V const, float const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 2> u;
@@ -998,12 +956,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 2> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 2>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<double, 2> u;
@@ -1023,12 +980,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<double, 2> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<double, 2>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -1046,12 +1002,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 2> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 2>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -1069,12 +1024,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<double, 3> const>
-      , boost::is_same<V const, double const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<double, 3> const>::value &&
+    std::is_same<V const, double const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 3> u;
@@ -1094,12 +1048,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 3> >
-      , boost::is_same<V, double>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 3>>::value &&
+    std::is_same<V, double>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<double, 3> u;
@@ -1119,12 +1072,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<double, 3> >
-      , boost::is_same<V, double>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<double, 3>>::value &&
+    std::is_same<V, double>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -1143,12 +1095,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 3> >
-      , boost::is_same<V, double>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 3>>::value &&
+    std::is_same<V, double>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -1167,12 +1118,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<double, 2> const>
-      , boost::is_same<V const, double const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<double, 2> const>::value &&
+    std::is_same<V const, double const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 2> u;
@@ -1192,12 +1142,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 2> >
-      , boost::is_same<V, double>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 2>>::value &&
+    std::is_same<V, double>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<double, 2> u;
@@ -1217,12 +1166,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<double, 2> >
-      , boost::is_same<V, double>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<double, 2>>::value &&
+    std::is_same<V, double>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -1240,12 +1188,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<double, 2> >
-      , boost::is_same<V, double>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<double, 2>>::value &&
+    std::is_same<V, double>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -1263,12 +1210,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<dsfloat, 3> const>
-      , boost::is_same<V const, int const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<dsfloat, 3> const>::value &&
+    std::is_same<V const, int const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 3> u;
@@ -1288,12 +1234,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 3> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 3>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<dsfloat, 3> u;
@@ -1313,12 +1258,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<dsfloat, 3> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 3>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -1337,12 +1281,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 3> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 3>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -1361,12 +1304,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<dsfloat, 2> const>
-      , boost::is_same<V const, int const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<dsfloat, 2> const>::value &&
+    std::is_same<V const, int const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 2> u;
@@ -1386,12 +1328,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 2> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 2>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<dsfloat, 2> u;
@@ -1411,12 +1352,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<dsfloat, 2> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 2>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -1434,12 +1374,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 2> >
-      , boost::is_same<V, int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 2>>::value &&
+    std::is_same<V, int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -1457,12 +1396,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<dsfloat, 3> const>
-      , boost::is_same<V const, unsigned int const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<dsfloat, 3> const>::value &&
+    std::is_same<V const, unsigned int const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 3> u;
@@ -1482,12 +1420,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 3> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 3>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<dsfloat, 3> u;
@@ -1507,12 +1444,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<dsfloat, 3> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 3>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -1531,12 +1467,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 3> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 3>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -1555,12 +1490,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<dsfloat, 2> const>
-      , boost::is_same<V const, unsigned int const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<dsfloat, 2> const>::value &&
+    std::is_same<V const, unsigned int const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 2> u;
@@ -1580,12 +1514,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 2> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 2>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<dsfloat, 2> u;
@@ -1605,12 +1538,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<dsfloat, 2> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 2>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -1628,12 +1560,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 2> >
-      , boost::is_same<V, unsigned int>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 2>>::value &&
+    std::is_same<V, unsigned int>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -1651,12 +1582,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<dsfloat, 3> const>
-      , boost::is_same<V const, float const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<dsfloat, 3> const>::value &&
+    std::is_same<V const, float const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 3> u;
@@ -1676,12 +1606,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 3> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 3>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<dsfloat, 3> u;
@@ -1701,12 +1630,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<dsfloat, 3> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 3>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -1725,12 +1653,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 3> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 3>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -1749,12 +1676,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<dsfloat, 2> const>
-      , boost::is_same<V const, float const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<dsfloat, 2> const>::value &&
+    std::is_same<V const, float const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 2> u;
@@ -1774,12 +1700,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 2> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 2>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<dsfloat, 2> u;
@@ -1799,12 +1724,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<dsfloat, 2> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 2>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -1822,12 +1746,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 2> >
-      , boost::is_same<V, float>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 2>>::value &&
+    std::is_same<V, float>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -1845,12 +1768,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<dsfloat, 3> const>
-      , boost::is_same<V const, dsfloat const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<dsfloat, 3> const>::value &&
+    std::is_same<V const, dsfloat const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 3> u;
@@ -1870,12 +1792,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 3> >
-      , boost::is_same<V, dsfloat>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 3>>::value &&
+    std::is_same<V, dsfloat>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<dsfloat, 3> u;
@@ -1895,12 +1816,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<dsfloat, 3> >
-      , boost::is_same<V, dsfloat>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 3>>::value &&
+    std::is_same<V, dsfloat>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -1919,12 +1839,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 3> >
-      , boost::is_same<V, dsfloat>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 3>>::value &&
+    std::is_same<V, dsfloat>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;
@@ -1943,12 +1862,11 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U const, fixed_vector<dsfloat, 2> const>
-      , boost::is_same<V const, dsfloat const>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U const, fixed_vector<dsfloat, 2> const>::value &&
+    std::is_same<V const, dsfloat const>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 2> u;
@@ -1968,12 +1886,11 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 2> >
-      , boost::is_same<V, dsfloat>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 2>>::value &&
+    std::is_same<V, dsfloat>::value
+>::type
 operator<<=(tuple<T&, T&> left, tuple<U, V> right)
 {
     fixed_vector<dsfloat, 2> u;
@@ -1993,12 +1910,11 @@ operator<<=(tuple<T&, T&> left, tuple<U, V> right)
  * Takes right-hand tuple of references, as returned by tie.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T const, float4 const>
-      , boost::is_same<U, fixed_vector<dsfloat, 2> >
-      , boost::is_same<V, dsfloat>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T const, float4 const>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 2> >::value &&
+    std::is_same<V, dsfloat>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
@@ -2016,12 +1932,11 @@ operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
  * Takes right-hand tuple of values, as returned by make_tuple.
  */
 template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<T, float4>
-      , boost::is_same<U, fixed_vector<dsfloat, 2> >
-      , boost::is_same<V, dsfloat>
-    >, void>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<
+    std::is_same<T, float4>::value &&
+    std::is_same<U, fixed_vector<dsfloat, 2>>::value &&
+    std::is_same<V, dsfloat>::value
+>::type
 operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 {
     float4 hi, lo;

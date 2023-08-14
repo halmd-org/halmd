@@ -27,6 +27,7 @@
 
 #include <lua.hpp>
 #include <memory>
+#include <tuple>
 
 namespace halmd {
 namespace mdsim {
@@ -118,8 +119,8 @@ private:
     cache<array_type> mask_;
     /** particle indices of particles in the region and of the species */
     cache<array_type> selection_;
-    /** cache observer of position updates for mask */
-    cache<> mask_cache_;
+    /** cache observer of position or species updates for mask */
+    std::tuple<cache<>, cache<>> mask_cache_;
 
     /** ordered sequence of particle indices */
     cache<array_type> ordered_;
@@ -127,8 +128,6 @@ private:
     cache<size_type> size_;
     /** cache observer of selection */
     cache<> ordered_cache_;
-    /** cache observer of size */
-    cache<> size_cache_;
 
     typedef utility::profiler::scoped_timer_type scoped_timer_type;
     typedef utility::profiler::accumulator_type accumulator_type;

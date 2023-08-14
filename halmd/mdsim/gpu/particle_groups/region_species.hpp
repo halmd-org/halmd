@@ -131,8 +131,6 @@ private:
     cache<size_type> size_;
     /** cache observer of region mask */
     cache<> ordered_cache_;
-    /** cache observer of size */
-    cache<> size_cache_;
 
     /**
      * mask for particles that determines whether they are in-/outside the region,

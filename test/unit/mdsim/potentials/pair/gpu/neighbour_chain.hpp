@@ -45,7 +45,7 @@ public:
     );
 
     /** neighbour lists */
-    virtual halmd::cache<cuda::vector<unsigned int>> const& g_neighbour()
+    virtual halmd::cache<cuda::memory::device::vector<unsigned int>> const& g_neighbour()
     {
         return g_neighbour_;
     }
@@ -59,10 +59,15 @@ public:
         return stride_;
     }
 
+    virtual bool unroll_force_loop() const
+    {
+        return true;
+    }
+
 private:
     unsigned int stride_;
     /** neighbour lists */
-    halmd::cache<cuda::vector<unsigned int>> g_neighbour_;
+    halmd::cache<cuda::memory::device::vector<unsigned int>> g_neighbour_;
 };
 
 template <int dimension, typename float_type>
@@ -78,7 +83,7 @@ neighbour_chain<dimension, float_type>::neighbour_chain(
     g_neighbour->resize(stride_);
 
     // fill each particle's neighbour list with the following particle
-    cuda::host::vector<unsigned int> neighbour(g_neighbour->size());
+    cuda::memory::host::vector<unsigned int> neighbour(g_neighbour->size());
     for (unsigned int i = 0; i < neighbour.size(); ++i) {
         neighbour[i] = (i + 1) % particle->nparticle(); // point only to real particles
     }

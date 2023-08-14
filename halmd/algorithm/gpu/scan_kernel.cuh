@@ -21,7 +21,7 @@
 #ifndef HALMD_ALGORITHM_GPU_SCAN_KERNEL_CUH
 #define HALMD_ALGORITHM_GPU_SCAN_KERNEL_CUH
 
-#include <halmd/algorithm/gpu/bits.cuh>
+#include <halmd/algorithm/gpu/bits/swap.cuh>
 #include <halmd/algorithm/gpu/scan_kernel.hpp>
 #include <halmd/numeric/zero.hpp>
 
@@ -48,6 +48,8 @@ __device__ T grid_prefix_sum(T const* g_in, T* g_out, uint const count)
     // Parallel Prefix Sum (Scan) with CUDA,
     // Mark Harris, April 2007, NVIDIA Corporation
     //
+
+    using bits::swap;
 
     extern __shared__ char __s_array[];
     T* const s_array = reinterpret_cast<T*>(__s_array); // work around for CUDA 3.0/3.1
@@ -159,7 +161,7 @@ __global__ void add_block_sums(T const* g_in, T* g_out, T const* g_block_sum, ui
  * CUDA C++ wrapper
  */
 template <typename T>
-scan_wrapper<T> const scan_wrapper<T>::kernel = {
+scan_wrapper<T> scan_wrapper<T>::kernel = {
     scan_kernel::grid_prefix_sum
   , scan_kernel::add_block_sums
   , scan_kernel::block_prefix_sum

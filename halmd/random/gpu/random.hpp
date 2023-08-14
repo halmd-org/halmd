@@ -62,9 +62,9 @@ public:
     // The following functions are provided for convenience.
     // Use the CUDA device functions for more flexibility.
     //
-    void uniform(cuda::vector<float>& g_v);
-    void get(cuda::vector<unsigned int>& g_v);
-    void normal(cuda::vector<float>& g_v, float mean, float sigma);
+    void uniform(cuda::memory::device::vector<float>& g_v);
+    void get(cuda::memory::device::vector<unsigned int>& g_v);
+    void normal(cuda::memory::device::vector<float>& g_v, float mean, float sigma);
 
     template <typename Sequence>
     void shuffle(Sequence& g_val);
@@ -108,7 +108,7 @@ template <typename RandomNumberGenerator>
 template <typename Sequence>
 void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
 {
-    cuda::vector<unsigned int> g_sort_index;
+    cuda::memory::device::vector<unsigned int> g_sort_index;
     g_sort_index.resize(g_val.size());
     get(g_sort_index);
     radix_sort(g_sort_index.begin(), g_sort_index.end(), g_val.begin());

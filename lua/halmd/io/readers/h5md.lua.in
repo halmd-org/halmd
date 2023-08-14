@@ -79,7 +79,7 @@ local h5md = assert(libhalmd.io.readers.h5md)
 --    This time stamp may be converted to a human-readable time using
 --    `os.date <http://www.lua.org/manual/5.2/manual.html#pdf-os.date>`_::
 --
---       halmd.log.info(("file created at %s"):format(os.date("%c", file.creation_time)))
+--       halmd.log.message(("file created at %s"):format(os.date("%c", file.creation_time)))
 --
 -- .. attribute:: author
 --

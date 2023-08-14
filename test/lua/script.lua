@@ -4,7 +4,7 @@ local log = halmd.io.log
 
 function main(args)
     -- some output to logger
-    log.info("Write 'Hello World!' to " .. args.output .. ".log")
+    log.message("Write 'Hello World!' to " .. args.output .. ".log")
 
     -- here: setup system and run simulation
 end

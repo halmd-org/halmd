@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2020       Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -21,7 +22,8 @@
 #ifndef HALMD_MDSIM_GPU_POTENTIALS_PAIR_LENNARD_JONES_KERNEL_HPP
 #define HALMD_MDSIM_GPU_POTENTIALS_PAIR_LENNARD_JONES_KERNEL_HPP
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/utility/tuple.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -38,13 +40,12 @@ enum {
   , SIGMA2      /**< square of pair separation */
 };
 
-// forward declaration for host code
-class lennard_jones;
-
-template<typename float_type>
-HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type const& rr
-                                                                    , float_type const& sigma2
-                                                                    , float_type const& epsilon)
+template <typename float_type>
+HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(
+    float_type const& rr
+  , float_type const& sigma2
+  , float_type const& epsilon
+)
 {
     float_type rri =  sigma2 / rr;
     float_type ri6 = rri * rri * rri;
@@ -54,13 +55,52 @@ HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(float_type
     return make_tuple(fval, en_pot);
 }
 
+/**
+ * Lennard-Jones interaction of a pair of particles.
+ */
+class lennard_jones
+{
+public:
+    /**
+     * Construct Lennard-Jones pair interaction potential.
+     */
+    lennard_jones(cudaTextureObject_t t_param) : t_param_(t_param) {}
+
+    /**
+     * Fetch potential parameters from texture cache for particle pair.
+     *
+     * @param type1 type of first interacting particle
+     * @param type2 type of second interacting particle
+     */
+    HALMD_GPU_ENABLED void fetch_param(
+        unsigned int type1, unsigned int type2
+      , unsigned int ntype1, unsigned int ntype2
+    );
+
+    /**
+     * Compute force and potential for interaction.
+     *
+     * @param rr squared distance between particles
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
+     */
+    template <typename float_type>
+    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const;
+
+private:
+    /** potential parameters for particle pair */
+    fixed_vector<float, 2> pair_;
+    cudaTextureObject_t t_param_;
+};
+
+template <typename float_type>
+HALMD_GPU_ENABLED tuple<float_type, float_type> lennard_jones::operator()(float_type rr) const
+{
+    return compute(rr, pair_[SIGMA2], pair_[EPSILON]);
+}
+
 } // namespace lennard_jones_kernel
 
-struct lennard_jones_wrapper
-{
-    /** Lennard-Jones potential parameters */
-    static cuda::texture<float2> param;
-};
+struct lennard_jones_wrapper {};
 
 } // namespace pair
 } // namespace potentials

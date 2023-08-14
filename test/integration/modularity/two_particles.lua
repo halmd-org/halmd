@@ -48,7 +48,7 @@ local function restore(args)
         })
         samples[label] = sample
         -- read phase space sample at last step in file
-        log.info("number of %s particles: %d", label, sample.nparticle)
+        log.message("number of %s particles: %d", label, sample.nparticle)
         reader:read_at_step(-1)
         -- increment label and species count
         label = string.char(string.byte(label) + 1)

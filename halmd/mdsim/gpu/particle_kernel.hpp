@@ -38,22 +38,26 @@ struct particle_wrapper
 
     cuda::symbol<unsigned int> nbox;
     cuda::symbol<unsigned int> ntype;
-    cuda::texture<unsigned int> ntypes;
-    /** positions, types */
-    cuda::texture<float4> r;
-    /** minimum image vectors */
-    cuda::texture<aligned_vector_type> image;
-    /** velocities, masses */
-    cuda::texture<float4> v;
-    /** IDs */
-    cuda::texture<unsigned int> id;
+
     /** rearrange particles by a given permutation */
-    cuda::function<void (unsigned int const*, ptr_type, aligned_vector_type*, ptr_type, unsigned int*, unsigned int)> rearrange;
-    static particle_wrapper const kernel;
+    cuda::function<void (
+        cudaTextureObject_t // positions, types
+      , cudaTextureObject_t // minimum image vectors
+      , cudaTextureObject_t // velocities, masses
+      , cudaTextureObject_t // IDs
+      , unsigned int const*
+      , ptr_type
+      , aligned_vector_type*
+      , ptr_type
+      , unsigned int*
+      , unsigned int
+    )> rearrange;
+
+    static particle_wrapper kernel;
 };
 
 template <int dimension, typename float_type>
-particle_wrapper<dimension, float_type> const& get_particle_kernel()
+particle_wrapper<dimension, float_type>& get_particle_kernel()
 {
     return particle_wrapper<dimension, float_type>::kernel;
 }
@@ -62,7 +66,7 @@ template<typename T>
 struct particle_initialize_wrapper
 {
     cuda::function<void (T*, T, T, unsigned int)> initialize;
-    static particle_initialize_wrapper const kernel;
+    static particle_initialize_wrapper kernel;
 };
 
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
@@ -72,7 +76,7 @@ struct dsfloat_particle_initialize_wrapper
     typedef typename type_traits<dimension, dsfloat>::gpu::ptr_type ptr_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type type;
     cuda::function<void (ptr_type, type, type, unsigned int)> initialize;
-    static dsfloat_particle_initialize_wrapper const kernel;
+    static dsfloat_particle_initialize_wrapper kernel;
 };
 #endif
 

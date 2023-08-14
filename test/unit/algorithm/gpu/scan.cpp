@@ -42,21 +42,21 @@ void compare_scan( size_t count )
     BOOST_TEST_MESSAGE( "Scanning " << count << " elements");
 
     // generate array of ascending integers
-    cuda::host::vector<uint> h_array(count);
-    cuda::vector<uint> g_array(count);
+    cuda::memory::host::vector<uint> h_array(count);
+    cuda::memory::device::vector<uint> g_array(count);
     for (uint i = 0; i < count; ++i) {
         h_array[i] = i + 1;
     }
-    cuda::copy(h_array, g_array);
+    cuda::copy(h_array.begin(), h_array.end(), g_array.begin());
 
     // parallel exclusive prefix sum
     halmd::algorithm::gpu::scan<uint> scan(count, threads);
-    cuda::host::vector<uint> h_array2(count);
+    cuda::memory::host::vector<uint> h_array2(count);
     halmd::timer timer;
     scan(g_array);
     cuda::thread::synchronize();
     double elapsed = timer.elapsed();
-    cuda::copy(g_array, h_array2);
+    cuda::copy(g_array.begin(), g_array.end(), h_array2.begin());
 
     BOOST_TEST_MESSAGE("GPU time: " << std::fixed << std::setprecision(3)
                        << elapsed * 1e3 << " ms");

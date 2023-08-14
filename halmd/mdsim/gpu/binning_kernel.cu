@@ -141,7 +141,7 @@ __global__ void gen_index(unsigned int* g_index, unsigned int const nbox)
 } // namespace binning_kernel
 
 template <int dimension>
-binning_wrapper<dimension> const binning_wrapper<dimension>::kernel = {
+binning_wrapper<dimension> binning_wrapper<dimension>::kernel = {
     binning_kernel::assign_cells
   , binning_kernel::find_cell_offset
   , binning_kernel::gen_index

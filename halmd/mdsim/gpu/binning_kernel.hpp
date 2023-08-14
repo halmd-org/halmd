@@ -55,7 +55,7 @@ struct binning_wrapper
     /** compute cell indices for particle positions */
     cuda::function<void (float4 const*, unsigned int*, vector_type, index_type)> compute_cell;
 
-    static binning_wrapper const kernel;
+    static binning_wrapper kernel;
 };
 
 } // namespace mdsim

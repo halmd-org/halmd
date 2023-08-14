@@ -28,6 +28,7 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 #include <halmd/utility/gpu/configure_kernel.hpp>
+#include <halmd/utility/gpu/device.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -58,7 +59,7 @@ binning<dimension, float_type>::binning(
   // allocate parameters
   , r_skin_(skin)
   , r_cut_max_(*std::max_element(r_cut.data().begin(), r_cut.data().end()))
-  , device_properties_(cuda::device::get())
+  , device_properties_(device::get())
 {
     LOG("initial cell occupancy: " << occupancy)
 
@@ -93,8 +94,8 @@ binning<dimension, float_type>::binning(
     cell_length_ = element_div(static_cast<vector_type>(box_->length()), static_cast<vector_type>(ncell_));
 
     LOG("neighbour list skin: " << r_skin_);
-    LOG("number of cells per dimension: " << ncell_);
-    LOG("edge lengths of cells: " << cell_length_);
+    LOG_INFO("number of cells per dimension: " << ncell_);
+    LOG_INFO("edge lengths of cells: " << cell_length_);
 
     size_t ncells = std::accumulate(ncell_.begin(), ncell_.end(), 1, std::multiplies<size_t>());
     set_cell_size(warp_size * static_cast<size_t>(std::ceil(nwarps / ncells)));
@@ -134,7 +135,7 @@ void binning<dimension, float_type>::set_cell_size(size_t cell_size)
         dim3(ncells / ncell_.back(), ncell_.back())
       , std::min(cell_size_, device_properties_.max_threads_per_block())
     );
-    LOG_DEBUG("CUDA threads per block: " << dim_cell_.threads_per_block());
+    LOG_INFO("CUDA threads per block: " << dim_cell_.threads_per_block());
 
     try {
         auto g_cell = make_cache_mutable(g_cell_);
@@ -167,13 +168,13 @@ void binning<dimension, float_type>::update()
     auto const& position = read_cache(particle_->position());
     auto g_cell = make_cache_mutable(g_cell_);
 
-    LOG_TRACE("update cell lists");
+    LOG_DEBUG("update cell lists");
 
     bool overcrowded = false;
     do {
         scoped_timer_type timer(runtime_.update);
 
-        auto const* kernel = &binning_wrapper<dimension>::kernel;
+        auto* kernel = &binning_wrapper<dimension>::kernel;
         unsigned int nparticle = particle_->nparticle();
 
         // compute cell indices for particle positions
@@ -188,18 +189,19 @@ void binning<dimension, float_type>::update()
         // generate permutation
         configure_kernel(kernel->gen_index, particle_->dim(), true);
         kernel->gen_index(g_cell_permutation_, nparticle);
-        radix_sort(g_cell_index_.begin(), g_cell_index_.end(), g_cell_permutation_.begin());
+        radix_sort(g_cell_index_.begin(), g_cell_index_.end(),
+            g_cell_permutation_.begin());
 
         // compute global cell offsets in sorted particle list
-        cuda::memset(g_cell_offset_, 0xFF);
+        cuda::memset(g_cell_offset_.begin(), g_cell_offset_.end(), 0xFF);
         configure_kernel(kernel->find_cell_offset, particle_->dim(), true);
         kernel->find_cell_offset(g_cell_index_, g_cell_offset_, nparticle);
 
         // assign particles to cells
-        cuda::vector<int> g_ret(1);
-        cuda::host::vector<int> h_ret(1);
-        cuda::memset(g_ret, EXIT_SUCCESS);
-        cuda::configure(dim_cell_.grid, dim_cell_.block);
+        cuda::memory::device::vector<int> g_ret(1);
+        cuda::memory::host::vector<int> h_ret(1);
+        cuda::memset(g_ret.begin(), g_ret.end(), EXIT_SUCCESS);
+        kernel->assign_cells.configure(dim_cell_.grid, dim_cell_.block);
         kernel->assign_cells(
             g_ret
           , g_cell_index_
@@ -209,7 +211,7 @@ void binning<dimension, float_type>::update()
           , nparticle
           , cell_size_
         );
-        cuda::copy(g_ret, h_ret);
+        cuda::copy(g_ret.begin(), g_ret.end(), h_ret.begin());
         overcrowded = h_ret.front() != EXIT_SUCCESS;
         if (overcrowded) {
             LOG("overcrowded placeholders in cell list update, increase cell size");

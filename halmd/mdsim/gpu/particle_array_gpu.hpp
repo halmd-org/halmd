@@ -66,14 +66,14 @@ public:
      *
      * @return a page-locked memory vector to be filled with data and passed to set_data
      */
-    virtual cuda::host::vector<uint8_t> get_host_memory() const = 0;
+    virtual cuda::memory::host::vector<uint8_t> get_host_memory() const = 0;
 
     /**
      * get data
      *
      * @return a page-locked memory vector containing the contents of the underlying gpu data
      */
-    virtual cuda::host::vector<uint8_t> get_host_data() const = 0;
+    virtual cuda::memory::host::vector<uint8_t> get_host_data() const = 0;
 
     /**
      * set data
@@ -81,7 +81,7 @@ public:
      * @param memory page-locked memory vector containing data to be copied to the underlying gpu data
      *               should have been obtained with get_memory
      */
-    virtual void set_host_data(cuda::host::vector<uint8_t> const& memory) = 0;
+    virtual void set_host_data(cuda::memory::host::vector<uint8_t> const& memory) = 0;
 
     /**
      * query cache observer
@@ -100,7 +100,7 @@ template<typename T>
 struct particle_array_gpu_traits
 {
     typedef T base_value_type;
-    typedef cuda::vector<T> gpu_vector_type;
+    typedef cuda::memory::device::vector<T> gpu_vector_type;
 };
 
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
@@ -187,14 +187,14 @@ public:
      *
      * @return a page-locked memory vector to be filled with data and passed to set_data
      */
-    virtual cuda::host::vector<uint8_t> get_host_memory() const;
+    virtual cuda::memory::host::vector<uint8_t> get_host_memory() const;
 
     /**
      * get data
      *
      * @return a page-locked memory vector containing the contents of the underlying gpu data
      */
-    virtual cuda::host::vector<uint8_t> get_host_data() const;
+    virtual cuda::memory::host::vector<uint8_t> get_host_data() const;
 
     /**
      * set data
@@ -202,7 +202,7 @@ public:
      * @param memory page-locked memory vector containing data to be copied to the underlying gpu data
      *               should have been obtained with get_memory
      */
-    virtual void set_host_data(cuda::host::vector<uint8_t> const& mem);
+    virtual void set_host_data(cuda::memory::host::vector<uint8_t> const& mem);
 
     /**
      * return number of particles

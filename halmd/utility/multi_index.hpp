@@ -21,10 +21,10 @@
 #ifndef HALMD_UTILITY_MULTI_INDEX_HPP
 #define HALMD_UTILITY_MULTI_INDEX_HPP
 
-#include <boost/utility/enable_if.hpp>
 #ifndef __CUDACC__
 # include <cassert>
 #endif
+#include <type_traits>
 
 #include <halmd/config.hpp>
 
@@ -32,7 +32,7 @@ namespace halmd {
 
 template <unsigned int dim, typename index_type>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if_c<(dim == index_type::static_size - 1), typename index_type::value_type>::type
+typename std::enable_if<(dim == index_type::static_size - 1), typename index_type::value_type>::type
 multi_index_to_offset(index_type const& index, index_type const& dims)
 {
 #ifndef __CUDACC__
@@ -43,7 +43,7 @@ multi_index_to_offset(index_type const& index, index_type const& dims)
 
 template <unsigned int dim, typename index_type>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if_c<(dim < index_type::static_size - 1), typename index_type::value_type>::type
+typename std::enable_if<(dim < index_type::static_size - 1), typename index_type::value_type>::type
 multi_index_to_offset(index_type const& index, index_type const& dims)
 {
 #ifndef __CUDACC__
@@ -64,7 +64,7 @@ multi_index_to_offset(index_type const& index, index_type const& dims)
 
 template <unsigned int dim, typename index_type>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if_c<(dim == index_type::static_size - 1), void>::type
+typename std::enable_if<(dim == index_type::static_size - 1), void>::type
 offset_to_multi_index(index_type& index, typename index_type::value_type const& offset, index_type const& dims)
 {
     index[dim] = offset;
@@ -75,7 +75,7 @@ offset_to_multi_index(index_type& index, typename index_type::value_type const& 
 
 template <unsigned int dim, typename index_type>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if_c<(dim < index_type::static_size - 1), void>::type
+typename std::enable_if<(dim < index_type::static_size - 1), void>::type
 offset_to_multi_index(index_type& index, typename index_type::value_type const& offset, index_type const& dims)
 {
     index[dim] = offset % dims[dim];

@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE( instance )
 BOOST_FIXTURE_TEST_CASE( default_log_level, console )
 {
 #ifdef NDEBUG
-    LOG("info");
+    LOG("message");
     LOG_DEBUG("debug");
     BOOST_CHECK_EQUAL( count_lines(console::stream()), 1 );
 #else
@@ -105,19 +105,19 @@ BOOST_AUTO_TEST_CASE( duplicate_output )
     log.close_console();
     {
         console cons;
-        LOG("info");
+        LOG("message");
         BOOST_CHECK_EQUAL( count_lines(cons.stream()), 0 );
     }
-    log.open_console(logging::info);
+    log.open_console(logging::message);
     {
         console cons;
-        LOG("info");
+        LOG("message");
         BOOST_CHECK_EQUAL( count_lines(cons.stream()), 1 );
     }
-    log.open_console(logging::info);
+    log.open_console(logging::message);
     {
         console cons;
-        LOG("info");
+        LOG("message");
         BOOST_CHECK_EQUAL( count_lines(cons.stream()), 1 );
     }
 }
@@ -130,6 +130,7 @@ BOOST_AUTO_TEST_CASE( log_levels )
     vector<logging::severity_level> log_levels = {
         logging::error
       , logging::warning
+      , logging::message
       , logging::info
       , logging::debug
       , logging::trace
@@ -143,9 +144,10 @@ BOOST_AUTO_TEST_CASE( log_levels )
         // capture console output
         console cons;
 
-        LOG("info");
+        LOG("message");
         LOG_ERROR("error");
         LOG_WARNING("warning");
+        LOG_INFO("info");
         LOG_DEBUG("debugging");
         LOG_TRACE("trace");
 

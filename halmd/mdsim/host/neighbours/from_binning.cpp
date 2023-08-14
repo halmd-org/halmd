@@ -128,7 +128,7 @@ void from_binning<dimension, float_type>::update()
 
     auto neighbour = make_cache_mutable(neighbour_);
 
-    LOG_TRACE("update neighbour lists");
+    LOG_DEBUG("update neighbour lists");
 
     scoped_timer_type timer(runtime_.update);
 

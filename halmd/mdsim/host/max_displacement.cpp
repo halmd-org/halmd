@@ -51,6 +51,9 @@ void max_displacement<dimension, float_type>::zero()
 {
     cache<position_array_type> const& position_cache = particle_->position();
     position_array_type const& position = read_cache(position_cache);
+
+    LOG_TRACE("zero maximum squared displacement");
+
     scoped_timer_type timer(runtime_.zero);
     std::copy(position.begin(), position.begin() + particle_->nparticle(), r0_.begin());
     displacement_ = 0;

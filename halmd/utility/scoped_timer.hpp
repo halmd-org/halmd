@@ -21,7 +21,7 @@
 #ifndef HALMD_UTILITY_SCOPED_TIMER_HPP
 #define HALMD_UTILITY_SCOPED_TIMER_HPP
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <functional>
 
 namespace halmd {

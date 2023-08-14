@@ -25,8 +25,10 @@ Cache variables are passed as options to CMake using ``-D...``
    HALMD_USE_STATIC_LIBS
      Compile separate, statically linked executable for each backend.
 
-     This flag does not apply to the CUDA runtime library. To use the CUDA runtime
-     statically see CUDA_USE_STATIC_CUDA_RUNTIME.
+     This flag does not apply to the CUDA runtime library. To use the CUDA
+     runtime statically see ``CUDA_USE_STATIC_CUDA_RUNTIME``.
+
+     Note that the CUDA driver library cannot be linked statically.
 
    Boost_USE_STATIC_LIBS
      Link to Boost libraries statically.
@@ -46,7 +48,7 @@ Cache variables are passed as options to CMake using ``-D...``
    CUDA_USE_STATIC_CUDA_RUNTIME
      Link to the CUDA runtime library statically.
 
-     Note, that linking statically could lead to kernel launch failures
+     Note that linking statically could lead to kernel launch failures
      when using CUDA 9.2.
 
    HALMD_WITH_GPU

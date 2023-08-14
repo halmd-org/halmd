@@ -202,7 +202,7 @@ inline void external<dimension, float_type, potential_type>::compute_()
     species_array_type const& species   = *particle_->species();
     size_type nparticle = particle_->nparticle();
 
-    LOG_TRACE("compute forces");
+    LOG_DEBUG("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -239,7 +239,7 @@ inline void external<dimension, float_type, potential_type>::compute_aux_()
     species_array_type const& species   = *particle_->species();
     size_type nparticle = particle_->nparticle();
 
-    LOG_TRACE("compute forces with auxiliary variables");
+    LOG_DEBUG("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute_aux);
 

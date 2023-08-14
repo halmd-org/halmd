@@ -23,13 +23,6 @@
 #ifndef HALMD_UTILITLY_GPU_CACHING_ARRAY
 #define HALMD_UTILITLY_GPU_CACHING_ARRAY
 
-#include <boost/version.hpp>
-#if BOOST_VERSION <= 105500
-# include <boost/utility.hpp>
-#else
-# include <boost/core/noncopyable.hpp>
-#endif
-
 #include <cstddef>
 #include <cuda_wrapper/error.hpp>
 
@@ -48,7 +41,7 @@ namespace halmd {
  * source files (.cu) only.
  */
 template <typename T>
-class caching_array : boost::noncopyable
+class caching_array
 {
 public:
     typedef std::size_t size_type;
@@ -60,6 +53,10 @@ public:
     typedef T const* const_pointer;
     typedef T* iterator;
     typedef T const* const_iterator;
+
+    // non copyable
+    caching_array(caching_array const&) = delete;
+    caching_array& operator=(caching_array const&) = delete;
 
     /**
      * Allocate uninitialised array of given number of elements.

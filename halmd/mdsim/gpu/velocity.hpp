@@ -38,7 +38,7 @@ inline void rescale_velocity(particle_type& particle, double factor)
 {
     auto velocity = make_cache_mutable(particle.velocity());
 
-    auto const& kernel =
+    auto& kernel =
         get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().rescale;
 
     configure_kernel(kernel, particle.dim(), false);
@@ -59,7 +59,7 @@ inline void rescale_velocity_group(particle_type& particle, particle_group& grou
     auto const& unordered = read_cache(group.unordered());
     auto velocity = make_cache_mutable(particle.velocity());
 
-    auto const& kernel =
+    auto& kernel =
         get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().rescale_group;
 
     configure_kernel(kernel, unordered.size());
@@ -80,7 +80,7 @@ inline void shift_velocity(particle_type& particle, fixed_vector<double, particl
 {
     auto velocity = make_cache_mutable(particle.velocity());
 
-    auto const& kernel =
+    auto& kernel =
         get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift;
 
     configure_kernel(kernel, particle.dim(), false);
@@ -101,7 +101,7 @@ inline void shift_velocity_group(particle_type& particle, particle_group& group,
     auto const& unordered = read_cache(group.unordered());
     auto velocity = make_cache_mutable(particle.velocity());
 
-    auto const& kernel =
+    auto& kernel =
         get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_group;
 
     configure_kernel(kernel, unordered.size());
@@ -122,7 +122,7 @@ inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double,
 {
     auto velocity = make_cache_mutable(particle.velocity());
 
-    auto const& kernel =
+    auto& kernel =
         get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_rescale;
 
     configure_kernel(kernel, particle.dim(), false);
@@ -144,7 +144,7 @@ inline void shift_rescale_velocity_group(particle_type& particle, particle_group
     auto const& unordered = read_cache(group.unordered());
     auto velocity = make_cache_mutable(particle.velocity());
 
-    auto const& kernel =
+    auto& kernel =
         get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_rescale_group;
 
     configure_kernel(kernel, unordered.size());

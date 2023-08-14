@@ -113,7 +113,7 @@ static void test_radix_sort_host(int count, int repeat)
 static void test_radix_sort_gpu(int count, int repeat)
 {
     std::vector<unsigned int> input = make_uniform_array(count);
-    cuda::vector<unsigned int> g_input(count);
+    cuda::memory::device::vector<unsigned int> g_input(count);
     BOOST_CHECK( cuda::copy(
         input.begin()
       , input.end()
@@ -127,7 +127,7 @@ static void test_radix_sort_gpu(int count, int repeat)
 
     halmd::accumulator<double> elapsed;
     for (int i = 0; i < repeat; ++i) {
-        cuda::vector<unsigned int> g_output(count);
+        cuda::memory::device::vector<unsigned int> g_output(count);
         BOOST_CHECK( cuda::copy(
             g_input.begin()
           , g_input.end()
@@ -137,7 +137,7 @@ static void test_radix_sort_gpu(int count, int repeat)
             halmd::scoped_timer<halmd::timer> t(elapsed);
             halmd::radix_sort(g_output.begin(), g_output.end());
         }
-        cuda::host::vector<unsigned int> h_output(count);
+        cuda::memory::host::vector<unsigned int> h_output(count);
         BOOST_CHECK( cuda::copy(
             g_output.begin()
           , g_output.end()
@@ -159,7 +159,7 @@ static void test_radix_sort_gpu(int count, int repeat)
 static void test_permutation_gpu(int count, int repeat)
 {
     std::vector<unsigned int> input_key = make_uniform_array(count);
-    cuda::vector<unsigned int> g_input_key(count);
+    cuda::memory::device::vector<unsigned int> g_input_key(count);
     BOOST_CHECK( cuda::copy(
         input_key.begin()
       , input_key.end()
@@ -170,7 +170,7 @@ static void test_permutation_gpu(int count, int repeat)
 
     std::vector<unsigned int> input_value(count);
     std::iota(input_value.begin(), input_value.end(), 0);
-    cuda::vector<unsigned int> g_input_value(count);
+    cuda::memory::device::vector<unsigned int> g_input_value(count);
     BOOST_CHECK( cuda::copy(
         input_value.begin()
       , input_value.end()
@@ -182,14 +182,14 @@ static void test_permutation_gpu(int count, int repeat)
 
     halmd::accumulator<double> elapsed;
     for (int i = 0; i < repeat; ++i) {
-        cuda::vector<unsigned int> g_output_key(count);
+        cuda::memory::device::vector<unsigned int> g_output_key(count);
         BOOST_CHECK( cuda::copy(
             g_input_key.begin()
           , g_input_key.end()
           , g_output_key.begin()) == g_output_key.end()
         );
 
-        cuda::vector<unsigned int> g_output_value(count);
+        cuda::memory::device::vector<unsigned int> g_output_value(count);
         BOOST_CHECK( cuda::copy(
             g_input_value.begin()
           , g_input_value.end()
@@ -205,7 +205,7 @@ static void test_permutation_gpu(int count, int repeat)
             );
         }
 
-        cuda::host::vector<unsigned int> h_output_key(count);
+        cuda::memory::host::vector<unsigned int> h_output_key(count);
         BOOST_CHECK( cuda::copy(
             g_output_key.begin()
           , g_output_key.end()
@@ -218,7 +218,7 @@ static void test_permutation_gpu(int count, int repeat)
           , result.end()
         );
 
-        cuda::host::vector<unsigned int> h_output_value(count);
+        cuda::memory::host::vector<unsigned int> h_output_value(count);
         BOOST_CHECK( cuda::copy(
             g_output_value.begin()
           , g_output_value.end()

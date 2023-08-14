@@ -99,7 +99,7 @@ pick_lattice_points_from_shell(
     }
     // compute partial sum: miller_sum_max = (h_max, h_max + k_max, h_max + k_max + l_max)
     partial_sum(miller_sum_max.begin(), miller_sum_max.end(), miller_sum_max.begin());
-    LOG_DEBUG("generate lattice points with a maximum sum of Miller indices: " << miller_sum_max[dimension-1]);
+    LOG_INFO("generate lattice points with a maximum sum of Miller indices: " << miller_sum_max[dimension-1]);
 
     // generate all lattice points bounded h+k+l ≤ miller_sum_max,
     // loop over tuple index (hkl), or (hk) in two dimensions,
@@ -154,7 +154,7 @@ pick_lattice_points_from_shell(
         }
     };
 
-    LOG_TRACE("lattice points constructed: "
+    LOG_DEBUG("lattice points constructed: "
       << accumulate(count.begin(), count.end(), 0u, plus<unsigned int>())
     );
 }

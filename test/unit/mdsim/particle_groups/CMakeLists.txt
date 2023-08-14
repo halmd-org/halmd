@@ -54,7 +54,7 @@ add_test(unit/mdsim/particle_groups/id_range/host
 # module region
 #
 if(HALMD_WITH_GPU)
-  cuda_add_executable(test_unit_mdsim_particle_groups_region
+  add_executable(test_unit_mdsim_particle_groups_region
     region.cpp
     region_kernel.cu
   )

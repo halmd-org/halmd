@@ -46,11 +46,11 @@ struct scan_wrapper
     cuda::function<void (T const*, T*, T*, const uint)> grid_prefix_sum;
     cuda::function<void (T const*, T*, T const*, const uint)> add_block_sums;
     cuda::function<void (T const*, T*, const uint)> block_prefix_sum;
-    static scan_wrapper const kernel;
+    static scan_wrapper kernel;
 };
 
 template <typename T>
-scan_wrapper<T> const& get_scan_kernel()
+scan_wrapper<T>& get_scan_kernel()
 {
     return scan_wrapper<T>::kernel;
 }

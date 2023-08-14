@@ -47,7 +47,8 @@ template <
   , typename gpu_vector_type
 >
 __global__ void compute(
-    float4 const* g_r1
+    potential_type potential
+  , float4 const* g_r1
   , float4 const* g_r2
   , unsigned int npart2
   , gpu_vector_type* g_f
@@ -75,11 +76,7 @@ __global__ void compute(
     // contribution to stress tensor
     stress_tensor_type stress_pot = 0;
     // force sum
-#ifdef USE_FORCE_DSFUN
     fixed_vector<dsfloat, dimension> f = 0;
-#else
-    vector_type f = 0;
-#endif
 
     for (unsigned int j = 0; j < npart2; ++j) {
         // load particle
@@ -87,7 +84,7 @@ __global__ void compute(
         vector_type r2;
         tie(r2, type2) <<= g_r2[j];
         // pair potential
-        potential_type const potential(type1, type2, ntype1, ntype2);
+        potential.fetch_param(type1, type2, ntype1, ntype2);
 
         // particle distance vector
         vector_type r = r1 - r2;
@@ -133,7 +130,7 @@ __global__ void compute(
 } // namespace pair_full_kernel
 
 template <int dimension, typename potential_type>
-pair_full_wrapper<dimension, potential_type> const
+pair_full_wrapper<dimension, potential_type>
 pair_full_wrapper<dimension, potential_type>::kernel = {
     pair_full_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_full_kernel::compute<true, fixed_vector<float, dimension>, potential_type>

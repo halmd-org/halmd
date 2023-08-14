@@ -1,0 +1,85 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: HAL's MD package
+message: >-
+  Please cite the following works when using this
+  software.
+type: software
+authors:
+  - given-names: Felix
+    family-names: Höfling
+    email: f.hoefling@fu-berlin.de
+    affiliation: 'Freie Universität Berlin, Germany'
+    orcid: 'https://orcid.org/0000-0002-5961-132X'
+  - given-names: Peter
+    family-names: Colberg
+    affiliation: 'University of Toronto, Canada'
+  - given-names: Nicolas
+    family-names: Höft
+    affiliation: 'Heinrich-Heine-Universität Düsseldorf, Germany'
+  - given-names: Roya
+    family-names: Ebrahimi Viand
+    affiliation: 'Freie Universität Berlin, Germany'
+  - given-names: Daniel
+    family-names: Kirchner
+    affiliation: 'Freie Universität Berlin, Germany'
+  - given-names: Michael
+    family-names: Kopp
+    affiliation: >-
+      Max Planck Institute for Intelligent Systems,
+      Stuttgart, Germany
+  - given-names: Sutapa
+    family-names: Roy
+    affiliation: >-
+      Max Planck Institute for Intelligent Systems,
+      Stuttgart, Germany
+  - given-names: Jaslo
+    family-names: Ziska
+    affiliation: 'Freie Universität Berlin, Germany'
+repository-code: 'https://github.com/halmd-org/halmd'
+url: 'https://halmd.org'
+abstract: >-
+  Highly accelerated large-scale molecular dynamics
+  simulations.
+
+
+  HAL’s MD package is a high-precision molecular
+  dynamics package for large-scale simulations of the
+  complex dynamics in inhomogeneous liquids. It has
+  been specifically designed to support acceleration
+  through CUDA-enabled graphics processors.
+license: LGPL-3.0+
+version: 1.1.0
+date-released: '2022-05-01'
+
+preferred-citation:
+  title: 'Highly accelerated simulations of glassy dynamics using GPUs: Caveats on limited floating-point precision'
+  type: article
+  authors:
+    - given-names: Felix
+      family-names: Höfling
+    - given-names: Peter H.
+      family-names: Colberg
+  doi: 'https://doi.org/10.1016/j.cpc.2011.01.009'
+  journal: 'Comput. Phys. Commun.'
+  pages: 1120
+  volume: 182
+  year: 2011
+
+references:
+  title: 'H5MD: a structured, efficient, and portable file format for molecular data'
+  type: article
+  authors:
+    - given-names: Pierre
+      family-names: de Buyl
+    - given-names: Peter H.
+      family names: Colberg
+    - given-names: Felix
+      family names: Höfling
+  journal: 'Comput. Phys. Commun.'
+  volume: 185
+  pages: 1546
+  year: 2014
+

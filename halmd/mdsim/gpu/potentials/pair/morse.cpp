@@ -53,6 +53,7 @@ morse<float_type>::morse(
   , sigma_(check_shape(sigma, epsilon))
   , r_min_sigma_(check_shape(r_min, epsilon))
   , g_param_(size1() * size2())
+  , t_param_(g_param_)
   , logger_(logger)
 {
     LOG("depth of potential well: ε = " << epsilon_);
@@ -60,7 +61,7 @@ morse<float_type>::morse(
     LOG("position of potential well: r_min / σ = " << r_min_sigma_);
 
     // copy parameters to CUDA device
-    cuda::host::vector<float4> param(g_param_.size());
+    cuda::memory::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p(0);
         p[morse_kernel::EPSILON] = epsilon_.data()[i];
@@ -68,7 +69,7 @@ morse<float_type>::morse(
         p[morse_kernel::R_MIN_SIGMA] = r_min_sigma_.data()[i];
         param[i] = p;
     }
-    cuda::copy(param, g_param_);
+    cuda::copy(param.begin(), param.end(), g_param_.begin());
 }
 
 template <typename float_type>

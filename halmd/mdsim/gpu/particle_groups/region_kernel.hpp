@@ -24,7 +24,7 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <boost/function.hpp>
+#include <functional>
 
 namespace halmd {
 namespace mdsim {
@@ -50,7 +50,7 @@ struct region_wrapper
       , geometry_selection
     )> compute_mask;
 
-    boost::function<unsigned int (
+    std::function<unsigned int (
         float4 const*        // position
       , unsigned int         // nparticle
       , unsigned int*        // output array
@@ -58,7 +58,7 @@ struct region_wrapper
       , geometry_selection   // geometry selection
     )> copy_selection;
 
-    static region_wrapper const kernel;
+    static region_wrapper kernel;
 };
 
 } // namespace gpu

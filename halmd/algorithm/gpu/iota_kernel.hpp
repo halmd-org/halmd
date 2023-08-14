@@ -31,13 +31,13 @@ class iota_kernel
 public:
     cuda::function<void (unsigned int*, unsigned int, unsigned int)> iota;
 
-    static iota_kernel const& get()
+    static iota_kernel& get()
     {
         return kernel;
     }
 
 private:
-    static iota_kernel const kernel;
+    static iota_kernel kernel;
 };
 
 } // namespace detail

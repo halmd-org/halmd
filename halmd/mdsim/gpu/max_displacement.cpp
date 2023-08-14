@@ -44,36 +44,13 @@ max_displacement<dimension, float_type>::max_displacement(
   : particle_(particle)
   , box_(box)
   // select thread-dependent reduction kernel
-  , dim_reduce_(64, (64 << DEVICE_SCALE))
-  , displacement_impl_(get_displacement_impl(dim_reduce_.threads_per_block()))
+  , dim_reduce_(64, 512)
   // allocate parameters
   , g_r0_(particle_->nparticle())
   , g_rr_(dim_reduce_.blocks_per_grid())
   , h_rr_(g_rr_.size())
   , displacement_(0)
 {
-}
-
-template <int dimension, typename float_type>
-typename max_displacement_wrapper<dimension>::displacement_impl_type
-max_displacement<dimension, float_type>::get_displacement_impl(int threads)
-{
-    switch (threads) {
-      case 1024:
-        return max_displacement_wrapper<dimension>::kernel.displacement_impl[0];
-      case 512:
-        return max_displacement_wrapper<dimension>::kernel.displacement_impl[1];
-      case 256:
-        return max_displacement_wrapper<dimension>::kernel.displacement_impl[2];
-      case 128:
-        return max_displacement_wrapper<dimension>::kernel.displacement_impl[3];
-      case 64:
-        return max_displacement_wrapper<dimension>::kernel.displacement_impl[4];
-      case 32:
-        return max_displacement_wrapper<dimension>::kernel.displacement_impl[5];
-      default:
-        throw std::logic_error("invalid reduction thread count");
-    }
 }
 
 /**
@@ -83,7 +60,7 @@ template <int dimension, typename float_type>
 void max_displacement<dimension, float_type>::zero()
 {
     cache<position_array_type> const& position_cache = particle_->position();
-    cuda::vector<float4> const& position = read_cache(position_cache);
+    cuda::memory::device::vector<float4> const& position = read_cache(position_cache);
 
     LOG_TRACE("zero maximum squared displacement");
 
@@ -104,23 +81,19 @@ float_type max_displacement<dimension, float_type>::compute()
     if (position_cache != position_cache_) {
         position_array_type const& position = read_cache(position_cache);
 
-        LOG_TRACE("compute maximum squared displacement");
+        LOG_DEBUG("compute maximum squared displacement");
 
         scoped_timer_type timer(runtime_.compute);
         try {
-            cuda::configure(
-                dim_reduce_.grid
-              , dim_reduce_.block
-              , dim_reduce_.threads_per_block() * sizeof(float)
-            );
-            displacement_impl_(
+            wrapper_type::kernel.displacement.configure(dim_reduce_.grid, dim_reduce_.block);
+            wrapper_type::kernel.displacement(
                 position.data()
               , g_r0_
               , g_rr_
               , particle_->nparticle()
               , static_cast<vector_type>(box_->length())
             );
-            cuda::copy(g_rr_, h_rr_);
+            cuda::copy(g_rr_.begin(), g_rr_.end(), h_rr_.begin());
         }
         catch (cuda::error const&) {
             LOG_ERROR("failed to reduce squared particle displacements on GPU");

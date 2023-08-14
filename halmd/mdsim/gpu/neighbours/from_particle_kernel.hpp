@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2021      Jaslo Ziska
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -32,11 +33,10 @@ namespace neighbours {
 template <int dimension>
 struct from_particle_wrapper
 {
-    /** (cutoff lengths + neighbour list skin)² */
-    cuda::texture<float> rr_cut_skin;
     /** update neighbour lists */
     typedef cuda::function<void (
-      float4 const*
+        cudaTextureObject_t // (cutoff distances + neighbour list skin)²
+      , float4 const*
       , unsigned int
       , float4 const*
       , unsigned int
@@ -48,13 +48,15 @@ struct from_particle_wrapper
       , unsigned int
       , int*
     )> update_function_type;
+
+    update_function_type update_unroll_force_loop;
     update_function_type update;
 
     static from_particle_wrapper kernel;
 };
 
 template <int dimension>
-from_particle_wrapper<dimension> const& get_from_particle_kernel()
+from_particle_wrapper<dimension>& get_from_particle_kernel()
 {
     return from_particle_wrapper<dimension>::kernel;
 }

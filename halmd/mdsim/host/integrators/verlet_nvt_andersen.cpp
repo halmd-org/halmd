@@ -19,7 +19,7 @@
  */
 
 #include <algorithm>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <cmath>
 #include <memory>
 
@@ -75,7 +75,7 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
 
-    LOG_TRACE("update positions and velocities: first leapfrog half-step")
+    LOG_DEBUG("update positions and velocities: first leapfrog half-step")
     scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the force!
@@ -99,7 +99,7 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
 
-    LOG_TRACE("update velocities: second leapfrog half-step")
+    LOG_DEBUG("update velocities: second leapfrog half-step")
     scoped_timer_type timer(runtime_.finalize);
 
     // invalidate the particle caches after accessing the force!

@@ -44,8 +44,8 @@ template <int dimension, typename float_type>
 void sphere<dimension, float_type>::log(std::shared_ptr<halmd::logger> logger_) const
 {
     LOG("using sphere geometry");
-    LOG("centre: " << centre_);
     LOG("radius: " << radius_);
+    LOG("centre: " << centre_);
 }
 
 template <int dimension, typename float_type>
@@ -69,7 +69,7 @@ void sphere<dimension, float_type>::luaopen(lua_State* L)
                     .property("volume", &sphere::volume)
 
               , def(class_name.c_str(), &std::make_shared<sphere
-                  , vector_type
+                  , vector_type const&
                   , float_type
                   >)
             ]

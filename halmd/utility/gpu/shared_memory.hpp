@@ -21,7 +21,7 @@
 #ifndef HALMD_UTILITY_GPU_SHARED_MEMORY_HPP
 #define HALMD_UTILITY_GPU_SHARED_MEMORY_HPP
 
-#include <boost/utility/enable_if.hpp>
+#include <type_traits>
 
 #include <halmd/config.hpp> // HALMD_GPU_ARCH
 
@@ -71,7 +71,7 @@ struct power_of_two_max_threads;
 
 template <unsigned int upper, unsigned int accumulator>
 struct power_of_two_max_threads<upper, accumulator
-  , typename boost::enable_if_c<
+  , typename std::enable_if<
         (((upper > 1) && (accumulator == max_threads_per_block::value)) || (upper == 1))
     >::type>
 {
@@ -80,7 +80,7 @@ struct power_of_two_max_threads<upper, accumulator
 
 template <unsigned int upper, unsigned int accumulator>
 struct power_of_two_max_threads<upper, accumulator
-  , typename boost::enable_if_c<
+  , typename std::enable_if<
         ((upper > 1) && (accumulator < max_threads_per_block::value))
     >::type>
 {

@@ -1,0 +1,115 @@
+--
+-- Copyright © 2022-2023 Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+
+local utility = require("halmd.utility")
+local device  = require("halmd.utility.device")
+local module  = require("halmd.utility.module")
+
+---
+-- Cylinder
+-- ========
+--
+-- Defines a cylindrical domain and a predicate whether a given position is
+-- inside or outside of the domain.
+--
+-- The cylinder is parametrised by an axis vector :math:`\hat n`, a centre
+-- point :math:`\vec a` on that axis, a radius :math:`\rho`, and a length
+-- :math:`\ell.` A point :math:`\vec r` is inside of the cylinder if
+--
+-- .. math::
+--
+--     |\Delta \vec r|^2 - (\Delta \vec r \cdot \hat n)^2 \leq \rho^2
+--     \: \text{and} \:
+--     |\Delta \vec r \cdot \hat n| \leq \ell/2 \,,
+--     \quad \Delta \vec r = \vec r - \vec a \,.
+--
+
+local cylinder = {
+    single = assert(libhalmd.mdsim.geometries.cylinder_float)
+  , double = assert(libhalmd.mdsim.geometries.cylinder_double)
+}
+
+---
+-- Construct cylinder geometry instance.
+--
+-- :param table args: keyword arguments
+-- :param table args.centre: cylinder centre
+-- :param number args.radius: cylinder radius
+-- :param number args.length: cylinder length
+-- :param string args.precision: floating point precision *(optional)*
+--
+--    The supported values for ``precision`` are ``single`` and ``double``. If
+--    ``precision`` is not specified, the precision is selected according to
+--    the compute device: ``single`` for GPU computing and ``@HALMD_HOST_PRECISION@`` otherwise.
+--
+-- .. note::
+--
+--    This module does not perform a validation of the meaningfulness of the domain,
+--    i.e. it does not test whether the geometry is placed outside the simulation
+--    domain.
+--
+-- .. attribute:: axis
+--
+--    Coordinates of cylinder axis vector, which may have any non-zero length.
+--
+-- .. attribute:: centre
+--
+--    Coordinates of cylinder centre.
+--
+-- .. attribute:: radius
+--
+--    Cylinder radius.
+--
+-- .. attribute:: length
+--
+--    Cylinder length.
+--
+-- .. attribute:: volume
+--
+--    The volume of the cylinder.
+--
+local M = module(function(args)
+    utility.assert_type(args, "table")
+    local axis = utility.assert_type(utility.assert_kwarg(args, "axis"), "table")
+    local centre = utility.assert_type(utility.assert_kwarg(args, "centre"), "table")
+    local radius = utility.assert_type(utility.assert_kwarg(args, "radius"), "number")
+    local length = utility.assert_type(utility.assert_kwarg(args, "length"), "number")
+    local precision = args.precision or (device.gpu and "single" or "@HALMD_HOST_PRECISION@")
+
+    if not cylinder[precision] then
+         error("Unsupported precision", 2)
+    end
+
+    -- construct instance
+    local self = cylinder[precision](axis, centre, radius, length)
+
+    -- attach coordinates of cylinder axis as read-only property
+    self.axis = property(function(self) return axis end)
+    -- attach coordinates of cylinder centre as read-only property
+    self.centre = property(function(self) return centre end)
+    -- attach cylinder radius as read-only property
+    self.radius = property(function(self) return radius end)
+    -- attach cylinder length as read-only property
+    self.length = property(function(self) return length end)
+
+    return self
+end)
+
+return M
+

@@ -51,7 +51,7 @@ public:
     typedef boost::numeric::ublas::matrix<float> matrix_type;
     typedef mdsim::box<dimension> box_type;
 
-    typedef cuda::vector<unsigned int> array_type;
+    typedef cuda::memory::device::vector<unsigned int> array_type;
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
     typedef fixed_vector<int, dimension> cell_diff_type;
 
@@ -178,7 +178,7 @@ get_cell(binning_type& binning, output_iterator output)
     array_type const& g_cell = read_cache(binning.g_cell());
     cell_size_type ncell = binning.ncell();
     unsigned int cell_size = binning.cell_size();
-    cuda::host::vector<unsigned int> h_cell(g_cell.size());
+    cuda::memory::host::vector<unsigned int> h_cell(g_cell.size());
     cuda::copy(g_cell.begin(), g_cell.end(), h_cell.begin());
     multi_range_for_each(
         cell_size_type(0)

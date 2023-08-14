@@ -42,11 +42,11 @@ using namespace halmd;
 /**
  * Test performance of implementations: dsfloat_cuda_vector vs. float4 pointers
  */
-BOOST_AUTO_TEST_CASE( performance )
+BOOST_FIXTURE_TEST_CASE( performance, set_cuda_device )
 {
     unsigned int memsize = 1024 * 1024;
 
-    cuda::vector<float4> data(memsize);
+    cuda::memory::device::vector<float4> data(memsize);
     data.reserve(memsize * 2);
     cuda::memset(data.begin(), data.begin() + data.capacity(), 0);
 
@@ -63,7 +63,8 @@ BOOST_AUTO_TEST_CASE( performance )
         accumulator<double> elapsed;
 
         for (unsigned int i = 0; i < iterations; i++) {
-            cuda::configure(dim.grid, dim.block);
+            dsfloat_kernel_wrapper::kernel.test_float4_ptr.configure(dim.grid,
+                dim.block);
             {
                 scoped_timer<timer> t(elapsed);
                 dsfloat_kernel_wrapper::kernel.test_float4_ptr(data, increment);
@@ -78,7 +79,8 @@ BOOST_AUTO_TEST_CASE( performance )
         dsfloat_cuda_vector<float4> data(memsize);
 
         for (unsigned int i = 0; i < iterations; i++) {
-            cuda::configure(dim.grid, dim.block);
+            dsfloat_kernel_wrapper::kernel.test_dsfloat_ptr.configure(dim.grid,
+                dim.block);
             {
                 scoped_timer<timer> t(elapsed);
                 dsfloat_kernel_wrapper::kernel.test_dsfloat_ptr(data.data(), increment);
@@ -91,7 +93,7 @@ BOOST_AUTO_TEST_CASE( performance )
     BOOST_CHECK_LE(mean_runtime_dsfloat_ptr, mean_runtime_float4_ptr * 1.05);
 }
 
-BOOST_AUTO_TEST_CASE( overloaded_kernel )
+BOOST_FIXTURE_TEST_CASE( overloaded_kernel, set_cuda_device )
 {
     // test parameters
     unsigned int const memsize = 256;
@@ -105,17 +107,19 @@ BOOST_AUTO_TEST_CASE( overloaded_kernel )
 
     // allocate GPU memory for 2×memsize float4, initialise to 0
     dsfloat_cuda_vector<float4> g_data(memsize);
-    cuda::vector<float4>& g_data_float4 = g_data;
+    cuda::memory::device::vector<float4>& g_data_float4 = g_data;
     cuda::memset(g_data_float4.begin(), g_data_float4.begin() + g_data_float4.capacity(), 0);
 
     // assign 1's to first float4 array
-    cuda::host::vector<float4> h_data(memsize);
+    cuda::memory::host::vector<float4> h_data(memsize);
     std::fill(h_data.begin(), h_data.end(), float4{ 1, 1, 1, 1 });
     cuda::copy(h_data.begin(), h_data.end(), g_data_float4.begin());
 
     // use only float4 part of high significance
-    cuda::configure(dim.grid, dim.block);
-    dsfloat_kernel_overloaded_wrapper<float>::kernel.overloaded_test(g_data_float4, increment);
+    dsfloat_kernel_overloaded_wrapper<float>::kernel.overloaded_test.configure(
+        dim.grid, dim.block);
+    dsfloat_kernel_overloaded_wrapper<float>::kernel.overloaded_test(
+        g_data_float4, increment);
     cuda::thread::synchronize();
 
     // convert float4 to fixed_vector, subtract 1 to be sensitive to the last digits
@@ -136,8 +140,10 @@ BOOST_AUTO_TEST_CASE( overloaded_kernel )
     // but the high significant float4's are important
     unsigned int N = 1 << 8;
     for (unsigned int i = 0; i < N; ++i) {
-        cuda::configure(dim.grid, dim.block);
-        dsfloat_kernel_overloaded_wrapper<dsfloat>::kernel.overloaded_test(g_data, increment / N);
+        dsfloat_kernel_overloaded_wrapper<dsfloat>::kernel.overloaded_test.configure(
+            dim.grid, dim.block);
+        dsfloat_kernel_overloaded_wrapper<dsfloat>::kernel.overloaded_test(
+            g_data, increment / N);
         cuda::thread::synchronize();
     }
 
@@ -155,4 +161,3 @@ BOOST_AUTO_TEST_CASE( overloaded_kernel )
        , result_dsfloat.begin(), result_dsfloat.end()
     );
 }
-

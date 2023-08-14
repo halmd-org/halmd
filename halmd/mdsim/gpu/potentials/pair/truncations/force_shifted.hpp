@@ -1,5 +1,6 @@
 /*
  * Copyright © 2016 Daniel Kirchner
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -60,6 +61,7 @@ public:
             , en_cut_(this->size1(), this->size2())
             , force_cut_(this->size1(), this->size2())
             , g_param_(this->size1() * this->size2())
+            , t_param_(g_param_)
     {
 
         for (size_t i = 0; i < this->size1(); ++i) {
@@ -69,11 +71,14 @@ public:
             }
         }
 
-        LOG("potential cutoff length: r_c = " << r_cut_sigma_);
-        LOG("potential cutoff energy: U = " << en_cut_);
-        LOG("potential cutoff force: F_c = " << force_cut_);
+        auto logger_ = std::make_shared<logger>("force_shifted");
+        LOG("apply sharp potential truncation with force and energy shifts");
+        LOG("potential cutoff distance: r_c / σ = " << r_cut_sigma_);
+        LOG_INFO("potential cutoff distance in simulation units: r_c = " << r_cut_);
+        LOG_INFO("potential cutoff energy: U = " << en_cut_);
+        LOG_INFO("potential cutoff force: F_c = " << force_cut_);
 
-        cuda::host::vector<float4> param(g_param_.size());
+        cuda::memory::host::vector<float4> param(g_param_.size());
         for (size_t i = 0; i < param.size(); ++i) {
             fixed_vector<float, 4> p;
             p[force_shifted_kernel::R_CUT] = r_cut_.data()[i];
@@ -83,14 +88,15 @@ public:
             param[i] = p;
         }
 
-        cuda::copy(param, g_param_);
+        cuda::copy(param.begin(), param.end(), g_param_.begin());
     }
 
-    /** bind textures before kernel invocation */
-    void bind_textures() const
+    /** return gpu potential with textures */
+    gpu_potential_type get_gpu_potential()
     {
-        force_shifted_wrapper<parent_potential>::param.bind(g_param_);
-        potential_type::bind_textures();
+        // FIXME: tex1Dfetch reads zero when texture is not recreated once in a while
+        t_param_ = cuda::texture<float4>(g_param_);
+        return gpu_potential_type(potential_type::get_gpu_potential(), t_param_);
     }
 
     matrix_type const& r_cut() const
@@ -145,18 +151,19 @@ public:
     }
 
 private:
-    /** cutoff length in units of sigma */
+    /** cutoff distance in units of sigma */
     matrix_type r_cut_sigma_;
-    /** cutoff length in MD units */
+    /** cutoff distance in MD units */
     matrix_type r_cut_;
-    /** square of cutoff length */
+    /** square of cutoff distance */
     matrix_type rr_cut_;
-    /** potential energy at cutoff length in MD units */
+    /** potential energy at cutoff distance in MD units */
     matrix_type en_cut_;
-    /** force at cutoff length in MD units */
+    /** force at cutoff distance in MD units */
     matrix_type force_cut_;
     /** adapter parameters at CUDA device */
-    cuda::vector<float4> g_param_;
+    cuda::memory::device::vector<float4> g_param_;
+    cuda::texture<float4> t_param_;
 };
 
 } // namespace truncations

@@ -160,7 +160,7 @@ __global__ void shift_rescale_group(
 } // namespace velocity_kernel
 
 template <int dimension, typename float_type>
-velocity_wrapper<dimension, float_type> const velocity_wrapper<dimension, float_type>::kernel = {
+velocity_wrapper<dimension, float_type> velocity_wrapper<dimension, float_type>::kernel = {
     velocity_kernel::rescale<dimension, float_type, ptr_type>
   , velocity_kernel::rescale_group<dimension, float_type, ptr_type>
   , velocity_kernel::shift<dimension, float_type, ptr_type>

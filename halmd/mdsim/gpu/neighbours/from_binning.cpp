@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2015 Felix Höfling
+ * Copyright © 2021      Jaslo Ziska
  * Copyright © 2013-2015 Nicolas Höft
  * Copyright © 2008-2011 Peter Colberg
  *
@@ -25,6 +26,7 @@
 #include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
+#include <halmd/utility/gpu/device.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -52,7 +54,7 @@ from_binning<dimension, float_type>::from_binning(
   , matrix_type const& r_cut
   , double skin
   , double cell_occupancy
-  , algorithm preferred_algorithm
+  , std::pair<algorithm, bool> options
   , std::shared_ptr<logger> logger
 )
   // dependency injection
@@ -70,8 +72,9 @@ from_binning<dimension, float_type>::from_binning(
   , rr_cut_skin_(r_cut.size1(), r_cut.size2())
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
   , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
-  , preferred_algorithm_(preferred_algorithm)
-  , device_properties_(cuda::device::get())
+  , preferred_algorithm_(options.first)
+  , unroll_force_loop_(options.second)
+  , device_properties_(device::get())
 {
     for (size_t i = 0; i < r_cut.size1(); ++i) {
         for (size_t j = 0; j < r_cut.size2(); ++j) {
@@ -79,7 +82,8 @@ from_binning<dimension, float_type>::from_binning(
         }
     }
     try {
-        cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
+        cuda::copy(rr_cut_skin_.data().begin(), rr_cut_skin_.data().end(),
+                   g_rr_cut_skin_.begin());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy neighbour list parameters to device symbols");
@@ -162,7 +166,7 @@ void from_binning<dimension, float_type>::update()
     cell_array_type const& g_cell2 = read_cache(binning2_->g_cell());
     auto g_neighbour = make_cache_mutable(g_neighbour_);
 
-    LOG_TRACE("update neighbour lists");
+    LOG_DEBUG("update neighbour lists");
 
     if (!is_binning_compatible(binning1_, binning2_)) {
         throw std::logic_error("number of cells per dimension must be at least 3");
@@ -185,10 +189,15 @@ void from_binning<dimension, float_type>::update()
         // mark neighbour list placeholders as virtual particles
         cuda::memset(g_neighbour->begin(), g_neighbour->end(), 0xFF);
         // build neighbour lists
-        cuda::vector<int> g_ret(1);
-        cuda::host::vector<int> h_ret(1);
-        cuda::memset(g_ret, EXIT_SUCCESS);
-        auto const* kernel = &from_binning_wrapper<dimension>::kernel;
+        cuda::memory::device::vector<int> g_ret(1);
+        cuda::memory::host::vector<int> h_ret(1);
+        cuda::memset(g_ret.begin(), g_ret.end(), EXIT_SUCCESS);
+
+        auto* kernel = &from_binning_wrapper<dimension>::kernel.normal;
+        if (unroll_force_loop_) {
+            kernel = &from_binning_wrapper<dimension>::kernel.unroll_force_loop;
+        }
+
         if (!use_naive) {
             // update the cell list of binning1 here, as the naive implementation
             // does not need it and calling binning1_->g_cell() may trigger
@@ -212,12 +221,18 @@ void from_binning<dimension, float_type>::update()
                 continue;
             }
 
-            cuda::configure(binning2_->dim_cell().grid, binning2_->dim_cell().block, smem_size);
-            kernel->rr_cut_skin.bind(g_rr_cut_skin_);
-            kernel->r1.bind(position1);
-            kernel->r2.bind(position2);
+            cuda::texture<float> rr_cut_skin(g_rr_cut_skin_);
+            cuda::texture<float4> r1(position1);
+            cuda::texture<float4> r2(position2);
+
+            kernel->update_neighbours.configure(binning2_->dim_cell().grid,
+                binning2_->dim_cell().block, smem_size);
+
             kernel->update_neighbours(
-                g_ret
+                rr_cut_skin
+              , r1
+              , r2
+              , g_ret
               , &*g_neighbour->begin()
               , size_
               , stride_
@@ -231,11 +246,16 @@ void from_binning<dimension, float_type>::update()
             );
         }
         else {
-            configure_kernel(kernel->update_neighbours_naive, particle1_->dim(), false);
-            kernel->rr_cut_skin.bind(g_rr_cut_skin_);
-            kernel->r2.bind(position2);
+            configure_kernel(kernel->update_neighbours_naive, particle1_->dim(),
+                false);
+
+            cuda::texture<float> rr_cut_skin(g_rr_cut_skin_);
+            cuda::texture<float4> r2(position2);
+
             kernel->update_neighbours_naive(
-                g_ret
+                rr_cut_skin
+              , r2
+              , g_ret
               , position1.data()
               , particle1_->nparticle()
               , particle1_ == particle2_
@@ -252,7 +272,7 @@ void from_binning<dimension, float_type>::update()
             );
         }
         cuda::thread::synchronize();
-        cuda::copy(g_ret, h_ret);
+        cuda::copy(g_ret.begin(), g_ret.end(), h_ret.begin());
         overcrowded = h_ret.front() != EXIT_SUCCESS;
         if (overcrowded) {
             LOG("overcrowded placeholders in neighbour lists update, reducing occupancy");
@@ -314,7 +334,7 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                   , matrix_type const&
                   , double
                   , double
-                  , algorithm
+                  , std::pair<algorithm, bool>
                   , std::shared_ptr<logger>
                 >)
               , def("is_binning_compatible", &from_binning::is_binning_compatible)

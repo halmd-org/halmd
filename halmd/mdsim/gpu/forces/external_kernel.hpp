@@ -39,7 +39,8 @@ struct external_wrapper
 
     /** compute forces only */
     cuda::function<void (
-        float4 const*
+        potential_type
+      , float4 const*
       , coalesced_vector_type*
       , float*
       , float*
@@ -49,7 +50,8 @@ struct external_wrapper
 
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
     cuda::function<void (
-        float4 const*
+        potential_type
+      , float4 const*
       , coalesced_vector_type*
       , float*
       , float*
@@ -57,7 +59,7 @@ struct external_wrapper
       , bool
     )> compute_aux;
 
-    static external_wrapper const kernel;
+    static external_wrapper kernel;
 };
 
 } // namespace forces

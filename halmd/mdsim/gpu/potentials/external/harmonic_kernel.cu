@@ -1,5 +1,6 @@
 /*
  * Copyright © 2014 Felix Höfling
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -20,8 +21,6 @@
 
 #include <halmd/mdsim/gpu/forces/external_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/external/harmonic_kernel.hpp>
-#include <halmd/numeric/blas/blas.hpp>
-#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -30,53 +29,13 @@ namespace potentials {
 namespace external {
 namespace harmonic_kernel {
 
-/** array of potential parameters for all particle species */
-static texture<float4> param_;
-
-/**
- * harmonic external potential
- */
 template <int dimension>
-class harmonic
+__device__ void harmonic<dimension>::fetch_param(unsigned int species)
 {
-public:
-    typedef fixed_vector<float, dimension> vector_type;
-
-    /**
-     * Construct harmonic potential.
-     *
-     * Fetch parameters from texture cache for this particle species.
-     */
-    HALMD_GPU_ENABLED harmonic(unsigned int species)
-    {
-        tie(offset_, stiffness_) <<= tex1Dfetch(param_, species);
-    }
-
-    /**
-     * Compute force and potential for interaction.
-     *
-     * @param r   particle position reduced to periodic box
-     * @returns   tuple of force vector @f$ -\nabla U(\vec r) @f$ and potential @f$ U(\vec r) @f$
-     */
-    HALMD_GPU_ENABLED tuple<vector_type, float> operator()(vector_type const& r) const
-    {
-        vector_type dr = r - offset_;
-        vector_type force = stiffness_ * dr;
-        float en_pot = inner_prod(force, dr) / 2;
-
-        return make_tuple(force, en_pot);
-    }
-
-private:
-    /** potential parameters for given particle species */
-    vector_type offset_;
-    float stiffness_;
-};
+    tie(offset_, stiffness_) <<= tex1Dfetch<float4>(t_param_, species);
+}
 
 } // namespace harmonic_kernel
-
-cuda::texture<float4> harmonic_wrapper::param = harmonic_kernel::param_;
-
 } // namespace external
 } // namespace potentials
 

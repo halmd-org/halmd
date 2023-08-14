@@ -91,11 +91,11 @@ template<typename T>
 struct particle_array_host_helper
 {
     typedef T type;
-    static T const& get(cuda::host::vector<uint8_t> const& memory, size_t offset)
+    static T const& get(cuda::memory::host::vector<uint8_t> const& memory, size_t offset)
     {
         return *reinterpret_cast<const T*>(&memory[offset]);
     }
-    static void set(cuda::host::vector<uint8_t>& memory, size_t offset, T const& value)
+    static void set(cuda::memory::host::vector<uint8_t>& memory, size_t offset, T const& value)
     {
         *reinterpret_cast<T*>(&memory[offset]) = value;
     }
@@ -108,13 +108,13 @@ template<typename T>
 struct particle_array_host_helper<stress_tensor_wrapper<T>>
 {
     typedef T type;
-    static T get(cuda::host::vector<uint8_t> const& memory, size_t offset)
+    static T get(cuda::memory::host::vector<uint8_t> const& memory, size_t offset)
     {
         unsigned int stride = memory.capacity() / (sizeof(typename T::value_type) * T::static_size);
         return read_stress_tensor<T>(reinterpret_cast<typename T::value_type const*>(&memory[offset]), stride);
     }
 
-    static void set(cuda::host::vector<uint8_t>& memory, size_t offset, T const& value)
+    static void set(cuda::memory::host::vector<uint8_t>& memory, size_t offset, T const& value)
     {
         throw std::runtime_error("attempt to write read-only data");
     }

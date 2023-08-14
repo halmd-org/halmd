@@ -26,8 +26,8 @@ function string_interp()
     local input = "{name:s} is {val:7.2f}%"
     local output = input:interp({name = "concentration_NOx", val = 56.2795})
 
-    log.info("formatting string: %s", input)
-    log.info("interpolated string: %s", output)
+    log.message("formatting string: %s", input)
+    log.message("interpolated string: %s", output)
     assert(output == "concentration_NOx is   56.28%")
 end
 

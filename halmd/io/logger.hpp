@@ -65,6 +65,7 @@ public:
     {
         error,
         warning,
+        message,
         info,
         debug,
         trace
@@ -102,7 +103,7 @@ private:
     typedef boost::log::sinks::synchronous_sink<file_backend_type> file_sink_type;
 
     /**
-     * Opens log to console with level logging::info if compiled
+     * Opens log to console with level logging::message if compiled
      * without debugging (-DNDEBUG), and logging::debug otherwise.
      *
      * This method is declared as private to ensure that logging
@@ -175,8 +176,10 @@ extern std::shared_ptr<logger> const logger_;
 #define LOG_ERROR_ONCE(format)      HALMD_LOG_ONCE(logging::error, format)
 #define LOG_WARNING(format)         HALMD_LOG(logging::warning, format)
 #define LOG_WARNING_ONCE(format)    HALMD_LOG_ONCE(logging::warning, format)
-#define LOG(format)                 HALMD_LOG(logging::info, format)
-#define LOG_ONCE(format)            HALMD_LOG_ONCE(logging::info, format)
+#define LOG(format)                 HALMD_LOG(logging::message, format)
+#define LOG_ONCE(format)            HALMD_LOG_ONCE(logging::message, format)
+#define LOG_INFO(format)            HALMD_LOG(logging::info, format)
+#define LOG_INFO_ONCE(format)       HALMD_LOG_ONCE(logging::info, format)
 #ifndef NDEBUG
 # define LOG_DEBUG(format)          HALMD_LOG(logging::debug, format)
 # define LOG_DEBUG_ONCE(format)     HALMD_LOG_ONCE(logging::debug, format)

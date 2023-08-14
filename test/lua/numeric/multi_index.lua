@@ -29,7 +29,7 @@ function test(dims)
     for d = 1, #dims do
         ndim = ndim * dims[d]
     end
-    log.info("total number of points: %d", ndim)
+    log.message("total number of points: %d", ndim)
 
     for i = 1, ndim do
         local index = numeric.offset_to_multi_index(i, dims)

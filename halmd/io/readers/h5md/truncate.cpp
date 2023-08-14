@@ -105,7 +105,9 @@ void wrap_on_read(
 
 void truncate::luaopen(lua_State* L)
 {
+    using namespace boost::placeholders;
     using namespace luaponte;
+
     module(L, "libhalmd")
     [
         namespace_("io")

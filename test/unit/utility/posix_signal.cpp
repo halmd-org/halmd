@@ -32,7 +32,6 @@
 #include <halmd/utility/posix_signal.hpp>
 #include <halmd/utility/timer.hpp>
 #include <test/tools/ctest.hpp>
-#include <boost/version.hpp>
 
 using namespace boost;
 using namespace halmd;

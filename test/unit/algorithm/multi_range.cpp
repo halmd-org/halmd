@@ -25,7 +25,7 @@
 #include <boost/test/data/monomorphic.hpp>
 
 #include <boost/assign.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/multi_array.hpp>
 #include <iterator> // std::back_inserter
 
@@ -75,7 +75,7 @@ BOOST_FIXTURE_TEST_CASE( find_if_every_element, multi_array_fixture )
                 boost::array<size_t, 3> result = multi_range_find_if(
                     first
                   , size
-                  , bind(&element_equal<double, 3>, boost::cref(tensor), n, _1)
+                  , bind(&element_equal<double, 3>, boost::cref(tensor), n, boost::placeholders::_1)
                 );
                 BOOST_CHECK_EQUAL(result[0], i);
                 BOOST_CHECK_EQUAL(result[1], j);
@@ -94,7 +94,7 @@ BOOST_FIXTURE_TEST_CASE( find_if_nonexistent, multi_array_fixture )
     boost::array<size_t, 3> result = multi_range_find_if(
         first
       , size
-      , bind(&element_equal<double, 3>, boost::cref(tensor), size[0] * size[1] * size[2] + 1, _1)
+      , bind(&element_equal<double, 3>, boost::cref(tensor), size[0] * size[1] * size[2] + 1, boost::placeholders::_1)
     );
     BOOST_CHECK_EQUAL(result[0], size[0]);
     BOOST_CHECK_EQUAL(result[1], size[1]);
@@ -111,7 +111,7 @@ BOOST_FIXTURE_TEST_CASE( find_if_empty_range, multi_array_fixture )
     boost::array<size_t, 3> result = multi_range_find_if(
         first
       , first
-      , bind(&element_equal<double, 3>, boost::cref(tensor), size[0] * size[1] * size[2], _1)
+      , bind(&element_equal<double, 3>, boost::cref(tensor), size[0] * size[1] * size[2], boost::placeholders::_1)
     );
     BOOST_CHECK_EQUAL(result[0], first[0]);
     BOOST_CHECK_EQUAL(result[1], first[1]);

@@ -36,21 +36,21 @@ namespace potentials {
 namespace pair {
 
 /**
- * Define modified Lennard-Jones potential and its parameters.
+ * Define Mie potential and its parameters.
  *
  * @f[ U(r) = 4 \epsilon \left[ (r/\sigma)^{-m} - (r/\sigma)^{-n}) \right] @f]
  *
  * @f$ m, n @f$ must be even and @f$ m > n @f$.
  */
 template <typename float_type_>
-class modified_lennard_jones
+class mie
 {
 public:
     typedef float_type_ float_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef boost::numeric::ublas::matrix<unsigned> uint_matrix_type;
 
-    modified_lennard_jones(
+    mie(
         matrix_type const& epsilon
       , matrix_type const& sigma
       , uint_matrix_type const& index_m

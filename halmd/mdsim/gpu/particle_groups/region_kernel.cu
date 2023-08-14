@@ -22,6 +22,7 @@
 
 #include <halmd/algorithm/gpu/copy_if_kernel.cuh>
 #include <halmd/mdsim/geometries/cuboid.hpp>
+#include <halmd/mdsim/geometries/cylinder.hpp>
 #include <halmd/mdsim/geometries/sphere.hpp>
 #include <halmd/mdsim/gpu/particle_groups/region_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
@@ -47,7 +48,7 @@ struct geometry_predicate
       , selection_(sel)
     {};
 
-    HALMD_GPU_ENABLED bool operator()(int const& i) const
+    HALMD_GPU_ENABLED bool operator()(unsigned int i) const
     {
         vector_type r;
         unsigned int species;
@@ -115,7 +116,7 @@ unsigned int copy_selection(
 } // namespace region_kernel
 
 template<int dimension, typename geometry_type>
-region_wrapper<dimension, geometry_type> const
+region_wrapper<dimension, geometry_type>
 region_wrapper<dimension, geometry_type>::kernel = {
     region_kernel::compute_mask
   , region_kernel::copy_selection<geometry_type>
@@ -123,6 +124,8 @@ region_wrapper<dimension, geometry_type>::kernel = {
 
 template class region_wrapper<3, halmd::mdsim::geometries::cuboid<3, float> >;
 template class region_wrapper<2, halmd::mdsim::geometries::cuboid<2, float> >;
+template class region_wrapper<3, halmd::mdsim::geometries::cylinder<3, float> >;
+template class region_wrapper<2, halmd::mdsim::geometries::cylinder<2, float> >;
 template class region_wrapper<3, halmd::mdsim::geometries::sphere<3, float> >;
 template class region_wrapper<2, halmd::mdsim::geometries::sphere<2, float> >;
 

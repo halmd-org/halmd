@@ -54,7 +54,7 @@ public:
     }
 
     typedef data_type_ data_type;
-    typedef cuda::vector<data_type> array_type;
+    typedef cuda::memory::device::vector<data_type> array_type;
 
     sample(std::size_t nparticles) : data_(nparticles) {}
 

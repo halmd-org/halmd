@@ -1,0 +1,221 @@
+--
+-- Copyright © 2010,2013 Felix Höfling
+-- Copyright © 2013      Nicolas Höft
+-- Copyright © 2010      Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
+local numeric           = require("halmd.numeric")
+local utility           = require("halmd.utility")
+local module            = require("halmd.utility.module")
+local adapters          = require("halmd.mdsim.potentials.pair.adapters")
+
+---
+-- Custom pair potential
+-- =====================
+--
+-- This module implements a custom pair potential,
+--
+-- .. math::
+--
+--    U_\text{custom}\left(r_{ij}\right) = \text{FIXME (put LaTeX formula of the custom potential)}
+--
+-- for the interaction between two particles of species :math:`i` and
+-- :math:`j`. The template assumes three potential parameters, named
+-- :math:`\sigma_{ij}`, :math:`p^{(2)}_{ij}`, and :math:`p^{(3)}_{ij}`.
+-- One of the parameters must be named :math:`\sigma`, which is used as the
+-- unit of length by the :ref:`pair_potential_truncations`.
+--
+-- The corresponding source files contain ``FIXME`` markers where adjustments to a
+-- specific potential are needed. These files are:
+--
+-- .. code-block:: none
+--
+--    halmd/mdsim/host/potentials/pair/custom.cpp
+--    halmd/mdsim/host/potentials/pair/custom.hpp
+--    halmd/mdsim/gpu/potentials/pair/custom.cpp
+--    halmd/mdsim/gpu/potentials/pair/custom.hpp
+--    halmd/mdsim/gpu/potentials/pair/custom_kernel.cu
+--    halmd/mdsim/gpu/potentials/pair/custom_kernel.hpp
+--    lua/halmd/mdsim/potentials/pair/custom.lua.in
+--    test/unit/mdsim/potentials/pair/custom.cpp
+--
+-- The last file contains a unit test, where reference values for
+-- :math:`U_\text{custom}(r)` must be provided for a number of distances
+-- :math:`r` and a few combinations of potential parameters.
+--
+
+-- grab C++ wrappers
+local custom = {
+    host = assert(libhalmd.mdsim.host.potentials.pair.custom)
+}
+local force_shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.force_shifted) }
+local smooth_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.smooth_r4) }
+local shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.shifted) }
+if device.gpu then
+    custom.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.custom)
+    force_shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.force_shifted)
+    smooth_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
+    shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
+end
+
+---
+-- Construct custom potential.
+--
+-- :param table args: keyword arguments
+--
+-- :param table args: keyword arguments
+-- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (*default:* ``1``)
+-- :param table args.param2: matrix with elements :math:`p^{(2)}_{ij}` (*default:* ``1``)
+-- :param table args.param3: matrix with elements :math:`p^{(3)}_{ij}` (*default:* ``1``)
+-- :param number args.species: number of particle species *(optional)*
+-- :param string args.memory: select memory location *(optional)*
+-- :param string args.label: instance label *(optional)*
+--
+-- If the argument ``species`` is omitted, it is inferred from the first
+-- dimension of the parameter matrices.
+--
+-- If all elements of a matrix are equal, a scalar value may be passed instead
+-- which is promoted to a square matrix of size given by the number of particle
+-- ``species``.
+--
+-- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
+-- not specified, the memory location is selected according to the compute
+-- device.
+--
+-- .. attribute:: sigma
+--
+--    Matrix with elements :math:`\sigma_{ij}`.
+--
+-- .. attribute:: param2
+--
+--    Matrix with elements :math:`p^{(2)}_{ij}`.
+--
+-- .. attribute:: param3
+--
+--    Matrix with elements :math:`p^{(3)}_{ij}`.
+--
+-- .. attribute:: description
+--
+--    Name of potential for profiler.
+--
+-- .. attribute:: memory
+--
+--    Device where the particle memory resides.
+--
+-- .. method:: truncate(args)
+--
+--    Truncate potential.
+--    See :ref:`pair_potential_truncations` for available truncations.
+--
+--    :param table args: keyword argument
+--    :param string args[1]: name of truncation type
+--    :param table cutoff: matrix with elements :math:`r_{\text{c}, ij}`
+--    :param any args.*: additional arguments depend on the truncation type
+--    :returns: truncated potential
+--
+--    Example::
+--
+--      potential = potential:truncate({"smooth_r4", cutoff = 5, h = 0.05})
+--
+-- .. method:: modify(args)
+--
+--    Apply potential modification.
+--    See :ref:`pair_potential_modifications` for available modifications.
+--
+--    :param table args: keyword argument
+--    :param string args[1]: name of modification type
+--    :param any args.*: additional arguments depend on the modification type
+--    :returns: modified potential
+--
+--    Example::
+--
+--      potential = potential:modify({"hard_core", radius = 0.5})
+--
+local M = module(function(args)
+    local sigma = args and args.sigma or 1
+    if type(sigma) ~= "table" and type(sigma) ~= "number" then
+        error("bad argument 'sigma'", 2)
+    end
+    -- FIXME rename param[2-3]
+    local param2 = args and args.param2 or 1
+    if type(param2) ~= "table" and type(param2) ~= "number" then
+        error("bad argument 'param2'", 2)
+    end
+    local param3 = args and args.param2 or 1
+    if type(param3) ~= "table" and type(param3) ~= "number" then
+        error("bad argument 'param3'", 2)
+    end
+
+    local memory = args and args.memory or (device.gpu and "gpu" or "host")
+
+    local label = args and args.label and utility.assert_type(args.label, "string")
+    label = label and (" (%s)"):format(label) or ""
+    local logger = log.logger({label =  "custom" .. label})
+
+    -- derive number of species from parameter matrices
+    local species = args and args.species
+        or (type(sigma) == "table" and #sigma)
+        or (type(param2) == "table" and #param2)    -- FIXME rename param[2-3]
+        or (type(param3) == "table" and #param3)
+        or 1
+    utility.assert_type(species, "number")
+
+    -- promote scalars to matrices
+    if type(sigma) == "number" then
+        sigma = numeric.scalar_matrix(species, species, sigma)
+    end
+    -- FIXME rename param[2-3]
+    if type(param2) == "number" then
+        param2 = numeric.scalar_matrix(species, species, param2)
+    end
+    if type(param3) == "number" then
+        param3 = numeric.scalar_matrix(species, species, param3)
+    end
+
+    -- construct instance
+    if not custom[memory] then
+        error(("unsupported memory type '%s'"):format(memory), 2)
+    end
+    local self = custom[memory](sigma, param2, param3, logger)
+
+    -- add description for profiler
+    self.description = property(function()
+        return "custom potential" .. label
+    end)
+
+    -- store number of species
+    self.species = property(function(self) return species end)
+
+    -- store memory location
+    self.memory = property(function(self) return memory end)
+
+    -- add logger instance
+    self.logger = property(function()
+        return logger
+    end)
+
+    self.truncate = adapters.truncate
+    self.modify = adapters.modify
+
+    return self
+end)
+
+return M

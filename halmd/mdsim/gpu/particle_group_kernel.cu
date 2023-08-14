@@ -23,38 +23,22 @@
 #include <halmd/utility/gpu/texfetch.cuh>
 #include <halmd/utility/tuple.hpp>
 
-/** positions, types */
-static texture<float4> r_;
-/** velocities, masses */
-static texture<float4> v_;
-
 namespace halmd {
 namespace mdsim {
 namespace gpu {
 namespace particle_group_kernel {
 
-/** positions, types */
-static texture<float4> r_;
-/** velocities, masses */
-static texture<float4> v_;
-
-/** minimum image vectors */
-template<int dimension>
-struct image
-{
-    // instantiate a separate texture for each aligned vector type
-    typedef texture<typename particle_group_wrapper<dimension, float>::aligned_vector_type> type;
-    static type tex_;
-};
-// instantiate static members
-template<int dimension> image<dimension>::type image<dimension>::tex_;
-
 /**
- * copy a subset of a particle instance (particle group) to another particle instance
+ * copy a subset of a particle instance (particle group) to another particle
+ * instance
  */
-template <typename float_type, typename vector_type, typename ptr_type, typename aligned_vector_type>
+template <typename float_type, typename vector_type, typename ptr_type,
+    typename aligned_vector_type>
 __global__ void particle_group_to_particle(
-    unsigned int const* g_index
+    cudaTextureObject_t r
+  , cudaTextureObject_t image
+  , cudaTextureObject_t v
+  , unsigned int const* g_index
   , ptr_type g_r
   , aligned_vector_type* g_image
   , ptr_type g_v
@@ -67,23 +51,21 @@ __global__ void particle_group_to_particle(
         int const i = g_index[GTID];
 
         // copy position and velocity as float4 values, and image vector
-        g_r[GTID] = texFetch<float_type>::fetch(r_, i);
-        g_v[GTID] = texFetch<float_type>::fetch(v_, i);
+        g_r[GTID] = texFetch<float4, float_type>::fetch(r, i);
+        g_v[GTID] = texFetch<float4, float_type>::fetch(v, i);
 
         // copy image vector with its type depending on the space dimension
-        g_image[GTID] = tex1Dfetch(image<dimension>::tex_, i);
+        //g_image[GTID] = tex1Dfetch<typename particle_group_wrapper<dimension, float>::aligned_vector_type>(image, i);
+        g_image[GTID] = tex1Dfetch<aligned_vector_type>(image, i);
     }
 }
 
 } // namespace particle_group_kernel
 
 template <int dimension, typename float_type>
-particle_group_wrapper<dimension, float_type> const
+particle_group_wrapper<dimension, float_type>
 particle_group_wrapper<dimension, float_type>::kernel = {
-    particle_group_kernel::r_
-  , particle_group_kernel::image<dimension>::tex_
-  , particle_group_kernel::v_
-  , particle_group_kernel::particle_group_to_particle<float_type, fixed_vector<float_type, dimension>, ptr_type>
+    particle_group_kernel::particle_group_to_particle<float_type, fixed_vector<float_type, dimension>, ptr_type>
 };
 
 template class particle_group_wrapper<3, float>;

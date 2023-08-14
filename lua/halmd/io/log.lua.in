@@ -26,6 +26,7 @@ local logging   = assert(libhalmd.io.logging)
 local level = {
     error       = assert(logging.error),
     warning     = assert(logging.warning),
+    message     = assert(logging.message),
     info        = assert(logging.info),
     debug       = assert(logging.debug),
     trace       = assert(logging.trace),
@@ -51,8 +52,9 @@ local M = {}
 -- Severity   Description
 -- =========  ===========================================
 -- error      An error has occurred, and HALMD will abort
--- warning    Warn user, e.g. when using single precision
--- info       Normal logging level, e.g. for parameters
+-- warning    Warn user, e.g., when using single precision
+-- message    Normal logging level, e.g., for simulation progress and parameters
+-- info       More verbose logging level, e.g., for internal parameters
 -- debug      Low frequency debugging messages
 -- trace      High frequency debugging messages
 -- =========  ===========================================
@@ -66,9 +68,9 @@ local M = {}
 --    function my_simulation(args)
 --        log.info("box edge lengths: %s", table.concat(args.length, " "))
 --
---        log.info("equilibrate system for %d steps", args.equilibrate)
+--        log.message("equilibrate system for %d steps", args.equilibrate)
 --
---        log.info("measure mean-square displacement for %d steps", args.steps)
+--        log.message("measure mean-square displacement for %d steps", args.steps)
 --    end
 
 ---
@@ -81,6 +83,12 @@ local M = {}
 -- .. function:: warning(format, ...)
 --
 --    Log message with severity ``warning``.
+--
+--    :param string format: see `string.format`_
+--
+-- .. function:: message(format, ...)
+--
+--    Log message with severity ``message``.
 --
 --    :param string format: see `string.format`_
 --
@@ -138,7 +146,7 @@ end
 --
 --    local M = module(function(args)
 --        -- logs message with prefix "my_potential: "
---        logger:info("parameters: %g %g %g", 1.0, 0.88, 0.8)
+--        logger:message("parameters: %g %g %g", 1.0, 0.88, 0.8)
 --
 --        -- pass module logger to C++ constructor
 --        local self = my_potential(..., logger)
@@ -165,6 +173,12 @@ end
 --    .. method:: warning(format, ...)
 --
 --       Log message with severity ``warning``.
+--
+--       :param string format: see `string.format`_
+--
+--    .. method:: message(format, ...)
+--
+--       Log message with severity ``message``.
 --
 --       :param string format: see `string.format`_
 --
@@ -229,7 +243,7 @@ end
 --
 -- :param string severity: logging severity level
 --
--- If ``severity`` is ``nil``, returns default ``info``.
+-- If ``severity`` is ``nil``, returns default ``message``.
 --
 local function logging_severity(severity)
     local result
@@ -239,7 +253,7 @@ local function logging_severity(severity)
             error(("undefined severity level '%s'"):format(severity), 2)
         end
     else
-        result = assert(level.info)
+        result = assert(level.message)
     end
     return result
 end
@@ -247,7 +261,7 @@ end
 ---
 -- Log messages with equal or higher ``severity`` to console.
 --
--- If ``severity`` is not specified, it is set to ``info``.
+-- If ``severity`` is not specified, it is set to ``message``.
 --
 -- :param table args: keyword arguments (optional)
 -- :param string args.severity: log severity level (optional)
@@ -267,7 +281,7 @@ end
 ---
 -- Log messages with equal or higher ``severity`` to file.
 --
--- If ``severity`` is not specified, it is set to ``info``.
+-- If ``severity`` is not specified, it is set to ``message``.
 --
 -- If a file with ``filename`` exists, it is truncated.
 --

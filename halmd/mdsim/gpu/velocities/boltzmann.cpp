@@ -38,8 +38,6 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
   : particle_(particle)
   , random_(random)
   , logger_(logger)
-  // select thread-dependent implementation
-  , gaussian_impl_(get_gaussian_impl(random_->rng().dim.threads_per_block()))
   // allocate GPU memory
   , g_mv_(random_->rng().dim.blocks_per_grid())
   , g_mv2_(random_->rng().dim.blocks_per_grid())
@@ -53,26 +51,6 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set_temperature(do
 {
     temp_ =  temperature;
     LOG("temperature of Boltzmann distribution: " << float(temp_));
-}
-
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-typename boltzmann<dimension, float_type, RandomNumberGenerator>::gaussian_impl_type
-boltzmann<dimension, float_type, RandomNumberGenerator>::get_gaussian_impl(int threads)
-{
-    switch (threads) {
-      case 512:
-        return wrapper_type::kernel.gaussian_impl_512;
-      case 256:
-        return wrapper_type::kernel.gaussian_impl_256;
-      case 128:
-        return wrapper_type::kernel.gaussian_impl_128;
-      case 64:
-        return wrapper_type::kernel.gaussian_impl_64;
-      case 32:
-        return wrapper_type::kernel.gaussian_impl_32;
-      default:
-        throw std::logic_error("invalid gaussian thread count");
-    }
 }
 
 /**
@@ -97,12 +75,8 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 
     // generate Maxwell-Boltzmann distributed velocities,
     // assuming equal (unit) mass for all particle types
-    cuda::configure(
-        random_->rng().dim.grid
-      , random_->rng().dim.block
-      , random_->rng().dim.threads_per_block() * (2 + dimension) * sizeof(dsfloat)
-    );
-    gaussian_impl_(
+    wrapper_type::kernel.gaussian.configure(random_->rng().dim.grid, random_->rng().dim.block);
+    wrapper_type::kernel.gaussian(
         velocity->data()
       , particle_->nparticle()
       , particle_->dim().threads()
@@ -116,8 +90,8 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 
     // set centre of mass velocity to zero and
     // rescale velocities to accurate temperature
-    cuda::configure(particle_->dim().grid, particle_->dim().block,
-      g_mv2_.size() * (2 + dimension) * sizeof(dsfloat));
+    wrapper_type::kernel.shift.configure(particle_->dim().grid,
+      particle_->dim().block, g_mv2_.size() * (2 + dimension) * sizeof(dsfloat));
     wrapper_type::kernel.shift(
         velocity->data()
       , particle_->nparticle()
@@ -130,7 +104,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     );
     cuda::thread::synchronize();
 
-    LOG_TRACE("assigned Boltzmann-distributed velocities");
+    LOG_DEBUG("assigned Boltzmann-distributed velocities");
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>

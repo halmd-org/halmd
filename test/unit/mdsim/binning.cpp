@@ -29,7 +29,12 @@
 
 #include <algorithm>
 #include <boost/numeric/ublas/banded.hpp>
-#include <boost/function_output_iterator.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION < 106600
+# include <boost/function_output_iterator.hpp>
+#else
+# include <boost/iterator/function_output_iterator.hpp>
+#endif
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <cmath>
@@ -289,12 +294,11 @@ BOOST_AUTO_TEST_SUITE( host )
 BOOST_AUTO_TEST_SUITE_END()
 
 #ifdef HALMD_WITH_GPU
-BOOST_AUTO_TEST_SUITE( gpu )
+BOOST_FIXTURE_TEST_SUITE( gpu, set_cuda_device )
     BOOST_AUTO_TEST_SUITE( two )
 # ifdef USE_GPU_SINGLE_PRECISION
         BOOST_DATA_TEST_CASE( type_float, dataset, unit, compression ) {
             typedef halmd::mdsim::gpu::binning<2, float> binning_type;
-            //set_cuda_device device;
             test_non_uniform_density<binning_type>(
                 {2 * unit, 3 * unit} // non-square box with coprime edge lengths
               , cell_length
@@ -305,7 +309,6 @@ BOOST_AUTO_TEST_SUITE( gpu )
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
         BOOST_DATA_TEST_CASE( type_dsfloat, dataset, unit, compression) {
             typedef halmd::mdsim::gpu::binning<2, halmd::dsfloat> binning_type;
-            //set_cuda_device device;
             test_non_uniform_density<binning_type>(
                 {2 * unit, 3 * unit} // non-square box with coprime edge lengths
               , cell_length
@@ -318,7 +321,6 @@ BOOST_AUTO_TEST_SUITE( gpu )
 # ifdef USE_GPU_SINGLE_PRECISION
         BOOST_DATA_TEST_CASE( type_float, dataset, unit, compression ) {
             typedef halmd::mdsim::gpu::binning<3, float> binning_type;
-            //set_cuda_device device;
             test_non_uniform_density<binning_type>(
                 {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
               , cell_length
@@ -329,7 +331,6 @@ BOOST_AUTO_TEST_SUITE( gpu )
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
         BOOST_DATA_TEST_CASE( type_dsfloat, dataset, unit, compression) {
             typedef halmd::mdsim::gpu::binning<3, halmd::dsfloat> binning_type;
-            //set_cuda_device device;
             test_non_uniform_density<binning_type>(
                 {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
               , cell_length

@@ -39,143 +39,14 @@ struct reduction_function
     typedef void (type)(iterator const, difference_type, accumulator_type*, accumulator_type);
 };
 
-template <unsigned int threads, typename accumulator_type>
-struct reduction_kernel
-{
-    typedef typename reduction_function<accumulator_type>::type function_type;
-    cuda::function<function_type> reduce;
-    static reduction_kernel const kernel;
-};
-
 } // namespace detail
 
-template <typename accumulator_type, unsigned int max_threads = shared_memory_max_threads<accumulator_type>::value>
-struct reduction_kernel;
-
 template <typename accumulator_type>
-struct reduction_kernel<accumulator_type, 1024>
+struct reduction_kernel
 {
     typedef typename detail::reduction_function<accumulator_type>::type function_type;
-
-    static cuda::function<function_type> const& reduce(unsigned int threads)
-    {
-        switch (threads) {
-          case 1024:
-            return detail::reduction_kernel<1024, accumulator_type>::kernel.reduce;
-          case 512:
-            return detail::reduction_kernel<512, accumulator_type>::kernel.reduce;
-          case 256:
-            return detail::reduction_kernel<256, accumulator_type>::kernel.reduce;
-          case 128:
-            return detail::reduction_kernel<128, accumulator_type>::kernel.reduce;
-          case 64:
-            return detail::reduction_kernel<64, accumulator_type>::kernel.reduce;
-          case 32:
-            return detail::reduction_kernel<32, accumulator_type>::kernel.reduce;
-          default:
-            throw std::logic_error("invalid number of reduction threads");
-        }
-    }
-};
-
-template <typename accumulator_type>
-struct reduction_kernel<accumulator_type, 512>
-{
-    typedef typename detail::reduction_function<accumulator_type>::type function_type;
-
-    static cuda::function<function_type> const& reduce(unsigned int threads)
-    {
-        switch (threads) {
-          case 512:
-            return detail::reduction_kernel<512, accumulator_type>::kernel.reduce;
-          case 256:
-            return detail::reduction_kernel<256, accumulator_type>::kernel.reduce;
-          case 128:
-            return detail::reduction_kernel<128, accumulator_type>::kernel.reduce;
-          case 64:
-            return detail::reduction_kernel<64, accumulator_type>::kernel.reduce;
-          case 32:
-            return detail::reduction_kernel<32, accumulator_type>::kernel.reduce;
-          default:
-            throw std::logic_error("invalid number of reduction threads");
-        }
-    }
-};
-
-template <typename accumulator_type>
-struct reduction_kernel<accumulator_type, 256>
-{
-    typedef typename detail::reduction_function<accumulator_type>::type function_type;
-
-    static cuda::function<function_type> const& reduce(unsigned int threads)
-    {
-        switch (threads) {
-          case 256:
-            return detail::reduction_kernel<256, accumulator_type>::kernel.reduce;
-          case 128:
-            return detail::reduction_kernel<128, accumulator_type>::kernel.reduce;
-          case 64:
-            return detail::reduction_kernel<64, accumulator_type>::kernel.reduce;
-          case 32:
-            return detail::reduction_kernel<32, accumulator_type>::kernel.reduce;
-          default:
-            throw std::logic_error("invalid number of reduction threads");
-        }
-    }
-};
-
-template <typename accumulator_type>
-struct reduction_kernel<accumulator_type, 128>
-{
-    typedef typename detail::reduction_function<accumulator_type>::type function_type;
-
-    static cuda::function<function_type> const& reduce(unsigned int threads)
-    {
-        switch (threads) {
-          case 128:
-            return detail::reduction_kernel<128, accumulator_type>::kernel.reduce;
-          case 64:
-            return detail::reduction_kernel<64, accumulator_type>::kernel.reduce;
-          case 32:
-            return detail::reduction_kernel<32, accumulator_type>::kernel.reduce;
-          default:
-            throw std::logic_error("invalid number of reduction threads");
-        }
-    }
-};
-
-template <typename accumulator_type>
-struct reduction_kernel<accumulator_type, 64>
-{
-    typedef typename detail::reduction_function<accumulator_type>::type function_type;
-
-    static cuda::function<function_type> const& reduce(unsigned int threads)
-    {
-        switch (threads) {
-          case 64:
-            return detail::reduction_kernel<64, accumulator_type>::kernel.reduce;
-          case 32:
-            return detail::reduction_kernel<32, accumulator_type>::kernel.reduce;
-          default:
-            throw std::logic_error("invalid number of reduction threads");
-        }
-    }
-};
-
-template <typename accumulator_type>
-struct reduction_kernel<accumulator_type, 32>
-{
-    typedef typename detail::reduction_function<accumulator_type>::type function_type;
-
-    static cuda::function<function_type> const& reduce(unsigned int threads)
-    {
-        switch (threads) {
-          case 32:
-            return detail::reduction_kernel<32, accumulator_type>::kernel.reduce;
-          default:
-            throw std::logic_error("invalid number of reduction threads");
-        }
-    }
+    cuda::function<function_type> reduce;
+    static reduction_kernel kernel;
 };
 
 } // namespace halmd

@@ -39,7 +39,7 @@ template <
 struct apply_wrapper
 {
     cuda::function<void (coalesced_input_type const*, coalesced_output_type*, unsigned int)> apply;
-    static apply_wrapper const kernel;
+    static apply_wrapper kernel;
 };
 
 } // namespace algorithm

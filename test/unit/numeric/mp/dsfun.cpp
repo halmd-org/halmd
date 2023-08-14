@@ -46,31 +46,31 @@ BOOST_GLOBAL_FIXTURE( set_cuda_device );
 BOOST_AUTO_TEST_CASE(test_dsfun_add)
 {
     cuda::config dim(BLOCKS, THREADS);
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-    cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<dsfloat> h_dsp(h_a.size());
-    cuda::vector<dsfloat> g_a(h_dsp.size());
-    cuda::vector<dsfloat> g_b(h_dsp.size());
-    cuda::vector<dsfloat> g_c(h_dsp.size());
+    cuda::memory::host::vector<double> h_a(BLOCKS * THREADS);
+    cuda::memory::host::vector<double> h_b(h_a.size());
+    cuda::memory::host::vector<double> h_c(h_a.size());
+    cuda::memory::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::memory::device::vector<dsfloat> g_a(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_b(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_c(h_dsp.size());
 
     // generate double-precision random numbers on host
     srand48(42);
     std::generate(h_a.begin(), h_a.end(), drand48);
     // convert to double-single precision numbers
     std::copy(h_a.begin(), h_a.end(), h_dsp.begin());
-    cuda::copy(h_dsp, g_a);
+    cuda::copy(h_dsp.begin(), h_dsp.end(), g_a.begin());
 
     std::generate(h_b.begin(), h_b.end(), drand48);
     std::copy(h_b.begin(), h_b.end(), h_dsp.begin());
-    cuda::copy(h_dsp, g_b);
+    cuda::copy(h_dsp.begin(), h_dsp.end(), g_b.begin());
 
-    cuda::memset(g_c, 0);
-    cuda::configure(dim.grid, dim.block);
+    cuda::memset(g_c.begin(), g_c.end(), 0);
+    kernel_add.configure(dim.grid, dim.block);
     kernel_add(g_a, g_b, g_c);
     cuda::thread::synchronize();
 
-    cuda::copy(g_c, h_dsp);
+    cuda::copy(g_c.begin(), g_c.end(), h_dsp.begin());
     std::copy(h_dsp.begin(), h_dsp.end(), h_c.begin());
 
     for (size_t i = 0; i < h_c.size(); ++i) {
@@ -84,31 +84,31 @@ BOOST_AUTO_TEST_CASE(test_dsfun_add)
 BOOST_AUTO_TEST_CASE(test_dsfun_sub)
 {
     cuda::config dim(BLOCKS, THREADS);
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-    cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<dsfloat> h_dsp(h_a.size());
-    cuda::vector<dsfloat> g_a(h_dsp.size());
-    cuda::vector<dsfloat> g_b(h_dsp.size());
-    cuda::vector<dsfloat> g_c(h_dsp.size());
+    cuda::memory::host::vector<double> h_a(BLOCKS * THREADS);
+    cuda::memory::host::vector<double> h_b(h_a.size());
+    cuda::memory::host::vector<double> h_c(h_a.size());
+    cuda::memory::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::memory::device::vector<dsfloat> g_a(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_b(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_c(h_dsp.size());
 
     // generate double-precision random numbers on host
     srand48(42);
     std::generate(h_a.begin(), h_a.end(), drand48);
     // convert to double-single precision numbers
     std::copy(h_a.begin(), h_a.end(), h_dsp.begin());
-    cuda::copy(h_dsp, g_a);
+    cuda::copy(h_dsp.begin(), h_dsp.end(), g_a.begin());
 
     std::generate(h_b.begin(), h_b.end(), drand48);
     std::copy(h_b.begin(), h_b.end(), h_dsp.begin());
-    cuda::copy(h_dsp, g_b);
+    cuda::copy(h_dsp.begin(), h_dsp.end(), g_b.begin());
 
-    cuda::memset(g_c, 0);
-    cuda::configure(dim.grid, dim.block);
+    cuda::memset(g_c.begin(), g_c.end(), 0);
+    kernel_sub.configure(dim.grid, dim.block);
     kernel_sub(g_a, g_b, g_c);
     cuda::thread::synchronize();
 
-    cuda::copy(g_c, h_dsp);
+    cuda::copy(g_c.begin(), g_c.end(), h_dsp.begin());
     std::copy(h_dsp.begin(), h_dsp.end(), h_c.begin());
 
     for (size_t i = 0; i < h_c.size(); ++i) {
@@ -122,31 +122,31 @@ BOOST_AUTO_TEST_CASE(test_dsfun_sub)
 BOOST_AUTO_TEST_CASE(test_dsfun_mul)
 {
     cuda::config dim(BLOCKS, THREADS);
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-    cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<dsfloat> h_dsp(h_a.size());
-    cuda::vector<dsfloat> g_a(h_dsp.size());
-    cuda::vector<dsfloat> g_b(h_dsp.size());
-    cuda::vector<dsfloat> g_c(h_dsp.size());
+    cuda::memory::host::vector<double> h_a(BLOCKS * THREADS);
+    cuda::memory::host::vector<double> h_b(h_a.size());
+    cuda::memory::host::vector<double> h_c(h_a.size());
+    cuda::memory::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::memory::device::vector<dsfloat> g_a(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_b(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_c(h_dsp.size());
 
     // generate double-precision random numbers on host
     srand48(42);
     std::generate(h_a.begin(), h_a.end(), drand48);
     // convert to double-single precision numbers
     std::copy(h_a.begin(), h_a.end(), h_dsp.begin());
-    cuda::copy(h_dsp, g_a);
+    cuda::copy(h_dsp.begin(), h_dsp.end(), g_a.begin());
 
     std::generate(h_b.begin(), h_b.end(), drand48);
     std::copy(h_b.begin(), h_b.end(), h_dsp.begin());
-    cuda::copy(h_dsp, g_b);
+    cuda::copy(h_dsp.begin(), h_dsp.end(), g_b.begin());
 
-    cuda::memset(g_c, 0);
-    cuda::configure(dim.grid, dim.block);
+    cuda::memset(g_c.begin(), g_c.end(), 0);
+    kernel_mul.configure(dim.grid, dim.block);
     kernel_mul(g_a, g_b, g_c);
     cuda::thread::synchronize();
 
-    cuda::copy(g_c, h_dsp);
+    cuda::copy(g_c.begin(), g_c.end(), h_dsp.begin());
     std::copy(h_dsp.begin(), h_dsp.end(), h_c.begin());
 
     for (size_t i = 0; i < h_c.size(); ++i) {
@@ -160,26 +160,26 @@ BOOST_AUTO_TEST_CASE(test_dsfun_mul)
 BOOST_AUTO_TEST_CASE(test_dsfun_mulss)
 {
     cuda::config dim(BLOCKS, THREADS);
-    cuda::host::vector<float> h_a(BLOCKS * THREADS);
-    cuda::host::vector<float> h_b(h_a.size());
-    cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<dsfloat> h_dsp(h_a.size());
-    cuda::vector<float> g_a(h_dsp.size());
-    cuda::vector<float> g_b(h_dsp.size());
-    cuda::vector<dsfloat> g_c(h_dsp.size());
+    cuda::memory::host::vector<float> h_a(BLOCKS * THREADS);
+    cuda::memory::host::vector<float> h_b(h_a.size());
+    cuda::memory::host::vector<double> h_c(h_a.size());
+    cuda::memory::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::memory::device::vector<float> g_a(h_dsp.size());
+    cuda::memory::device::vector<float> g_b(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_c(h_dsp.size());
 
     srand48(42);
     std::generate(h_a.begin(), h_a.end(), drand48);
-    cuda::copy(h_a, g_a);
+    cuda::copy(h_a.begin(), h_a.end(), g_a.begin());
     std::generate(h_b.begin(), h_b.end(), drand48);
-    cuda::copy(h_b, g_b);
+    cuda::copy(h_b.begin(), h_b.end(), g_b.begin());
 
-    cuda::memset(g_c, 0);
-    cuda::configure(dim.grid, dim.block);
+    cuda::memset(g_c.begin(), g_c.end(), 0);
+    kernel_mulss.configure(dim.grid, dim.block);
     kernel_mulss(g_a, g_b, g_c);
     cuda::thread::synchronize();
 
-    cuda::copy(g_c, h_dsp);
+    cuda::copy(g_c.begin(), g_c.end(), h_dsp.begin());
     std::copy(h_dsp.begin(), h_dsp.end(), h_c.begin());
 
     for (size_t i = 0; i < h_c.size(); ++i) {
@@ -193,31 +193,31 @@ BOOST_AUTO_TEST_CASE(test_dsfun_mulss)
 BOOST_AUTO_TEST_CASE(test_dsfun_div)
 {
     cuda::config dim(BLOCKS, THREADS);
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-    cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<dsfloat> h_dsp(h_a.size());
-    cuda::vector<dsfloat> g_a(h_dsp.size());
-    cuda::vector<dsfloat> g_b(h_dsp.size());
-    cuda::vector<dsfloat> g_c(h_dsp.size());
+    cuda::memory::host::vector<double> h_a(BLOCKS * THREADS);
+    cuda::memory::host::vector<double> h_b(h_a.size());
+    cuda::memory::host::vector<double> h_c(h_a.size());
+    cuda::memory::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::memory::device::vector<dsfloat> g_a(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_b(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_c(h_dsp.size());
 
     // generate double-precision random numbers on host
     srand48(42);
     std::generate(h_a.begin(), h_a.end(), drand48);
     // convert to double-single precision numbers
     std::copy(h_a.begin(), h_a.end(), h_dsp.begin());
-    cuda::copy(h_dsp, g_a);
+    cuda::copy(h_dsp.begin(), h_dsp.end(), g_a.begin());
 
     std::generate(h_b.begin(), h_b.end(), drand48);
     std::copy(h_b.begin(), h_b.end(), h_dsp.begin());
-    cuda::copy(h_dsp, g_b);
+    cuda::copy(h_dsp.begin(), h_dsp.end(), g_b.begin());
 
-    cuda::memset(g_c, 0);
-    cuda::configure(dim.grid, dim.block);
+    cuda::memset(g_c.begin(), g_c.end(), 0);
+    kernel_div.configure(dim.grid, dim.block);
     kernel_div(g_a, g_b, g_c);
     cuda::thread::synchronize();
 
-    cuda::copy(g_c, h_dsp);
+    cuda::copy(g_c.begin(), g_c.end(), h_dsp.begin());
     std::copy(h_dsp.begin(), h_dsp.end(), h_c.begin());
 
     for (size_t i = 0; i < h_c.size(); ++i) {
@@ -231,25 +231,25 @@ BOOST_AUTO_TEST_CASE(test_dsfun_div)
 BOOST_AUTO_TEST_CASE(test_dsfun_sqrt)
 {
     cuda::config dim(BLOCKS, THREADS);
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-    cuda::host::vector<dsfloat> h_dsp(h_a.size());
-    cuda::vector<dsfloat> g_a(h_dsp.size());
-    cuda::vector<dsfloat> g_b(h_dsp.size());
+    cuda::memory::host::vector<double> h_a(BLOCKS * THREADS);
+    cuda::memory::host::vector<double> h_b(h_a.size());
+    cuda::memory::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::memory::device::vector<dsfloat> g_a(h_dsp.size());
+    cuda::memory::device::vector<dsfloat> g_b(h_dsp.size());
 
     // generate double-precision random numbers on host
     srand48(42);
     std::generate(h_a.begin(), h_a.end(), drand48);
     // convert to double-single precision numbers
     std::copy(h_a.begin(), h_a.end(), h_dsp.begin());
-    cuda::copy(h_dsp, g_a);
+    cuda::copy(h_dsp.begin(), h_dsp.end(), g_a.begin());
 
-    cuda::memset(g_b, 0);
-    cuda::configure(dim.grid, dim.block);
+    cuda::memset(g_b.begin(), g_b.end(), 0);
+    kernel_sqrt.configure(dim.grid, dim.block);
     kernel_sqrt(g_a, g_b);
     cuda::thread::synchronize();
 
-    cuda::copy(g_b, h_dsp);
+    cuda::copy(g_b.begin(), g_b.end(), h_dsp.begin());
     std::copy(h_dsp.begin(), h_dsp.end(), h_b.begin());
 
     for (size_t i = 0; i < h_b.size(); ++i) {

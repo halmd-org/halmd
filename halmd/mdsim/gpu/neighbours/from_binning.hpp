@@ -1,7 +1,8 @@
 /*
- * Copyright © 2008-2015  Felix Höfling
- * Copyright © 2015       Nicolas Höft
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2015 Felix Höfling
+ * Copyright © 2021      Jaslo Ziska
+ * Copyright © 2015      Nicolas Höft
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -78,7 +79,7 @@ public:
       , matrix_type const& r_cut
       , double skin
       , double cell_occupancy = defaults::occupancy()
-      , algorithm preferred_algorithm = shared_mem
+      , std::pair<algorithm, bool> options = std::make_pair(shared_mem, false)
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -125,6 +126,11 @@ public:
         return stride_;
     }
 
+    virtual bool unroll_force_loop() const
+    {
+        return unroll_force_loop_;
+    }
+
     //! returns true if the binning modules are compatible with the neighbour list module
     static bool is_binning_compatible(
         std::shared_ptr<binning_type const> binning1
@@ -158,16 +164,18 @@ private:
 
     /** neighbour list skin in MD units */
     float r_skin_;
-    /** maximum cutoff length */
+    /** maximum cutoff distance */
     float r_cut_max_;
-    /** (cutoff lengths + neighbour list skin)² */
+    /** (cutoff distances + neighbour list skin)² */
     matrix_type rr_cut_skin_;
-    /** (cutoff lengths + neighbour list skin)² */
-    cuda::vector<float> g_rr_cut_skin_;
+    /** (cutoff distances + neighbour list skin)² */
+    cuda::memory::device::vector<float> g_rr_cut_skin_;
     /** FIXME average desired cell occupancy */
     float nu_cell_;
     /** preferred algorithm for update */
     algorithm preferred_algorithm_;
+    /** transpose list */
+    bool unroll_force_loop_;
     /** neighbour lists */
     cache<array_type> g_neighbour_;
     /** cache observer for neighbour list update */

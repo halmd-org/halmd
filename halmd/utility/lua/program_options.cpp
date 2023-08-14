@@ -23,6 +23,7 @@
 #include <boost/algorithm/string/find_iterator.hpp>
 #include <boost/algorithm/string/finder.hpp>
 #include <boost/any.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
@@ -394,7 +395,9 @@ variables_map_notify(lua_State* L, po::variables_map& vm, luaponte::object const
 template <typename T>
 static void typed_value(lua_State* L, char const* name, char const* value, char const* multi_value)
 {
+    using namespace boost::placeholders;
     using namespace luaponte;
+
     module(L, "libhalmd")
     [
         namespace_("program_options")
@@ -430,7 +433,9 @@ static void typed_value(lua_State* L, char const* name, char const* value, char 
 
 HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
 {
+    using namespace boost::placeholders;
     using namespace luaponte;
+
     module(L, "libhalmd")
     [
         namespace_("program_options")
@@ -493,7 +498,10 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
                 .def(constructor<>())
                 .def("store", &variables_map_store)
                 .def("notify", &variables_map_notify)
-                .def("count", &po::variables_map::count)
+                .def("count",
+                     (po::variables_map::size_type
+                      (po::variables_map::*)(const po::variables_map::key_type&) const)
+                     &po::variables_map::count)
         ]
     ];
 

@@ -21,7 +21,7 @@
 
 #include <algorithm>
 #include <tuple>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <halmd/algorithm/multi_range.hpp>
 #include <halmd/mdsim/host/positions/excluded_volume.hpp>
@@ -59,7 +59,7 @@ void excluded_volume<dimension, float_type>::exclude_sphere(
     multi_range_for_each(
         lower
       , upper
-      , bind(&excluded_volume::exclude_sphere_from_cell, this, centre, diameter, _1)
+      , bind(&excluded_volume::exclude_sphere_from_cell, this, centre, diameter, boost::placeholders::_1)
     );
 }
 
@@ -93,7 +93,7 @@ bool excluded_volume<dimension, float_type>::place_sphere(
     index_type result = multi_range_find_if(
         lower
       , upper
-      , bind(&excluded_volume::place_cell, this, centre, diameter, _1)
+      , bind(&excluded_volume::place_cell, this, centre, diameter, boost::placeholders::_1)
     );
     return std::equal(upper.begin(), upper.end(), result.begin());
 }

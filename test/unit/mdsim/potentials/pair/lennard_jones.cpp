@@ -47,6 +47,7 @@
 # include <halmd/mdsim/gpu/potentials/pair/lennard_jones.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
+# include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 #include <test/tools/dsfloat.hpp>
@@ -250,7 +251,7 @@ struct make_potential<mdsim::gpu::potentials::pair::truncations::smooth_r4<base_
 
 /**
  * The tolerance for the GPU tests can be overridden for a specific
- * kind of potential trunctation.
+ * kind of potential truncation.
  *
  * This is necessary as the subtraction in the force_shifted potential
  * truncation is ill-conditioned.
@@ -422,10 +423,12 @@ void lennard_jones<float_type>::test()
         vector_type f = f_list[i];
 
         // reference values from host module
-        float_type fval, en_pot_;
-        std::tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
-        // the GPU force module stores only a fraction of these values
-        en_pot_ /= 2;
+        float_type fval(0), en_pot_(0);
+        if (host_potential->within_range(inner_prod(r, r), type1, type2)) {
+            std::tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
+            // the GPU force module stores only a fraction of these values
+            en_pot_ /= 2;
+        }
 
         BOOST_CHECK_SMALL(float_type(norm_inf(fval * r - f)), float_type(norm_inf(f)) * tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot_, float_type(en_pot[i]), 4 * tolerance);
@@ -474,12 +477,12 @@ lennard_jones<float_type>::lennard_jones()
 }
 
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( lennard_jones_gpu_dsfloat, device ) {
+BOOST_FIXTURE_TEST_CASE( lennard_jones_gpu_dsfloat, set_cuda_device ) {
     lennard_jones<dsfloat>().test();
 }
 # endif
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( lennard_jones_gpu_float, device ) {
+BOOST_FIXTURE_TEST_CASE( lennard_jones_gpu_float, set_cuda_device ) {
     lennard_jones<float>().test();
 }
 # endif

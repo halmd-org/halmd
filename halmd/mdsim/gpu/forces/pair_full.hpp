@@ -52,7 +52,7 @@ public:
     typedef signal_type::slot_function_type slot_function_type;
 
     pair_full(
-        std::shared_ptr<potential_type const> potential
+        std::shared_ptr<potential_type> potential
       , std::shared_ptr<particle_type> particle1
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
@@ -106,7 +106,7 @@ private:
     void compute_aux_();
 
     /** pair potential */
-    std::shared_ptr<potential_type const> potential_;
+    std::shared_ptr<potential_type> potential_;
     /** state of first system */
     std::shared_ptr<particle_type> particle1_;
     /** state of second system */
@@ -142,7 +142,7 @@ private:
 
 template <int dimension, typename float_type, typename potential_type>
 pair_full<dimension, float_type, potential_type>::pair_full(
-    std::shared_ptr<potential_type const> potential
+    std::shared_ptr<potential_type> potential
   , std::shared_ptr<particle_type> particle1
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
@@ -211,15 +211,14 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
     position_array_type const& position2 = read_cache(particle2_->position());
     auto force = make_cache_mutable(particle1_->mutable_force());
 
-    LOG_TRACE("compute forces");
+    LOG_DEBUG("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
 
-    potential_->bind_textures();
-
     configure_kernel(gpu_wrapper::kernel.compute, particle1_->dim(), true);
     gpu_wrapper::kernel.compute(
-        position1.data()
+        potential_->get_gpu_potential()
+      , position1.data()
       , position2.data()
       , particle2_->nparticle()
       , &*force->begin()
@@ -243,11 +242,9 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
     auto en_pot = make_cache_mutable(particle1_->mutable_potential_energy());
     auto stress_pot = make_cache_mutable(particle1_->mutable_stress_pot());
 
-    LOG_TRACE("compute forces with auxiliary variables");
+    LOG_DEBUG("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute_aux);
-
-    potential_->bind_textures();
 
     float weight = aux_weight_;
     if (particle1_ == particle2_) {
@@ -256,7 +253,8 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
 
     configure_kernel(gpu_wrapper::kernel.compute_aux, particle1_->dim(), true);
     gpu_wrapper::kernel.compute_aux(
-        position1.data()
+        potential_->get_gpu_potential()
+      , position1.data()
       , position2.data()
       , particle2_->nparticle()
       , &*force->begin()
@@ -295,7 +293,7 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
                     .def_readonly("runtime", &pair_full::runtime_)
 
               , def("pair_full", &std::make_shared<pair_full,
-                    std::shared_ptr<potential_type const>
+                    std::shared_ptr<potential_type>
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>

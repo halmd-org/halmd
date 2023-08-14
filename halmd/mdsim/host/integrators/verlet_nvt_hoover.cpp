@@ -90,7 +90,7 @@ void verlet_nvt_hoover<dimension, float_type>::set_temperature(double temperatur
     set_mass(mass);
 
     LOG("temperature of heat bath: " << temperature_);
-    LOG_DEBUG("target kinetic energy: " << en_kin_target_2_ / particle_->nparticle());
+    LOG_INFO("target kinetic energy: " << en_kin_target_2_ / particle_->nparticle());
 }
 
 template <int dimension, typename float_type>
@@ -111,7 +111,7 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
 
-    LOG_TRACE("update positions and velocities: first leapfrog half-step")
+    LOG_DEBUG("update positions and velocities: first leapfrog half-step")
     scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the force!
@@ -140,7 +140,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
 
-    LOG_TRACE("update velocities: second leapfrog half-step")
+    LOG_DEBUG("update velocities: second leapfrog half-step")
     scoped_timer_type timer(runtime_.finalize);
 
     // invalidate the particle caches after accessing the force!

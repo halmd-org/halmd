@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_SUITE( host )
 BOOST_AUTO_TEST_SUITE_END()
 
 #ifdef HALMD_WITH_GPU
-BOOST_AUTO_TEST_SUITE( gpu )
+BOOST_FIXTURE_TEST_SUITE( gpu, set_cuda_device )
     BOOST_AUTO_TEST_SUITE( two )
 # ifdef USE_GPU_SINGLE_PRECISION
         BOOST_AUTO_TEST_SUITE( type_float )
@@ -297,13 +297,11 @@ BOOST_AUTO_TEST_SUITE( gpu )
 
             BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
                 for (std::pair<unsigned int, unsigned int> const& range : make_range(nparticle)) {
-                    set_cuda_device device;
                     test_ordered<test_suite_type>(nparticle, nspecies, range, repeat);
                 }
             }
             BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
                 for (std::pair<unsigned int, unsigned int> const& range : make_range(nparticle)) {
-                    set_cuda_device device;
                     test_unordered<test_suite_type>(nparticle, nspecies, range, repeat);
                 }
             }
@@ -315,13 +313,11 @@ BOOST_AUTO_TEST_SUITE( gpu )
 
             BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
                 for (std::pair<unsigned int, unsigned int> const& range : make_range(nparticle)) {
-                    set_cuda_device device;
                     test_ordered<test_suite_type>(nparticle, nspecies, range, repeat);
                 }
             }
             BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
                 for (std::pair<unsigned int, unsigned int> const& range : make_range(nparticle)) {
-                    set_cuda_device device;
                     test_unordered<test_suite_type>(nparticle, nspecies, range, repeat);
                 }
             }
@@ -336,13 +332,11 @@ BOOST_AUTO_TEST_SUITE( gpu )
 
             BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
                 for (std::pair<unsigned int, unsigned int> const& range : make_range(nparticle)) {
-                    set_cuda_device device;
                     test_ordered<test_suite_type>(nparticle, nspecies, range, repeat);
                 }
             }
             BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
                 for (std::pair<unsigned int, unsigned int> const& range : make_range(nparticle)) {
-                    set_cuda_device device;
                     test_unordered<test_suite_type>(nparticle, nspecies, range, repeat);
                 }
             }
@@ -354,13 +348,11 @@ BOOST_AUTO_TEST_SUITE( gpu )
 
             BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
                 for (std::pair<unsigned int, unsigned int> const& range : make_range(nparticle)) {
-                    set_cuda_device device;
                     test_ordered<test_suite_type>(nparticle, nspecies, range, repeat);
                 }
             }
             BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
                 for (std::pair<unsigned int, unsigned int> const& range : make_range(nparticle)) {
-                    set_cuda_device device;
                     test_unordered<test_suite_type>(nparticle, nspecies, range, repeat);
                 }
             }

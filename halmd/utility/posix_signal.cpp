@@ -18,7 +18,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/system/error_code.hpp>
 #include <boost/system/system_error.hpp>
@@ -105,11 +105,12 @@ bool posix_signal::poll() const
 {
     timespec timeout = { 0, 0 };
     int signum = sigtimedwait(&set_, NULL, &timeout);
-    if (signum > 0) {
-        this->handle(signum);
-        return true;
+
+    for (int s = signum; s > 0; s = sigtimedwait(&set_, NULL, &timeout)) {
+        this->handle(s);
     }
-    return false;
+
+    return signum > 0;
 }
 
 /**

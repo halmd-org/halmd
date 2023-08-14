@@ -64,7 +64,7 @@ connection append::on_read(
         throw invalid_argument("dataset location");
     }
     group = h5xx::open_group(group_, boost::join(location, "/"));
-    return on_read_.connect(bind(&read_dataset<T>, group, slot, _1));
+    return on_read_.connect(bind(&read_dataset<T>, group, slot, boost::placeholders::_1));
 }
 
 connection append::on_prepend_read(slot_function_type const& slot)
@@ -80,14 +80,14 @@ connection append::on_append_read(slot_function_type const& slot)
 void append::read_at_step(step_difference_type offset)
 {
     on_prepend_read_();
-    on_read_(bind(&read_step_index, offset, _1));
+    on_read_(bind(&read_step_index, offset, boost::placeholders::_1));
     on_append_read_();
 }
 
 void append::read_at_time(time_difference_type offset)
 {
     on_prepend_read_();
-    on_read_(bind(&read_time_index, offset, _1));
+    on_read_(bind(&read_time_index, offset, boost::placeholders::_1));
     on_append_read_();
 }
 
@@ -208,7 +208,9 @@ void wrap_on_read(
 
 void append::luaopen(lua_State* L)
 {
+    using namespace boost::placeholders;
     using namespace luaponte;
+
     module(L, "libhalmd")
     [
         namespace_("io")
