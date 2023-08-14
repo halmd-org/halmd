@@ -58,7 +58,7 @@ function main(args)
     boltzmann:set()
 
     -- Lennard-Jones potential
-    local potential = mdsim.potentials.pair.lennard_jones({cutoff = args.cutoff})
+    local potential = mdsim.potentials.pair.lennard_jones():truncate({cutoff = args.cutoff})
 
     -- compute forces
     local force = mdsim.forces.pair({
@@ -105,7 +105,7 @@ function main(args)
 
     -- run equilibration
     observables.sampler:run(equi_steps)
-    -- log profiler results
+    -- log intermediate profiler results
     utility.profiler:profile()
 
     integrator:disconnect()
@@ -178,9 +178,6 @@ function main(args)
 
     -- run NVE simulation
     observables.sampler:run(steps)
-
-    -- log profiler results
-    utility.profiler:profile()
 end
 
 --

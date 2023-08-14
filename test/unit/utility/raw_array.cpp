@@ -465,7 +465,8 @@ static void test_reserve(halmd::raw_array<T>& array)
 using namespace boost::unit_test;
 
 // cover border cases: smallest sizes, a power of 2 and neighbours, and a large size which is not a power of 2
-auto dataset = data::make<size_t>({0, 1, 2, 1023, 1024, 1025, 3 * 5 * (1UL << 20) + 1});
+size_t const DATA_ARRAY[] = {0, 1, 2, 1023, 1024, 1025, 3 * 5 * (1UL << 20) + 1};
+auto dataset = data::make(DATA_ARRAY);
 
 BOOST_AUTO_TEST_SUITE( type_unsigned_int )
     TEST_SUITE(unsigned int, dataset)

@@ -257,9 +257,6 @@ local function production(box, particle, args)
 
     -- run simulation
     observables.sampler:run(steps)
-
-    -- log profiler results
-    halmd.utility.profiler:profile()
 end
 
 function main(args)

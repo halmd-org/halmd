@@ -78,11 +78,9 @@ template <typename T, typename A>
 struct default_converter<boost::numeric::ublas::vector<T, A> const&>
   : default_converter<boost::numeric::ublas::vector<T, A> > {};
 
-#ifndef HALMD_NO_CXX11
 template <typename T, typename A>
 struct default_converter<boost::numeric::ublas::vector<T, A>&&>
   : default_converter<boost::numeric::ublas::vector<T, A> > {};
-#endif
 
 /**
  * Luabind converter for Boost uBLAS matrix
@@ -175,11 +173,9 @@ template <typename T, typename F1, typename F2, typename A>
 struct default_converter<boost::numeric::ublas::symmetric_matrix<T, F1, F2, A> const&>
   : default_converter<boost::numeric::ublas::symmetric_matrix<T, F1, F2, A> > {};
 
-#ifndef HALMD_NO_CXX11
 template <typename T, typename F1, typename F2, typename A>
 struct default_converter<boost::numeric::ublas::symmetric_matrix<T, F1, F2, A>&&>
   : default_converter<boost::numeric::ublas::symmetric_matrix<T, F1, F2, A> > {};
-#endif
 
 } // namespace luaponte
 

@@ -129,6 +129,9 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
       if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 5.0)
         message(SEND_ERROR "Minium required CUDA version is 5.0 (found ${CMAKE_CUDA_COMPILER_VERSION})")
       endif()
+      if (CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 10.0)
+        message(SEND_ERROR "CUDA version 10.0 and later is not supported (found ${CMAKE_CUDA_COMPILER_VERSION})")
+      endif()
 
       try_compile(success "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu" OUTPUT_VARIABLE result)
       if(result MATCHES "__CUDA_ARCH__([0-9]+)__")
@@ -188,6 +191,13 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     unit_test_framework
   )
   set(Boost_VERSION ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION})
+
+  # the compiler macro __CUDACC_VER__ was deprecated in CUDA 9, but is used by Boost C++ 1.61 to 1.65
+  if(${CUDA_VERSION} VERSION_GREATER_EQUAL 9.0)
+    if(${Boost_VERSION} VERSION_GREATER_EQUAL 1.61 AND ${Boost_VERSION} VERSION_LESS_EQUAL 1.65)
+       message(SEND_ERROR "The combination of CUDA ≥ 9 and Boost C++ ≥ 1.61 and ≤ 1.65 is not supported.")
+    endif()
+  endif()
 
   find_package(HDF5 QUIET REQUIRED COMPONENTS CXX)
   find_package(LuaLibs QUIET REQUIRED)

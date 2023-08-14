@@ -20,32 +20,28 @@ Parameters:
     * force: lennard_jones (:math:`r_c = 3\sigma, r_\text{skin} = 0.7\sigma`)
     * integrator: verlet (NVE, :math:`\delta t^* = 0.002`)
 
-+--------------------+------------------+-----------+---------------+----------------------------+
-| Hardware           | time per MD step | steps per | FP precision  | compilation details        |
-|                    | and particle     | second    |               |                            |
-+====================+==================+===========+===============+============================+
-| Intel Xeon E5-2640 | 1.44 µs          | 10.8      | double        | GCC 4.7.2, -O3             |
-+--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla S1070 | 57.0 ns          | 274       | double-single | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 55.1 ns          | 284       | single        | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla C2050 | 39.4 ns          | 397       | double-single | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 34.3 ns          | 456       | single        | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla K20m  | 22.2 ns          | 702       | double-single | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 20.7 ns          | 756       | single        | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla K20Xm | 19.7 ns          | 792       | double-single | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 18.4 ns          | 851       | single        | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
++---------------------------+------------------+-----------+---------------+----------------------------+
+| Hardware                  | time per MD step | steps per | FP precision  | compilation details        |
+|                           | and particle     | second    |               |                            |
++===========================+==================+===========+===============+============================+
+| Intel Xeon E5-2637v4      | 750 ns           | 20.9      | double        | GCC 8.3.0, -O3             |
++---------------------------+------------------+-----------+---------------+----------------------------+
+| NVIDIA Tesla V100-PCI     | 5.6 ns           | 2790      | double-single | CUDA 9.2, -arch compute_61 |
++---------------------------+------------------+-----------+---------------+----------------------------+
+|                           | 5.1 ns           | 3020      | single        | CUDA 9.2, -arch compute_61 |
++---------------------------+------------------+-----------+---------------+----------------------------+
+| NVIDIA GeForce RTX 2080 S | 5.9 ns           | 2640      | double-single | CUDA 9.2, -arch compute_61 |
++---------------------------+------------------+-----------+---------------+----------------------------+
+|                           | 5.6 ns           | 2810      | single        | CUDA 9.2, -arch compute_61 |
++---------------------------+------------------+-----------+---------------+----------------------------+
+| NVIDIA GeForce RTX 2070   | 7.7 ns           | 2030      | double-single | CUDA 9.2, -arch compute_61 |
++---------------------------+------------------+-----------+---------------+----------------------------+
+|                           | 7.0 ns           | 2220      | single        | CUDA 9.2, -arch compute_61 |
++---------------------------+------------------+-----------+---------------+----------------------------+
 
-Results were obtained from 1 independent measurement based on pre-release
-version 1.0-alpha1. Each run consisted of NVT equilibration at :math:`T^*=1.2`
-over :math:`\Delta t^*=100` (10⁴ steps), followed by benchmarking 10⁴ NVE 5
+Results were obtained from 1 independent measurement based on release version
+1.0.0. Each run consisted of NVT equilibration at :math:`T^*=1.2` over
+:math:`\Delta t^*=100` (10⁴ steps), followed by benchmarking 10⁴ NVE 5
 times steps in a row.
 
 Supercooled binary mixture (Kob-Andersen)
@@ -58,34 +54,30 @@ Parameters:
 
       (:math:`\epsilon_{AA}=1`, :math:`\epsilon_{AB}=.5`, :math:`\epsilon_{BB}=1.5`,
       :math:`\sigma_{AA}=1`, :math:`\sigma_{AB}=.88`, :math:`\sigma_{BB}=.8`,
-      :math:`r_c = 2.5\sigma`, :math:`r_\text{skin} = 0.5\sigma`)
+      :math:`r_c = 2.5\sigma`, :math:`r_\text{skin} = 0.3\sigma`, neighbour list occupancy: 70%)
 
     * integrator: verlet (NVE, :math:`\delta t^* = 0.001`)
 
-+--------------------+------------------+-----------+---------------+----------------------------+
-| Hardware           | time per MD step | steps per | FP precision  | compilation details        |
-|                    | and particle     | second    |               |                            |
-+====================+==================+===========+===============+============================+
-| Intel Xeon E5-2640 | 2.03 µs          | 1.93      | double        | GCC 4.7.2, -O3             |
-+--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla S1070 | 65.7 ns          | 59.4      | double-single | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 66.3 ns          | 58.9      | single        | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla C2050 | 39.2 ns          | 99.7      | double-single | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 32.4 ns          | 120       | single        | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla K20m  | 18.5 ns          | 211       | double-single | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 17.0 ns          | 230       | single        | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla K20Xm | 16.2 ns          | 242       | double-single | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 15.0 ns          | 261       | single        | CUDA 5.5, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
++---------------------------+------------------+-----------+---------------+----------------------------+
+| Hardware                  | time per MD step | steps per | FP precision  | compilation details        |
+|                           | and particle     | second    |               |                            |
++===========================+==================+===========+===============+============================+
+| Intel Xeon E5-2637v4      | 744 ns           | 5.25      | double        | GCC 10.2.1, -O3            |
++---------------------------+------------------+-----------+---------------+----------------------------+
+| NVIDIA Tesla V100-PCI     | 3.83 ns          | 1020      | double-single | CUDA 9.2, -arch compute_61 |
++---------------------------+------------------+-----------+---------------+----------------------------+
+|                           | 3.65 ns          | 1070      | single        | CUDA 9.2, -arch compute_61 |
++---------------------------+------------------+-----------+---------------+----------------------------+
+| NVIDIA GeForce RTX 2080 S | 5.17 ns          |  755      | double-single | CUDA 9.2, -arch compute_61 |
++---------------------------+------------------+-----------+---------------+----------------------------+
+|                           | 4.87 ns          |  802      | single        | CUDA 9.2, -arch compute_61 |
++---------------------------+------------------+-----------+---------------+----------------------------+
+| NVIDIA GeForce RTX 2070   | 6.63 ns          |  589      | double-single | CUDA 9.2, -arch compute_61 |
++---------------------------+------------------+-----------+---------------+----------------------------+
+|                           | 6.28 ns          |  621      | single        | CUDA 9.2, -arch compute_61 |
++---------------------------+------------------+-----------+---------------+----------------------------+
 
-Results were obtained from 1 independent measurement and are based on
-pre-release version 1.0-alpha1. Each run consisted of NVT equilibration at
-:math:`T^*=0.7` over :math:`\Delta t^*=100` (2×10⁴ steps), followed by
-benchmarking 10⁴ NVE steps 5 times in a row.
+Results were obtained from 1 independent measurement and are based on release
+version 1.0.0. Each run consisted of NVT equilibration at :math:`T^*=0.7` over
+:math:`\Delta t^*=100` (2×10⁴ steps), followed by benchmarking 10⁴ NVE steps 5
+times in a row.

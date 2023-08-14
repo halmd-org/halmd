@@ -1,5 +1,7 @@
 /*
  * Copyright © 2019 Roya Ebrahimi Viand
+ * Copyright © 2023 Felix Höfling
+ * Copyright © 2021 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -18,24 +20,38 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <string>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/geometries/sphere.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
+
+#include <cmath>
+#include <numeric>
+#include <string>
 
 namespace halmd {
 namespace mdsim {
 namespace geometries {
 
 template <int dimension, typename float_type>
-sphere<dimension, float_type>::sphere(vector_type centre, float_type radius)
+sphere<dimension, float_type>::sphere(vector_type const& centre, float_type const& radius)
   : centre_(centre)
   , radius_(radius)
   , radius2_(radius_ * radius_)
+{}
+
+template <int dimension, typename float_type>
+void sphere<dimension, float_type>::log(std::shared_ptr<halmd::logger> logger_) const
 {
-    LOG("geometry: sphere of radius " << radius_ << " at " << centre_);
+    LOG("using sphere geometry");
+    LOG("centre: " << centre_);
+    LOG("radius: " << radius_);
+}
+
+template <int dimension, typename float_type>
+float_type sphere<dimension, float_type>::volume() const
+{
+    return 4 * float_type(M_PI) / 3 * std::pow(radius_, 3);
 }
 
 template <int dimension, typename float_type>
@@ -50,6 +66,8 @@ void sphere<dimension, float_type>::luaopen(lua_State* L)
             namespace_("geometries")
             [
                 class_<sphere>()
+                    .property("volume", &sphere::volume)
+
               , def(class_name.c_str(), &std::make_shared<sphere
                   , vector_type
                   , float_type

@@ -255,8 +255,11 @@ test_non_uniform_density(typename binning_type::cell_size_type const& shape, flo
  * Data-driven test case registration.
  */
 using namespace boost::unit_test;
+
+unsigned int const DATA_ARRAY_UNIT[] = {1, 2, 4, 8};
+float const DATA_ARRAY_COMPRESSION[] = {0., 0.25, 0.5, 0.75, 1.};
+auto dataset = data::make(DATA_ARRAY_UNIT) * data::make(DATA_ARRAY_COMPRESSION);
 float cell_length = 2;
-auto dataset = data::make<unsigned int>({1, 2, 4, 8}) * data::make<float>({0., 0.25, 0.5, 0.75, 1.});
 
 BOOST_AUTO_TEST_SUITE( host )
     BOOST_DATA_TEST_CASE( two, dataset, unit, compression ) {

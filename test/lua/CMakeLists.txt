@@ -13,6 +13,6 @@ configure_file(
   @ONLY
 )
 
-add_test(lua/script
+halmd_add_test(lua/script
   ${CMAKE_COMMAND} -P test_lua_script.cmake
 )

@@ -79,7 +79,8 @@ BOOST_AUTO_TEST_CASE( test_alarm )
 // FIXME test multiple concurrent posix_signal instances
 using namespace boost::unit_test;
 
-vector<int> const signum = {
+size_t const DATA_ARRAY_COUNT[] = {1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144};
+int const DATA_ARRAY_SIGNUM[] = {
     SIGHUP
   , SIGINT
   , SIGALRM
@@ -91,8 +92,7 @@ vector<int> const signum = {
   , SIGTTIN
   , SIGTTOU
 };
-
-auto dataset = data::make<size_t>({1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144}) * data::make(signum);
+auto dataset = data::make(DATA_ARRAY_COUNT) * data::make(DATA_ARRAY_SIGNUM);
 
 BOOST_DATA_TEST_CASE( test_signal_wait, dataset, count, signum) {
     BOOST_TEST_MESSAGE("wait " << posix_signal::name(signum) << ", " << count << " iterations");

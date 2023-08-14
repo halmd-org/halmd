@@ -26,7 +26,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/cache.hpp>
-#include <halmd/utility/raw_array.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/mdsim/force_kernel.hpp>
 
@@ -47,8 +46,11 @@ namespace host {
 class particle_group
 {
 public:
-    typedef raw_array<unsigned int> array_type;
+
+    typedef std::vector<unsigned int> array_type;
     typedef array_type::value_type size_type;
+
+    virtual ~particle_group() {}
 
     /**
      * Returns ordered sequence of particle indices.

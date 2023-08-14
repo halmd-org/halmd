@@ -36,13 +36,9 @@
 
 namespace halmd {
 
-#ifndef HALMD_NO_TEMPLATE_ALIASES
 // import into top-level namespace
 template <typename T, size_t N>
 using fixed_vector = halmd::numeric::blas::detail::fixed_vector<T, N>;
-#else
-using halmd::numeric::blas::detail::fixed_vector;
-#endif
 
 } // namespace halmd
 

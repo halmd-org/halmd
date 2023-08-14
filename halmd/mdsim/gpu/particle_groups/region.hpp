@@ -1,4 +1,4 @@
-/*
+/* Copyright © 2019 Roya Ebrahimi Viand
  * Copyright © 2014-2015 Nicolas Höft
  *
  * This file is part of HALMD.
@@ -18,64 +18,40 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_REGION_HPP
-#define HALMD_MDSIM_GPU_REGION_HPP
+#ifndef HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_HPP
+#define HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_HPP
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/gpu/region_kernel.hpp>
+#include <halmd/mdsim/gpu/particle_group.hpp>
+#include <halmd/mdsim/gpu/particle_groups/region_kernel.hpp>
+#include <halmd/utility/raw_array.hpp>
 #include <halmd/utility/profiler.hpp>
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
+namespace particle_groups {
 
-class region_base
-{
-public:
-    typedef cuda::vector<unsigned int> array_type;
-    typedef typename array_type::value_type size_type;
-
-    /**
-     * Returns list of particle indices that are in the
-     * defined region of the system
-     */
-    virtual cache<array_type> const& selection() = 0;
-
-    /**
-     * Number of particles in the region
-     */
-    virtual size_type size() = 0;
-
-    /**
-     * mask of that specifies if a particle is within the region
-     * or outside. Sorted by particle id
-     */
-    virtual cache<array_type> const& mask() = 0;
-
-    /**
-     * Bind class to Lua
-     */
-    static void luaopen(lua_State* L);
-};
-
+/**
+ * Select particles of a given particle instance according to a region in space
+ */
 template <int dimension, typename float_type, typename geometry_type>
 class region
-  : public region_base
+  : public particle_group
 {
 public:
-    typedef region_base::array_type array_type;
-    typedef region_base::size_type size_type;
+    typedef typename particle_group::array_type array_type;
+    typedef typename particle_group::size_type size_type;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef mdsim::box<dimension> box_type;
 
     enum geometry_selection {
         excluded = 1
@@ -83,14 +59,11 @@ public:
     };
 
     /**
-     * Bind class to Lua
+     * Select by region
      */
-    static void luaopen(lua_State* L);
-
     region(
         std::shared_ptr<particle_type const> particle
-      , std::shared_ptr<box_type const> box
-      , std::shared_ptr<geometry_type> geometry
+      , std::shared_ptr<geometry_type const> geometry
       , geometry_selection geometry_sel
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
@@ -101,13 +74,27 @@ public:
      */
     cache<array_type> const& selection();
 
-    size_type size()
-    {
-        update_selection_();
-        return selection_->size();
-    }
-
     cache<array_type> const& mask();
+
+    /**
+     * Returns ordered sequence of particle indices.
+     */
+    virtual cache<array_type> const& ordered();
+
+    /**
+     * Returns unordered sequence of particle indices.
+     */
+    virtual cache<array_type> const& unordered();
+
+    /**
+     * Returns number of particles.
+     */
+    virtual cache<size_type> const& size();
+
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
 
 private:
     typedef typename particle_type::position_array_type position_array_type;
@@ -116,20 +103,27 @@ private:
     void update_mask_();
     void update_selection_();
 
-    //! system state
+    /** particle instance */
     std::shared_ptr<particle_type const> particle_;
-    //! simulation box
-    std::shared_ptr<box_type const> box_;
+    /** region the particles are sorted by */
+    std::shared_ptr<geometry_type const> geometry_;
+    geometry_selection geometry_selection_;
     /** module logger */
     std::shared_ptr<logger> logger_;
-    //! region the particles are sorted by
-    std::shared_ptr<geometry_type> geometry_;
 
-    geometry_selection geometry_selection_;
     /** cache observer of position updates for mask */
     cache<> mask_cache_;
     /** cache observer of position updates for selection updates */
     cache<> selection_cache_;
+
+    /** ordered sequence of particle indices */
+    cache<array_type> ordered_;
+    /** number of particles in region */
+    cache<size_type> size_;
+    /** cache observer of region mask */
+    cache<> ordered_cache_;
+    /** cache observer of size */
+    cache<> size_cache_;
 
     /**
      * mask for particles that determines whether they are in-/outside the region,
@@ -151,49 +145,16 @@ private:
     {
         accumulator_type update_mask;
         accumulator_type update_selection;
+        accumulator_type sort_selection;
     };
+
     /** profiling runtime accumulators */
     runtime runtime_;
 };
 
-/**
- * Copy particle ids of included particles to given array.
- */
-template <typename region_type, typename iterator_type>
-inline iterator_type
-get_selection(region_type& region, iterator_type const& first)
-{
-    typedef typename region_type::array_type::value_type value_type;
-    auto const& selection = read_cache(region.selection());
-    cuda::host::vector<value_type> h_selection(selection.size());
-    cuda::copy(std::begin(selection), std::end(selection), h_selection.begin());
-    iterator_type output = first;
-    for (auto const& element : h_selection) {
-        *output++ = element;
-    }
-    return output;
-}
-
-/**
- * Copy region mask of particles to given array.
- */
-template <typename region_type, typename iterator_type>
-inline iterator_type
-get_mask(region_type& region, iterator_type const& first)
-{
-    typedef typename region_type::array_type::value_type value_type;
-    auto const& g_mask = read_cache(region.mask());
-    cuda::host::vector<value_type> h_mask(g_mask.size());
-    cuda::copy(g_mask.begin(), g_mask.end(), h_mask.begin());
-    iterator_type output = first;
-    for (auto const& m : h_mask) {
-        *output++ = m;
-    }
-    return output;
-}
-
+} // namespace particle_groups
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_REGION_HPP */
+#endif /* ! HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_HPP */

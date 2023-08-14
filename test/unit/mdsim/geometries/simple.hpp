@@ -24,6 +24,10 @@
 #include <halmd/config.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
+#ifndef __CUDACC__
+# include <halmd/io/logger.hpp>
+#endif
+
 /**
  * excluded positions if any coordinate is larger
  * than the lowest corner
@@ -35,6 +39,8 @@ public:
     typedef halmd::fixed_vector<float_type, dimension> vector_type;
 #ifndef __CUDACC__
     simple_geometry(vector_type lowest_corner) : lowest_corner_(lowest_corner) {}
+
+    void log(std::shared_ptr<halmd::logger> logger_ = std::make_shared<halmd::logger>()) const {}
 #endif
     HALMD_GPU_ENABLED bool operator()(vector_type const& r) const
     {

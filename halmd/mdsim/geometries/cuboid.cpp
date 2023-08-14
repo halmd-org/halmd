@@ -1,5 +1,7 @@
 /*
  * Copyright © 2014 Nicolas Höft
+ * Copyright © 2023 Felix Höfling
+ * Copyright © 2021 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -18,21 +20,36 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <string>
-
 #include <halmd/mdsim/geometries/cuboid.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
+
+#include <functional>
+#include <numeric>
+#include <string>
 
 namespace halmd {
 namespace mdsim {
 namespace geometries {
 
 template <int dimension, typename float_type>
-cuboid<dimension, float_type>::cuboid(vector_type lowest_corner, vector_type length)
+cuboid<dimension, float_type>::cuboid(vector_type const& lowest_corner, vector_type const& edge_length)
   : lowest_corner_(lowest_corner)
-  , edge_length_(length)
+  , edge_length_(edge_length)
+{}
+
+template <int dimension, typename float_type>
+void cuboid<dimension, float_type>::log(std::shared_ptr<halmd::logger> logger_) const
 {
+    LOG("using cuboid geometry");
+    LOG("lowest corner: " << lowest_corner_);
+    LOG("edge length: " << edge_length_);
+}
+
+template <int dimension, typename float_type>
+float_type cuboid<dimension, float_type>::volume() const
+{
+    return std::accumulate(edge_length_.begin(), edge_length_.end(), float_type(1), std::multiplies<float_type>());
 }
 
 template <int dimension, typename float_type>
@@ -47,6 +64,8 @@ void cuboid<dimension, float_type>::luaopen(lua_State* L)
             namespace_("geometries")
             [
                 class_<cuboid>()
+                    .property("volume", &cuboid::volume)
+
               , def(class_name.c_str(), &std::make_shared<cuboid
                   , vector_type
                   , vector_type

@@ -47,6 +47,8 @@ namespace samples {
 class blocking_scheme_base
 {
 public:
+    /** make destructor of base class virtual */
+    virtual ~blocking_scheme_base() {}
     /** append the current input data to level 'index' */
     virtual void push_back(std::size_t index) = 0;
     /** drop the first entry at level 'index' */

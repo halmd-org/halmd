@@ -5,7 +5,6 @@ halmd_add_modules(
   libhalmd_mdsim_gpu_particle
   libhalmd_mdsim_gpu_position
   libhalmd_mdsim_gpu_particle_group
-  libhalmd_mdsim_gpu_region
 )
 
 add_subdirectory(integrators)
@@ -30,6 +29,4 @@ halmd_add_library(halmd_mdsim_gpu
   particle_array_gpu.cpp
   particle_array_host.cpp
   particle_group_kernel.cu
-  region.cpp
-  region_kernel.cu
-)
+  )

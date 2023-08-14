@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2016 Felix Höfling
+ * Copyright © 2010-2023 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2010-2012 Peter Colberg
  *
@@ -36,11 +36,14 @@ thermodynamics<dimension, float_type>::thermodynamics(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<particle_group_type> group
   , std::shared_ptr<box_type const> box
+  , volume_type volume
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
   , group_(group)
   , box_(box)
+    // use box volume by default
+  , volume_(volume ? volume : [=](){ return box->volume(); })
   , logger_(logger)
 {
 }
@@ -54,7 +57,7 @@ unsigned int thermodynamics<dimension, float_type>::particle_number() const
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::volume() const
 {
-    return box_->volume();
+    return volume_();
 }
 
 /**
@@ -239,6 +242,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
               , std::shared_ptr<particle_type>
               , std::shared_ptr<particle_group_type>
               , std::shared_ptr<box_type const>
+              , volume_type
               , std::shared_ptr<logger>
             >)
         ]

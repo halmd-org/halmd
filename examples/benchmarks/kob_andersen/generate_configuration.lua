@@ -87,7 +87,7 @@ function main(args)
     -- sample each particle group separately and write to H5MD file
     local offset = 0
     for s = 0, 1 do
-        local group = mdsim.particle_groups.from_range({
+        local group = mdsim.particle_groups.id_range({
             particle = particle
           , range = {offset + 1, offset + ngroup[s + 1]}
           , label = string.char(string.byte('A') + s)

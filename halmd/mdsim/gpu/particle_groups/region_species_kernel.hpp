@@ -18,8 +18,9 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_REGION_KERNEL_HPP
-#define HALMD_MDSIM_GPU_REGION_KERNEL_HPP
+
+#ifndef HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_SPECIES_KERNEL_HPP
+#define HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_SPECIES_KERNEL_HPP
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
@@ -30,6 +31,7 @@
 namespace halmd {
 namespace mdsim {
 namespace gpu {
+namespace particle_groups {
 
 enum geometry_selection {
     excluded = 1
@@ -37,7 +39,7 @@ enum geometry_selection {
 };
 
 template<int dimension, typename geometry_type>
-struct region_wrapper
+struct region_species_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
 
@@ -48,7 +50,7 @@ struct region_wrapper
       , unsigned int* // mask
       , geometry_type const
       , geometry_selection
-      , vector_type  // box length
+      , unsigned int // species
     )> compute_mask;
 
     boost::function<unsigned int (
@@ -57,13 +59,15 @@ struct region_wrapper
       , unsigned int*        // output array
       , geometry_type const  // predicate
       , geometry_selection   // geometry selection
+      , unsigned int         // species
     )> copy_selection;
 
-    static region_wrapper const kernel;
+    static region_species_wrapper const kernel;
 };
 
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
+} // namespace particle_groups
 
-#endif /* ! HALMD_MDSIM_GPU_REGION_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_PARTICLE_GROUPS_REGION_SPECIES_KERNEL_HPP */

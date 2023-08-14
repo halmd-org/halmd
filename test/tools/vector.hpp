@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Nicolas Höft
+ * Copyright © 2021 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -18,16 +18,29 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/region_kernel.cu>
-#include <test/unit/mdsim/geometries/simple.hpp>
+#ifndef HALMD_TEST_TOOLS_VECTOR_HPP
+#define HALMD_TEST_TOOLS_VECTOR_HPP
 
-namespace halmd {
-namespace mdsim {
-namespace gpu {
+#include <vector>
 
-template class region_wrapper<2, simple_geometry<2, float> >;
-template class region_wrapper<3, simple_geometry<3, float> >;
+#ifdef HALMD_WITH_GPU
+# include <cuda_wrapper/cuda_wrapper.hpp>
+#endif
 
-} // namespace gpu
-} // namespace mdsim
-} // namespace halmd
+template <typename T>
+std::vector<T> get_host_vector(std::vector<T> const& v)
+{
+    return v;
+}
+
+#ifdef HALMD_WITH_GPU
+template <typename T>
+cuda::host::vector<T> get_host_vector(cuda::vector<T> const& g_v)
+{
+    cuda::host::vector<T> v(g_v.size());
+    cuda::copy(g_v.begin(), g_v.end(), v.begin());
+    return v;
+}
+#endif
+
+#endif // ! HALMD_TEST_TOOLS_VECTOR_HPP

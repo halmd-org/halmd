@@ -5,7 +5,6 @@ halmd_add_modules(
   libhalmd_mdsim_host_particle
   libhalmd_mdsim_host_position
   libhalmd_mdsim_host_particle_group
-  libhalmd_mdsim_host_region
 )
 
 add_subdirectory(integrators)
@@ -23,5 +22,4 @@ halmd_add_library(halmd_mdsim_host
   particle.cpp
   position.cpp
   particle_group.cpp
-  region.cpp
 )

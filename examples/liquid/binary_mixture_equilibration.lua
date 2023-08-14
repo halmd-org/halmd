@@ -61,7 +61,7 @@ function main(args)
             table.insert(species, s)
         end
         local label = string.char(string.byte("A") + s)
-        groups[label] = mdsim.particle_groups.from_range({
+        groups[label] = mdsim.particle_groups.id_range({
             particle = particle
           , range = {offset + 1, offset + nparticle}
           , label = label
@@ -150,15 +150,8 @@ function main(args)
     -- in order to melt the initial fcc crystal
     observables.sampler:run(steps / 10)
 
-    -- disconnect NVT integrator from sampler and profiler
-    integrator.disconnect()
-
     -- run remaining first half of the simulation in NVT ensemble at the target temperature
-    -- FIXME provide method set_temperature()
-    integrator = mdsim.integrators.verlet_nvt_boltzmann({
-        box = box, particle = particle
-      , timestep = args.timestep, temperature = args.temperature, rate = args.rate
-    })
+    integrator:set_temperature(args.temperature)
     observables.sampler:run(steps / 2 - steps / 10)
 
     -- log intermediate profiler results and reset accumulators
@@ -175,9 +168,6 @@ function main(args)
     -- run remaining part of the simulation in NVE ensemble
     -- to prepare for the NVE production run
     observables.sampler:run(steps - steps / 2)
-
-    -- log profiler results
-    utility.profiler:profile()
 end
 
 --

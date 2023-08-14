@@ -39,31 +39,10 @@
 #endif
 
 /**
- * C++11 standards-compliant compilers set __cplusplus == 201103L.
- * This is the case for GCC 4.7 in C++11 mode. To ensure backward
- * compatibility with GCC 4.6 in C++0x mode, check for the macro
- * __GXX_EXPERIMENTAL_CXX0X__ as well.
- */
-#if __cplusplus < 201103L && !defined(__GXX_EXPERIMENTAL_CXX0X__)
-# define HALMD_NO_CXX11
-#endif
-
-/**
- * Template aliases are only available with compilers that support
- * C++11 (not C++0x), i.e. GCC 4.7 and Clang 3.1 or higher.
- * This macro ensure backwards compatibility with GCC 4.6.
- */
-#if __cplusplus < 201103L
-# define HALMD_NO_TEMPLATE_ALIASES
-#endif
-
-/**
  * Enable use of decltype in boost::result_of, which is needed to
  * make boost::transform_iterator work with lambda functions.
  */
-#ifndef HALMD_NO_CXX11
-# define BOOST_RESULT_OF_USE_DECLTYPE
-#endif
+#define BOOST_RESULT_OF_USE_DECLTYPE
 
 /**
  * List of potential truncations.

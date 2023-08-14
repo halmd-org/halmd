@@ -66,11 +66,15 @@ blocking_scheme::blocking_scheme(
         LOG("disable shifted coarse-graining blocks");
     }
 
+    if (resolution <= 0) {
+        throw invalid_argument("Resolution must be greater than zero.");
+    }
     LOG("minimal separation of samples in time: " << separation_ * resolution);
 
     // set up sampling intervals for each level
     step_type max_interval = static_cast<step_type>(maximum_lag_time / clock_->timestep());
     step_type s = static_cast<step_type>(resolution / clock_->timestep());
+    assert(s > 0);
     while (s <= max_interval)
     {
         interval_.push_back(s);               // even levels

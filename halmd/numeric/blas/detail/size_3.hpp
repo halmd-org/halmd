@@ -26,14 +26,12 @@
 
 #include <halmd/config.hpp>
 
+#include <algorithm>
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/utility/enable_if.hpp>
-#ifndef HALMD_NO_CXX11
-# include <algorithm>
-# include <cassert>
-# include <initializer_list>
-# include <type_traits>
-#endif
+#include <cassert>
+#include <initializer_list>
+#include <type_traits>
 
 // CUDA vector types for host compiler
 #ifdef HALMD_WITH_GPU
@@ -74,8 +72,6 @@ struct fixed_vector<float, 3>
 
     HALMD_GPU_ENABLED fixed_vector() {}
 
-#ifndef HALMD_NO_CXX11
-
     /**
      * Assign values from initializer list.
      */
@@ -86,8 +82,6 @@ struct fixed_vector<float, 3>
         assert( v.size() == _Base::size() );
         std::copy(v.begin(), v.end(), _Base::begin());
     }
-
-#endif /* ! HALMD_NO_CXX11 */
 
     /**
      * Initialization by scalar
@@ -184,8 +178,6 @@ struct fixed_vector<unsigned int, 3>
 
     HALMD_GPU_ENABLED fixed_vector() {}
 
-#ifndef HALMD_NO_CXX11
-
     /**
      * Assign values from initializer list.
      */
@@ -196,8 +188,6 @@ struct fixed_vector<unsigned int, 3>
         assert( v.size() == _Base::size() );
         std::copy(v.begin(), v.end(), _Base::begin());
     }
-
-#endif /* ! HALMD_NO_CXX11 */
 
     /**
      * Initialization by scalar
@@ -294,8 +284,6 @@ struct fixed_vector<int, 3>
 
     HALMD_GPU_ENABLED fixed_vector() {}
 
-#ifndef HALMD_NO_CXX11
-
     /**
      * Assign values from initializer list.
      */
@@ -306,8 +294,6 @@ struct fixed_vector<int, 3>
         assert( v.size() == _Base::size() );
         std::copy(v.begin(), v.end(), _Base::begin());
     }
-
-#endif /* ! HALMD_NO_CXX11 */
 
     /**
      * Initialization by scalar
@@ -403,8 +389,6 @@ struct fixed_vector<dsfloat, 3> : fixed_array<dsfloat, 3>
 
     HALMD_GPU_ENABLED fixed_vector() {}
 
-#ifndef HALMD_NO_CXX11
-
     /**
      * Assign values from initializer list.
      */
@@ -415,8 +399,6 @@ struct fixed_vector<dsfloat, 3> : fixed_array<dsfloat, 3>
         assert( v.size() == _Base::size() );
         std::copy(v.begin(), v.end(), _Base::begin());
     }
-
-#endif /* ! HALMD_NO_CXX11 */
 
     /**
      * Initialization by scalar
@@ -463,8 +445,6 @@ struct fixed_vector<double, 3>
 
     HALMD_GPU_ENABLED fixed_vector() {}
 
-#ifndef HALMD_NO_CXX11
-
     /**
      * Assign values from initializer list.
      */
@@ -475,8 +455,6 @@ struct fixed_vector<double, 3>
         assert( v.size() == _Base::size() );
         std::copy(v.begin(), v.end(), _Base::begin());
     }
-
-#endif /* ! HALMD_NO_CXX11 */
 
     /**
      * Initialization by scalar

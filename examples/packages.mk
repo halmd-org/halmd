@@ -274,7 +274,7 @@ BOOST_RELEASE = 1_72_0
 BOOST_ABI = c++11
 BOOST_TOOLSET = gcc
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
-BOOST_TARBALL_URL = https://dl.bintray.com/boostorg/release/$(BOOST_VERSION)/source/$(BOOST_TARBALL)
+BOOST_TARBALL_URL = https://boostorg.jfrog.io/artifactory/main/release/$(BOOST_VERSION)/source/$(BOOST_TARBALL)
 BOOST_TARBALL_SHA256 = 59c9b274bc451cf91a9ba1dd2c7fdcaf5d60b1b3aa83f2c9fa143417cc660722
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)-$(BOOST_ABI)
@@ -998,7 +998,7 @@ env-gcc:
 ## HALMD Highly Accerelated Large-scale Molecular Dynamics
 ##
 
-HALMD_VERSION = 1.0-alpha6
+HALMD_VERSION = 1.0.0
 HALMD_TARBALL = halmd-$(HALMD_VERSION).tar.bz2
 HALMD_TARBALL_URL = http://code.halmd.org/tar/$(HALMD_TARBALL)
 HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)

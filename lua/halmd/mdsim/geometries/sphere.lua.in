@@ -1,5 +1,6 @@
 --
 -- Copyright © 2019 Roya Ebrahimi Viand
+-- Copyright © 2023 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -60,11 +61,15 @@ local sphere = {
 --
 --    Sphere radius.
 --
+-- .. attribute:: volume
+--
+--    The volume of the sphere.
+--
 local M = module(function(args)
     utility.assert_type(args, "table")
     local centre = utility.assert_type(utility.assert_kwarg(args, "centre"), "table")
     local radius = utility.assert_type(utility.assert_kwarg(args, "radius"), "number")
-    local precision = args.precision or (device.gpu and "single" or "double")
+    local precision = args.precision or (device.gpu and "single" or "@HALMD_HOST_PRECISION@")
 
     if not sphere[precision] then
          error("Unsupported precision", 2)
@@ -83,4 +88,3 @@ local M = module(function(args)
 end)
 
 return M
-

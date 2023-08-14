@@ -44,6 +44,8 @@ cache<typename all<particle_type>::array_type> const&
 all<particle_type>::ordered()
 {
     if (!(ordered_observer_ == particle_->reverse_id())) {
+        LOG_TRACE("acquire particle indices in ID order");
+
         auto reverse_id = read_cache(particle_->reverse_id());
         cuda::copy(reverse_id.begin(), reverse_id.begin() + particle_->nparticle(), make_cache_mutable(ordered_)->begin());
         ordered_observer_ = particle_->reverse_id();

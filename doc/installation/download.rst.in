@@ -9,6 +9,10 @@ The following release tarballs of *HAL’s MD package* are available:
 
 .. blank.
 
+* version `1.0.0 <http://code.halmd.org/tar/halmd-1.0.0.tar.bz2>`_
+
+.. blank.
+
 Developers' previews on version 1.0:
 
 * version `1.0-alpha6 <http://code.halmd.org/tar/halmd-1.0-alpha6.tar.bz2>`_
@@ -31,7 +35,7 @@ Developers' previews on version 1.0:
 Download and verify the integrity of the tar balls with the following command
 (in bash)::
 
-  TAR="halmd-0.2.1.tar.bz2" URL="http://code.halmd.org/tar"; \
+  TAR="halmd-1.0.0.tar.bz2" URL="http://code.halmd.org/tar"; \
   wget "$URL/$TAR" && openssl dgst -sha512 \
     -verify <(wget -qO- "$URL/cert.pem" | openssl x509 -noout -pubkey) \
     -signature <(wget -qO- "$URL/$TAR.sig") "$TAR"

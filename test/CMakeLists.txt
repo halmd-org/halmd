@@ -40,6 +40,13 @@ set(HALMD_TEST_CMAKE_BINARY_DIR "${CMAKE_BINARY_DIR}/test/cmake")
 # path to HALMD executable
 set(HALMD_EXECUTABLE "${CMAKE_BINARY_DIR}/halmd/halmd")
 
+# run test based on HALMD executable only if binary was built successfully
+macro(halmd_add_test NAME)
+  add_test(${NAME} ${ARGN})
+  set_tests_properties(${NAME} PROPERTIES REQUIRED_FILES ${HALMD_EXECUTABLE})
+endmacro()
+
+
 # path to HALMD C++ and Lua modules
 #
 # These may be used with the ENVIRONMENT test property if needed:
@@ -72,9 +79,9 @@ if(HALMD_WITH_GPU)
 
   macro(halmd_add_gpu_test NAME)
     if ("${NAME}" STREQUAL "NO_MEMCHECK")
-      add_test(${ARGN})
+      halmd_add_test(${ARGN})
     else()
-      add_test(${NAME} ${CUDA_MEMCHECK_COMMAND} ${ARGN})
+      halmd_add_test(${NAME} ${CUDA_MEMCHECK_COMMAND} ${ARGN})
     endif()
   endmacro()
 endif()

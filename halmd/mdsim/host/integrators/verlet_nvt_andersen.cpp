@@ -71,18 +71,17 @@ void verlet_nvt_andersen<dimension, float_type>::set_temperature(double temperat
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::integrate()
 {
-    LOG_TRACE("update positions and velocities")
-
     force_array_type const& force = read_cache(particle_->force());
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
+
+    LOG_TRACE("update positions and velocities: first leapfrog half-step")
+    scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the force!
     auto position = make_cache_mutable(particle_->position());
     auto image = make_cache_mutable(particle_->image());
     auto velocity = make_cache_mutable(particle_->velocity());
-
-    scoped_timer_type timer(runtime_.integrate);
 
     for (size_type i = 0; i < nparticle; ++i) {
         vector_type& v = (*velocity)[i];
@@ -96,16 +95,15 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::finalize()
 {
-    LOG_TRACE("update velocities")
-
     force_array_type const& force = read_cache(particle_->force());
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
 
+    LOG_TRACE("update velocities: second leapfrog half-step")
+    scoped_timer_type timer(runtime_.finalize);
+
     // invalidate the particle caches after accessing the force!
     auto velocity = make_cache_mutable(particle_->velocity());
-
-    scoped_timer_type timer(runtime_.finalize);
 
     // cache random numbers
     float_type rng_cache = 0;

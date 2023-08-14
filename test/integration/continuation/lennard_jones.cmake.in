@@ -36,9 +36,9 @@ if(DEFINED USE_HOST)
   if(HALMD_WITH_GPU)
     set(BACKEND_OPTION "--disable-gpu")
   endif()
-  message(STATUS "Using host backend")
+  message(STATUS "Using host backend for continuation")
 else()
-  message(STATUS "Using GPU backend")
+  message(STATUS "Using GPU backend for continuation")
 endif()
 
 if(NOT DEFINED DIMENSION)
@@ -59,12 +59,12 @@ execute_halmd(
   --verbose
   --overwrite
   --output "${OUTPUT_PREFIX}"
-  --particles 100,200,1
+  --particles 200
   --ratios "${EDGE_RATIOS}"
   --density 0.1
   --time 1
   --timestep 0.002
-  --sampling trajectory=500
+  --sampling trajectory=250
 )
 
 execute_halmd(

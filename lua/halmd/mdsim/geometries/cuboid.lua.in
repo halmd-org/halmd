@@ -1,4 +1,5 @@
 --
+-- Copyright © 2023      Felix Höfling
 -- Copyright © 2014-2015 Nicolas Höft
 --
 -- This file is part of HALMD.
@@ -16,7 +17,6 @@
 -- You should have received a copy of the GNU Lesser General
 -- Public License along with this program.  If not, see
 -- <http://www.gnu.org/licenses/>.
-
 
 local utility = require("halmd.utility")
 local device  = require("halmd.utility.device")
@@ -64,6 +64,10 @@ local cuboid = {
 --
 --    Edge lengths of cuboid.
 --
+-- .. attribute:: volume
+--
+--    The volume of the cuboid.
+--
 local M = module(function(args)
     utility.assert_type(args, "table")
     local lowest_corner = utility.assert_type(utility.assert_kwarg(args, "lowest_corner"), "table")
@@ -77,6 +81,7 @@ local M = module(function(args)
     if #lowest_corner ~= #length  then
         error("'lowest_corner' and 'length' vectors have mismatching dimensions", 2)
     end
+
     -- construct instance
     local self = cuboid[precision](lowest_corner, length)
 

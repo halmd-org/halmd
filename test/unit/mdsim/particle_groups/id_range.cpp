@@ -21,21 +21,21 @@
 
 #include <halmd/config.hpp>
 
-#define BOOST_TEST_MODULE from_range
+#define BOOST_TEST_MODULE id_range
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/data/monomorphic.hpp>
 
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_group.hpp>
-#include <halmd/mdsim/host/particle_groups/from_range.hpp>
+#include <halmd/mdsim/host/particle_groups/id_range.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/particle_group.hpp>
-# include <halmd/mdsim/gpu/particle_groups/from_range.hpp>
+# include <halmd/mdsim/gpu/particle_groups/id_range.hpp>
 # include <test/tools/cuda.hpp>
 #endif
 #define HALMD_TEST_NO_LOGGING
@@ -73,13 +73,13 @@ test_ordered(
     typedef typename test_suite_type::particle_group_type particle_group_type;
     typedef typename particle_group_type::array_type array_type;
     typedef typename particle_group_type::size_type size_type;
-    typedef typename test_suite_type::from_range_type from_range_type;
+    typedef typename test_suite_type::id_range_type id_range_type;
 
     BOOST_TEST_MESSAGE("  " << "[" << range.first << ", " << range.second << ") of " << nparticle << " particles");
     BOOST_TEST_MESSAGE("  " << repeat << " iterations");
 
     std::shared_ptr<particle_type> particle = std::make_shared<particle_type>(nparticle, nspecies);
-    std::shared_ptr<particle_group_type> group = std::make_shared<from_range_type>(particle, range);
+    std::shared_ptr<particle_group_type> group = std::make_shared<id_range_type>(particle, range);
     {
         BOOST_CHECK_EQUAL( *group->size(), range.second - range.first );
     }
@@ -135,13 +135,13 @@ test_unordered(
     typedef typename test_suite_type::particle_group_type particle_group_type;
     typedef typename particle_group_type::array_type array_type;
     typedef typename particle_group_type::size_type size_type;
-    typedef typename test_suite_type::from_range_type from_range_type;
+    typedef typename test_suite_type::id_range_type id_range_type;
 
     BOOST_TEST_MESSAGE("  " << "[" << range.first << ", " << range.second << ") of " << nparticle << " particles");
     BOOST_TEST_MESSAGE("  " << repeat << " iterations");
 
     std::shared_ptr<particle_type> particle = std::make_shared<particle_type>(nparticle, nspecies);
-    std::shared_ptr<particle_group_type> group = std::make_shared<from_range_type>(particle, range);
+    std::shared_ptr<particle_group_type> group = std::make_shared<id_range_type>(particle, range);
     {
         BOOST_CHECK_EQUAL( *group->size(), range.second - range.first );
     }
@@ -194,7 +194,7 @@ struct test_suite_host
 {
     typedef halmd::mdsim::host::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::host::particle_group particle_group_type;
-    typedef halmd::mdsim::host::particle_groups::from_range<particle_type> from_range_type;
+    typedef halmd::mdsim::host::particle_groups::id_range<particle_type> id_range_type;
 };
 
 #ifdef HALMD_WITH_GPU
@@ -206,7 +206,7 @@ struct test_suite_gpu
 {
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::particle_group particle_group_type;
-    typedef halmd::mdsim::gpu::particle_groups::from_range<particle_type> from_range_type;
+    typedef halmd::mdsim::gpu::particle_groups::id_range<particle_type> id_range_type;
 };
 #endif
 
@@ -245,7 +245,8 @@ make_range(size_type nparticle)
  */
 using namespace boost::unit_test;
 
-auto dataset = data::make<unsigned int>({500000, 25000, 1000});
+unsigned int const DATA_ARRAY[] = {500000, 25000, 1000};
+auto dataset = data::make(DATA_ARRAY);
 unsigned int const nspecies = 1;
 unsigned int constexpr repeat = 10;
 

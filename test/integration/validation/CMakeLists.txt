@@ -13,10 +13,10 @@ configure_file(
   test_integration_validation_thermodynamics.cmake
   @ONLY
 )
-add_test(integration/validation/thermodynamics/host/2d
+halmd_add_test(integration/validation/thermodynamics/host/2d
   ${CMAKE_COMMAND} -DDIMENSION=2 -DUSE_GPU=0 -P test_integration_validation_thermodynamics.cmake
 )
-add_test(integration/validation/thermodynamics/host/3d
+halmd_add_test(integration/validation/thermodynamics/host/3d
   ${CMAKE_COMMAND} -DDIMENSION=3 -DUSE_GPU=0 -P test_integration_validation_thermodynamics.cmake
 )
 if(HALMD_WITH_GPU)
