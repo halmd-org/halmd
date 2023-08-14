@@ -40,7 +40,7 @@ struct random_wrapper
 
     cuda::function<void (float4*, unsigned int, unsigned int, vector_type, rng_type)> uniform;
 
-    static random_wrapper const kernel;
+    static random_wrapper kernel;
 };
 
 } // namespace positions

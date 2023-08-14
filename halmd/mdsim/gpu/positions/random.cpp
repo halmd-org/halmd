@@ -64,8 +64,6 @@ random<dimension, float_type, RandomNumberGenerator>::random(
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void random<dimension, float_type, RandomNumberGenerator>::set()
 {
-    typedef random_wrapper<dimension, typename rng_type::rng_type> wrapper_type;
-
     auto position = make_cache_mutable(particle_->position());
     auto image = make_cache_mutable(particle_->image());
 
@@ -77,18 +75,21 @@ void random<dimension, float_type, RandomNumberGenerator>::set()
     vector_type slab_length = element_prod(static_cast<vector_type>(box_->length()), slab_);
 
     try {
-        cuda::configure(rng_->rng().dim.grid, rng_->rng().dim.block);
-        wrapper_type::kernel.uniform(
+        auto& random_kernel = random_wrapper<dimension, typename rng_type::rng_type>::kernel.uniform;
+
+        random_kernel.configure(rng_->rng().dim.grid, rng_->rng().dim.block);
+        random_kernel(
             &*position->begin()
           , particle_->nparticle()
           , particle_->dim().threads()
           , slab_length
           , rng_->rng().rng()
         );
+
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
-        LOG_ERROR("failed to generate particle lattice on GPU");
+        LOG_ERROR("failed to generate random particle positions on GPU");
         throw;
     }
 

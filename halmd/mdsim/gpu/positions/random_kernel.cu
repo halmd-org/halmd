@@ -77,8 +77,7 @@ __global__ void uniform(
 } // namespace random_kernel
 
 template <int dimension, typename rng_type>
-random_wrapper<dimension, rng_type> const
-random_wrapper<dimension, rng_type>::kernel = {
+random_wrapper<dimension, rng_type> random_wrapper<dimension, rng_type>::kernel = {
     random_kernel::uniform<fixed_vector<float, dimension>, rng_type>
 };
 
