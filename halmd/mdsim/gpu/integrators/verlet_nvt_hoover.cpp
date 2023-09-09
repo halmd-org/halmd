@@ -193,6 +193,16 @@ float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 
     // compute total kinetic energy multiplied by 2
     float_type en_kin_2 = 2 * compute_en_kin_(&*velocity.begin(), &*velocity.end())();
+    // FIXME the above calculation yields wrong results in conjuction with the pair_full kernel
+    // FIXME the below calculation is a poor workaround
+    std::vector<vector_type> h_velocity(particle_->nparticle());
+    get_velocity(*particle_, h_velocity.begin());
+    float_type en_kin_2_host = 0;
+    for( auto const& v : h_velocity) {
+        en_kin_2_host += inner_prod(v, v); // mass = 1
+    }
+    LOG_TRACE("E_kin = " << en_kin_2 / 2 << ", E_kin (host) = " << en_kin_2_host / 2);
+    en_kin_2 = en_kin_2_host;
 
     // head of the chain
     v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) / mass_xi_[1] * timestep_4_;
