@@ -49,6 +49,7 @@ public:
         matrix_type const& epsilon
       , matrix_type const& sigma
       , matrix_type const& r_min
+      , matrix_type const& distortion
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -62,11 +63,13 @@ public:
      */
     std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
-        float_type r_sigma = sqrt(rr) / sigma_(a, b);
-        float_type exp_dr = exp(r_min_sigma_(a, b) - r_sigma);
-        float_type eps_exp_dr = epsilon_(a, b) * exp_dr;
-        float_type fval = 2 * eps_exp_dr * (exp_dr - 1) * r_sigma / rr;
-        float_type en_pot = eps_exp_dr * (exp_dr - 2);
+        float_type B = distortion_(a, b);
+        float_type r_sigma = sqrt(rr) / sigma_(a, b) / B;
+        float_type exp_dr = exp(r_min_sigma_(a, b) / B - r_sigma);
+        float_type B2 = B * B;
+        float_type eps_exp_dr = epsilon_(a, b) * exp_dr / (2 * B2 - 1);
+        float_type fval = 2 * eps_exp_dr * (exp_dr - B2) * r_sigma / rr;
+        float_type en_pot = eps_exp_dr * (exp_dr - 2 * B2);
 
         return std::make_tuple(fval, en_pot);
     }
@@ -81,9 +84,19 @@ public:
         return sigma_;
     }
 
+    matrix_type const& r_min() const
+    {
+        return r_min_;
+    }
+
     matrix_type const& r_min_sigma() const
     {
         return r_min_sigma_;
+    }
+
+    matrix_type const& distortion() const
+    {
+        return distortion_;
     }
 
     unsigned int size1() const
@@ -106,8 +119,12 @@ private:
     matrix_type epsilon_;
     /** width of potential well in MD units */
     matrix_type sigma_;
+    /** position of potential well in MD units */
+    matrix_type r_min_;
     /** position of potential well in units of sigma */
     matrix_type r_min_sigma_;
+    /** distortion factor B */
+    matrix_type distortion_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

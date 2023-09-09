@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2023       Felix Höfling
  * Copyright © 2008-2010  Peter Colberg
  * Copyright © 2020       Jaslo Ziska
  *
@@ -39,6 +40,7 @@ enum {
     EPSILON     /**< depth of potential well in MD units */
   , SIGMA       /**< width of potential well in MD units */
   , R_MIN_SIGMA /**< position of potential well in units of sigma */
+  , DISTORTION  /**< distortion factor B */
 };
 
 template <typename float_type>
@@ -46,14 +48,16 @@ HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(
     float_type const& rr
   , float_type const& sigma
   , float_type const& epsilon
-  , float_type const& r_min
+  , float_type const& r_min_sigma
+  , float_type const& B     // distortion
 )
 {
-    float_type r_sigma = sqrt(rr) / sigma;
-    float_type exp_dr = exp(r_min - r_sigma);
-    float_type eps_exp_dr = epsilon * exp_dr;
-    float_type fval = 2 * eps_exp_dr * (exp_dr - 1) * r_sigma / rr;
-    float_type en_pot = eps_exp_dr * (exp_dr - 2);
+    float_type r_sigma = sqrt(rr) / sigma / B;
+    float_type exp_dr = exp(r_min_sigma / B - r_sigma);
+    float_type B2 = B * B;
+    float_type eps_exp_dr = epsilon * exp_dr / (2 * B2 - 1);
+    float_type fval = 2 * eps_exp_dr * (exp_dr - B2) * r_sigma / rr;
+    float_type en_pot = eps_exp_dr * (exp_dr - 2 * B2);
 
     return make_tuple(fval, en_pot);
 }
@@ -89,7 +93,7 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
-        return morse_kernel::compute(rr, pair_[SIGMA], pair_[EPSILON], pair_[R_MIN_SIGMA]);
+        return morse_kernel::compute(rr, pair_[SIGMA], pair_[EPSILON], pair_[R_MIN_SIGMA], pair_[DISTORTION]);
     }
 
 private:
