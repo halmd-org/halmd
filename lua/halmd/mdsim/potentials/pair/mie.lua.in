@@ -35,9 +35,9 @@ local adapters          = require("halmd.mdsim.potentials.pair.adapters")
 --
 -- .. math::
 --
---    U_\text{LJ}\left(r_{ij}\right) = 4\epsilon_{ij} \left(
---        \left(\frac{\sigma_{ij}}{r_{ij}}\right)^{m_{ij}}
---      - \left(\frac{\sigma_{ij}}{r_{ij}}\right)^{n_{ij}}
+--    U^{(ij)}_\text{Mie}(r) = 4\epsilon_{ij} \left(
+--        \left(\frac{\sigma_{ij}}{r}\right)^{m_{ij}}
+--      - \left(\frac{\sigma_{ij}}{r}\right)^{n_{ij}}
 --    \right)
 --
 -- for the interaction between two particles of species :math:`i` and :math:`j`.

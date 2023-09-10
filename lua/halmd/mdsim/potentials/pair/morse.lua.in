@@ -216,7 +216,7 @@ local M = module(function(args)
 
     -- backwards compatibility: fix units of minimum position
     if fix_r_min then
-        logger:warning("'minimum' has been deprecated, use 'r_min' instead (see documentation)")
+        logger:warning("The argument \'minimum\' has been deprecated, use \'r_min\' instead (see documentation)")
         for i = 1, species do
             for j = 1, species do
                 r_min[i][j] = r_min[i][j] * sigma[i][j]
