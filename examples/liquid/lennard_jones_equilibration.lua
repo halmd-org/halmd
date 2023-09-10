@@ -1,6 +1,6 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2010-2014 Felix Höfling
+-- Copyright © 2010-2023 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -26,6 +26,12 @@ local numeric = halmd.numeric
 local observables = halmd.observables
 local writers = halmd.io.writers
 local utility = halmd.utility
+
+-- The next line is not needed if the definition files are located
+-- in the same folder as the simulation script. The regular expression
+-- is used to construct a path relative to the current script.
+package.path = arg[0]:match("@?(.*/)") .. "../?.lua;" .. package.path
+local definitions = { lennard_jones = require("definitions/lennard_jones") }
 
 --
 -- Setup and run simulation
@@ -58,21 +64,10 @@ function main(args)
       , temperature = args.temperature
     }):set()
 
-    -- define Lennard-Jones pair potential,
-    -- use default parameters ε=1 and σ=1 for a single species
-    local potential = mdsim.potentials.pair.lennard_jones()
-    -- apply interaction cutoff
-    if args.cutoff > 0 then
-        -- use smooth truncation
-        if args.smoothing > 0 then
-            potential = potential:truncate({"smooth_r4", cutoff = args.cutoff, h = args.smoothing})
-        else
-            potential = potential:truncate({cutoff = args.cutoff})
-        end
-    end
-    -- register computation of pair forces
-    mdsim.forces.pair({
-        box = box, particle = particle, potential = potential
+    -- define Lennard-Jones pair potential (with parameters ε=1 and σ=1 for a single species)
+    -- and register computation of pair forces
+    definitions.lennard_jones.create_pair_force({
+        box = box, particle = particle, cutoff = args.cutoff, smoothing = args.smoothing
     })
 
     -- convert integration time to number of steps
