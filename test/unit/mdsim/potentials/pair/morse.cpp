@@ -74,15 +74,15 @@ BOOST_AUTO_TEST_CASE( morse_host )
     matrix_type cutoff_array(ntype, ntype);
     cutoff_array <<=
         5., 5.
-      , 5., 5.;
+      , 5., 8.;
     matrix_type epsilon_array(ntype, ntype);
     epsilon_array <<=
         1., .5
-      , .5, .25;
+      , .5, .5;
     matrix_type sigma_array(ntype, ntype);
     sigma_array <<=
         1., 2.
-      , 2., 4.;
+      , 2., .75;
     matrix_type r_min_array(ntype, ntype);
     r_min_array <<=
         .25, 1.5
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE( morse_host )
     matrix_type distortion_array(ntype, ntype);
     distortion_array <<=
         1.41, 1.
-      , 1., 1.;
+      , 1., 1.5;
 
     // construct module
     potential_type potential(cutoff_array, epsilon_array, sigma_array, r_min_array, distortion_array);
@@ -126,12 +126,12 @@ BOOST_AUTO_TEST_CASE( morse_host )
 
     // expected results (r, fval, en_pot) for ε=1, σ=1, rmin=.25, B=1.41, rc=5σ
     boost::array<array_type, 6> results_aa = {{
-        {{0.25, -1.883690993465417, -0.9543983814993708}}
-      , {{0.5, -0.9185258533215198, -0.8376445472183219}}
-      , {{0.75, -0.5735137141996109, -0.7262099794113598}}
-      , {{1.0, -0.3921585807041995, -0.6233057918071602}}
-      , {{2.0, -0.1170322138642982, -0.3125030723043601}}
-      , {{5.0, -0.006411814323209902, 0.0}}
+        {{0.25, 0.0, -0.9540005656159722}}
+      , {{0.5, -0.6507845119203753, -0.9069122207759784}}
+      , {{0.75, -0.577737379921433, -0.8091011280363248}}
+      , {{1.0, -0.4423441678610893, -0.6983391318532663}}
+      , {{2.0, -0.1335362022766309, -0.3377631169819678}}
+      , {{5.0, -0.006524526474499887, 0.0}}
     }};
 
     BOOST_FOREACH (array_type const& a, results_aa) {
@@ -165,24 +165,23 @@ BOOST_AUTO_TEST_CASE( morse_host )
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
     };
 
-    // interaction BB: ε=.25, σ=4, rmin=2., B=1, rc=5σ
+    // interaction BB: ε=.5, σ=0.75, rmin=2, B=1.5, rc=8σ
     boost::array<array_type, 7> results_bb = {{
-        {{0.25, 0.4250224976664824, -0.1691726800071926}}
-      , {{0.5, 0.1655021504986183, -0.1927220573378325}}
-      , {{0.75, 0.08356800270973765, -0.2108338354107431}}
-      , {{1.0, 0.04558698175154832, -0.2243087448507392}}
-      , {{2.0, 0.0, -0.2444763541819005}}
-      , {{5.0, -0.006230909814814622, -0.1748770905153004}}
-      , {{10.0, -0.001462745554348482, -0.05756508607802333}}
+        {{0.5, 456.725857826345, 55.21226180109373}}
+      , {{0.75, 110.7622303429022, 19.2674158206776}}
+      , {{1.0, 29.80898547363259, 6.254397161406729}}
+      , {{2.0, 0.0, -0.481636479857814}}
+      , {{3.0, -0.07481840983208633, -0.2433064324854725}}
+      , {{5.0, -0.007940263658336938, -0.02630353504213594}}
+      , {{6.0, -0.002720513166607205, 0.0}}
     }};
-
 
     BOOST_FOREACH (array_type const& a, results_bb) {
         float_type rr = std::pow(a[0], 2);
         float_type fval, en_pot;
         std::tie(fval, en_pot) = potential(rr, 1, 1);  // interaction BB
 
-        float_type tolerance = 2 * eps;
+        float_type tolerance = 4 * eps;
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], 2 * tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
     };

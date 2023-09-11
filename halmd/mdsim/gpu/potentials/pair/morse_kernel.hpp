@@ -52,12 +52,15 @@ HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(
   , float_type const& B     // distortion
 )
 {
-    float_type r_sigma = sqrt(rr) / sigma / B;
-    float_type exp_dr = exp(r_min_sigma / B - r_sigma);
-    float_type B2 = B * B;
-    float_type eps_exp_dr = epsilon * exp_dr / (2 * B2 - 1);
-    float_type fval = 2 * eps_exp_dr * (exp_dr - B2) * r_sigma / rr;
-    float_type en_pot = eps_exp_dr * (exp_dr - 2 * B2);
+    float_type r_sigma_B = sqrt(rr) / sigma / B;
+    float_type dr = r_min_sigma / B - r_sigma_B;
+    float_type exp_dr = exp(dr);
+
+    float_type A = 2 * B * B - 1;
+    float_type exp_A_dr = (A == 1) ? exp_dr : exp(A * dr);
+    float_type eps_exp_dr = epsilon * exp_dr / A;
+    float_type fval = (A + 1) * eps_exp_dr * (exp_A_dr - 1) * r_sigma_B / rr;
+    float_type en_pot = eps_exp_dr * (exp_A_dr - A - 1);
 
     return make_tuple(fval, en_pot);
 }

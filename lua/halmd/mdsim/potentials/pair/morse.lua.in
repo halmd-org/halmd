@@ -36,7 +36,7 @@ local adapters          = require("halmd.mdsim.potentials.pair.adapters")
 -- .. math::
 --
 --    U^{(ij)}_\text{Morse}(r) = \frac{\epsilon_{ij}}{2 B^2 - 1} \left(
---        e^{-2 (r - r_{\text{min},ij}) / (B \sigma_{ij})}
+--        e^{-2 (r - r_{\text{min},ij}) B / \sigma_{ij}}
 --        - 2 B^2 e^{-(r - r_{\text{min},ij}) / (B \sigma_{ij})}
 --    \right)
 --
@@ -51,9 +51,8 @@ local adapters          = require("halmd.mdsim.potentials.pair.adapters")
 --        1 - e^{-(r - r_{\text{min},ij}) / \sigma_{ij}}
 --    \right)^2 - \epsilon_{ij}
 --
--- In this case, the potential minimum is at :math:`r = r_{\text{min},ij}`. The
--- inverse length :math:`1/\sigma_{ij}` is also referred to as stiffness
--- parameter.
+-- The potential minimum is at :math:`r = r_{\text{min},ij}`. The inverse
+-- length :math:`1/\sigma_{ij}` is also referred to as stiffness parameter.
 --
 
 -- grab C++ wrappers
