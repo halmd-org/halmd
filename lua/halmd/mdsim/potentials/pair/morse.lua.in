@@ -55,6 +55,7 @@ local adapters          = require("halmd.mdsim.potentials.pair.adapters")
 -- inverse length :math:`1/\sigma_{ij}` is also referred to as stiffness
 -- parameter.
 --
+
 -- grab C++ wrappers
 local morse = {
     host = assert(libhalmd.mdsim.host.potentials.pair.morse)
@@ -68,7 +69,6 @@ if device.gpu then
     smooth_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
     shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
 end
-
 ---
 -- Construct Morse potential.
 --
@@ -92,7 +92,7 @@ end
 -- not specified, the memory location is selected according to the compute
 -- device.
 --
--- Note::
+-- .. note::
 --
 --     The keyword ``minimum`` has been deprecated since version 1.1.0. Please
 --     use ``r_min`` instead. For backwards compatibility, values passed via
