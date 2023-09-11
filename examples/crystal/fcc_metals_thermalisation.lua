@@ -49,7 +49,7 @@ function main(args)
     -- query (nominal) lattice constant from potential parameters.
     -- r_min (or r₀) is the distance between nearest lattice points,
     -- so for the fcc lattice, we have a_lat = √2 r₀.
-    local lattice_constant = math.sqrt(2) * parameters.r_min
+    local lattice_constant = math.sqrt(2) * parameters.r_min * .95 -- FIXME
     log.info(("lattice constant: %g Å"):format(lattice_constant))
 
     -- linear extend of cubic simulation box in multiples of the lattice constant
@@ -66,6 +66,11 @@ function main(args)
     -- set particle masses
     local mass = parameters.mass
     log.info(("atomic mass: %g u"):format(mass * units.mass / constants.Da))
+    local masses = {}
+    for i = 1, nparticle do
+        masses[i] = mass
+    end
+    particle.data["mass"] = masses
 
     -- set initial particle positions
     mdsim.positions.lattice({box = box, particle = particle})
@@ -105,7 +110,7 @@ function main(args)
     local interval = args.sampling.trajectory or steps
     if interval > 0 then
         phase_space:writer({
-            file = file, fields = {"position", "velocity"}, every = interval
+            file = file, fields = {"position", "velocity", "mass"}, every = interval
         })
     end
 
@@ -154,11 +159,11 @@ function define_args(parser)
     parser:add_argument("cutoff", {type = "float32", help = "potential cutoff radius"})
     parser:add_argument("smoothing", {type = "number", default = 0.01, help = "cutoff smoothing parameter"})
     parser:add_argument("temperature", {type = "number", default = 700, help = "thermostat temperature (Kelvin)"})
-    parser:add_argument("rate", {type = "number", default = 2, help = "heat bath collision rate"})
+    parser:add_argument("rate", {type = "number", default = 100, help = "heat bath collision rate"})
     parser:add_argument("time", {type = "number", default = 100, help = "integration time"})
-    parser:add_argument("timestep", {type = "number", default = 0.001, help = "integration time step"})
+    parser:add_argument("timestep", {type = "number", default = 0.0003, help = "integration time step"})
 
     local sampling = parser:add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})
     sampling:add_argument("trajectory", {type = "integer", help = "for trajectory"})
-    sampling:add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
+    sampling:add_argument("state-vars", {type = "integer", default = 200, help = "for state variables"})
 end
