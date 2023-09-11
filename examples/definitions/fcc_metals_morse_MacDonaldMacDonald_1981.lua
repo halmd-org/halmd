@@ -48,49 +48,49 @@ M.parameters = {
        , r_min = 2.5471
        , sigma = 1 / 1.1857
        , epsilon = 0.9403e-19 / eV
-       , B = math.sqrt(2.265)
+       , distortion = math.sqrt(2.265)
        , mass = 63.546 * Da / M.units.mass
     }
   , Ag = {"silver"
        , r_min = 2.8765
        , sigma = 1 / 1.1255
        , epsilon = 0.7874e-19 / eV
-       , B = math.sqrt(2.3)
+       , distortion = math.sqrt(2.3)
        , mass = 196.967 * Da / M.units.mass
     }
   , Ca = {"calcium"
        , r_min = 3.9264
        , sigma = 1 / 0.8380
        , epsilon = 0.5535e-19 / eV
-       , B = math.sqrt(1.0)
+       , distortion = math.sqrt(1.0)
        , mass = 40.078 * Da / M.units.mass
     }
   , Sr = {"strontium"
        , r_min = 4.2804
        , sigma = 1 / 0.7867
        , epsilon = 0.5442e-19 / eV
-       , B = math.sqrt(1.0)
+       , distortion = math.sqrt(1.0)
        , mass = 87.62 * Da / M.units.mass
     }
   , Al = {"aluminium"
        , r_min = 2.8485
        , sigma = 1 / 1.1611
        , epsilon = 0.6369e-19 / eV
-       , B = math.sqrt(2.5)
+       , distortion = math.sqrt(2.5)
        , mass = 26.982 * Da / M.units.mass
     }
   , Pb = {"lead"
        , r_min = 3.4779
        , sigma = 1 / 0.7776
        , epsilon = 0.5500e-19 / eV
-       , B = math.sqrt(1.5)
+       , distortion = math.sqrt(1.5)
        , mass = 207.2 * Da / M.units.mass
     }
   , Ni = {"nickel"
        , r_min = 2.4849
        , sigma = 1 / 1.3909
        , epsilon = 0.9843e-19 / eV
-       , B = math.sqrt(2.4)
+       , distortion = math.sqrt(2.4)
        , mass = 58.6934 * Da / M.units.mass
     }
 }
