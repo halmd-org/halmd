@@ -46,8 +46,10 @@ function main(args)
     local units = definitions.fcc_metals.units
     log.message(("using potential parameters for %s (%s)"):format(substance, parameters[1]))
 
-    -- query (nominal) lattice constant from potential parameters
-    local lattice_constant = parameters.r_min
+    -- query (nominal) lattice constant from potential parameters.
+    -- r_min (or r₀) is the distance between nearest lattice points,
+    -- so for the fcc lattice, we have a_lat = √2 r₀.
+    local lattice_constant = math.sqrt(2) * parameters.r_min
     log.info(("lattice constant: %g Å"):format(lattice_constant))
 
     -- linear extend of cubic simulation box in multiples of the lattice constant
