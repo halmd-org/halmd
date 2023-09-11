@@ -210,9 +210,7 @@ function main(args)
     observables.sampler:sample()
 
     -- estimate remaining runtime
-    local runtime = observables.runtime_estimate({
-        steps = steps, first = 10, interval = 900, sample = 60
-    })
+    local runtime = observables.runtime_estimate({steps = steps})
 
     -- run simulation
     observables.sampler:run(steps)

@@ -40,6 +40,7 @@ local utility           = require("halmd.utility")
 --    local steps = 1000000
 --
 --    -- calculate remaining runtime every minute, and log every 15 minutes
+--    -- (only 'steps' is required; for the other three parameters, the default values are given)
 --    local runtime = halmd.observables.runtime_estimate({steps = steps, first = 10, interval = 900, sample = 60})
 --
 --    -- run simulation
@@ -58,27 +59,18 @@ local runtime_estimate = assert(libhalmd.observables.runtime_estimate)
 --
 -- :param table args: keyword arguments
 -- :param number steps: length of simulation run
--- :param number first: time to first estimate in seconds
--- :param number interval: frequency of estimates in seconds
--- :param number sample: frequency of sampling in seconds
+-- :param number first: time to first estimate in seconds (*default*: 10)
+-- :param number interval: frequency of estimates in seconds (*default*: 900)
+-- :param number sample: frequency of sampling in seconds (*default*: 60)
 --
 local M = module(function(args)
     local steps = args.steps
     if not steps then
         error("missing argument: steps", 2)
     end
-    local first = args.first
-    if not first then
-        error("missing argument: first", 2)
-    end
-    local interval = args.interval
-    if not interval then
-        error("missing argument: interval", 2)
-    end
-    local sample = args.sample
-    if not sample then
-        error("missing argument: sample", 2)
-    end
+    local first = args.first or 10
+    local interval = args.interval or 900
+    local sample = args.sample or 60
 
     -- construct instance
     local self = runtime_estimate(clock, steps)

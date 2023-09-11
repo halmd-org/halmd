@@ -128,9 +128,7 @@ function main(args)
     observables.sampler:sample()
 
     -- estimate remaining runtime
-    local runtime = observables.runtime_estimate({
-        steps = steps, first = 10, interval = 900, sample = 60
-    })
+    local runtime = observables.runtime_estimate({steps = steps})
 
     -- add velocity-Verlet integrator with Boltzmann thermostat (NVT)
     local integrator = mdsim.integrators.verlet_nvt_boltzmann({
