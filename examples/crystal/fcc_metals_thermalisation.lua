@@ -49,16 +49,19 @@ function main(args)
     -- query (nominal) lattice constant from potential parameters.
     -- r_min (or r₀) is the distance between nearest lattice points,
     -- so for the fcc lattice, we have a_lat = √2 r₀.
-    local lattice_constant = math.sqrt(2) * parameters.r_min * .95 -- FIXME
+    local lattice_constant = math.sqrt(2) * parameters.r_min
     log.info(("lattice constant: %g Å"):format(lattice_constant))
 
-    -- linear extend of cubic simulation box in multiples of the lattice constant
+    -- linear extent of cubic grain in multiples of the lattice constant
     local ncells = args.ncells
-    local box_length = lattice_constant * ncells
+    local grain_size = lattice_constant * ncells
     local nparticle = math.pow(ncells, 3) * 4       -- 4 atoms per fcc unit cell
 
-    -- create cubic simulation domain with periodic boundary conditions
-    local box = mdsim.box({length = {box_length, box_length, box_length}})
+    -- create cubic simulation domain with effectively free boundaries.
+    -- Make the box extent twice as large as the sample size so that the
+    -- imposed periodic boundary conditions are ineffective.
+    local inflation = 2
+    local box = mdsim.box({length = {inflation * grain_size, inflation * grain_size, inflation * grain_size}})
 
     -- create system state
     local particle = mdsim.particle({dimension = box.dimension, particles = nparticle})
@@ -72,26 +75,24 @@ function main(args)
     end
     particle.data["mass"] = masses
 
-    -- set initial particle positions
-    mdsim.positions.lattice({box = box, particle = particle})
+    -- set initial particle positions,
+    -- fill only the central part of the box, which represents the cubic grain
+    mdsim.positions.lattice({box = box, particle = particle, slab = {1. / inflation, 1. / inflation, 1. / inflation}})
        :set()
 
     -- set initial particle velocities
-    --
-    -- use twice the value of the target temperature since we start with a
-    -- perfect lattice configuration which is force free (the potential energy
-    -- fluctuation is zero)
     local temperature = constants.kB * args.temperature / units.energy    -- convert from Kelvin to simulation units (eV)
     log.message(("heat bath temperature: %g K = %g eV / kB"):format(args.temperature, temperature))
     local boltzmann = mdsim.velocities.boltzmann({
-        particle = particle, temperature = 2 * temperature
+        particle = particle, temperature = temperature
     }):set()
 
-    -- define Lennard-Jones pair potential (with parameters ε=1 and σ=1 for a single species)
+    -- define particle interactions according to the material model
     -- and register computation of pair forces
     definitions.fcc_metals.create_pair_force({
         substance = substance, box = box, particle = particle
       , cutoff = args.cutoff, smoothing = args.smoothing
+        -- this line is optional to speed up the simulation of small systems
       , neighbour = { disable_binning = true, disable_sorting = true, unroll_force_loop = true }
     })
 
