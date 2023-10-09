@@ -55,7 +55,7 @@ public:
 
     /** particle number */
     virtual unsigned int particle_number() const = 0;
-    /** box volume */
+    /** reference volume */
     virtual double volume() const = 0;
     /** potential energy per particle */
     virtual double en_pot() = 0;
@@ -84,7 +84,7 @@ public:
         return density() * (temp() + virial() / dimension);
     }
 
-    /** system temperature */
+    /** kinetic temperature */
     double temp() { return 2 * en_kin() / dimension; }
     /** number density */
     double density() { return particle_number() / volume(); }

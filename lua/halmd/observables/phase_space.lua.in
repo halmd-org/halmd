@@ -272,14 +272,14 @@ local M = module(function(args)
 
     if particle.memory == "gpu" then
         self.set = function(self, samples)
-            logger:info(("setting particles from phase space sample"):format(label))
+            logger:message(("setting particles from phase space sample"):format(label))
             for name,sample in pairs(samples) do
                 phase_space:set(name, sample, sample.gpu and sample:gpu() or false)
             end
         end
     else
         self.set = function(self, samples)
-            logger:info(("setting particles from phase space sample"):format(label))
+            logger:message(("setting particles from phase space sample"):format(label))
             for name,sample in pairs(samples) do
                 phase_space:set(name, sample)
             end

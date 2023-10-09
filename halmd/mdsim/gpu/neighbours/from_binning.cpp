@@ -166,7 +166,7 @@ void from_binning<dimension, float_type>::update()
     cell_array_type const& g_cell2 = read_cache(binning2_->g_cell());
     auto g_neighbour = make_cache_mutable(g_neighbour_);
 
-    LOG_TRACE("update neighbour lists");
+    LOG_DEBUG("update neighbour lists");
 
     if (!is_binning_compatible(binning1_, binning2_)) {
         throw std::logic_error("number of cells per dimension must be at least 3");

@@ -1,6 +1,6 @@
 /*
- * Copyright © 2022 Felix Höfling
- * Copyright © 2021 Jaslo Ziska
+ * Copyright © 2022-2023 Felix Höfling
+ * Copyright © 2021      Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -43,7 +43,7 @@ public:
     typedef fixed_vector<float_type, dimension> vector_type;
 
 #ifndef __CUDACC__
-    cylinder(vector_type const& axis, vector_type const& offset, float_type radius);
+    cylinder(vector_type const& axis, vector_type const& centre, float_type radius, float_type length);
 
     /**
      * Log geometry information
@@ -54,6 +54,11 @@ public:
      * The logger_ argument must have an underscore in it's name because of the way the LOG() macro works.
      */
     void log(std::shared_ptr<halmd::logger> logger_ = std::make_shared<halmd::logger>()) const;
+
+    /**
+     * returns the volume enclosed by the geometry
+     */
+    float_type volume() const;
 
     /**
      * Bind class to Lua
@@ -67,27 +72,25 @@ public:
     HALMD_GPU_ENABLED bool operator()(vector_type const& r) const;
 
 private:
-    vector_type axis_original_;     // store for logging purposes only
-    float_type radius_;
-
-    vector_type axis_;
-    vector_type offset_;
-    float_type radius2_;
+    vector_type axis_;              //< normalised cylinder axis
+    vector_type centre_;            //< coordinates of cylinder centre
+    float_type radius2_;            //< squared radius
+    float_type length2_4_;          //< length squared divided by 4
 };
 
 template<int dimension, typename float_type>
 HALMD_GPU_ENABLED bool cylinder<dimension, float_type>::operator()(vector_type const& r) const
 {
     bool inside = true;
-    vector_type const dr = r - offset_;
+    vector_type const dr = r - centre_;
 
     // Pythagorean theorem:
     // the hypotenuse is dr, and the two legs of the triangle are the
     // projection (axis_ · dr) and the perpendicular vector from r to the axis
     float_type dr2 = inner_prod(dr, dr);
-    float_type par2 = inner_prod(axis_, dr);    // parallel to the axis
+    float_type par = inner_prod(axis_, dr);    // parallel to the axis
 
-    if (dr2 - par2 * par2 > radius2_) {
+    if (dr2 - par * par > radius2_  ||  par * par > length2_4_ ) {
         inside = false;
     }
 

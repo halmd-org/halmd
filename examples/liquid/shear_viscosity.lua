@@ -99,9 +99,7 @@ function main(args)
     })
 
     -- estimate remaining runtime
-    local runtime = observables.runtime_estimate({
-        steps = equi_steps, first = 10, interval = 900, sample = 60
-    })
+    local runtime = observables.runtime_estimate({steps = equi_steps})
 
     -- run equilibration
     observables.sampler:run(equi_steps)
@@ -172,9 +170,7 @@ function main(args)
     local stress_tensor_autocorrelation = dynamics.stress_tensor_autocorrelation({thermodynamics = msv})
     blocking_scheme:correlation({tcf = stress_tensor_autocorrelation, file = file})
 
-    runtime = observables.runtime_estimate({
-        steps = steps, first = 10, interval = 900, sample = 60
-    })
+    runtime = observables.runtime_estimate({steps = steps})
 
     -- run NVE simulation
     observables.sampler:run(steps)

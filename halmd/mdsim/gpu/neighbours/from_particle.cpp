@@ -135,7 +135,7 @@ void from_particle<dimension, float_type>::update()
     position_array_type const& position2 = read_cache(particle2_->position());
     auto g_neighbour = make_cache_mutable(g_neighbour_);
 
-    LOG_TRACE("update neighbour lists");
+    LOG_DEBUG("update neighbour lists");
 
 
     bool overcrowded = false;

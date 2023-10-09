@@ -105,7 +105,7 @@ local M = module(function(args)
         end
 
         -- emit notification to blocking_scheme logger
-        logger:info("register " .. desc)
+        logger:message("register " .. desc)
         -- switch to tcf-specific logger
         local logger = log.logger({label = desc})
 
@@ -164,7 +164,7 @@ local M = module(function(args)
     -- connect blocking scheme to sampler
     table.insert(conn, sampler:on_sample(self.sample, every, clock.step))
     table.insert(conn, sampler:on_finish(self.finalise))
-    logger:info("sampling interval in integration steps: " .. every)
+    logger:message("sampling interval in integration steps: " .. every)
 
     return self
 end)

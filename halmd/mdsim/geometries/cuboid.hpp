@@ -1,5 +1,6 @@
 /*
  * Copyright © 2014 Nicolas Höft
+ * Copyright © 2023 Felix Höfling
  * Copyright © 2021 Jaslo Ziska
  *
  * This file is part of HALMD.
@@ -53,6 +54,11 @@ public:
      * The logger_ argument must have an underscore in it's name because of the way the LOG() macro works.
      */
     void log(std::shared_ptr<halmd::logger> logger_ = std::make_shared<halmd::logger>()) const;
+
+    /**
+     * returns the volume enclosed by the geometry
+     */
+    float_type volume() const;
 
     /**
      * Bind class to Lua

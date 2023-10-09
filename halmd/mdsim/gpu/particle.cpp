@@ -138,8 +138,8 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
         iota(reverse_id->begin(), reverse_id->end(), 0);
     }
 
-    LOG_DEBUG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
-    LOG_DEBUG("number of CUDA execution threads per block: " << dim_.threads_per_block());
+    LOG_INFO("number of CUDA execution blocks: " << dim_.blocks_per_grid());
+    LOG_INFO("number of CUDA execution threads per block: " << dim_.threads_per_block());
 
     if (typeid(float_type) == typeid(float)) {
         LOG("integrate using single precision");
@@ -162,7 +162,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::aux_enable()
 {
-    LOG_TRACE("enable computation of auxiliary variables");
+    LOG_DEBUG("enable computation of auxiliary variables");
     aux_enabled_ = true;
 }
 

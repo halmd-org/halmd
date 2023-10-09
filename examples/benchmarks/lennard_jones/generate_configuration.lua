@@ -78,7 +78,7 @@ function main(args)
     })
 
     -- estimate remaining runtime
-    observables.runtime_estimate({steps = steps, first = 10, interval = 900, sample = 60})
+    observables.runtime_estimate({steps = steps})
 
     -- sample initial state
     observables.sampler:sample()

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2013 Felix Höfling
+ * Copyright © 2008-2023 Felix Höfling
  * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
@@ -43,17 +43,21 @@ morse<float_type>::morse(
     matrix_type const& epsilon
   , matrix_type const& sigma
   , matrix_type const& r_min
+  , matrix_type const& distortion
   , std::shared_ptr<logger> logger
 )
   // allocate potential parameters
   : epsilon_(epsilon)
   , sigma_(check_shape(sigma, epsilon))
-  , r_min_sigma_(check_shape(r_min, epsilon))
+  , r_min_(check_shape(r_min, epsilon))
+  , r_min_sigma_(element_div(r_min, sigma))
+  , distortion_(check_shape(distortion, epsilon))
   , logger_(logger)
 {
     LOG("depth of potential well: ε = " << epsilon_);
     LOG("width of potential well: σ = " << sigma_);
-    LOG("position of potential well: r_min / σ = " << r_min_sigma_);
+    LOG("position of potential well: r_min = " << r_min_);
+    LOG("distortion factor: B = " << distortion_);
 }
 
 template <typename float_type>
@@ -75,11 +79,14 @@ void morse<float_type>::luaopen(lua_State* L)
                                 matrix_type const&
                               , matrix_type const&
                               , matrix_type const&
+                              , matrix_type const&
                               , std::shared_ptr<logger>
                             >())
                             .property("epsilon", &morse::epsilon)
                             .property("sigma", &morse::sigma)
+                            .property("r_min", &morse::r_min)
                             .property("r_min_sigma", &morse::r_min_sigma)
+                            .property("distortion", &morse::distortion)
                     ]
                 ]
             ]

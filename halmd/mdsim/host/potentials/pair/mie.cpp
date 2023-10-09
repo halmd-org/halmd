@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2013 Felix Höfling
+ * Copyright © 2008-2023 Felix Höfling
  * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
@@ -28,7 +28,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/pair_full.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
-#include <halmd/mdsim/host/potentials/pair/modified_lennard_jones.hpp>
+#include <halmd/mdsim/host/potentials/pair/mie.hpp>
 #include <halmd/mdsim/host/potentials/pair/truncations/truncations.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -45,7 +45,7 @@ namespace pair {
  * Initialise Lennard-Jones potential parameters
  */
 template <typename float_type>
-modified_lennard_jones<float_type>::modified_lennard_jones(
+mie<float_type>::mie(
     matrix_type const& epsilon
   , matrix_type const& sigma
   , uint_matrix_type const& index_m
@@ -54,6 +54,7 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
 )
   // allocate potential parameters
   : epsilon_(epsilon)
+  , epsilon_C_(epsilon)                              // multiply prefactor C below
   , sigma_(check_shape(sigma, epsilon))
   , index_m_(check_shape(index_m, epsilon))
   , index_m_2_(index_m_ / 2)
@@ -67,6 +68,7 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
     LOG("index of repulsion: m = " << index_m_);
     LOG("index of attraction: n = " << index_n_);
 
+
     // check conditions on power law indices (after logging output)
     for (unsigned i = 0; i < index_m_.size1(); ++i) {
         for (unsigned j = 0; j < index_m_.size2(); ++j) {
@@ -79,10 +81,19 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
             }
         }
     }
+
+    // compute prefactor C(m,n) and multiply with epsilon
+    for (unsigned i = 0; i < index_m_.size1(); ++i) {
+        for (unsigned j = 0; j < index_m_.size2(); ++j) {
+            float_type m = index_m_(i, j);  // promote to floating-point numbers
+            float_type n = index_n_(i, j);
+            epsilon_C_(i, j) *= m / (m - n) * std::pow(m / n, n / (m - n));
+        }
+    }
 }
 
 template <typename float_type>
-void modified_lennard_jones<float_type>::luaopen(lua_State* L)
+void mie<float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -95,7 +106,7 @@ void modified_lennard_jones<float_type>::luaopen(lua_State* L)
                 [
                     namespace_("pair")
                     [
-                        class_<modified_lennard_jones, std::shared_ptr<modified_lennard_jones> >("modified_lennard_jones")
+                        class_<mie, std::shared_ptr<mie> >("mie")
                             .def(constructor<
                                 matrix_type const&
                               , matrix_type const&
@@ -103,10 +114,10 @@ void modified_lennard_jones<float_type>::luaopen(lua_State* L)
                               , uint_matrix_type const&
                               , std::shared_ptr<logger>
                             >())
-                            .property("epsilon", &modified_lennard_jones::epsilon)
-                            .property("sigma", &modified_lennard_jones::sigma)
-                            .property("index_m", &modified_lennard_jones::index_m)
-                            .property("index_n", &modified_lennard_jones::index_n)
+                            .property("epsilon", &mie::epsilon)
+                            .property("sigma", &mie::sigma)
+                            .property("index_m", &mie::index_m)
+                            .property("index_n", &mie::index_n)
                     ]
                 ]
             ]
@@ -114,29 +125,29 @@ void modified_lennard_jones<float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_modified_lennard_jones(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_pair_mie(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
-    modified_lennard_jones<double>::luaopen(L);
-    forces::pair_full<3, double, modified_lennard_jones<double> >::luaopen(L);
-    forces::pair_full<2, double, modified_lennard_jones<double> >::luaopen(L);
-    truncations::truncations_luaopen<double, modified_lennard_jones<double> >(L);
+    mie<double>::luaopen(L);
+    forces::pair_full<3, double, mie<double> >::luaopen(L);
+    forces::pair_full<2, double, mie<double> >::luaopen(L);
+    truncations::truncations_luaopen<double, mie<double> >(L);
 #else
-    modified_lennard_jones<float>::luaopen(L);
-    forces::pair_full<3, float, modified_lennard_jones<float> >::luaopen(L);
-    forces::pair_full<2, float, modified_lennard_jones<float> >::luaopen(L);
-    truncations::truncations_luaopen<float, modified_lennard_jones<float> >(L);
+    mie<float>::luaopen(L);
+    forces::pair_full<3, float, mie<float> >::luaopen(L);
+    forces::pair_full<2, float, mie<float> >::luaopen(L);
+    truncations::truncations_luaopen<float, mie<float> >(L);
 #endif
     return 0;
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class modified_lennard_jones<double>;
-HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(modified_lennard_jones<double>)
+template class mie<double>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(mie<double>)
 #else
-template class modified_lennard_jones<float>;
-HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(modified_lennard_jones<float>)
+template class mie<float>;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE(mie<float>)
 #endif
 
 } // namespace pair
@@ -146,13 +157,13 @@ namespace forces {
 
 // explicit instantiation of force modules
 #ifndef USE_HOST_SINGLE_PRECISION
-template class pair_full<3, double, potentials::pair::modified_lennard_jones<double> >;
-template class pair_full<2, double, potentials::pair::modified_lennard_jones<double> >;
-HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(double, potentials::pair::modified_lennard_jones<double>)
+template class pair_full<3, double, potentials::pair::mie<double> >;
+template class pair_full<2, double, potentials::pair::mie<double> >;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(double, potentials::pair::mie<double>)
 #else
-template class pair_full<3, float, potentials::pair::modified_lennard_jones<float> >;
-template class pair_full<2, float, potentials::pair::modified_lennard_jones<float> >;
-HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::modified_lennard_jones<float>)
+template class pair_full<3, float, potentials::pair::mie<float> >;
+template class pair_full<2, float, potentials::pair::mie<float> >;
+HALMD_MDSIM_HOST_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCES(float, potentials::pair::mie<float>)
 #endif
 
 } // namespace forces

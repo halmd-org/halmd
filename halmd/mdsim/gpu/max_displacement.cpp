@@ -81,7 +81,7 @@ float_type max_displacement<dimension, float_type>::compute()
     if (position_cache != position_cache_) {
         position_array_type const& position = read_cache(position_cache);
 
-        LOG_TRACE("compute maximum squared displacement");
+        LOG_DEBUG("compute maximum squared displacement");
 
         scoped_timer_type timer(runtime_.compute);
         try {

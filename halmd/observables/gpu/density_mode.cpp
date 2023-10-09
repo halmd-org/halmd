@@ -49,7 +49,7 @@ density_mode<dimension, float_type>::density_mode(
   , g_sin_(nq_), g_cos_(nq_)
   , h_sin_(nq_), h_cos_(nq_)
 {
-    LOG_DEBUG(
+    LOG_INFO(
         "CUDA configuration: " << dim_.blocks_per_grid() << " blocks of "
         << dim_.threads_per_block() << " threads each"
     );
@@ -86,7 +86,7 @@ density_mode<dimension, float_type>::acquire()
         auto const& group = read_cache(group_cache);
         auto const& position = read_cache(position_cache);
 
-        LOG_TRACE("acquire sample");
+        LOG_DEBUG("acquire sample");
 
         scoped_timer_type timer(runtime_.acquire);
 

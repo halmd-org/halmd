@@ -162,8 +162,8 @@ local M = module(function(args)
     self.interval    = property(function() return interval end)
     self.rate        = property(function() return rate end)
 
-    logger:info(("coupling interval: %d steps"):format(self.interval))
-    logger:info(("coupling rate: %g per unit time"):format(self.rate))
+    logger:message(("coupling interval: %d steps"):format(self.interval))
+    logger:message(("coupling rate: %g per unit time"):format(self.rate))
 
     -- sequence of signal connections
     local conn = {}

@@ -64,7 +64,7 @@ ssf<dimension>::sample()
     // track the validity of the caches via std::weak_ptr
     if (!owner_equal(mode1_observer_, mode1) || !owner_equal(mode2_observer_, mode2))
     {
-        LOG_TRACE("sampling");
+        LOG_DEBUG("sampling");
 
         scoped_timer_type timer(runtime_.sample);
 

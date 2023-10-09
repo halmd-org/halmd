@@ -90,7 +90,7 @@ __global__ void update(
             // squared particle distance
             float rr = inner_prod(dr, dr);
 
-            // enforce cutoff length with neighbour list skin
+            // enforce cutoff distance with neighbour list skin
             float rr_cut_skin = tex1Dfetch<float>(t_rr_cut_skin, type1 * ntype2 + type2);
 
             if (rr > rr_cut_skin) { continue; }

@@ -105,6 +105,8 @@ static inline std::ostream& operator<<(std::ostream& os, logging::severity_level
         os << "TRACE"; break;
       case logging::debug:
         os << "DEBUG"; break;
+      case logging::info:
+        os << "INFO"; break;
       case logging::warning:
         os << "WARNING"; break;
       case logging::error:
@@ -120,7 +122,7 @@ void logging::set_formatter(boost::shared_ptr<backend_type> backend)
 {
     backend->set_formatter(expressions::stream
         << expressions::format_date_time<boost::posix_time::ptime>("TimeStamp", "[%d-%m-%Y %H:%M:%S.%f]")
-        << expressions::if_(severity != logging::info)
+        << expressions::if_(severity != logging::message)
            [
                expressions::stream << " [" << severity << "]"
            ]
@@ -171,6 +173,7 @@ HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
                 [
                     value("error", logging::error)
                   , value("warning", logging::warning)
+                  , value("message", logging::message)
                   , value("info", logging::info)
                   , value("debug", logging::debug)
                   , value("trace", logging::trace)

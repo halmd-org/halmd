@@ -1,5 +1,6 @@
 --
 -- Copyright © 2019 Roya Ebrahimi Viand
+-- Copyright © 2023 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -59,6 +60,10 @@ local sphere = {
 -- .. attribute:: radius
 --
 --    Sphere radius.
+--
+-- .. attribute:: volume
+--
+--    The volume of the sphere.
 --
 local M = module(function(args)
     utility.assert_type(args, "table")

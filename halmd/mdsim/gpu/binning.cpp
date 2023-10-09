@@ -94,8 +94,8 @@ binning<dimension, float_type>::binning(
     cell_length_ = element_div(static_cast<vector_type>(box_->length()), static_cast<vector_type>(ncell_));
 
     LOG("neighbour list skin: " << r_skin_);
-    LOG("number of cells per dimension: " << ncell_);
-    LOG("edge lengths of cells: " << cell_length_);
+    LOG_INFO("number of cells per dimension: " << ncell_);
+    LOG_INFO("edge lengths of cells: " << cell_length_);
 
     size_t ncells = std::accumulate(ncell_.begin(), ncell_.end(), 1, std::multiplies<size_t>());
     set_cell_size(warp_size * static_cast<size_t>(std::ceil(nwarps / ncells)));
@@ -135,7 +135,7 @@ void binning<dimension, float_type>::set_cell_size(size_t cell_size)
         dim3(ncells / ncell_.back(), ncell_.back())
       , std::min(cell_size_, device_properties_.max_threads_per_block())
     );
-    LOG_DEBUG("CUDA threads per block: " << dim_cell_.threads_per_block());
+    LOG_INFO("CUDA threads per block: " << dim_cell_.threads_per_block());
 
     try {
         auto g_cell = make_cache_mutable(g_cell_);
@@ -168,7 +168,7 @@ void binning<dimension, float_type>::update()
     auto const& position = read_cache(particle_->position());
     auto g_cell = make_cache_mutable(g_cell_);
 
-    LOG_TRACE("update cell lists");
+    LOG_DEBUG("update cell lists");
 
     bool overcrowded = false;
     do {

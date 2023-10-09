@@ -95,7 +95,7 @@ void binning<dimension, float_type>::update()
 
     auto cell = make_cache_mutable(cell_);
 
-    LOG_TRACE("update cell lists");
+    LOG_DEBUG("update cell lists");
 
     scoped_timer_type timer(runtime_.update);
 

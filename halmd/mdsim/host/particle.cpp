@@ -96,7 +96,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::aux_enable()
 {
-    LOG_TRACE("enable computation of auxiliary variables");
+    LOG_DEBUG("enable computation of auxiliary variables");
     aux_enabled_ = true;
 }
 

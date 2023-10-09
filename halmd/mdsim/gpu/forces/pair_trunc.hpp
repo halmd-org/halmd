@@ -225,7 +225,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
 
     cuda::texture<float4> t_r2(position2);
 
-    LOG_TRACE("compute forces");
+    LOG_DEBUG("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -284,7 +284,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
 
     cuda::texture<float4> t_r2(position2);
 
-    LOG_TRACE("compute forces with auxiliary variables");
+    LOG_DEBUG("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute_aux);
 

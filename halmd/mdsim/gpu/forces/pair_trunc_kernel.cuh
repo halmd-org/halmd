@@ -107,7 +107,7 @@ __global__ void compute_unroll_force_loop(
         box_kernel::reduce_periodic(r, box_length);
         // squared particle distance
         value_type rr = inner_prod(r, r);
-        // enforce cutoff length
+        // enforce cutoff distance
         if (!potential.within_range(rr)) {
             continue;
         }
@@ -219,7 +219,7 @@ __global__ void compute(
         box_kernel::reduce_periodic(r, box_length);
         // squared particle distance
         value_type rr = inner_prod(r, r);
-        // enforce cutoff length
+        // enforce cutoff distance
         if (!potential.within_range(rr)) {
             continue;
         }

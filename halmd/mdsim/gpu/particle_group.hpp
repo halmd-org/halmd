@@ -321,7 +321,7 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type aligned_vector_type;
 
     if(*group.size() != particle_dst.nparticle()) {
-        LOG_TRACE("group size: " << *group.size() << ", destination particle size: " << particle_dst.nparticle());
+        LOG_INFO("group size: " << *group.size() << ", destination particle size: " << particle_dst.nparticle());
         throw std::logic_error("source group size and destination particle size must match!");
     }
 

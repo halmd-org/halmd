@@ -41,7 +41,7 @@ sampler::sampler(
 
 void sampler::sample()
 {
-    LOG_TRACE("sample state at step " << clock_->step());
+    LOG_DEBUG("sample state at step " << clock_->step());
     on_prepare_();
     on_sample_();
 }
@@ -64,7 +64,7 @@ void sampler::run(step_type steps)
             // increment 1-based simulation step
             clock_->advance();
 
-            LOG_TRACE("performing MD step #" << clock_->step());
+            LOG_DEBUG("performing MD step #" << clock_->step());
 
             {
                 scoped_timer_type timer(runtime_.prepare);

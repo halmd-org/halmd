@@ -122,7 +122,7 @@ void from_binning<dimension, float_type>::update()
     // the order of calls is setup at the Lua level, and it allows us to
     // pass binning as a const dependency.
 
-    LOG_TRACE("update neighbour lists");
+    LOG_DEBUG("update neighbour lists");
 
     scoped_timer_type timer(runtime_.update);
 

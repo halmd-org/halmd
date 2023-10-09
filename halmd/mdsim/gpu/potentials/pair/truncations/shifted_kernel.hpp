@@ -37,8 +37,8 @@ namespace shifted_kernel {
  * indices of parameters
  */
 enum {
-    RR_CUT      /**< square of cutoff length */
-  , EN_CUT      /**< potential energy at cutoff length in MD units */
+    RR_CUT      /**< square of cutoff distance */
+  , EN_CUT      /**< potential energy at cutoff distance in MD units */
 };
 
 template <typename parent_kernel>

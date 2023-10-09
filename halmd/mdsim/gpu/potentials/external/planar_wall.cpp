@@ -86,7 +86,7 @@ planar_wall<dimension, float_type>::planar_wall(
     LOG("interaction strength: epsilon = " << epsilon_);
     LOG("interaction range: sigma = " << sigma_);
     LOG("wetting paramter: w = " << wetting_);
-    LOG("cutoff length for wall potential: rc = " << cutoff_);
+    LOG("cutoff distance for wall potential: rc = " << cutoff_);
     LOG("smoothing parameter for wall potential: h = " << smoothing_);
 
     // impose normalisation of surface normals
@@ -167,8 +167,14 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_external_planar_wall(lua
 {
     planar_wall<3, float>::luaopen(L);
     planar_wall<2, float>::luaopen(L);
+#ifdef USE_GPU_SINGLE_PRECISION
     forces::external<3, float, planar_wall<3, float>>::luaopen(L);
     forces::external<2, float, planar_wall<2, float>>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    forces::external<3, dsfloat, planar_wall<3, float>>::luaopen(L);
+    forces::external<2, dsfloat, planar_wall<2, float>>::luaopen(L);
+#endif
     return 0;
 }
 
@@ -184,8 +190,14 @@ namespace forces {
 // explicit instantiation of force modules
 using namespace potentials::external;
 
+#ifdef USE_GPU_SINGLE_PRECISION
 template class external<3, float, planar_wall<3, float>>;
 template class external<2, float, planar_wall<2, float>>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class external<3, dsfloat, planar_wall<3, float>>;
+template class external<2, dsfloat, planar_wall<2, float>>;
+#endif
 
 } // namespace forces
 } // namespace gpu

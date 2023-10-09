@@ -293,7 +293,7 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
     enum { dimension = particle_type::force_type::static_size };
 
     if(*group.size() != particle_dst.nparticle()) {
-        LOG_TRACE("group size: " << *group.size() << ", destination particle size: " << particle_dst.nparticle());
+        LOG_INFO("group size: " << *group.size() << ", destination particle size: " << particle_dst.nparticle());
         throw std::logic_error("source group size and destination particle size must match!");
     }
 

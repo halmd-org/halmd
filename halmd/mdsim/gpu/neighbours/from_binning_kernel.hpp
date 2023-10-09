@@ -39,7 +39,7 @@ struct from_binning_wrapper
 
     /** update neighbour lists */
     typedef cuda::function<void (
-        cudaTextureObject_t // (cutoff lengths + neighbour list skin)²
+        cudaTextureObject_t // (cutoff distances + neighbour list skin)²
       , cudaTextureObject_t // positions, IDs of particle1
       , cudaTextureObject_t // positions, IDs of particle2
       , int*
@@ -57,7 +57,7 @@ struct from_binning_wrapper
 
     /** update neighbour lists that uses a 'naive' implementation */
     typedef cuda::function<void (
-        cudaTextureObject_t // (cutoff lengths + neighbour list skin)²
+        cudaTextureObject_t // (cutoff distances + neighbour list skin)²
       , cudaTextureObject_t // positions, IDs of particle2
       , int*
       , float4 const*

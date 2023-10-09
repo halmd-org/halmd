@@ -222,7 +222,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
     size_type nparticle1 = particle1_->nparticle();
     size_type nparticle2 = particle2_->nparticle();
 
-    LOG_TRACE("compute forces");
+    LOG_DEBUG("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -272,7 +272,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
     size_type nparticle1 = particle1_->nparticle();
     size_type nparticle2 = particle2_->nparticle();
 
-    LOG_TRACE("compute forces with auxiliary variables");
+    LOG_DEBUG("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute_aux);
 

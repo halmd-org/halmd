@@ -21,7 +21,7 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/pair/modified_lennard_jones_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/pair/mie_kernel.hpp>
 #include <halmd/mdsim/gpu/potentials/pair/truncations/truncations.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 
@@ -30,9 +30,9 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace pair {
-namespace modified_lennard_jones_kernel {
+namespace mie_kernel {
 
-__device__ void modified_lennard_jones::fetch_param(
+__device__ void mie::fetch_param(
     unsigned int type1, unsigned int type2
   , unsigned int ntype1, unsigned int ntype2
 )
@@ -40,9 +40,9 @@ __device__ void modified_lennard_jones::fetch_param(
     pair_ = tex1Dfetch<float4>(t_param_, type1 * ntype2 + type2);
 }
 
-} // namespace modified_lennard_jones_kernel
+} // namespace mie_kernel
 
-HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(modified_lennard_jones_kernel::modified_lennard_jones);
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(mie_kernel::mie);
 
 } // namespace pair
 } // namespace potentials
@@ -50,11 +50,11 @@ HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_WRAPPERS(modified_lennar
 // explicit instantiation of force kernels
 namespace forces {
 
-using namespace halmd::mdsim::gpu::potentials::pair::modified_lennard_jones_kernel;
+using namespace halmd::mdsim::gpu::potentials::pair::mie_kernel;
 
-template class pair_full_wrapper<3, modified_lennard_jones>;
-template class pair_full_wrapper<2, modified_lennard_jones>;
-HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCE_KERNELS(modified_lennard_jones);
+template class pair_full_wrapper<3, mie>;
+template class pair_full_wrapper<2, mie>;
+HALMD_MDSIM_GPU_POTENTIALS_PAIR_TRUNCATIONS_INSTANTIATE_FORCE_KERNELS(mie);
 
 } // namespace forces
 
