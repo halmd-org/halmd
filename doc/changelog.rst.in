@@ -13,6 +13,9 @@ Widom branch
    number of cells, anticipates commit 6b3e7b163d3
  - new observables module chemical potential using Widom's particle insertion method
 
+* provide the :mod:`Yukawa <halmd.mdsim.potential.pair.yukawa` pair potential,
+  which corresponds to a screened Coulumb potential *(Felix Höfling)*
+
 
 Version 1.1.0
 =============

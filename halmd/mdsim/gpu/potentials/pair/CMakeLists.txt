@@ -38,3 +38,10 @@ halmd_add_potential(
   power_law.cpp
   power_law_kernel.cu
 )
+
+halmd_add_potential(
+  halmd_mdsim_gpu_potentials_pair_yukawa
+  pair yukawa
+  yukawa.cpp
+  yukawa_kernel.cu
+)
