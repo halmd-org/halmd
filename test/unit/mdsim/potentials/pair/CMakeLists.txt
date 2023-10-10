@@ -204,3 +204,37 @@ if(${HALMD_WITH_pair_morse})
     endif()
   endif()
 endif()
+
+if(${HALMD_WITH_pair_yukawa})
+  add_executable(test_unit_mdsim_potentials_pair_yukawa
+    yukawa.cpp
+  )
+  if(HALMD_WITH_GPU)
+    target_link_libraries(test_unit_mdsim_potentials_pair_yukawa
+      halmd_mdsim_gpu_potentials_pair_yukawa
+      halmd_mdsim_gpu
+      halmd_algorithm_gpu
+      halmd_utility_gpu
+    )
+  endif()
+  target_link_libraries(test_unit_mdsim_potentials_pair_yukawa
+    halmd_mdsim_host_potentials_pair_yukawa
+    halmd_mdsim
+    ${HALMD_TEST_LIBRARIES}
+  )
+  add_test(unit/mdsim/potentials/pair/yukawa/host
+    test_unit_mdsim_potentials_pair_yukawa --run_test=yukawa_host --log_level=test_suite
+  )
+  if(HALMD_WITH_GPU)
+    if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+      halmd_add_gpu_test(unit/mdsim/potentials/pair/yukawa/gpu/float
+        test_unit_mdsim_potentials_pair_yukawa --run_test=yukawa_gpu_float --log_level=test_suite
+      )
+    endif()
+    if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+      halmd_add_gpu_test(unit/mdsim/potentials/pair/yukawa/gpu/dsfloat
+        test_unit_mdsim_potentials_pair_yukawa --run_test=yukawa_gpu_dsfloat --log_level=test_suite
+      )
+    endif()
+  endif()
+endif()

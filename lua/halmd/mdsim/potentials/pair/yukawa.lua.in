@@ -1,0 +1,205 @@
+--
+-- Copyright © 2010-2023 Felix Höfling
+-- Copyright © 2013      Nicolas Höft
+-- Copyright © 2010      Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
+local numeric           = require("halmd.numeric")
+local utility           = require("halmd.utility")
+local module            = require("halmd.utility.module")
+local adapters          = require("halmd.mdsim.potentials.pair.adapters")
+
+---
+-- Yukawa pair potential
+-- =====================
+--
+-- This module implements the Yukawa pair potential, which corresponds to a
+-- screened Coulomb potential,
+--
+-- .. math::
+--
+--    U^{(ij)}_\text{Yukawa}\left(r\right) = \frac{A_{ij} \mathrm{-r / \sigma_{ij}}}{r}
+--
+-- for the interaction between two particles of species :math:`i` and
+-- :math:`j` with the (Debye) screening length :math:`\sigma_{ij}`. In the
+-- context of electrolytes, the amplitude :math:`\sigma_{ij} = q_i q_j` is
+-- given by the product of the effective charges of the two particles (in
+-- Gaussian units).
+--
+-- The corresponding source files contain ``FIXME`` markers where adjustments to a
+-- specific potential are needed. These files are:
+--
+-- .. code-block:: none
+--
+--    halmd/mdsim/gpu/potentials/pair/custom.cpp
+--    halmd/mdsim/gpu/potentials/pair/custom.hpp
+--    halmd/mdsim/gpu/potentials/pair/custom_kernel.cu
+--    halmd/mdsim/gpu/potentials/pair/custom_kernel.hpp
+--    test/unit/mdsim/potentials/pair/custom.cpp
+--
+-- The last file contains a unit test, where reference values for
+-- :math:`U^{(ij)}_\text{custom}(r)` must be provided for a number of distances
+-- :math:`r` and a few combinations of potential parameters. The Python script
+-- ``compute_potential_reference.py`` in the same folder can generate such values.
+--
+
+-- grab C++ wrappers
+local yukawa = {
+    host = assert(libhalmd.mdsim.host.potentials.pair.yukawa)
+}
+local force_shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.force_shifted) }
+local smooth_r4 = { host = assert(libhalmd.mdsim.host.potentials.pair.smooth_r4) }
+local shifted = { host = assert(libhalmd.mdsim.host.potentials.pair.shifted) }
+if device.gpu then
+    yukawa.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.yukawa)
+    force_shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.force_shifted)
+    smooth_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
+    shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
+end
+
+---
+-- Construct Yukawa potential.
+--
+-- :param table args: keyword arguments
+--
+-- :param table args: keyword arguments
+-- :param table args.amplitude: matrix with elements :math:`A_{ij}` (*default:* ``1``)
+-- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (*default:* ``1``)
+-- :param number args.species: number of particle species *(optional)*
+-- :param string args.memory: select memory location *(optional)*
+-- :param string args.label: instance label *(optional)*
+--
+-- If the argument ``species`` is omitted, it is inferred from the first
+-- dimension of the parameter matrices.
+--
+-- If all elements of a matrix are equal, a scalar value may be passed instead
+-- which is promoted to a square matrix of size given by the number of particle
+-- ``species``.
+--
+-- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
+-- not specified, the memory location is selected according to the compute
+-- device.
+--
+-- .. attribute:: amplitude
+--
+--    Matrix with elements :math:`A_{ij}`.
+--
+-- .. attribute:: sigma
+--
+--    Matrix with elements :math:`\sigma_{ij}`.
+--
+-- .. attribute:: description
+--
+--    Name of potential for profiler.
+--
+-- .. attribute:: memory
+--
+--    Device where the particle memory resides.
+--
+-- .. method:: truncate(args)
+--
+--    Truncate potential.
+--    See :ref:`pair_potential_truncations` for available truncations.
+--
+--    :param table args: keyword argument
+--    :param string args[1]: name of truncation type
+--    :param table cutoff: matrix with elements :math:`r_{\text{c}, ij}`
+--    :param any args.*: additional arguments depend on the truncation type
+--    :returns: truncated potential
+--
+--    Example::
+--
+--      potential = potential:truncate({"smooth_r4", cutoff = 5, h = 0.05})
+--
+-- .. method:: modify(args)
+--
+--    Apply potential modification.
+--    See :ref:`pair_potential_modifications` for available modifications.
+--
+--    :param table args: keyword argument
+--    :param string args[1]: name of modification type
+--    :param any args.*: additional arguments depend on the modification type
+--    :returns: modified potential
+--
+--    Example::
+--
+--      potential = potential:modify({"hard_core", radius = 0.5})
+--
+local M = module(function(args)
+    local amplitude = args and args.amplitude or 1
+    if type(amplitude) ~= "table" and type(amplitude) ~= "number" then
+        error("bad argument 'amplitude'", 2)
+    end
+    local sigma = args and args.sigma or 1
+    if type(sigma) ~= "table" and type(sigma) ~= "number" then
+        error("bad argument 'sigma'", 2)
+    end
+
+    local memory = args and args.memory or (device.gpu and "gpu" or "host")
+
+    local label = args and args.label and utility.assert_type(args.label, "string")
+    label = label and (" (%s)"):format(label) or ""
+    local logger = log.logger({label =  "Yukawa" .. label})
+
+    -- derive number of species from parameter matrices
+    local species = args and args.species
+        or (type(amplitude) == "table" and #amplitude)
+        or (type(sigma) == "table" and #sigma)
+        or 1
+    utility.assert_type(species, "number")
+
+    -- promote scalars to matrices
+    if type(amplitude) == "number" then
+        amplitude = numeric.scalar_matrix(species, species, amplitude)
+    end
+    if type(sigma) == "number" then
+        sigma = numeric.scalar_matrix(species, species, sigma)
+    end
+
+    -- construct instance
+    if not yukawa[memory] then
+        error(("unsupported memory type '%s'"):format(memory), 2)
+    end
+    local self = yukawa[memory](amplitude, sigma, logger)
+
+    -- add description for profiler
+    self.description = property(function()
+        return "Yukawa potential" .. label
+    end)
+
+    -- store number of species
+    self.species = property(function(self) return species end)
+
+    -- store memory location
+    self.memory = property(function(self) return memory end)
+
+    -- add logger instance
+    self.logger = property(function()
+        return logger
+    end)
+
+    self.truncate = adapters.truncate
+    self.modify = adapters.modify
+
+    return self
+end)
+
+return M

@@ -13,6 +13,9 @@ Snapshot (master branch)
   respect to the quality of randomness and is selected by default. *(Manuel
   Dibak, Jaslo Ziska)*
 
+* provide the :mod:`Yukawa <halmd.mdsim.potential.pair.yukawa` pair potential,
+  which corresponds to a screened Coulumb potential *(Felix Höfling)*
+
 
 Version 1.1.0
 =============

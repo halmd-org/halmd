@@ -27,3 +27,9 @@ halmd_add_potential(
   pair power_law
   power_law.cpp
 )
+
+halmd_add_potential(
+  halmd_mdsim_host_potentials_pair_yukawa
+  pair yukawa
+  yukawa.cpp
+)
