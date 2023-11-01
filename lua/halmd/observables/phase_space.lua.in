@@ -241,6 +241,11 @@ local M = module(function(args)
           , "table")
         local every = args.every
 
+        if group.fluctuating then
+            logger:error("writing a selection of particles with fluctuating number is not yet supported")
+            error("Aborting", 2)
+        end
+
         local writer = file:writer({location = location, mode = "append"})
 
         -- register data fields with writer,
