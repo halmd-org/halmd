@@ -71,7 +71,8 @@ __global__ void compute(
         }
 
         // accumulate results within block
-        reduce<complex_sum_>(sin_, cos_);
+        reduce<sum_>(sin_);
+        reduce<sum_>(cos_);
 
         if (TID == 0) {
             g_sin_block[i * BDIM + BID] = sin_;
@@ -103,7 +104,8 @@ __global__ void finalise(
         }
 
         // accumulate results within block
-        reduce<complex_sum_>(s_sum, c_sum);
+        reduce<sum_>(s_sum);
+        reduce<sum_>(c_sum);
 
         // store result in global memory
         if (TID == 0) {
