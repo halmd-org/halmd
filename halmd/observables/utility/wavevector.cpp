@@ -172,7 +172,7 @@ wavevector<dimension>::wavevector(
         // wavevector: q[i] = n[i] * 2 \pi / L[i]
         vector_type q = element_prod(unit_cell, static_cast<vector_type>(idx));
         // apply |q| < q_max
-        if (inner_prod(q, q) <= q_max * q_max) {
+        if (inner_prod(q, q) < q_max * q_max) {
             wavevector_.push_back(q);
         }
 
