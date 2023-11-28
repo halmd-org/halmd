@@ -1,5 +1,6 @@
 /*
  * Copyright © 2021 Jaslo Ziska
+ * Copyright © 2023 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -29,12 +30,11 @@
 static const size_t NTHREADS = 224; // NTHREADS / 32 is not a power of two
 static const size_t NREDUCES = 10000;
 
-extern cuda::function<void (float const*, float*)> reduce_float_kernel;
-extern cuda::function<void (int const*, int*)> reduce_int_kernel;
-extern cuda::function<void (halmd::dsfloat const*, halmd::dsfloat*)> reduce_dsfloat_kernel;
-extern cuda::function<void (halmd::fixed_vector<float, 3> const*, halmd::fixed_vector<float, 3>*)>
-    reduce_fixed_vector_float_kernel;
-extern cuda::function<void (halmd::fixed_vector<halmd::dsfloat, 3> const*, halmd::fixed_vector<halmd::dsfloat, 3>*)>
-    reduce_fixed_vector_dsfloat_kernel;
+template <typename T>
+struct reduce_kernel
+{
+    cuda::function<void (T const*, T*)> sum;
+    static reduce_kernel kernel;
+};
 
 #endif // ! HALMD_TEST_PERFORMANCE_REDUCTION_KERNEL_HPP

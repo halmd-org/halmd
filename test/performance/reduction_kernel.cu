@@ -1,5 +1,6 @@
 /*
  * Copyright © 2021 Jaslo Ziska
+ * Copyright © 2023 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -41,10 +42,28 @@ __global__ void reduce_sum(T const* input, T* output)
     }
 }
 
-cuda::function<void (float const*, float*)> reduce_float_kernel(reduce_sum<float>);
-cuda::function<void (int const*, int*)> reduce_int_kernel(reduce_sum<int>);
-cuda::function<void (halmd::dsfloat const*, halmd::dsfloat*)> reduce_dsfloat_kernel(reduce_sum<halmd::dsfloat>);
-cuda::function<void (halmd::fixed_vector<float, 3> const*, halmd::fixed_vector<float, 3>*)>
-    reduce_fixed_vector_float_kernel(reduce_sum<halmd::fixed_vector<float, 3>>);
-cuda::function<void (halmd::fixed_vector<halmd::dsfloat, 3> const*, halmd::fixed_vector<halmd::dsfloat, 3>*)>
-    reduce_fixed_vector_dsfloat_kernel(reduce_sum<halmd::fixed_vector<halmd::dsfloat, 3>>);
+// initialise static class member
+template <typename T>
+reduce_kernel<T> reduce_kernel<T>::kernel = {
+    reduce_sum<T>
+};
+
+// explicit template instantiations
+using halmd::dsfloat;
+using halmd::fixed_vector;
+
+template class reduce_kernel<int>;
+template class reduce_kernel<fixed_vector<int, 2>>;
+#ifdef USE_GPU_SINGLE_PRECISION
+template class reduce_kernel<float>;
+template class reduce_kernel<fixed_vector<float, 3>>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class reduce_kernel<dsfloat>;
+template class reduce_kernel<fixed_vector<dsfloat, 2>>;
+#endif
+#ifdef USE_GPU_DOUBLE_PRECISION
+template class reduce_kernel<double>;
+template class reduce_kernel<fixed_vector<double, 3>>;
+#endif
+
