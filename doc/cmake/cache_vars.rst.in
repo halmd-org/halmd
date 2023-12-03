@@ -17,10 +17,12 @@ Cache variables are passed as options to CMake using ``-D...``
      For builds using CUDA device emulation,
      use ``-DCMAKE_BUILD_TYPE=DeviceEmu``.
 
-   CMAKE_PREFIX_PATH
+   CMAKE_PREFIX_PATH (cache variable)
      Path to third-party libraries, e.g. ``-DCMAKE_PREFIX_PATH=$HOME/usr``.
 
      This variable is only needed if libraries are installed in non-standard paths.
+
+     Note that there is also an environment variable with the same name.
 
    HALMD_USE_STATIC_LIBS
      Compile separate, statically linked executable for each backend.
