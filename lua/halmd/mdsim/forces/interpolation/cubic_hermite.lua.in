@@ -30,7 +30,7 @@ local module  = require("halmd.utility.module")
 -- precalculated potential energy points and coefficients at the lattice points.
 --
 -- In 1D the interpolated value :math:`\tilde V(x)` is calculated by the following
--- expression:
+-- expression [1]_:
 --
 -- .. math::
 --
@@ -79,9 +79,8 @@ local module  = require("halmd.utility.module")
 -- coefficients needed for the node at ``index``.
 --
 --
--- .. [1] Martin H. Schultz,
---       *Spline Analysis* (Ch. 3),
---       Prentice-Hall (Englewood Cliffs, N.J) (1972), ISBN 0138354057
+-- .. [1] Martin H. Schultz, *Spline Analysis*, ch. 3
+--        (Prentice-Hall, Englewood Cliffs, N.J., 1972), ISBN 0138354057.
 
 -- grab C++ wrappers
 local cubic_hermite = {
