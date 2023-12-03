@@ -326,7 +326,7 @@ lattice<modules_type>::lattice()
 
     ncell = (dimension == 3) ? cell_vector{6, 12, 12} : cell_vector{4, 1024};
     if (dimension == 3 && gpu) {
-        ncell[0] *= 19; // prime
+        ncell[0] *= 11; // prime
     }
     nunit_cell = (dimension == 3) ? 4 : 2;  //< number of particles per unit cell
     npart = nunit_cell * accumulate(ncell.begin(), ncell.end(), 1u, multiplies<unsigned>());
