@@ -45,12 +45,12 @@ def main():
     H5box = H5particle['box']
 
     # print some details
-    print 'Particles: {0}'.format(H5obs['particle_number'][()])
-    print 'Box size:',
+    print('Particles: {0}'.format(H5obs['particle_number'][()]))
+    print('Box size:', end = ' ')
     for x in diag(H5box['edges']):
-        print ' {0:g}'.format(x),
-    print
-    print 'Density: {0:g}'.format(H5obs['density'][()])
+        print(' {0:g}'.format(x), end = ' ')
+    print()
+    print('Density: {0:g}'.format(H5obs['density'][()]))
 
     # compute and print some averages
     # the simplest selection of a data set looks like this:
@@ -67,9 +67,9 @@ def main():
     # append plot data to file
     if args.dump:
         f = open(args.dump, 'a')
-        print >>f, '# time   E_pot(t)'
+        print('# time   E_pot(t)', file = f)
         savetxt(f, array((x, y)).T)
-        print >>f, '\n'
+        print('\n', file = f)
         f.close()
 
     # generate plot
@@ -101,7 +101,7 @@ def compute_average(data, label, nblocks = 10):
     # compute mean and error
     avg = mean(data)
     err = std(mean(data, axis=1)) / sqrt(nblocks - 1)
-    print '{0:s}: {1:.4f} ± {2:.2g}'.format(label, avg, err)
+    print('{0:s}: {1:.4f} ± {2:.2g}'.format(label, avg, err))
 
     # return as tuple
     return avg, err
