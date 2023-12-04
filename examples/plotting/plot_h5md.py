@@ -48,9 +48,9 @@ def main():
 
     # print some details
     print('Particles: {0}'.format(H5obs['particle_number'][()]))
-    print('Box size:')
+    print('Box size:', end = ' ')
     for x in diag(H5box['edges']):
-        print(' {0:g}'.format(x))
+        print(' {0:g}'.format(x), end = ' ')
     print()
     print('Density: {0:g}'.format(H5obs['density'][()]))
 
@@ -69,9 +69,9 @@ def main():
     # append plot data to file
     if args.dump:
         f = open(args.dump, 'a')
-        print('# time   E_pot(t)', file=f)
+        print('# time   E_pot(t)', file = f)
         savetxt(f, array((x, y)).T)
-        print('\n', file=f)
+        print('\n', file = f)
         f.close()
 
     # generate plot

@@ -42,15 +42,16 @@ namespace density_mode_kernel {
  *
  *  @returns block sums of sin(q·r), cos(q·r) for each wavevector
  */
-template <typename vector_type, typename coalesced_vector_type>
+template <int dimension>
 __global__ void compute(
     cudaTextureObject_t t_wavevector
-  , coalesced_vector_type const* g_r
+  , float4 const* g_r
   , unsigned int const* g_idx, int npart
   , float* g_sin_block, float* g_cos_block, int nq
 )
 {
-    enum { dimension = vector_type::static_size };
+    typedef fixed_vector<float, dimension> vector_type;
+    typedef typename density_mode_wrapper<dimension>::coalesced_vector_type coalesced_vector_type;
 
     float sin_;
     float cos_;
@@ -71,7 +72,8 @@ __global__ void compute(
         }
 
         // accumulate results within block
-        reduce<complex_sum_>(sin_, cos_);
+        reduce<sum_>(sin_);
+        reduce<sum_>(cos_);
 
         if (TID == 0) {
             g_sin_block[i * BDIM + BID] = sin_;
@@ -103,7 +105,8 @@ __global__ void finalise(
         }
 
         // accumulate results within block
-        reduce<complex_sum_>(s_sum, c_sum);
+        reduce<sum_>(s_sum);
+        reduce<sum_>(c_sum);
 
         // store result in global memory
         if (TID == 0) {
@@ -117,7 +120,7 @@ __global__ void finalise(
 
 template <int dimension>
 density_mode_wrapper<dimension> density_mode_wrapper<dimension>::kernel = {
-    density_mode_kernel::compute<fixed_vector<float, dimension> >
+    density_mode_kernel::compute<dimension>
   , density_mode_kernel::finalise
 };
 

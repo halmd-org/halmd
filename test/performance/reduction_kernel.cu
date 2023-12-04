@@ -1,5 +1,6 @@
 /*
  * Copyright © 2021 Jaslo Ziska
+ * Copyright © 2023 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -25,11 +26,16 @@
 #include <test/performance/reduction_kernel.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <type_traits>
 
 using namespace halmd::algorithm::gpu;
+using halmd::dsfloat;
+using halmd::fixed_vector;
 
 template <typename T>
-__global__ void reduce_sum(T const* input, T* output)
+__global__
+typename std::enable_if<std::is_arithmetic<T>::value, void>::type
+reduce_sum(T const* input, T* output)
 {
     for (int i = 0; i < NREDUCES; ++i) {
         T val = input[TID + i * NTHREADS];
@@ -41,10 +47,58 @@ __global__ void reduce_sum(T const* input, T* output)
     }
 }
 
-cuda::function<void (float const*, float*)> reduce_float_kernel(reduce_sum<float>);
-cuda::function<void (int const*, int*)> reduce_int_kernel(reduce_sum<int>);
-cuda::function<void (halmd::dsfloat const*, halmd::dsfloat*)> reduce_dsfloat_kernel(reduce_sum<halmd::dsfloat>);
-cuda::function<void (halmd::fixed_vector<float, 3> const*, halmd::fixed_vector<float, 3>*)>
-    reduce_fixed_vector_float_kernel(reduce_sum<halmd::fixed_vector<float, 3>>);
-cuda::function<void (halmd::fixed_vector<halmd::dsfloat, 3> const*, halmd::fixed_vector<halmd::dsfloat, 3>*)>
-    reduce_fixed_vector_dsfloat_kernel(reduce_sum<halmd::fixed_vector<halmd::dsfloat, 3>>);
+// In case of fixed_vector, we could just rely on the operator+ and use the above version.
+// Instead, the following specialisations test the multi-variable transforms
+// 'complex_sum' and 'ternary_sum'.
+template <typename T>
+__global__
+typename std::enable_if<std::is_same<T, fixed_vector<typename T::value_type, 2>>::value, void>::type
+reduce_sum(T const* input, T* output)
+{
+    for (int i = 0; i < NREDUCES; ++i) {
+        T val = input[TID + i * NTHREADS];
+        reduce<complex_sum_>(val[0], val[1]);
+
+        if (TID == 0) {
+            output[i] = val;
+        }
+    }
+}
+
+template <typename T>
+__global__
+typename std::enable_if<std::is_same<T, fixed_vector<typename T::value_type, 3>>::value, void>::type
+reduce_sum(T const* input, T* output)
+{
+    for (int i = 0; i < NREDUCES; ++i) {
+        T val = input[TID + i * NTHREADS];
+        reduce<ternary_sum_>(val[0], val[1], val[2]);
+
+        if (TID == 0) {
+            output[i] = val;
+        }
+    }
+}
+
+// initialise static class member
+template <typename T>
+reduce_kernel<T> reduce_kernel<T>::kernel = {
+    reduce_sum<T>
+};
+
+// explicit template instantiations
+template class reduce_kernel<int>;
+template class reduce_kernel<fixed_vector<int, 2>>;
+#ifdef USE_GPU_SINGLE_PRECISION
+template class reduce_kernel<float>;
+template class reduce_kernel<fixed_vector<float, 3>>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class reduce_kernel<dsfloat>;
+template class reduce_kernel<fixed_vector<dsfloat, 2>>;
+#endif
+#ifdef USE_GPU_DOUBLE_PRECISION
+template class reduce_kernel<double>;
+template class reduce_kernel<fixed_vector<double, 3>>;
+#endif
+

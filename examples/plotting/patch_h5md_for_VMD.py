@@ -50,16 +50,16 @@ if not "particles" in f:
 
 # iterate over particle groups
 s = None
-for p in f["particles"].itervalues():
+for p in f["particles"].values():
     # make species time-independent
-    if "species" in p.keys():
+    if "species" in list(p.keys()):
         species = p["species/value"][0]
         del p["species"]
         p["species"] = species
         s = numpy.append(s, species) if s is not None else species
 
     # add image data and fold back particle positions to periodic box
-    if "image" not in p.keys() and "position" in p.keys():
+    if "image" not in list(p.keys()) and "position" in list(p.keys()):
         image = p.create_group("image")
         pos = p["position"]
         image["time"] = pos["time"]     # create hard links

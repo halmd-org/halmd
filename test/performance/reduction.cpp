@@ -1,5 +1,6 @@
 /*
  * Copyright © 2021 Jaslo Ziska
+ * Copyright © 2023 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -23,6 +24,7 @@
 
 #include <numeric>
 #include <random>
+#include <type_traits>
 
 #include <boost/iterator/counting_iterator.hpp>
 
@@ -33,6 +35,7 @@
 #include <test/performance/reduction_kernel.hpp>
 #include <test/tools/ctest.hpp>
 #include <test/tools/cuda.hpp>
+#include <test/tools/dsfloat.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -77,144 +80,139 @@ void reduce(cuda::memory::host::vector<T> const& h_input, cuda::memory::host::ve
     BOOST_TEST_MESSAGE("summation of " << h_input.size() << " * " << halmd::demangled_name<T>() << ": " << time << " s");
 }
 
-BOOST_AUTO_TEST_CASE(type_int)
+/*
+ * helper functions to compare collections of integers, floats, and fixed vectors
+ */
+template <typename Iter1, typename Iter2>
+typename std::enable_if<std::is_integral<typename Iter1::value_type>::value, void>::type
+check_equal_collections(Iter1 it1, Iter1 end1, Iter2 it2, Iter2 end2)
 {
-    cuda::memory::host::vector<int> h_input(NTHREADS * NREDUCES);
-    cuda::memory::host::vector<int> h_output(NREDUCES);
-    std::vector<int> result(NREDUCES);
+    BOOST_CHECK_EQUAL_COLLECTIONS(it1, end1, it2, end2);
+}
+
+template <typename Iter1, typename Iter2>
+typename std::enable_if<std::is_floating_point<typename Iter1::value_type>::value, void>::type
+check_equal_collections(Iter1 it1, Iter1 end1, Iter2 it2, Iter2 end2)
+{
+    typedef typename Iter1::value_type T;
+    const T tolerance = 10 * dsfloat_aware_numeric_limits<T>::epsilon();
+    while (it1 != end1 && it2 != end2) {
+        BOOST_CHECK_CLOSE_FRACTION(*it1++, *it2++, tolerance);
+    }
+}
+
+template <typename Iter1, typename Iter2>
+typename std::enable_if<std::is_enum<decltype(Iter1::value_type::static_size)>::value, void>::type
+check_equal_collections(Iter1 it1, Iter1 end1, Iter2 it2, Iter2 end2)
+{
+    typedef typename Iter1::value_type::value_type T;
+    static_assert(Iter1::value_type::static_size == Iter2::value_type::static_size, "mismatching sizes of array types");
+
+    const T tolerance = 10 * dsfloat_aware_numeric_limits<T>::epsilon();
+    while (it1 != end1 && it2 != end2) {
+        // the following does not work due to fixed_vector<T>::begin returning T* instead of an iterator
+        // check_equal_collections(it->begin(), it1->end(), it2->begin(), it2->end());
+        for (unsigned int i = 0; i < it1->size(); ++i) {
+            BOOST_CHECK_CLOSE_FRACTION((*it1)[i], (*it2)[i], tolerance);
+        }
+        ++it1, ++it2;
+    }
+}
+
+/*
+ * define test cases
+ */
+template <typename T, typename random_type = T>
+void sum_integers_test()
+{
+    cuda::memory::host::vector<T> h_input(NTHREADS * NREDUCES);
+    cuda::memory::host::vector<T> h_output(NREDUCES);
+    std::vector<T> result(NREDUCES);
 
     std::default_random_engine gen;
-    std::uniform_int_distribution<int> rand(0, 100);
+    std::uniform_int_distribution<random_type> rand(0, 100);
 
     // generate random numbers
     std::generate(h_input.begin(), h_input.end(), std::bind(rand, std::ref(gen)));
 
-    reduce(h_input, h_output, reduce_int_kernel);
+    reduce(h_input, h_output, reduce_kernel<T>::kernel.sum);
 
     // calculate the result on the cpu
     for (unsigned int i = 0; i < NREDUCES; ++i) {
-        result[i] = std::accumulate(h_input.begin() + NTHREADS * i, h_input.begin() + NTHREADS * (i + 1), 0.0);
+        result[i] = std::accumulate(h_input.begin() + NTHREADS * i, h_input.begin() + NTHREADS * (i + 1), T(0));
     }
 
-    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), h_output.begin(), h_output.end());
+    check_equal_collections(result.begin(), result.end(), h_output.begin(), h_output.end());
 }
+
+template <typename T, typename random_type = T>
+void sum_reals_test()
+{
+    cuda::memory::host::vector<T> h_input(NTHREADS * NREDUCES);
+    cuda::memory::host::vector<T> h_output(NREDUCES);
+    std::vector<T> result(NREDUCES);
+
+    std::default_random_engine gen;
+    std::uniform_real_distribution<random_type> rand(0, 1);
+
+    // generate random numbers
+    std::generate(h_input.begin(), h_input.end(), std::bind(rand, std::ref(gen)));
+
+    reduce(h_input, h_output, reduce_kernel<T>::kernel.sum);
+
+    // calculate the result on the cpu
+    for (unsigned int i = 0; i < NREDUCES; ++i) {
+        result[i] = std::accumulate(h_input.begin() + NTHREADS * i, h_input.begin() + NTHREADS * (i + 1), T(0));
+    }
+
+    check_equal_collections(result.begin(), result.end(), h_output.begin(), h_output.end());
+}
+
+BOOST_AUTO_TEST_CASE(type_int)
+{
+    sum_integers_test<int>();
+}
+
+/* FIXME comparison of fixed_vector<int> is not implemented in the above scheme
+BOOST_AUTO_TEST_CASE(type_fixed_vector_int_3)
+{
+    sum_integers_test<halmd::fixed_vector<int, 3>, int>();
+}
+*/
 
 #ifdef USE_GPU_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE(type_float)
 {
-    cuda::memory::host::vector<float> h_input(NTHREADS * NREDUCES);
-    cuda::memory::host::vector<float> h_output(NREDUCES);
-    std::vector<float> result(NREDUCES);
-
-    std::default_random_engine gen;
-    std::uniform_real_distribution<float> rand(0, 1);
-
-    // generate random numbers
-    std::generate(h_input.begin(), h_input.end(), std::bind(rand, std::ref(gen)));
-
-    reduce(h_input, h_output, reduce_float_kernel);
-
-    // calculate the result on the cpu
-    for (unsigned int i = 0; i < NREDUCES; ++i) {
-        result[i] = std::accumulate(h_input.begin() + NTHREADS * i, h_input.begin() + NTHREADS * (i + 1), 0.0);
-    }
-
-    for (unsigned int i = 0; i < NREDUCES; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(result[i], h_output[i], 1e-6);
-    }
+    sum_reals_test<float>();
 }
 
-BOOST_AUTO_TEST_CASE(type_fixed_vector_float)
+BOOST_AUTO_TEST_CASE(type_fixed_vector_float_3)
 {
-    using fixed_vector_type = halmd::fixed_vector<float, 3>;
-
-    cuda::memory::host::vector<fixed_vector_type> h_input(NTHREADS * NREDUCES);
-    cuda::memory::host::vector<fixed_vector_type> h_output(NREDUCES);
-    std::vector<fixed_vector_type> result(NREDUCES);
-
-    std::default_random_engine gen;
-    std::uniform_real_distribution<float> rand(0, 1);
-
-    // generate random numbers
-    std::generate(h_input.begin(), h_input.end(), std::bind(rand, std::ref(gen)));
-
-    reduce(h_input, h_output, reduce_fixed_vector_float_kernel);
-
-    // calculate the result on the cpu
-    for (unsigned int i = 0; i < NREDUCES; ++i) {
-        result[i] = std::accumulate(
-            h_input.begin() + NTHREADS * i
-          , h_input.begin() + NTHREADS * (i + 1)
-          , fixed_vector_type(0.0)
-        );
-    }
-
-    for (unsigned int i = 0; i < NREDUCES; ++i) {
-        for (unsigned int j = 0; j < fixed_vector_type::static_size; ++j) {
-            BOOST_CHECK_CLOSE_FRACTION(result[i][j], h_output[i][j], 1e-6);
-        }
-    }
+    sum_reals_test<halmd::fixed_vector<float, 3>, float>();
 }
 #endif
 
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE(type_dsfloat)
 {
-    using halmd::dsfloat;
-
-    cuda::memory::host::vector<dsfloat> h_input(NTHREADS * NREDUCES);
-    cuda::memory::host::vector<dsfloat> h_output(NREDUCES);
-    std::vector<double> result(NREDUCES);
-
-    std::default_random_engine gen;
-    std::uniform_real_distribution<double> rand(0, 1);
-
-    // generate random numbers
-    std::generate(h_input.begin(), h_input.end(), std::bind(rand, std::ref(gen)));
-
-    reduce(h_input, h_output, reduce_dsfloat_kernel);
-
-    // calculate the result on the cpu
-    for (unsigned int i = 0; i < NREDUCES; ++i) {
-        result[i] = std::accumulate(h_input.begin() + NTHREADS * i, h_input.begin() + NTHREADS * (i + 1), 0.0);
-    }
-
-    std::vector<double> h_result(h_output.begin(), h_output.end());
-    for (unsigned int i = 0; i < NREDUCES; ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(result[i], h_result[i], 1e-12);
-    }
+    sum_reals_test<halmd::dsfloat, double>();
 }
 
-BOOST_AUTO_TEST_CASE(type_fixed_vector_dsfloat)
+BOOST_AUTO_TEST_CASE(type_fixed_vector_dsfloat_2)
 {
-    using halmd::dsfloat;
-    using fixed_vector_type = halmd::fixed_vector<dsfloat, 3>;
-
-    cuda::memory::host::vector<fixed_vector_type> h_input(NTHREADS * NREDUCES);
-    cuda::memory::host::vector<fixed_vector_type> h_output(NREDUCES);
-    std::vector<fixed_vector_type> result(NREDUCES);
-
-    std::default_random_engine gen;
-    std::uniform_real_distribution<double> rand(0, 1);
-
-    // generate random numbers
-    std::generate(h_input.begin(), h_input.end(), std::bind(rand, std::ref(gen)));
-
-    reduce(h_input, h_output, reduce_fixed_vector_dsfloat_kernel);
-
-    // calculate the result on the cpu
-    for (unsigned int i = 0; i < NREDUCES; ++i) {
-        result[i] = std::accumulate(
-            h_input.begin() + NTHREADS * i
-          , h_input.begin() + NTHREADS * (i + 1)
-          , fixed_vector_type(0.0)
-        );
-    }
-
-    for (unsigned int i = 0; i < NREDUCES; ++i) {
-        for (unsigned int j = 0; j < fixed_vector_type::static_size; ++j) {
-            BOOST_CHECK_CLOSE_FRACTION(result[i][j], h_output[i][j], 1e-12);
-        }
-    }
+    sum_reals_test<halmd::fixed_vector<halmd::dsfloat, 2>, double>();
 }
 #endif
+
+#ifdef USE_GPU_DOUBLE_PRECISION
+BOOST_AUTO_TEST_CASE(type_double)
+{
+    sum_reals_test<double>();
+}
+
+BOOST_AUTO_TEST_CASE(type_fixed_vector_double_3)
+{
+    sum_reals_test<halmd::fixed_vector<double, 3>, double>();
+}
+#endif
+
