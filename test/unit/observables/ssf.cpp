@@ -230,11 +230,14 @@ void lattice<modules_type>::test()
             round(element_prod(q_a, static_cast<decltype(q_a)>(ncell) / (2 * M_PI)))
         );
 
-        LOG_DEBUG("(hkl) × n_cell = (" << hkl_ncell << "), ρ_q = " << round(rho) << ", " <<
-                  "ρ_q(ref) = " << round(rho_ref.real()) << " + " << round(rho_ref.imag()) << "j");
+        LOG_DEBUG("(hkl) × n_cell = (" << hkl_ncell << "), ρ_q = " << round(1e6 * rho) / 1e6 << ", " <<
+                  "ρ_q(ref) = " << round(1e6 * rho_ref.real()) / 1e6 << " + " << round(1e6 * rho_ref.imag()) / 1e6 << "j");
 #endif
 
-        double tolerance = 20 * npart * epsilon;
+        // the prefactor of the tolerance appears to be pretty large, but
+        // adding up 'npart' cos/sin values to obtain zero seems to be
+        // numerically challenging
+        double tolerance = 50 * npart * epsilon;
         BOOST_CHECK_SMALL(fabs(rho[0] - rho_ref.real()), tolerance);
         BOOST_CHECK_SMALL(fabs(rho[1] - rho_ref.imag()), tolerance);
 
