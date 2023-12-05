@@ -42,7 +42,7 @@ density_mode<dimension, float_type>::density_mode(
   , logger_(logger)
     // member initialisation
   , nq_(wavevector_->value().size())
-  , dim_(50, 512)
+  , dim_(particle_->dim())
     // memory allocation
   , g_q_(nq_)
   , g_rho_block_(nq_ * dim_.blocks_per_grid())
@@ -110,7 +110,7 @@ density_mode<dimension, float_type>::acquire()
 
             // finalise block sums for each wavevector
             wrapper_type::kernel.finalise.configure(
-                nq_                        // #blocks: one per wavevector
+                nq_                        // #blocks: one per wavevector, at most 2^31 - 1 ≈ 2 × 10^9
               , dim_.block                 // #threads per block, must be a power of 2
             );
             wrapper_type::kernel.finalise(g_rho_block_.data(), g_rho_.data(), nq_, dim_.blocks_per_grid());
