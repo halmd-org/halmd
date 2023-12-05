@@ -41,16 +41,13 @@ struct density_mode_wrapper
       , float4 const*
       , unsigned int const*
       , int
-      , float*
-      , float*
+      , float2*
       , int
     )> compute;
     /** finalise computation by summing block sums per wavevector */
     cuda::function<void (
-        float const*
-      , float const*
-      , float*
-      , float*
+        float2 const*
+      , float2*
       , int
       , int
     )> finalise;

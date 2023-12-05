@@ -47,37 +47,36 @@ __global__ void compute(
     cudaTextureObject_t wavevector
   , float4 const* g_r
   , unsigned int const* g_idx, int npart
-  , float* g_sin_block, float* g_cos_block, int nq
+  , float2* g_rho_block, int nq
 )
 {
+    typedef fixed_vector<float, 2> complex_type;    // replacement for std::complex
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename density_mode_wrapper<dimension>::coalesced_vector_type coalesced_vector_type;
 
-    float sin_;
-    float cos_;
+    complex_type rho_;
 
     // outer loop over wavevectors
     for (int i=0; i < nq; i++) {
         vector_type q = tex1Dfetch<coalesced_vector_type>(wavevector, i);
-        sin_ = 0;
-        cos_ = 0;
+        rho_ = 0;
         for (int j = GTID; j < npart; j += GTDIM) {
             // retrieve particle position via index array
             unsigned int idx = g_idx[j];
             vector_type r = g_r[idx];
 
             float q_r = inner_prod(q, r);
-            sin_ += sin(q_r);
-            cos_ += cos(q_r);
+            // FIXME for huge simulation boxes, it may be necessary to use the
+            // double precision versions cos() and sin() here
+            rho_[0] += cosf(q_r);
+            rho_[1] += sinf(q_r);
         }
 
         // accumulate results within block
-        reduce<sum_>(sin_);
-        reduce<sum_>(cos_);
+        reduce<sum_>(rho_);
 
         if (TID == 0) {
-            g_sin_block[i * BDIM + BID] = sin_;
-            g_cos_block[i * BDIM + BID] = cos_;
+            g_rho_block[i * BDIM + BID] = rho_;
         }
     }
 }
@@ -87,31 +86,23 @@ __global__ void compute(
  *
  *  @param bdim  number of blocks (grid size) in the preceding call to compute()
  */
-__global__ void finalise(
-    float const* g_sin_block, float const* g_cos_block
-  , float* g_sin, float* g_cos
-  , int nq, int bdim)
+__global__ void finalise(float2 const* g_rho_block, float2* g_rho, int nq, int bdim)
 {
-    float s_sum;
-    float c_sum;
+    typedef fixed_vector<float, 2> complex_type;    // replacement for std::complex
 
     // outer loop over wavevectors, distributed over block grid
     for (int i = BID; i < nq; i += BDIM) {
-        s_sum = 0;
-        c_sum = 0;
+        complex_type rho_sum = 0;
         for (int j = TID; j < bdim; j += TDIM) {
-            s_sum += g_sin_block[i * bdim + j];
-            c_sum += g_cos_block[i * bdim + j];
+            rho_sum += static_cast<complex_type>(g_rho_block[i * bdim + j]);
         }
 
         // accumulate results within block
-        reduce<sum_>(s_sum);
-        reduce<sum_>(c_sum);
+        reduce<sum_>(rho_sum);
 
         // store result in global memory
         if (TID == 0) {
-            g_sin[i] = s_sum;
-            g_cos[i] = c_sum;
+            g_rho[i] = rho_sum;
         }
     }
 }

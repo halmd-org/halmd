@@ -45,9 +45,9 @@ density_mode<dimension, float_type>::density_mode(
   , dim_(50, 512)
     // memory allocation
   , g_q_(nq_)
-  , g_sin_block_(nq_ * dim_.blocks_per_grid()), g_cos_block_(nq_ * dim_.blocks_per_grid())
-  , g_sin_(nq_), g_cos_(nq_)
-  , h_sin_(nq_), h_cos_(nq_)
+  , g_rho_block_(nq_ * dim_.blocks_per_grid())
+  , g_rho_(nq_)
+  , h_rho_(nq_)
 {
     LOG_INFO(
         "CUDA configuration: " << dim_.blocks_per_grid() << " blocks of "
@@ -104,7 +104,7 @@ density_mode<dimension, float_type>::acquire()
             wrapper_type::kernel.compute(
                 t_wavevector
               , position.data(), &*group.begin(), group.size()
-              , g_sin_block_, g_cos_block_, nq_
+              , g_rho_block_.data(), nq_
             );
             cuda::thread::synchronize();
 
@@ -113,7 +113,7 @@ density_mode<dimension, float_type>::acquire()
                 nq_                        // #blocks: one per wavevector
               , dim_.block                 // #threads per block, must be a power of 2
             );
-            wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, nq_, dim_.blocks_per_grid());
+            wrapper_type::kernel.finalise(g_rho_block_.data(), g_rho_.data(), nq_, dim_.blocks_per_grid());
         }
         catch (cuda::error const&) {
             LOG_ERROR("failed to compute density modes on GPU");
@@ -121,11 +121,11 @@ density_mode<dimension, float_type>::acquire()
         }
 
         // copy data from device and store in density_mode sample
-        cuda::copy(g_sin_.begin(), g_sin_.end(), h_sin_.begin());
-        cuda::copy(g_cos_.begin(), g_cos_.end(), h_cos_.begin());
-        auto rho_q = begin(*result_);
+        cuda::copy(g_rho_.begin(), g_rho_.end(), h_rho_.begin());
+        auto rho = begin(*result_);
         for (unsigned int i = 0; i < nq_; ++i) {
-            *rho_q++ = {{ h_cos_[i], -h_sin_[i] }};
+            // convert from float2 to result type
+            *rho++ = fixed_vector<double, 2>({{ h_rho_[i].x, -h_rho_[i].y }}); // FIXME check minus sign on imaginary part
         }
 
         // update cache observers
