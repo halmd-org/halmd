@@ -88,11 +88,17 @@ configure_file(version.h.in version.h ESCAPE_QUOTES @ONLY)
 ##
 # HALMD executable
 #
-add_executable(halmd
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(HALMD_EXECUTABLE "halmd")
+else()
+    set(HALMD_EXECUTABLE "halmd-debug")
+endif()
+
+add_executable("${HALMD_EXECUTABLE}"
   main.cpp
   "${CMAKE_CURRENT_BINARY_DIR}/modules.cpp"
 )
-target_link_libraries(halmd
+target_link_libraries("${HALMD_EXECUTABLE}"
   # with newer version of GNU ld, indirect linking through intermediate
   # libraries does not work anymore, so we have to explicitly link halmd
   # against common libraries
@@ -100,6 +106,6 @@ target_link_libraries(halmd
   ${HALMD_LIBRARIES}
   ${HALMD_COMMON_LIBRARIES}
 )
-install(TARGETS halmd
+install(TARGETS "${HALMD_EXECUTABLE}"
   RUNTIME DESTINATION bin
 )
