@@ -185,8 +185,8 @@ Version 1.0.0
 
 **Improvements**
 
-* usage documentation: add :ref:`tutorial <tutorial>` on diffusion in a simple
-  liquid *(Jake Atwell)*
+* usage documentation: add :ref:`tutorial <tutorial-diffusion>` on diffusion in
+  a simple liquid *(Jake Atwell)*
 
 * examples: simplify scripts for basic simulations of a one-component
   Lennard-Jones fluid *(Felix Höfling)*
