@@ -1,7 +1,20 @@
 .. _tutorial-wetting:
 
-Tutorial: wetting processes at a flat, smooth interface
-=======================================================
+Tutorial: wetting and drying at a flat, smooth surface
+======================================================
+
+The wetting behaviour of a Lennard-Jones (LJ) fluid within a slit pore is
+simulated. The aim is to calculate the density profile :math:`\rho(x)`
+perpendicular to the wall surfaces for a range of wetting parameters :math:`w`.
+The set-up and the choice of parameters follows approximately the work of
+Evans *et al.* [1]_.
+
+|
+
+.. image:: /_images/density_profiles.png
+          :alt: Normalised density profiles for various wetting parameters
+          :align: center
+          :width: 75%
 
 Prerequisites
 -------------
@@ -20,26 +33,24 @@ These simulation scripts are found in the folder
   - plotting/plot_density_profile.py
 
 
-Setup
------
+Set-up
+------
 
-The fluid is confined within a slit pore comprised of two identical planar walls
-separated by a distance :math:`D=30\sigma` along the x-direction of the simulation
-box, where :math:`\sigma` is the interaction range of the Lennard-Jones (LJ)
-potential. Periodic boundary conditions are applied in the directions parallel to
-the planar walls.
+A Lennard-Jones (LJ) fluid is confined within a slit pore delimited by two
+identical planar walls separated by a distance :math:`D=30\sigma` along the
+:math:`x`-direction of the simulation box, where :math:`\sigma` is the
+interaction range of the LJ potential. Periodic boundary conditions are applied
+in the directions parallel to the planar walls.
 
-The wetting behaviour of a LJ fluid is simulated using the smoothed truncated LJ potential
-for particle-particle interactions and the planar wall potential for particle-wall interactions.
-The simulation parameters for wetting processes are selected based on chemical physics literature [1]_.
+The wetting behaviour of a LJ fluid is simulated using the smoothly truncated
+LJ potential for particle pair interactions and the planar wall potential for
+the particle--wall interaction.
 
 
 Equilibration phase
 -------------------
 
-Melting of the initial lattice configuration with an NVT simulation:
-
-.. code:: bash
+Melting of the initial lattice configuration with an NVT simulation::
 
     halmd wetting_equilibration.lua -v \
         --output wetting_thermalisation \
@@ -107,12 +118,9 @@ wetting parameters :math:`w`, one should first execute the two Lua simulation sc
 for :math:`w \in \{0.1, 0.5, 1.0, 1.5, 3.0, 6.0\}`. Once the output files are obtained,
 the profiles can be visualised in a single plot by running the following command::
 
-    python plot_density_profile.py --inputs wetting_production_*.h5
+   python plot_density_profile.py --inputs wetting_production_*.h5
 
-.. image:: /_images/density_profiles.png
-        :alt: Normalised density profiles for various wetting parameters
-        :align: center
-        :width: 75%
+|
 
 .. [1] Robert Evans, Maria C. Stewart, Nigel B. Wilding,
        *Drying and wetting transitions of a Lennard-Jones fluid: Simulations and density functional theory*,
