@@ -25,7 +25,7 @@ particle.data["species"] = species
 -- set particle positions sequentially on an fcc lattice
 mdsim.positions.lattice({box = box, particle = particle}):set()
 
--- shuffle positions randomly
+-- shuffle positions randomly (shuffling is available in the host backend only)
 local r = particle.data["position"]
 r = random.generator({memory = "host"}):shuffle(r)
 particle.data["position"] = r

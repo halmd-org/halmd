@@ -1,0 +1,33 @@
+Create fluid in a slit pore
+===========================
+
+A fluid confined to a slit pore is set up by placing fluid particles in between
+two planar surfaces. The latter are implemented as flat walls by an
+:mod:`external potential <halmd.mdsim.potentials.external.planar_wall>`. The
+fluid may consist of particles of different species, and the walls may have
+different interaction parameters for each species. For simplicity, only a
+single species is used here.
+
+The simulation box is still defined with periodic boundary conditions at all
+its faces. Therefore, it is crucial that the box size in the direction
+perpendicular to the walls is larger than the pore width to avoid spurious pair
+interactions across the walls.
+
+The setup procedure has the following steps:
+
+ * define geometry: pore width and box extents, fraction of the pore
+ * place particles on an fcc lattice in the pore part of the box
+ * assign random velocities according to a Maxwell–Boltzmann distribution
+ * define interactions: external wall potential, pair potential
+
+.. literalinclude:: /test/lua/recipes/create_slit_pore.lua
+   :lines: 44-69
+   :language: lua
+
+We have made use of the following helper functions, which may be placed in a
+separate definitions file:
+
+.. literalinclude:: /test/lua/recipes/create_slit_pore.lua
+   :lines: 7-41
+   :language: lua
+
