@@ -93,7 +93,7 @@ def compute_average(data, label, nblocks = 10):
         The error is estimated from grouping the data in shorter blocks """
 
     # group data in blocks, discard excess data
-    data = reshape(data[:(nblocks * (data.shape[0] / nblocks))], (nblocks, -1))
+    data = reshape(data[:(nblocks * (data.shape[0] // nblocks))], (nblocks, -1))
 
     # compute mean and error
     avg = mean(data)
