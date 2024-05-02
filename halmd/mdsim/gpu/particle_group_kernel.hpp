@@ -38,8 +38,6 @@ struct particle_group_wrapper
     cuda::texture<float4> r;
     /** minimum image vectors */
     cuda::texture<aligned_vector_type> image;
-    /** orientations */
-    cuda::texture<float4> u;
     /** velocities, masses */
     cuda::texture<float4> v;
     /** copy particle group data (position, species, velocities, masses) into particle instance */

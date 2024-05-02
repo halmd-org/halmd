@@ -61,7 +61,6 @@ public:
 
     typedef unsigned int size_type;
     typedef vector_type position_type;
-    typedef vector_type orientation_type;
     typedef vector_type image_type;
     typedef vector_type velocity_type;
     typedef unsigned int id_type;
@@ -74,7 +73,6 @@ public:
     typedef stress_tensor_wrapper<typename type_traits<dimension, float>::stress_tensor_type> stress_pot_type;
 
     typedef gpu_hp_vector_type gpu_position_type;
-    typedef gpu_hp_vector_type gpu_orientation_type;
     typedef gpu_hp_vector_type gpu_velocity_type;
     typedef gpu_vector_type gpu_image_type;
     typedef id_type gpu_id_type;
@@ -86,7 +84,6 @@ public:
 
     typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_vector_type position_array_type;
     typedef typename particle_array_gpu<gpu_vector_type>::gpu_vector_type image_array_type;
-    typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_vector_type orientation_array_type;
     typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_vector_type velocity_array_type;
     typedef cuda::vector<unsigned int> id_array_type;
     typedef cuda::vector<unsigned int>  reverse_id_array_type;
@@ -225,22 +222,6 @@ public:
     cache<image_array_type>& image()
     {
         return mutable_data<gpu_image_type>("image");
-    }
-
-    /**
-     * Returns const reference to particle orientation.
-     */
-    cache<orientation_array_type> const& orientation() const
-    {
-        return data<gpu_orientation_type>("orientation");
-    }
-
-    /**
-     * Returns non-const reference to particle orientation.
-     */
-    cache<orientation_array_type>& orientation()
-    {
-        return mutable_data<gpu_orientation_type>("orientation");
     }
 
     /**
@@ -575,26 +556,6 @@ inline iterator_type
 set_image(particle_type& particle, iterator_type const& first)
 {
     return particle.template set_data<typename particle_type::image_type>("image", first);
-}
-
-/**
- * Copy particle orientations to given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-get_orientation(particle_type const& particle, iterator_type const& first)
-{
-    return particle.template get_data<typename particle_type::orientation_type>("orientation", first);
-}
-
-/**
- * Copy particle orientations from given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-set_orientation(particle_type& particle, iterator_type const& first)
-{
-    return particle.template set_data<typename particle_type::orientation_type>("orientation", first);
 }
 
 /**

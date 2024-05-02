@@ -35,7 +35,6 @@ local module = require("halmd.utility.module")
 --    potentials/index
 --    velocities/index
 --    positions/index
---    orientations/index
 --    sorts/index
 --    geometries/index
 --

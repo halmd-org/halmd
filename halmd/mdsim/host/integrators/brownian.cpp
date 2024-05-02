@@ -102,105 +102,6 @@ void brownian<dimension, float_type>::update_displacement(
 }
 
 /**
- * free function to update orientation for 2d
- */
-template<typename float_type>
-void update_orientation_impl(
-    float_type const diff_const
-  , fixed_vector<float_type, 2>& u
-  , float_type const& tau
-  , float_type timestep
-  , float_type temperature
-  , float_type eta
-  , float_type ignore
-)
-{
-    // numerical limits for computation
-    float_type epsilon = std::numeric_limits<float_type>::epsilon();
-
-    // the 2d case is just diffusion of orientation angle
-    float_type omega = eta + tau * diff_const * timestep / temperature;
-
-    // rotate by omega
-    fixed_vector<float_type, 2> e;
-    e[0] = -u[1];
-    e[1] = u[0];
-    u = cos(omega) * u + sin(omega) * e;
-
-    // ensure normalization, TODO: is this really necessary?
-    if (norm_2(u) > epsilon) {
-        u /= norm_2(u);
-    }
-}
-
-/**
- * free function to update orientation for 3d
- */
-template<typename float_type>
-void update_orientation_impl(
-    float_type const diff_const
-  , fixed_vector<float_type, 3>& u
-  , fixed_vector<float_type, 3> const& tau
-  , float_type timestep
-  , float_type temperature
-  , float_type eta1
-  , float_type eta2
-)
-{
-    typedef fixed_vector<float_type, 3> vector_type;
-
-    //numerical limits for computation
-    float_type epsilon = std::numeric_limits<float_type>::epsilon();
-
-    //construct trihedron along particle orientation
-    vector_type e1, e2;
-    if (u[1] > epsilon || u[2] > epsilon) {
-        e1[0] = 0; e1[1] = u[2]; e1[2] = -u[1];
-    } else {
-        e1[0] = u[1]; e1[1] = -u[0]; e1[2] = 0;
-    }
-    e2  = cross_prod(u, e1);
-
-    // normalize vectors, TODO: is this really necessary?
-    if (norm_2(e1) > 2e-38){
-        e1 /= norm_2(e1);
-    }
-    if (norm_2(e2) > 2e-38){
-        e2 /= norm_2(e2);
-    }
-
-    // first two terms are the random angular velocity, the final is the
-    // systematic torque
-    vector_type omega = eta1 * e1 + eta2 * e2 + tau * diff_const * timestep / temperature;
-    float_type alpha = norm_2(omega);
-
-    if (alpha > 2e-38){
-        omega /= alpha;
-    }
-
-    u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
-
-    if (norm_2(u) > 2e-38){
-        u /= norm_2(u);
-    }
-}
-
-/**
- * Wrapper for the free functions that update the orientation
- */
-template <int dimension, typename float_type>
-void brownian<dimension, float_type>::update_orientation(
-    float_type const diff_const
-  , vector_type& u
-  , torque_type const& tau
-  , float_type eta1
-  , float_type eta2
-)
-{
-    update_orientation_impl(diff_const, u, tau, timestep_, temperature_, eta1, eta2);
-}
-
-/**
  * perform Brownian integration: update positions with random displacement
  *
  * @f$ r(t + \Delta t) = \mu F(t) + \sigma d vec{W} @f$
@@ -217,7 +118,6 @@ void brownian<dimension, float_type>::integrate()
 
     // invalidate the particle caches after accessing the force and torque!
     auto position    = make_cache_mutable(particle_->position());
-    auto orientation = make_cache_mutable(particle_->orientation());
     auto image       = make_cache_mutable(particle_->image());
 
     scoped_timer_type timer(runtime_.integrate);
@@ -257,31 +157,6 @@ void brownian<dimension, float_type>::integrate()
             // enforce periodic boundary conditions
             (*image)[i] += box_->reduce_periodic(r);
         }
-        if (degrees_ & integrate_orientation) {
-            torque_type tau = torque[i];
-            vector_type& u = (*orientation)[i];
-
-            float_type const diff_const_rot = diff_const_(s, 1);
-            float_type sigma_rot = sqrt(2 * timestep_ * diff_const_rot);
-
-            // update orientation last (Ito interpretation)
-            if (dimension == 2) {
-                float_type eta;
-                if (rng_rot_cached) {
-                    eta = rng_rot_cache;
-                } else {
-                    std::tie(eta, rng_rot_cache) = random_->normal(sigma_rot);
-                }
-                rng_rot_cached = !rng_rot_cached;
-
-                update_orientation(diff_const_rot, u, tau, eta, float_type(0));
-            } else {
-                float_type eta1, eta2;
-                std::tie(eta1, eta2) = random_->normal(sigma_rot);
-
-                update_orientation(diff_const_rot, u, tau, eta1, eta2);
-            }
-        }
     }
 }
 
@@ -310,7 +185,6 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
                     .enum_("degrees")
                     [
                         value("position", integrate_position)
-                      , value("orientation", integrate_orientation)
                       , value("both", integrate_both)
                     ]
 

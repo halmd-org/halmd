@@ -221,10 +221,6 @@ local M = module(function(args)
         return phase_space:data("position")
     end
 
-    self.orientation = function(self)
-        return phase_space:data("orientation")
-    end
-
     self.velocity = function(self)
         return phase_space:data("velocity")
     end

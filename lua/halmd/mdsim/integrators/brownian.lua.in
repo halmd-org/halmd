@@ -50,7 +50,6 @@ local brownian = assert(libhalmd.mdsim.integrators.brownian)
 -- degrees of freedom to integrate
 local integrate_degrees = {
     position    = assert(brownian.integrate_position),
-    orientation = assert(brownian.integrate_orientation),
     both        = assert(brownian.integrate_both),
 }
 
@@ -92,7 +91,7 @@ local integrate_degrees = {
 --
 -- .. attribute:: degrees
 --
---    Which degrees of freedom to integrate (can be either "position", "orientation" or "both")
+--    Which degrees of freedom to integrate
 --
 -- .. method:: disconnect()
 --

@@ -51,8 +51,6 @@ public:
 
     enum integration_degrees {
         integrate_position = 1 << 0
-      , integrate_orientation = 1 << 1
-      , integrate_both = integrate_position | integrate_orientation
     };
 
     brownian(
@@ -122,15 +120,7 @@ private:
       , vector_type const& f
       , vector_type const& eta
     );
-
-    void update_orientation(
-        float_type const diff_const
-      , vector_type& u
-      , torque_type const& tau
-      , float_type eta1
-      , float_type eta2
-    );
-
+    
     /**
      * set rng and random seed
      */

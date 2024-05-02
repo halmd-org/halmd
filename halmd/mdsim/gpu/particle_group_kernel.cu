@@ -25,8 +25,6 @@
 
 /** positions, types */
 static texture<float4> r_;
-/** orientations */
-static texture<float4> u_;
 /** velocities, masses */
 static texture<float4> v_;
 
@@ -37,8 +35,6 @@ namespace particle_group_kernel {
 
 /** positions, types */
 static texture<float4> r_;
-/** orientations */
-static texture<float4> u_;
 /** velocities, masses */
 static texture<float4> v_;
 

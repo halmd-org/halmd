@@ -41,8 +41,6 @@ static __constant__ unsigned int ntype_;
 static texture<unsigned int> ntypes_;
 /** positions, types */
 static texture<float4> r_;
-/** orientation */
-static texture<float4> u_;
 /** velocities, masses */
 static texture<float4> v_;
 /** IDs */

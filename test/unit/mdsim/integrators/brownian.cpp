@@ -40,11 +40,9 @@
 #include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/potentials/external/harmonic.hpp>
-#include <halmd/mdsim/host/orientations/uniform.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/dynamics/blocking_scheme.hpp>
 #include <halmd/observables/dynamics/correlation.hpp>
-#include <halmd/observables/host/dynamics/orientational_autocorrelation.hpp>
 #include <halmd/observables/host/dynamics/mean_quartic_displacement.hpp>
 #include <halmd/observables/host/dynamics/mean_square_displacement.hpp>
 #include <halmd/observables/host/phase_space.hpp>
@@ -58,9 +56,7 @@
 # include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/potentials/external/harmonic.hpp>
-# include <halmd/mdsim/gpu/orientations/uniform.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
-# include <halmd/observables/gpu/dynamics/orientational_autocorrelation.hpp>
 # include <halmd/observables/gpu/dynamics/mean_quartic_displacement.hpp>
 # include <halmd/observables/gpu/dynamics/mean_square_displacement.hpp>
 # include <halmd/random/gpu/random.hpp>
@@ -78,7 +74,6 @@ struct brownian_free
 
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::integrator_type integrator_type;
-    typedef typename modules_type::orientation_type orientation_type;
     typedef typename modules_type::particle_type particle_type;
     typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename modules_type::phase_space_type phase_space_type;
@@ -111,7 +106,6 @@ struct brownian_free
     std::shared_ptr<box_type> box;
     std::shared_ptr<clock_type> clock;
     std::shared_ptr<integrator_type> integrator;
-    std::shared_ptr<orientation_type> orientation;
     std::shared_ptr<particle_type> particle;
     std::shared_ptr<particle_group_type> particle_group;
     std::shared_ptr<phase_space_type> phase_space;
@@ -134,11 +128,6 @@ void brownian_free<modules_type>::test()
     // allocate space for block samples
     auto block_sample = std::make_shared<observables::samples::blocking_scheme<sample_type>>(
         [=]() { return phase_space->template acquire<sample_type>("position"); }
-      , blocking_scheme.count()
-      , blocking_scheme.block_size()
-    );
-    auto block_sample_u = std::make_shared<observables::samples::blocking_scheme<sample_type>>(
-        [=]() { return phase_space->template acquire<sample_type>("orientation"); }
       , blocking_scheme.count()
       , blocking_scheme.block_size()
     );
@@ -229,14 +218,12 @@ brownian_free<modules_type>::brownian_free()
         particle, random, box, timestep, temperature, diff_const, integrator_type::integrate_both
     );
     position = std::make_shared<position_type>(particle, box, slab);
-    orientation = std::make_shared<orientation_type>(particle, random);
     clock = std::make_shared<clock_type>();
     clock->set_timestep(integrator->timestep());
     phase_space = std::make_shared<phase_space_type>(particle, particle_group, box);
 
-    // set positions and orientations
+    // set positions
     position->set();
-    orientation->set();
 }
 
 template <typename modules_type>
@@ -397,13 +384,11 @@ struct host_modules_free
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::host::integrators::brownian<dimension, float_type> integrator_type;
     typedef halmd::random::host::random random_type;
-    typedef mdsim::host::orientations::uniform<dimension, float_type> orientation_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
     typedef observables::host::samples::sample<dimension, float_type> sample_type;
     typedef observables::host::phase_space<dimension, float_type> phase_space_type;
     typedef observables::host::dynamics::mean_square_displacement<dimension, float_type> msd_type;
     typedef observables::host::dynamics::mean_quartic_displacement<dimension, float_type> mqd_type;
-    typedef observables::host::dynamics::orientational_autocorrelation<dimension, float_type> ocf_type;
 
     static bool const gpu = false;
 };
@@ -418,12 +403,10 @@ struct host_modules_harmonic
     typedef mdsim::host::forces::external<dimension, float_type, potential_type> force_type;
     typedef mdsim::host::integrators::brownian<dimension, float_type> integrator_type;
     typedef halmd::random::host::random random_type;
-    typedef mdsim::host::orientations::uniform<dimension, float_type> orientation_type;
     typedef observables::host::samples::sample<dimension, float_type> sample_type;
     typedef observables::host::phase_space<dimension, float_type> phase_space_type;
     typedef observables::host::dynamics::mean_square_displacement<dimension, float_type> msd_type;
     typedef observables::host::dynamics::mean_quartic_displacement<dimension, float_type> mqd_type;
-    typedef observables::host::dynamics::orientational_autocorrelation<dimension, float_type> ocf_type;
 
     static bool const gpu = false;
 };
@@ -441,13 +424,11 @@ struct gpu_modules_free
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef mdsim::gpu::integrators::brownian<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
-    typedef mdsim::gpu::orientations::uniform<dimension, float_type, halmd::random::gpu::rand48> orientation_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef observables::gpu::samples::sample<dimension, float4> sample_type;
     typedef observables::gpu::phase_space<dimension, float_type> phase_space_type;
     typedef observables::gpu::dynamics::mean_square_displacement<dimension, float4> msd_type;
     typedef observables::gpu::dynamics::mean_quartic_displacement<dimension, float4> mqd_type;
-    typedef observables::gpu::dynamics::orientational_autocorrelation<dimension, float4> ocf_type;
 
     static bool const gpu = true;
 };
@@ -462,12 +443,10 @@ struct gpu_modules_harmonic
     typedef mdsim::gpu::forces::external<dimension, float_type, potential_type> force_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef mdsim::gpu::integrators::brownian<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
-    typedef mdsim::gpu::orientations::uniform<dimension, float_type, halmd::random::gpu::rand48> orientation_type;
     typedef observables::gpu::samples::sample<dimension, float4> sample_type;
     typedef observables::gpu::phase_space<dimension, float_type> phase_space_type;
     typedef observables::gpu::dynamics::mean_square_displacement<dimension, float4> msd_type;
     typedef observables::gpu::dynamics::mean_quartic_displacement<dimension, float4> mqd_type;
-    typedef observables::gpu::dynamics::orientational_autocorrelation<dimension, float4> ocf_type;
 
     static bool const gpu = true;
 };

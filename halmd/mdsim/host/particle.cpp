@@ -57,7 +57,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
 {
     // register and allocate named particle arrays
     auto position = make_cache_mutable(register_data<position_type>("position")->mutable_data());
-    auto orientation = make_cache_mutable(register_data<orientation_type>("orientation")->mutable_data());
     auto image = make_cache_mutable(register_data<image_type>("image")->mutable_data());
     auto velocity = make_cache_mutable(register_data<velocity_type>("velocity")->mutable_data());
     auto id = make_cache_mutable(register_data<id_type>("id")->mutable_data());
@@ -72,7 +71,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
 
     // initialize particle arrays
     std::fill(position->begin(), position->end(), 0);
-    std::fill(orientation->begin(), orientation->end(), 0);
     std::fill(image->begin(), image->end(), 0);
     std::fill(velocity->begin(), velocity->end(), 0);
     std::iota(id->begin(), id->begin() + nparticle_, 0);
@@ -110,7 +108,6 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     scoped_timer_type timer(runtime_.rearrange);
 
     auto position = make_cache_mutable(mutable_data<position_type>("position"));
-    auto orientation = make_cache_mutable(mutable_data<orientation_type>("orientation"));
     auto image = make_cache_mutable(mutable_data<image_type>("image"));
     auto velocity = make_cache_mutable(mutable_data<velocity_type>("velocity"));
     auto id = make_cache_mutable(mutable_data<id_type>("id"));
@@ -120,7 +117,6 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
 
     permute(position->begin(), position->begin() + nparticle_, index.begin());
     permute(image->begin(), image->begin() + nparticle_, index.begin());
-    permute(orientation->begin(), orientation->begin() + nparticle_, index.begin());
     permute(velocity->begin(), velocity->begin() + nparticle_, index.begin());
     permute(id->begin(), id->begin() + nparticle_, index.begin());
     permute(species->begin(), species->begin() + nparticle_, index.begin());

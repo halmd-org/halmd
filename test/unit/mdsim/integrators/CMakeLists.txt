@@ -8,7 +8,6 @@ if(HALMD_WITH_GPU)
     halmd_mdsim_gpu_integrators
     halmd_mdsim_gpu_particle_groups
     halmd_mdsim_gpu_positions
-    halmd_mdsim_gpu_orientations
     halmd_mdsim_gpu_potentials_external_harmonic
     halmd_mdsim_gpu
     halmd_observables_gpu
@@ -19,7 +18,6 @@ if(HALMD_WITH_GPU)
 endif()
 target_link_libraries(test_unit_mdsim_integrators_brownian
   halmd_mdsim_host_integrators
-  halmd_mdsim_host_orientations
   halmd_mdsim_host_particle_groups
   halmd_mdsim_host_positions
   halmd_mdsim_host_potentials_external_harmonic

@@ -99,12 +99,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
       fixed_vector<float, 3> (0.0f), -1U
     };
     struct {
-        fixed_vector<float, 3> orientation;
-        float mass;
-    } orientation_init_value = {
-        fixed_vector<float, 3>(0.0f), 1.0f
-    };
-    struct {
         fixed_vector<float, 3> velocity;
         float mass;
     } velocity_init_value = {
@@ -115,8 +109,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
             (dim_, nparticle_, array_size_, position_init_value, position_ghost_init_value);
     auto gpu_image_array = gpu_data_["image"] = std::make_shared<particle_array_gpu<gpu_image_type>>
             (dim_, nparticle_, array_size_);
-    auto gpu_orientation_array = gpu_data_["orientation"] = std::make_shared<particle_array_gpu<gpu_orientation_type>>
-            (dim_, nparticle_, array_size_, orientation_init_value, orientation_init_value);
     auto gpu_velocity_array = gpu_data_["velocity"] = std::make_shared<particle_array_gpu<gpu_velocity_type>>
             (dim_, nparticle_, array_size_, velocity_init_value, velocity_init_value);
     auto gpu_force_array = gpu_data_["force"] = std::make_shared<particle_array_gpu<gpu_force_type>>
@@ -132,7 +124,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     // register host data wrappers for packed data
     host_data_["position"] = std::make_shared<particle_array_host<position_type>>(gpu_position_array, 0, sizeof(float4), true);
     host_data_["species"] = std::make_shared<particle_array_host<species_type>>(gpu_position_array, sizeof(float) * 3, sizeof(float) * 4, true);
-    host_data_["orientation"] = std::make_shared<particle_array_host<orientation_type>>(gpu_orientation_array, 0, sizeof(float4), true);
     host_data_["velocity"] = std::make_shared<particle_array_host<velocity_type>>(gpu_velocity_array, 0, sizeof(float4), true);
     host_data_["mass"] = std::make_shared<particle_array_host<mass_type>>(gpu_velocity_array, sizeof(float) * 3, sizeof(float) * 4, true);
 
@@ -186,27 +177,23 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
 {
     auto g_position = make_cache_mutable(mutable_data<gpu_position_type>("position"));
     auto g_image = make_cache_mutable(mutable_data<gpu_image_type>("image"));
-    auto g_orientation = make_cache_mutable(mutable_data<gpu_orientation_type>("orientation"));
     auto g_velocity = make_cache_mutable(mutable_data<gpu_velocity_type>("velocity"));
 
     scoped_timer_type timer(runtime_.rearrange);
 
     position_array_type position(array_size_);
     image_array_type image(array_size_);
-    orientation_array_type orientation(array_size_);
     velocity_array_type velocity(array_size_);
     id_array_type id(array_size_);
 
     configure_kernel(get_particle_kernel<dimension, float_type>().rearrange, dim_, true);
     get_particle_kernel<dimension, float_type>().r.bind(*g_position);
     get_particle_kernel<dimension, float_type>().image.bind(*g_image);
-    get_particle_kernel<dimension, float_type>().u.bind(*g_orientation);
     get_particle_kernel<dimension, float_type>().v.bind(*g_velocity);
     get_particle_kernel<dimension, float_type>().id.bind(read_cache(id_));
-    get_particle_kernel<dimension, float_type>().rearrange(g_index, position, image, orientation, velocity, id, nparticle_);
+    get_particle_kernel<dimension, float_type>().rearrange(g_index, position, image, velocity, id, nparticle_);
 
     position.swap(*g_position);
-    orientation.swap(*g_orientation);
     image.swap(*g_image);
     velocity.swap(*g_velocity);
     cuda::copy(id.begin(), id.begin() + id.capacity(), make_cache_mutable(id_)->begin());
