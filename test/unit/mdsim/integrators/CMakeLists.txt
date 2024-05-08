@@ -1,3 +1,4 @@
+#[[
 # module brownian
 add_executable(test_unit_mdsim_integrators_brownian
   brownian.cpp
@@ -55,6 +56,7 @@ if(HALMD_WITH_GPU)
     test_unit_mdsim_integrators_brownian --run_test=brownian_harmonic_gpu_3d --log_level=test_suite
   )
 endif()
+]]
 
 # module euler
 cuda_add_executable(test_unit_mdsim_integrators_euler

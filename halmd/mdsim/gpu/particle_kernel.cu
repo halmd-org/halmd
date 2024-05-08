@@ -76,7 +76,6 @@ __global__ void rearrange(
 
     // copy position and velocity as float4 values, and image vector
     g_r[GTID] = texFetch<float_type>::fetch(r_, i);
-    g_u[GTID] = texFetch<float_type>::fetch(u_, i);
     g_v[GTID] = texFetch<float_type>::fetch(v_, i);
 
     // select correct image texture depending on the space dimension
@@ -95,7 +94,6 @@ particle_wrapper<dimension, float_type> const particle_wrapper<dimension, float_
   , particle_kernel::ntypes_
   , particle_kernel::r_
   , particle_kernel::image<dimension>::tex_
-  , particle_kernel::u_
   , particle_kernel::v_
   , particle_kernel::id_
   , particle_kernel::rearrange<dimension, float_type, ptr_type>
