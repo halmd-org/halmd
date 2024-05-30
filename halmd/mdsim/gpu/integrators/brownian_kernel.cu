@@ -276,14 +276,10 @@ brownian_wrapper<dimension, float_type, rng_type>::kernel = {
 #ifdef USE_GPU_SINGLE_PRECISION
 template class brownian_wrapper<2, float, random::gpu::rand48_rng>;
 template class brownian_wrapper<3, float, random::gpu::rand48_rng>;
-template class brownian_wrapper<2, float, random::gpu::mrg32k3a_rng>;
-template class brownian_wrapper<3, float, random::gpu::mrg32k3a_rng>;
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class brownian_wrapper<2, dsfloat, random::gpu::rand48_rng>;
 template class brownian_wrapper<3, dsfloat, random::gpu::rand48_rng>;
-template class brownian_wrapper<2, dsfloat, random::gpu::mrg32k3a_rng>;
-template class brownian_wrapper<3, dsfloat, random::gpu::mrg32k3a_rng>;
 #endif
 
 } // namespace integrators

@@ -197,14 +197,10 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_brownian(lua_State* L)
 #ifdef USE_GPU_SINGLE_PRECISION
     brownian<2, float, halmd::random::gpu::rand48>::luaopen(L);
     brownian<3, float, halmd::random::gpu::rand48>::luaopen(L);
-    brownian<2, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
-    brownian<3, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
     brownian<2, dsfloat, halmd::random::gpu::rand48>::luaopen(L);
     brownian<3, dsfloat, halmd::random::gpu::rand48>::luaopen(L);
-    brownian<2, dsfloat, halmd::random::gpu::mrg32k3a>::luaopen(L);
-    brownian<3, dsfloat, halmd::random::gpu::mrg32k3a>::luaopen(L);
 #endif
     return 0;
 }
@@ -213,14 +209,10 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_brownian(lua_State* L)
 #ifdef USE_GPU_SINGLE_PRECISION
 template class brownian<2, float, halmd::random::gpu::rand48>;
 template class brownian<3, float, halmd::random::gpu::rand48>;
-template class brownian<2, float, halmd::random::gpu::mrg32k3a>;
-template class brownian<3, float, halmd::random::gpu::mrg32k3a>;
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class brownian<2, dsfloat, halmd::random::gpu::rand48>;
 template class brownian<3, dsfloat, halmd::random::gpu::rand48>;
-template class brownian<2, dsfloat, halmd::random::gpu::mrg32k3a>;
-template class brownian<3, dsfloat, halmd::random::gpu::mrg32k3a>;
 #endif
 
 } // namespace integrators
