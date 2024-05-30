@@ -44,7 +44,6 @@ struct brownian_wrapper
 
     typedef cuda::function <void (
         ptr_type
-      , ptr_type
       , coalesced_vector_type*
       , const_ptr_type
       , coalesced_vector_type const*

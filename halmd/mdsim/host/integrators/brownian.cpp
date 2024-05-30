@@ -185,7 +185,7 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
                     .enum_("degrees")
                     [
                         value("position", integrate_position)
-                      , value("both", integrate_both)
+//                      , value("both", integrate_both)
                     ]
 
               , def("brownian", &std::make_shared<brownian

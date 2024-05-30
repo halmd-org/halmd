@@ -57,7 +57,6 @@ __global__ void particle_group_to_particle(
     unsigned int const* g_index
   , ptr_type g_r
   , aligned_vector_type* g_image
-  , ptr_type g_u
   , ptr_type g_v
   , unsigned int npart
 )
@@ -69,7 +68,6 @@ __global__ void particle_group_to_particle(
 
         // copy position and velocity as float4 values, and image vector
         g_r[GTID] = texFetch<float_type>::fetch(r_, i);
-        g_u[GTID] = texFetch<float_type>::fetch(u_, i);
         g_v[GTID] = texFetch<float_type>::fetch(v_, i);
 
         // copy image vector with its type depending on the space dimension
@@ -84,7 +82,6 @@ particle_group_wrapper<dimension, float_type> const
 particle_group_wrapper<dimension, float_type>::kernel = {
     particle_group_kernel::r_
   , particle_group_kernel::image<dimension>::tex_
-  , particle_group_kernel::u_
   , particle_group_kernel::v_
   , particle_group_kernel::particle_group_to_particle<float_type, fixed_vector<float_type, dimension>, ptr_type>
 };

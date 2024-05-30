@@ -64,8 +64,6 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
 
     if (degrees_ == integrate_position) {
         integrate_kernel = wrapper_type::kernel.integrate_position;
-    } else if (degrees_ == integrate_orientation) {
-        integrate_kernel = wrapper_type::kernel.integrate_orientation;
     } else if (degrees_ == integrate_both) {
         integrate_kernel = wrapper_type::kernel.integrate_both;
     } else {
@@ -117,7 +115,6 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
 
     // invalidate the particle caches after accessing the velocity!
     auto position = make_cache_mutable(particle_->position());
-    auto orientation = make_cache_mutable(particle_->orientation());
     auto image = make_cache_mutable(particle_->image());
     bind_textures();
     scoped_timer_type timer(runtime_.integrate);
@@ -128,7 +125,6 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
         cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
         integrate_kernel(
             position->data()
-          , orientation->data()
           , image->data()
           , velocity.data()
           , force.data()
@@ -173,7 +169,6 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
                     .enum_("degrees")
                     [
                         value("position", integrate_position)
-                      , value("orientation", integrate_orientation)
                       , value("both", integrate_both)
                     ]
 

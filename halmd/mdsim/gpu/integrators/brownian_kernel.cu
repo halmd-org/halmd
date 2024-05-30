@@ -150,7 +150,6 @@ template <
 >
 __global__ void integrate(
     ptr_type g_position
-  , ptr_type g_orientation
   , gpu_vector_type* g_image
   , const_ptr_type g_velocity
   , gpu_vector_type const* g_force
@@ -224,35 +223,6 @@ __global__ void integrate(
                 g_image[i] = image + static_cast<float_vector_type>(g_image[i]);
             }
         }
-        if (use_orientation) {
-            float_type const diff_const_rot = diff_const[1];
-            float_type const sigma_rot= sqrtf(2 * diff_const_rot * timestep);
-
-            torque_type tau = static_cast<float_torque_type>(g_torque[i]);
-
-            // load orientation (and mass which we don't need)
-            tie(u, mass) <<= g_orientation[i];
-
-            // draw random numbers
-            float_type eta1, eta2, eta3;
-            if (dimension == 2) {
-                if (rng_rot_cached) {
-                    eta1 = rng_rot_cache;
-                } else {
-                    tie(eta1, rng_rot_cache) =  random::gpu::normal(rng, state, 0, sigma_rot);
-                }
-                rng_rot_cached = !rng_rot_cached;
-            } else {
-                tie(eta1, eta2) =  random::gpu::normal(rng, state, 0, sigma_rot);
-            }
-
-            // update orientation after position! (Ito interpretation)
-            update_orientation(diff_const_rot, u, tau, timestep, temp, eta1, eta2);
-
-            // store orientation
-            g_orientation[i] <<= tie(u, mass);
-        }
-
     }
 
     // store random number generator state in global device memory

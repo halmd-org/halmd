@@ -65,7 +65,6 @@ __global__ void rearrange(
     unsigned int const* g_index
   , ptr_type g_r
   , aligned_vector_type* g_image
-  , ptr_type g_u
   , ptr_type g_v
   , unsigned int* g_id
   , unsigned int npart
