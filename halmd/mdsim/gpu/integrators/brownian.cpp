@@ -27,8 +27,6 @@
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace gpu {

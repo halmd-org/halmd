@@ -31,8 +31,6 @@
 #include <halmd/utility/timer.hpp>
 #include <halmd/numeric/blas/detail/operators.hpp>
 
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace host {
