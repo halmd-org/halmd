@@ -42,7 +42,7 @@ if(HALMD_WITH_GPU)
     halmd_add_gpu_test(unit/observables/ssf/gpu/dsfloat/2d
       test_unit_observables_ssf --run_test=ssf_gpu_dsfloat_2d --log_level=test_suite
     )
-    halmd_add_gpu_test(unit/observables/ssf/gpu/float/3d
+    halmd_add_gpu_test(unit/observables/ssf/gpu/dsfloat/3d
       test_unit_observables_ssf --run_test=ssf_gpu_dsfloat_3d --log_level=test_suite
     )
   endif()
@@ -110,3 +110,5 @@ if(HALMD_WITH_GPU)
     )
   endif()
 endif()
+
+add_subdirectory(utility)

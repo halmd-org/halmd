@@ -27,6 +27,7 @@
 
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
 #include <halmd/utility/demangle.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace std;
@@ -109,20 +110,20 @@ void verlet_nvt_hoover<dimension, float_type>::set_mass(chain_type const& mass)
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
-    LOG_TRACE("update positions and velocities");
-
     force_array_type const& force = read_cache(particle_->force());
+
+    LOG_TRACE("update positions and velocities: first leapfrog half-step");
+    scoped_timer<timer> timer_(runtime_.integrate);
 
     // invalidate the particle caches after accessing the force!
     auto position = make_cache_mutable(particle_->position());
     auto velocity = make_cache_mutable(particle_->velocity());
     auto image = make_cache_mutable(particle_->image());
 
-    scoped_timer<timer> timer_(runtime_.integrate);
     float_type scale = propagate_chain();
 
     try {
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        configure_kernel(wrapper_type::kernel.integrate, particle_->dim(), true);
         wrapper_type::kernel.integrate(
             position->data()
           , image->data()
@@ -146,17 +147,16 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
-    LOG_TRACE("update velocities");
-
     force_array_type const& force = read_cache(particle_->force());
+
+    LOG_TRACE("update velocities: second leapfrog half-step");
+    scoped_timer_type timer(runtime_.finalize);
 
     // invalidate the particle caches after accessing the force!
     auto velocity = make_cache_mutable(particle_->velocity());
 
-    scoped_timer_type timer(runtime_.finalize);
-
     try {
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        configure_kernel(wrapper_type::kernel.finalize, particle_->dim(), true);
         wrapper_type::kernel.finalize(velocity->data(), force.data(), timestep_);
         cuda::thread::synchronize();
 
@@ -164,7 +164,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 
         // rescale velocities
         scoped_timer_type timer2(runtime_.rescale);
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        configure_kernel(wrapper_type::kernel.rescale, particle_->dim(), true);
         wrapper_type::kernel.rescale(velocity->data(), scale);
         cuda::thread::synchronize();
     }

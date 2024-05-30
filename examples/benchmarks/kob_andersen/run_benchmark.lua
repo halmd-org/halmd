@@ -69,12 +69,12 @@ function main(args)
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
 
     -- create system state
-    local particle = mdsim.particle({dimension = 3, particles = nparticle, species = 2})
+    local particle = mdsim.particle({dimension = 3, particles = nparticle, species = 2, precision = args.precision})
 
     -- setup and sample each particle group separately
     local offset = 0
     for label, sample in utility.sorted(samples) do
-        local group = mdsim.particle_groups.from_range({
+        local group = mdsim.particle_groups.id_range({
             particle = particle
           , range = {offset + 1, offset + sample.nparticle}
           , label = label
@@ -94,8 +94,15 @@ function main(args)
         epsilon = {{1, 1.5}, {1.5, 0.5}} -- ((AA, AB), (BA, BB))
       , sigma = {{1, 0.8}, {0.8, 0.88}} -- ((AA, AB), (BA, BB))
     }):truncate({cutoff = 2.5})
-    -- compute forces
-    local force = mdsim.forces.pair({box = box, particle = particle, potential = potential})
+    -- compute pair forces
+    --
+    -- use smaller skin width and increased neighbour list occupancy as the
+    -- high density of the system makes diffusion slow and suppresses density
+    -- fluctuations.
+    local force = mdsim.forces.pair({
+        box = box, particle = particle, potential = potential
+      , neighbour = { skin = 0.3, occupancy = 0.7 }
+    })
 
     -- define velocity-Verlet integrator
     local integrator = mdsim.integrators.verlet({
@@ -128,4 +135,5 @@ function define_args(parser)
     end, help = "H5MD trajectory file"})
 
     parser:add_argument("count", {type = "number", default = 5, help = "number of repetitions"})
+    parser:add_argument("precision", {type = "string", help = "floating-point precision"})
 end

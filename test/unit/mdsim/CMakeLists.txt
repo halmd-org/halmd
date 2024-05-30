@@ -1,49 +1,53 @@
 add_subdirectory(forces)
 add_subdirectory(integrators)
 add_subdirectory(orientations)
-add_subdirectory(particle_groups)
 add_subdirectory(positions)
 add_subdirectory(potentials)
 add_subdirectory(velocities)
-
-add_executable(test_unit_mdsim_binning
-  binning.cpp
-)
-if(HALMD_WITH_GPU)
-  target_link_libraries(test_unit_mdsim_binning
-    halmd_mdsim_gpu
-    halmd_algorithm_gpu
-    halmd_utility_gpu
-  )
+if (NOT ${Boost_VERSION} VERSION_LESS 1.59.0)
+  add_subdirectory(particle_groups)
 endif()
-target_link_libraries(test_unit_mdsim_binning
-  halmd_mdsim_host
-  halmd_mdsim
-  halmd_utility
-  ${HALMD_TEST_LIBRARIES}
-)
-add_test(unit/mdsim/binning/host/2d
-  test_unit_mdsim_binning --run_test=host/two --log_level=test_suite
-)
-add_test(unit/mdsim/binning/host/3d
-  test_unit_mdsim_binning --run_test=host/three --log_level=test_suite
-)
-if(HALMD_WITH_GPU)
-  if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
-    halmd_add_gpu_test(unit/mdsim/binning/gpu/float/2d
-      test_unit_mdsim_binning --run_test=gpu/two/float --log_level=test_suite
-    )
-    halmd_add_gpu_test(unit/mdsim/binning/gpu/float/3d
-      test_unit_mdsim_binning --run_test=gpu/three/float --log_level=test_suite
+
+if (NOT ${Boost_VERSION} VERSION_LESS 1.59.0)
+  add_executable(test_unit_mdsim_binning
+    binning.cpp
+  )
+  if(HALMD_WITH_GPU)
+    target_link_libraries(test_unit_mdsim_binning
+      halmd_mdsim_gpu
+      halmd_algorithm_gpu
+      halmd_utility_gpu
     )
   endif()
-  if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
-    halmd_add_gpu_test(unit/mdsim/binning/gpu/dsfloat/2d
-      test_unit_mdsim_binning --run_test=gpu/two/dsfloat --log_level=test_suite
-    )
-    halmd_add_gpu_test(unit/mdsim/binning/gpu/dsfloat/3d
-      test_unit_mdsim_binning --run_test=gpu/three/dsfloat --log_level=test_suite
-    )
+  target_link_libraries(test_unit_mdsim_binning
+    halmd_mdsim_host
+    halmd_mdsim
+    halmd_utility
+    ${HALMD_TEST_LIBRARIES}
+  )
+  add_test(unit/mdsim/binning/host/2d
+    test_unit_mdsim_binning --run_test=host/two --log_level=test_suite
+  )
+  add_test(unit/mdsim/binning/host/3d
+    test_unit_mdsim_binning --run_test=host/three --log_level=test_suite
+  )
+  if(HALMD_WITH_GPU)
+    if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+      halmd_add_gpu_test(unit/mdsim/binning/gpu/float/2d
+        test_unit_mdsim_binning --run_test=gpu/two/type_float --log_level=test_suite
+      )
+      halmd_add_gpu_test(unit/mdsim/binning/gpu/float/3d
+        test_unit_mdsim_binning --run_test=gpu/three/type_float --log_level=test_suite
+      )
+    endif()
+    if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+      halmd_add_gpu_test(unit/mdsim/binning/gpu/dsfloat/2d
+        test_unit_mdsim_binning --run_test=gpu/two/type_dsfloat --log_level=test_suite
+      )
+      halmd_add_gpu_test(unit/mdsim/binning/gpu/dsfloat/3d
+        test_unit_mdsim_binning --run_test=gpu/three/type_dsfloat --log_level=test_suite
+      )
+    endif()
   endif()
 endif()
 
@@ -100,41 +104,46 @@ add_test(unit/mdsim/clock
   test_unit_mdsim_clock --log_level=test_suite
 )
 
-add_executable(test_unit_mdsim_particle
-  particle.cpp
-)
-if(HALMD_WITH_GPU)
-  target_link_libraries(test_unit_mdsim_particle
-    halmd_mdsim_gpu
-    halmd_algorithm_gpu
-    halmd_utility_gpu
+# module particle
+if (NOT ${Boost_VERSION} VERSION_LESS 1.59.0)
+  add_executable(test_unit_mdsim_particle
+    particle.cpp
   )
-endif()
-target_link_libraries(test_unit_mdsim_particle
-  halmd_mdsim_host
-  ${HALMD_TEST_LIBRARIES}
-)
-add_test(unit/mdsim/particle/host/2d
-  test_unit_mdsim_particle --run_test=host/two --log_level=test_suite
-)
-add_test(unit/mdsim/particle/host/3d
-  test_unit_mdsim_particle --run_test=host/three --log_level=test_suite
-)
-if(HALMD_WITH_GPU)
-  if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
-    halmd_add_gpu_test(unit/mdsim/particle/gpu/float/2d
-      test_unit_mdsim_particle --run_test=gpu/two/float --log_level=test_suite
-    )
-    halmd_add_gpu_test(unit/mdsim/particle/gpu/float/3d
-      test_unit_mdsim_particle --run_test=gpu/three/float --log_level=test_suite
+  if(HALMD_WITH_GPU)
+    target_link_libraries(test_unit_mdsim_particle
+      halmd_mdsim_gpu
+      halmd_algorithm_gpu
+      halmd_utility_gpu
     )
   endif()
-  if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
-    halmd_add_gpu_test(unit/mdsim/particle/gpu/dsfloat/2d
-      test_unit_mdsim_particle --run_test=gpu/two/dsfloat --log_level=test_suite
-    )
-    halmd_add_gpu_test(unit/mdsim/particle/gpu/dsfloat/3d
-      test_unit_mdsim_particle --run_test=gpu/three/dsfloat --log_level=test_suite
-    )
+  target_link_libraries(test_unit_mdsim_particle
+    halmd_mdsim_host
+    ${HALMD_TEST_LIBRARIES}
+  )
+
+  add_test(unit/mdsim/particle/host/2d
+    test_unit_mdsim_particle --run_test=host/two --log_level=test_suite
+  )
+  add_test(unit/mdsim/particle/host/3d
+    test_unit_mdsim_particle --run_test=host/three --log_level=test_suite
+  )
+  if(HALMD_WITH_GPU)
+    if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+      halmd_add_gpu_test(unit/mdsim/particle/gpu/float/2d
+        test_unit_mdsim_particle --run_test=gpu/two/type_float --log_level=test_suite
+      )
+      halmd_add_gpu_test(unit/mdsim/particle/gpu/float/3d
+        test_unit_mdsim_particle --run_test=gpu/three/type_float --log_level=test_suite
+      )
+    endif()
+    if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+      halmd_add_gpu_test(unit/mdsim/particle/gpu/dsfloat/2d
+        test_unit_mdsim_particle --run_test=gpu/two/type_dsfloat --log_level=test_suite
+      )
+      halmd_add_gpu_test(unit/mdsim/particle/gpu/dsfloat/3d
+        test_unit_mdsim_particle --run_test=gpu/three/type_dsfloat --log_level=test_suite
+      )
+    endif()
   endif()
 endif()
+

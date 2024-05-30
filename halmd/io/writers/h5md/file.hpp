@@ -51,7 +51,12 @@ public:
      * entry for the real user id of the calling process. If author_email is
      * empty output of this optional field is skipped.
      */
-    file(std::string const& path, std::string const& author_name = "", std::string const& author_email = "");
+    file(
+        std::string const& path
+      , std::string const& author_name = ""
+      , std::string const& author_email = ""
+      , bool overwrite = false
+    );
 
     /** flush file to disk */
     void flush();

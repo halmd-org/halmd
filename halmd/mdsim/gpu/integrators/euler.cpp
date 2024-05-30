@@ -22,6 +22,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/euler.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -63,18 +64,17 @@ void euler<dimension, float_type>::set_timestep(double timestep)
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::integrate()
 {
-    LOG_TRACE("update positions")
-
     velocity_array_type const& velocity = read_cache(particle_->velocity());
+
+    LOG_TRACE("update positions")
+    scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the velocity!
     auto position = make_cache_mutable(particle_->position());
     auto image = make_cache_mutable(particle_->image());
 
-    scoped_timer_type timer(runtime_.integrate);
-
     try {
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        configure_kernel(wrapper_type::kernel.integrate, particle_->dim(), true);
         wrapper_type::kernel.integrate(
             position->data()
           , image->data()

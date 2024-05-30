@@ -1,6 +1,6 @@
 /*
  * Copyright © 2016      Daniel Kirchner
- * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2010-2016 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
  *
@@ -29,6 +29,7 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
 #include <halmd/mdsim/gpu/velocity.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
@@ -55,18 +56,39 @@ template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
   : // allocate global device memory
     nparticle_(nparticle)
-  , array_size_((nparticle + 128 - 1) & ~(128 - 1)) // round upwards to multiple of 128
   , nspecies_(std::max(nspecies, 1u))
-  // FIXME default CUDA kernel execution dimensions
-  , dim_(device::validate(cuda::config(array_size_ / 128, 128)))
-  , id_(array_size_)
-  , reverse_id_(array_size_)
-  // enable auxiliary variables by default to allow sampling of initial state
+  // set internal flags
+  , force_in_progress_(false)
   , force_zero_(true)
   , force_dirty_(true)
   , aux_dirty_(true)
-  , aux_enabled_(true)
+  , aux_enabled_(true) // enable auxiliary variables by default to allow sampling of initial state
 {
+    {
+        // FIXME default CUDA kernel execution dimensions
+        cuda::device::properties prop(cuda::device::get());
+        int max_block_size = prop.max_threads_per_block();
+        // round up to next power of two
+        --max_block_size;
+        max_block_size |= max_block_size >> 1;
+        max_block_size |= max_block_size >> 2;
+        max_block_size |= max_block_size >> 4;
+        max_block_size |= max_block_size >> 8;
+        max_block_size |= max_block_size >> 16;
+        max_block_size++;
+        array_size_ = (nparticle_ + max_block_size - 1) / max_block_size;
+        array_size_ *= max_block_size;
+        size_t block_size = 128;
+        size_t grid_size = array_size_ / block_size;
+        while (grid_size > prop.max_grid_size().x && block_size <= prop.max_threads_per_block()/2) {
+            block_size <<= 1;
+            grid_size = (grid_size + 1) >> 1;
+        }
+        assert(grid_size * block_size == array_size_);
+        dim_ = device::validate(cuda::config(grid_size, block_size));
+        id_ = id_array_type(array_size_);
+        reverse_id_ = reverse_id_array_type(array_size_);
+    }
     // prepare initialization values
     struct {
         fixed_vector<float, 3> position;
@@ -175,7 +197,7 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     velocity_array_type velocity(array_size_);
     id_array_type id(array_size_);
 
-    cuda::configure(dim_.grid, dim_.block);
+    configure_kernel(get_particle_kernel<dimension, float_type>().rearrange, dim_, true);
     get_particle_kernel<dimension, float_type>().r.bind(*g_position);
     get_particle_kernel<dimension, float_type>().image.bind(*g_image);
     get_particle_kernel<dimension, float_type>().u.bind(*g_orientation);
@@ -198,6 +220,14 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::update_force_(bool with_aux)
 {
+    // break loop if update_force_() is called recursively,
+    // e.g., due to a slot function calling particle->force()
+    if (force_in_progress_) {
+        LOG_WARNING_ONCE("Force update is already in progress, breaking recursion.");
+        return;
+    }
+    force_in_progress_ = true;
+
     on_prepend_force_();          // ask force modules whether force/aux cache is dirty
 
     if (force_dirty_ || (with_aux && aux_dirty_)) {
@@ -218,6 +248,8 @@ void particle<dimension, float_type>::update_force_(bool with_aux)
         aux_enabled_ = false;     // disable aux variables for next call
     }
     on_append_force_();
+
+    force_in_progress_ = false;
 }
 
 template<int dimension, typename float_type>

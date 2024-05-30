@@ -13,7 +13,7 @@ proceeding, be aware of the section :ref:`automatic`.
    When installing third-party packages, it is advisable to put them into
    separate directories. If you install software only for yourself, use package
    directories of the form ``~/opt/PKGNAME-PKGVERSION``, for example
-   ``~/opt/boost-1.57.0`` or ``~/opt/Sphinx-1.2.3``. If you install software
+   ``~/opt/boost-1.65.0`` or ``~/opt/Sphinx-1.6.3``. If you install software
    system-wide as the root user, use ``/opt/PKGNAME-PKGVERSION``.
    This simple scheme allows you to have multiple versions of a package, or
    remove a package without impacting others.
@@ -24,12 +24,12 @@ For example, if Boost and Lua are installed in your home directory,
 CUDA is installed system-wide, and the HALMD source is in ``~/projects/halmd``,
 the initial cmake command might look like this ::
 
-   CMAKE_PREFIX_PATH=~/opt/boost_1_57_0:/opt/cuda-5.5:~/opt/lua-5.2.3 cmake ~/projects/halmd
+   CMAKE_PREFIX_PATH=~/opt/boost_1_65_0:/opt/cuda-8.5:~/opt/lua-5.2.3 cmake ~/projects/halmd
 
-Instead of setting CMAKE_PREFIX_PATH manually, you would include the package directories in your ~/.bashrc (or your favourite shell’s equivalent) ::
+Instead of setting CMAKE_PREFIX_PATH manually, you would include the package directories in your ~/.bashrc (or your favourite shell’s equivalent)::
 
-   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_57_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export CMAKE_PREFIX_PATH="/opt/cuda-5.5${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_65_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="/opt/cuda-8.5${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
    export CMAKE_PREFIX_PATH="${HOME}/opt/lua-5.2.3${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 GNU/Linux
@@ -67,11 +67,11 @@ Include CMake in your shell environment, by adding to ~/.bashrc::
 Boost C++ libraries
 ^^^^^^^^^^^^^^^^^^^
 
-Get the latest `Boost source package`_, currently `Boost 1.61.0`_ (1.55.0
-is the minimum required version).
+Get the latest `Boost source package`_, currently `Boost 1.72.0`_ (1.55.0
+is the minimum required version, some unit tests will be disabled in Boost versions less than 1.59.0).
 
-.. _Boost source package: http://www.boost.org/users/download
-.. _Boost 1.61.0: http://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.bz2
+.. _Boost source package: https://www.boost.org/users/download
+.. _Boost 1.72.0: https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2
 
 To build Boost, extract the source package and bootstrap the build with ::
 
@@ -79,7 +79,7 @@ To build Boost, extract the source package and bootstrap the build with ::
 
 Compile Boost using ::
 
-   ./bjam cxxflags="-fPIC -std=c++11"
+   ./b2 cxxflags="-fPIC -std=c++11"
 
 This compiles both dynamic and static libraries.
 
@@ -97,12 +97,12 @@ This compiles both dynamic and static libraries.
 
 Install the Boost libraries into your packages directory::
 
-   ./bjam cxxflags="-fPIC -std=c++11" install --prefix=$HOME/opt/boost_1_61_0
+   ./b2 cxxflags="-fPIC -std=c++11" install --prefix=$HOME/opt/boost_1_72_0
 
 Include Boost in your shell environment, by adding to ~/.bashrc::
 
-   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_61_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export LD_LIBRARY_PATH="${HOME}/opt/boost_1_61_0/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_72_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export LD_LIBRARY_PATH="${HOME}/opt/boost_1_72_0/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
 
 
 Lua interpreter

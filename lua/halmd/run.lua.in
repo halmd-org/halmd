@@ -19,6 +19,7 @@
 --
 
 local halmd = halmd
+local sampler = halmd.observables.sampler
 local utility = halmd.utility
 local log = halmd.io.log
 
@@ -45,6 +46,11 @@ return function()
     end
     local args = parser:parse_args()
 
+    -- replace parameter values in output filename if present
+    if args.output then
+        args.output = (args.output):interp(args)
+    end
+
     -- start logger
     log.open_console({severity = args.verbose[1]})
     -- log to file
@@ -56,6 +62,14 @@ return function()
 
     -- call run method from user script
     main(args)
+
+    -- finish simulation run, only if sampler:run() was called in user script
+    if not sampler.first_run then
+        sampler:finish()
+    end
+
+    -- log profiler results
+    utility.profiler:profile()
   else
     error("simulation script did not define a \"main\" method")
   end

@@ -1,5 +1,6 @@
 /*
  * Copyright © 2012 Peter Colberg
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -22,12 +23,13 @@
 
 #define BOOST_TEST_MODULE particle
 #include <boost/test/unit_test.hpp>
+#include <boost/test/data/test_case.hpp>
+#include <boost/test/data/monomorphic.hpp>
 
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <test/tools/constant_iterator.hpp>
 #include <test/tools/ctest.hpp>
-#include <test/tools/init.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <test/tools/cuda.hpp>
@@ -660,212 +662,167 @@ static void test_stress_pot(particle_type& particle)
     );
 }
 
-template <typename particle_type>
-static void
-test_suite_host(std::size_t nparticle, unsigned int nspecies, boost::unit_test::test_suite* ts)
-{
-    auto position = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_position(particle);
-    };
-    ts->add(BOOST_TEST_CASE( position ));
-
-    auto image = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_image(particle);
-    };
-    ts->add(BOOST_TEST_CASE( image ));
-
-    auto velocity = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_velocity(particle);
-    };
-    ts->add(BOOST_TEST_CASE( velocity ));
-
-    auto id = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_id(particle);
-    };
-    ts->add(BOOST_TEST_CASE( id ));
-
-    auto reverse_id = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_reverse_id(particle);
-    };
-    ts->add(BOOST_TEST_CASE( reverse_id ));
-
-    auto species = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_species(particle);
-    };
-    ts->add(BOOST_TEST_CASE( species ));
-
-    auto mass = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_mass(particle);
-    };
-    ts->add(BOOST_TEST_CASE( mass ));
-
-    auto force = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_force(particle);
-    };
-    ts->add(BOOST_TEST_CASE( force ));
-
-    auto en_pot = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_en_pot(particle);
-    };
-    ts->add(BOOST_TEST_CASE( en_pot ));
-
-    auto stress_pot = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_stress_pot(particle);
-    };
-    ts->add(BOOST_TEST_CASE( stress_pot ));
-}
-
-#ifdef HALMD_WITH_GPU
-template <typename particle_type>
-static void
-test_suite_gpu(std::size_t nparticle, unsigned int nspecies, boost::unit_test::test_suite* ts)
-{
-    auto position = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_position(particle);
-    };
-    ts->add(BOOST_TEST_CASE( position ));
-
-    auto image = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_image(particle);
-    };
-    ts->add(BOOST_TEST_CASE( image ));
-
-    auto velocity = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_velocity(particle);
-    };
-    ts->add(BOOST_TEST_CASE( velocity ));
-
-    auto id = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_id(particle);
-    };
-    ts->add(BOOST_TEST_CASE( id ));
-
-    auto reverse_id = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_reverse_id(particle);
-    };
-    ts->add(BOOST_TEST_CASE( reverse_id ));
-
-    auto species = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_species(particle);
-    };
-    ts->add(BOOST_TEST_CASE( species ));
-
-    auto mass = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_mass(particle);
-    };
-    ts->add(BOOST_TEST_CASE( mass ));
-
-    auto force = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_force(particle);
-    };
-    ts->add(BOOST_TEST_CASE( force ));
-
-    auto en_pot = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_en_pot(particle);
-    };
-    ts->add(BOOST_TEST_CASE( en_pot ));
-
-    auto stress_pot = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_stress_pot(particle);
-    };
-    ts->add(BOOST_TEST_CASE( stress_pot ));
-}
-#endif
-
-HALMD_TEST_INIT( particle )
-{
-    using namespace boost::unit_test;
-
-    test_suite* ts_host = BOOST_TEST_SUITE( "host" );
-    framework::master_test_suite().add(ts_host);
-
-    test_suite* ts_host_two = BOOST_TEST_SUITE( "two" );
-    ts_host->add(ts_host_two);
-
-    test_suite* ts_host_three = BOOST_TEST_SUITE( "three" );
-    ts_host->add(ts_host_three);
-
-#ifdef HALMD_WITH_GPU
-    test_suite* ts_gpu = BOOST_TEST_SUITE( "gpu" );
-    framework::master_test_suite().add(ts_gpu);
-
-    test_suite* ts_gpu_two = BOOST_TEST_SUITE( "two" );
-    ts_gpu->add(ts_gpu_two);
-
-# ifdef USE_GPU_SINGLE_PRECISION
-    test_suite* ts_gpu_two_float = BOOST_TEST_SUITE( "float" );
-    ts_gpu_two->add(ts_gpu_two_float);
-# endif
-
-# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-    test_suite* ts_gpu_two_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
-    ts_gpu_two->add(ts_gpu_two_dsfloat);
-# endif
-
-    test_suite* ts_gpu_three = BOOST_TEST_SUITE( "three" );
-    ts_gpu->add(ts_gpu_three);
-
-# ifdef USE_GPU_SINGLE_PRECISION
-    test_suite* ts_gpu_three_float = BOOST_TEST_SUITE( "float" );
-    ts_gpu_three->add(ts_gpu_three_float);
-# endif
-
-# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-    test_suite* ts_gpu_three_dsfloat = BOOST_TEST_SUITE( "dsfloat" );
-    ts_gpu_three->add(ts_gpu_three_dsfloat);
-# endif
-
-#endif
-
-    unsigned int const nspecies = 1;
-
-    for (unsigned int nparticle : {109, 4789, 42589}) {
-#ifdef USE_HOST_SINGLE_PRECISION
-        test_suite_host<halmd::mdsim::host::particle<3, float> >(nparticle, nspecies, ts_host_three);
-        test_suite_host<halmd::mdsim::host::particle<2, float> >(nparticle, nspecies, ts_host_two);
-#else
-        test_suite_host<halmd::mdsim::host::particle<3, double> >(nparticle, nspecies, ts_host_three);
-        test_suite_host<halmd::mdsim::host::particle<2, double> >(nparticle, nspecies, ts_host_two);
-#endif
-#ifdef HALMD_WITH_GPU
-# ifdef USE_GPU_SINGLE_PRECISION
-        test_suite_gpu<halmd::mdsim::gpu::particle<3, float> >(nparticle, nspecies, ts_gpu_three_float);
-        test_suite_gpu<halmd::mdsim::gpu::particle<2, float> >(nparticle, nspecies, ts_gpu_two_float);
-# endif
-# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-        test_suite_gpu<halmd::mdsim::gpu::particle<3, halmd::dsfloat> >(nparticle, nspecies, ts_gpu_three_dsfloat);
-        test_suite_gpu<halmd::mdsim::gpu::particle<2, halmd::dsfloat> >(nparticle, nspecies, ts_gpu_two_dsfloat);
-# endif
-#endif
+/**
+ * BOOST_AUTO_TEST_SUITE only allows test cases to be registered inside it, no function calls.
+ * For this reason the old test_suite_{host,gpu} function had to be replaced with these macros.
+ * This way no function is called and BOOST_DATA_TEST_CASE is directly registered
+ * inside the test suite.
+ */
+#define TEST_SUITE_HOST(particle_type, dataset, nspecies)   \
+    BOOST_DATA_TEST_CASE( position, dataset, nparticle ) {  \
+        particle_type particle(nparticle, nspecies);        \
+        test_position(particle);                            \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( image, dataset, nparticle ) {     \
+        particle_type particle(nparticle, nspecies);        \
+        test_image(particle);                               \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( velocity, dataset, nparticle ) {  \
+        particle_type particle(nparticle, nspecies);        \
+        test_velocity(particle);                            \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( id, dataset, nparticle )  {       \
+        particle_type particle(nparticle, nspecies);        \
+        test_id(particle);                                  \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( reverse_id, dataset, nparticle ) {\
+        particle_type particle(nparticle, nspecies);        \
+        test_reverse_id(particle);                          \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( species, dataset, nparticle ) {   \
+        particle_type particle(nparticle, nspecies);        \
+        test_species(particle);                             \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( mass, dataset, nparticle ) {      \
+        particle_type particle(nparticle, nspecies);        \
+        test_mass(particle);                                \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( force, dataset, nparticle ) {     \
+        particle_type particle(nparticle, nspecies);        \
+        test_force(particle);                               \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( en_pot, dataset, nparticle ) {    \
+        particle_type particle(nparticle, nspecies);        \
+        test_en_pot(particle);                              \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( stress_pot, dataset, nparticle ) {\
+        particle_type particle(nparticle, nspecies);        \
+        test_stress_pot(particle);                          \
     }
-}
+
+#ifdef HALMD_WITH_GPU
+# define TEST_SUITE_GPU(particle_type, dataset, nspecies)   \
+    BOOST_DATA_TEST_CASE( position, dataset, nparticle ) {  \
+        set_cuda_device device;                             \
+        particle_type particle(nparticle, nspecies);        \
+        test_position(particle);                            \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( image, dataset, nparticle ) {     \
+        set_cuda_device device;                             \
+        particle_type particle(nparticle, nspecies);        \
+        test_image(particle);                               \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( velocity, dataset, nparticle ) {  \
+        set_cuda_device device;                             \
+        particle_type particle(nparticle, nspecies);        \
+        test_velocity(particle);                            \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( id, dataset, nparticle ) {        \
+        set_cuda_device device;                             \
+        particle_type particle(nparticle, nspecies);        \
+        test_id(particle);                                  \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( reverse_id, dataset, nparticle ) {\
+        set_cuda_device device;                             \
+        particle_type particle(nparticle, nspecies);        \
+        test_reverse_id(particle);                          \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( species, dataset, nparticle ) {   \
+        set_cuda_device device;                             \
+        particle_type particle(nparticle, nspecies);        \
+        test_species(particle);                             \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( mass, dataset, nparticle ) {      \
+        set_cuda_device device;                             \
+        particle_type particle(nparticle, nspecies);        \
+        test_mass(particle);                                \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( force, dataset, nparticle ) {     \
+        set_cuda_device device;                             \
+        particle_type particle(nparticle, nspecies);        \
+        test_force(particle);                               \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( en_pot, dataset, nparticle ) {    \
+        set_cuda_device device;                             \
+        particle_type particle(nparticle, nspecies);        \
+        test_en_pot(particle);                              \
+    }                                                       \
+    BOOST_DATA_TEST_CASE( stress_pot, dataset, nparticle ) {\
+        set_cuda_device device;                             \
+        particle_type particle(nparticle, nspecies);        \
+        test_stress_pot(particle);                          \
+    }
+#endif
+
+/**
+ * Data-driven test case registration.
+ */
+using namespace boost::unit_test;
+
+unsigned int const DATA_ARRAY[] = {109, 4789, 42589};
+auto dataset = data::make(DATA_ARRAY);
+unsigned int const nspecies = 1;
+
+BOOST_AUTO_TEST_SUITE( host )
+    BOOST_AUTO_TEST_SUITE( two )
+#ifdef USE_HOST_SINGLE_PRECISION
+        typedef halmd::mdsim::host::particle<2, float> particle_type;
+#else
+        typedef halmd::mdsim::host::particle<2, double> particle_type;
+#endif
+        TEST_SUITE_HOST(particle_type, dataset, nspecies)
+    BOOST_AUTO_TEST_SUITE_END()
+
+    BOOST_AUTO_TEST_SUITE( three )
+#ifdef USE_HOST_SINGLE_PRECISION
+        typedef halmd::mdsim::host::particle<3, float> particle_type;
+#else
+        typedef halmd::mdsim::host::particle<3, double> particle_type;
+#endif
+        TEST_SUITE_HOST(particle_type, dataset, nspecies)
+    BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END()
+
+#ifdef HALMD_WITH_GPU
+BOOST_AUTO_TEST_SUITE( gpu )
+    BOOST_AUTO_TEST_SUITE( two )
+# ifdef USE_GPU_SINGLE_PRECISION
+        BOOST_AUTO_TEST_SUITE( type_float )
+            typedef halmd::mdsim::gpu::particle<2, float> particle_type;
+        TEST_SUITE_GPU(particle_type, dataset, nspecies)
+        BOOST_AUTO_TEST_SUITE_END()
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+        BOOST_AUTO_TEST_SUITE( type_dsfloat )
+            typedef halmd::mdsim::gpu::particle<2, halmd::dsfloat> particle_type;
+        TEST_SUITE_GPU(particle_type, dataset, nspecies)
+        BOOST_AUTO_TEST_SUITE_END()
+# endif
+    BOOST_AUTO_TEST_SUITE_END()
+
+    BOOST_AUTO_TEST_SUITE( three )
+# ifdef USE_GPU_SINGLE_PRECISION
+        BOOST_AUTO_TEST_SUITE( type_float )
+            typedef halmd::mdsim::gpu::particle<3, float> particle_type;
+        TEST_SUITE_GPU(particle_type, dataset, nspecies)
+        BOOST_AUTO_TEST_SUITE_END()
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+        BOOST_AUTO_TEST_SUITE( type_dsfloat )
+            typedef halmd::mdsim::gpu::particle<3, halmd::dsfloat> particle_type;
+        TEST_SUITE_GPU(particle_type, dataset, nspecies)
+        BOOST_AUTO_TEST_SUITE_END()
+# endif
+    BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END()
+#endif

@@ -27,6 +27,7 @@
 #include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -102,9 +103,9 @@ binning<dimension, float_type>::binning(
     // number of placeholders
     try {
         g_cell_offset_.resize(dim_cell_.blocks_per_grid());
-        g_cell_index_.reserve(particle_->dim().threads());
+        g_cell_index_.reserve(particle_->array_size());
         g_cell_index_.resize(particle_->nparticle());
-        g_cell_permutation_.reserve(particle_->dim().threads());
+        g_cell_permutation_.reserve(particle_->array_size());
         g_cell_permutation_.resize(particle_->nparticle());
     }
     catch (cuda::error const&) {
@@ -176,7 +177,7 @@ void binning<dimension, float_type>::update()
         unsigned int nparticle = particle_->nparticle();
 
         // compute cell indices for particle positions
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        configure_kernel(kernel->compute_cell, particle_->dim(), true);
         kernel->compute_cell(
             position.data()
           , g_cell_index_
@@ -185,13 +186,13 @@ void binning<dimension, float_type>::update()
         );
 
         // generate permutation
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        configure_kernel(kernel->gen_index, particle_->dim(), true);
         kernel->gen_index(g_cell_permutation_, nparticle);
         radix_sort(g_cell_index_.begin(), g_cell_index_.end(), g_cell_permutation_.begin());
 
         // compute global cell offsets in sorted particle list
         cuda::memset(g_cell_offset_, 0xFF);
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        configure_kernel(kernel->find_cell_offset, particle_->dim(), true);
         kernel->find_cell_offset(g_cell_index_, g_cell_offset_, nparticle);
 
         // assign particles to cells

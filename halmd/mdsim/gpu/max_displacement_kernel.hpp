@@ -43,7 +43,7 @@ struct max_displacement_wrapper
     )> displacement_impl_type;
 
     /** maximum squared particle displacement */
-    displacement_impl_type displacement_impl[5];
+    displacement_impl_type displacement_impl[6];
 
     static max_displacement_wrapper kernel;
 };

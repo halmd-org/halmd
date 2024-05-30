@@ -58,7 +58,7 @@ function main(args)
     boltzmann:set()
 
     -- Lennard-Jones potential
-    local potential = mdsim.potentials.pair.lennard_jones({cutoff = args.cutoff})
+    local potential = mdsim.potentials.pair.lennard_jones():truncate({cutoff = args.cutoff})
 
     -- compute forces
     local force = mdsim.forces.pair({
@@ -66,13 +66,10 @@ function main(args)
     })
 
     -- H5MD file writer
-    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
-
-    -- sample phase space
-    local phase_space = observables.phase_space({box = box, group = particle_group})
 
     -- Sample macroscopic state variables.
     local msv = observables.thermodynamics({box = box, group = particle_group})
@@ -82,7 +79,7 @@ function main(args)
     end
 
     local internal_energy = observables.utility.accumulator({
-        aquire = msv.internal_energy
+        acquire = msv.internal_energy
       , every = 500
       , start = math.floor(equi_steps / 2)
       , desc = "averaged internal energy"
@@ -108,7 +105,7 @@ function main(args)
 
     -- run equilibration
     observables.sampler:run(equi_steps)
-    -- log profiler results
+    -- log intermediate profiler results
     utility.profiler:profile()
 
     integrator:disconnect()
@@ -127,7 +124,7 @@ function main(args)
     internal_energy:disconnect()
 
     local temperature = observables.utility.accumulator({
-        aquire = msv.temperature
+        acquire = msv.temperature
       , every = 200
       , desc = "averaged temperature"
       , aux_enable = {particle}
@@ -144,6 +141,13 @@ function main(args)
     interval = args.sampling.state_vars
     if interval > 0 then
         msv:writer({file = file, fields = {"internal_energy"}, every = interval})
+    end
+
+    -- sample phase space, only the last state by default
+    local interval = args.sampling.trajectory or steps
+    if interval > 0 then
+        observables.phase_space({box = box, group = particle_group})
+            :writer({file = file, fields = {"position", "velocity"}, every = interval})
     end
 
     -- replace thermostat integrator by NVE velocity-Verlet
@@ -174,9 +178,6 @@ function main(args)
 
     -- run NVE simulation
     observables.sampler:run(steps)
-
-    -- log profiler results
-    utility.profiler:profile()
 end
 
 --
@@ -184,9 +185,9 @@ end
 --
 function define_args(parser)
 
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
-        default = "shear_viscosity_%Y%m%d", help = "prefix of output files"})
-    -- _%Y%m%d_%H%M%S
+    parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
+        default = "shear_viscosity_%Y%m%d", help = "basename of output files"})
+    parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("density", {type = "number", default = 0.8442, help = "particle number density"})
     parser:add_argument("cutoff", {type = "float32", default = 2.5, help = "potential cutoff radius"})

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2010-2023 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2010-2012 Peter Colberg
  *
@@ -33,6 +33,7 @@
 
 #include <lua.hpp>
 
+#include <functional>
 #include <memory>
 #include <tuple>
 
@@ -51,6 +52,7 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::stress_tensor_type stress_tensor_type;
     typedef mdsim::box<dimension> box_type;
+    typedef std::function<double ()> volume_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_group particle_group_type;
 
@@ -60,6 +62,7 @@ public:
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<particle_group_type> group
       , std::shared_ptr<box_type const> box
+      , volume_type volume = nullptr
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -69,7 +72,7 @@ public:
     virtual unsigned int particle_number() const;
 
     /**
-     * Returns volume.
+     * Returns the volume obtained from calling volume_().
      */
     virtual double volume() const;
 
@@ -77,6 +80,11 @@ public:
      * Compute mean kinetic energy per particle.
      */
     virtual double en_kin();
+
+    /**
+     * Compute total force.
+     */
+    virtual vector_type const& total_force();
 
     /**
      * Compute velocity of centre of mass
@@ -124,11 +132,15 @@ private:
     std::shared_ptr<particle_group_type> group_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
+    /** reference volume */
+    volume_type volume_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
     /** mean kinetic energy per particle */
     double en_kin_;
+    /** total force */
+    vector_type force_;
     /** velocity of centre of mass */
     vector_type v_cm_;
     /** centre of mass */
@@ -144,6 +156,8 @@ private:
 
     /** cache observers of mean kinetic energy per particle */
     std::tuple<cache<>, cache<>, cache<>> en_kin_cache_;
+    /** cache observers of total force */
+    std::tuple<cache<>, cache<>> force_cache_;
     /** cache observers of velocity of centre of mass */
     std::tuple<cache<>, cache<>, cache<>> v_cm_cache_;
     /** cache observers of cemtre of mass */
@@ -161,6 +175,7 @@ private:
     struct runtime
     {
         accumulator_type en_kin;
+        accumulator_type force;
         accumulator_type v_cm;
         accumulator_type r_cm;
         accumulator_type en_pot;

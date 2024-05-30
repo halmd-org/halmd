@@ -32,8 +32,7 @@ local utility = halmd.utility
 --
 function main(args)
     -- total number of particles from sum of particles per species
-    local nspecies = #args.particles
-    local nparticle = numeric.sum(args.particles)
+    local nparticle = args.particles
 
     -- derive edge lengths from number of particles, density and edge ratios
     local volume = nparticle / args.density
@@ -48,34 +47,31 @@ function main(args)
     local box = mdsim.box({length = length})
 
     -- create system state
-    local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = nspecies})
-    -- set particle species, with continuous range of IDs per species
-    local species = {}
-    for s = 0, nspecies - 1 do
-        local nparticle = assert(args.particles[s + 1])
-        for i = 1, nparticle do table.insert(species, s) end
-    end
-    particle.data["species"] = species
+    local particle = mdsim.particle({dimension = dimension, particles = nparticle})
+
     -- set initial particle positions
-    local lattice = mdsim.positions.lattice({box = box, particle = particle})
-    lattice:set()
+    mdsim.positions.lattice({box = box, particle = particle})
+       :set()
     -- set initial particle velocities
     local boltzmann = mdsim.velocities.boltzmann({
         particle = particle
       , temperature = args.temperature
-    })
-    boltzmann:set()
+    }):set()
 
-    -- smoothly truncated Lennard-Jones potential
-    local potential = mdsim.potentials.pair.lennard_jones({species = particle.nspecies})
-    -- smooth truncation
-    if args.smoothing > 0 then
-        potential = potential:truncate({"smooth_r4", cutoff = args.cutoff, h = args.smoothing})
-    else
-        potential = potential:truncate({cutoff = args.cutoff})
+    -- define Lennard-Jones pair potential,
+    -- use default parameters ε=1 and σ=1 for a single species
+    local potential = mdsim.potentials.pair.lennard_jones()
+    -- apply interaction cutoff
+    if args.cutoff > 0 then
+        -- use smooth truncation
+        if args.smoothing > 0 then
+            potential = potential:truncate({"smooth_r4", cutoff = args.cutoff, h = args.smoothing})
+        else
+            potential = potential:truncate({cutoff = args.cutoff})
+        end
     end
-    -- compute forces
-    local force = mdsim.forces.pair({
+    -- register computation of pair forces
+    mdsim.forces.pair({
         box = box, particle = particle, potential = potential
     })
 
@@ -83,18 +79,27 @@ function main(args)
     local steps = math.ceil(args.time / args.timestep)
 
     -- H5MD file writer
-    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
 
     -- select all particles
-    local particle_group = mdsim.particle_groups.all({particle = particle})
+    local all_group = mdsim.particle_groups.all({particle = particle})
+
+    -- select particles from a sphere centred in the simulation box,
+    -- the radius is 1/4 of the shortest box edge
+    local sphere = mdsim.geometries.sphere({
+        centre = numeric.scalar_vector(dimension, 0), radius = numeric.min(length) / 4
+    })
+    local sphere_group = mdsim.particle_groups.region({particle = particle
+      , geometry = sphere, selection = "included", label = "central sphere"
+    })
 
     -- sample phase space
-    local phase_space = observables.phase_space({box = box, group = particle_group})
+    local phase_space = observables.phase_space({box = box, group = all_group})
     -- write trajectory of particle groups to H5MD file
     local interval = args.sampling.trajectory or steps
     if interval > 0 then
         phase_space:writer({
-            file = file, fields = {"position", "velocity", "species", "mass"}, every = interval
+            file = file, fields = {"position", "velocity"}, every = interval
         })
     end
 
@@ -102,12 +107,16 @@ function main(args)
     local msv
     local interval = args.sampling.state_vars
     if interval > 0 then
-        msv = observables.thermodynamics({box = box, group = particle_group})
+        msv = observables.thermodynamics({box = box, group = all_group})
         msv:writer({file = file, every = interval})
+
+        -- explicitly specify the volume of the particle group
+        observables.thermodynamics({box = box, group = sphere_group, volume = sphere.volume })
+           :writer({file = file, every = interval})
     end
 
     local accumulator = observables.utility.accumulator({
-         aquire = msv.internal_energy
+         acquire = msv.internal_energy
        , every = 10
        , desc = "Averaged internal energy"
        , aux_enable = {particle}
@@ -138,9 +147,6 @@ function main(args)
 
     -- run simulation
     observables.sampler:run(steps)
-
-    -- log profiler results
-    utility.profiler:profile()
 end
 
 --
@@ -148,12 +154,13 @@ end
 --
 function define_args(parser)
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
-        default = "lennard_jones_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+        default = "lennard_jones_equilibration_rc{cutoff:g}_rho{density:g}_T{temperature:.2f}_%Y%m%d_%H%M%S", help = "basename of output files"})
+    parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("random-seed", {type = "integer", action = parser.action.random_seed,
         help = "seed for random number generator"})
 
-    parser:add_argument("particles", {type = "vector", dtype = "integer", default = {10000}, help = "number of particles"})
+    parser:add_argument("particles", {type = "integer", default = 10000, help = "number of particles"})
     parser:add_argument("density", {type = "number", default = 0.75, help = "particle number density"})
     parser:add_argument("ratios", {type = "vector", dtype = "number", action = function(args, key, value)
         if #value ~= 2 and #value ~= 3 then
@@ -161,11 +168,12 @@ function define_args(parser)
         end
         args[key] = value
     end, default = {1, 1, 1}, help = "relative aspect ratios of simulation box"})
+
     parser:add_argument("cutoff", {type = "float32", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
     parser:add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser:add_argument("temperature", {type = "number", default = 1.5, help = "initial system temperature"})
-    parser:add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
+    parser:add_argument("rate", {type = "number", default = 2, help = "heat bath collision rate"})
     parser:add_argument("time", {type = "number", default = 100, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.005, help = "integration time step"})
 

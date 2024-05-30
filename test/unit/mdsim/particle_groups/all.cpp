@@ -1,5 +1,6 @@
 /*
  * Copyright © 2012 Peter Colberg
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -22,6 +23,8 @@
 
 #define BOOST_TEST_MODULE all
 #include <boost/test/unit_test.hpp>
+#include <boost/test/data/test_case.hpp>
+#include <boost/test/data/monomorphic.hpp>
 
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_groups/all.hpp>
@@ -35,7 +38,6 @@
 #endif
 #define HALMD_TEST_NO_LOGGING
 #include <test/tools/ctest.hpp>
-#include <test/tools/init.hpp>
 
 #include <boost/iterator/counting_iterator.hpp>
 
@@ -52,7 +54,7 @@ make_random_id(size_type nparticle)
     std::vector<size_type> id(nparticle);
     std::iota(id.begin(), id.end(), 0);
     std::random_shuffle(id.begin(), id.end());
-    return std::move(id);
+    return id;
 }
 
 /**
@@ -195,113 +197,111 @@ struct test_suite_gpu
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::particle_group particle_group_type;
     typedef halmd::mdsim::gpu::particle_groups::all<particle_type> all_type;
-    static void add_test(
-        boost::unit_test::test_suite *suite
-      , unsigned int nparticle
-      , unsigned int nspecies
-      , unsigned int repeat
-    );
 };
-
-template<int dimension, typename float_type>
-void test_suite_gpu<dimension, float_type>::add_test(
-    boost::unit_test::test_suite *suite
-  , unsigned int nparticle
-  , unsigned int nspecies
-  , unsigned int repeat
-)
-{
-    typedef test_suite_gpu<dimension, float_type> test_suite_type;
-
-    auto ordered = [=]() {
-        set_cuda_device device;
-        test_ordered<test_suite_type>(nparticle, nspecies, repeat);
-    };
-    suite->add(BOOST_TEST_CASE( ordered ));
-
-    auto unordered = [=]() {
-        set_cuda_device device;
-        test_unordered<test_suite_type>(nparticle, nspecies, repeat);
-    };
-    suite->add(BOOST_TEST_CASE( unordered ));
-}
-
 #endif
 
 /**
- * Manual test case registration.
+ * Data-driven test case registration.
  */
-HALMD_TEST_INIT( all )
-{
-    using namespace boost::unit_test;
+using namespace boost::unit_test;
 
-    test_suite* ts_host = BOOST_TEST_SUITE( "host" );
-    framework::master_test_suite().add(ts_host);
+unsigned int const DATA_ARRAY[] = {500000, 25000, 1000};
+auto dataset = data::make(DATA_ARRAY);
+unsigned int const nspecies = 1;
+unsigned int constexpr repeat = 10;
 
-    test_suite* ts_host_two = BOOST_TEST_SUITE( "two" );
-    ts_host->add(ts_host_two);
+BOOST_AUTO_TEST_SUITE( host )
+    BOOST_AUTO_TEST_SUITE( two )
+#ifdef USE_HOST_SINGLE_PRECISION
+        typedef test_suite_host<2, float> test_suite_type;
+#else
+        typedef test_suite_host<2, double> test_suite_type;
+#endif
+        BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
+            test_ordered<test_suite_type>(nparticle, nspecies, repeat);
+        }
+        BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
+            test_unordered<test_suite_type>(nparticle, nspecies, repeat);
+        }
+    BOOST_AUTO_TEST_SUITE_END()
 
-    test_suite* ts_host_three = BOOST_TEST_SUITE( "three" );
-    ts_host->add(ts_host_three);
+    BOOST_AUTO_TEST_SUITE( three )
+#ifdef USE_HOST_SINGLE_PRECISION
+        typedef test_suite_host<3, float> test_suite_type;
+#else
+        typedef test_suite_host<3, double> test_suite_type;
+#endif
+        BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
+            test_ordered<test_suite_type>(nparticle, nspecies, repeat);
+        }
+        BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
+            test_unordered<test_suite_type>(nparticle, nspecies, repeat);
+        }
+    BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END()
 
 #ifdef HALMD_WITH_GPU
-    test_suite* ts_gpu = BOOST_TEST_SUITE( "gpu" );
-    framework::master_test_suite().add(ts_gpu);
-
-    test_suite* ts_gpu_two = BOOST_TEST_SUITE( "two" );
-    ts_gpu->add(ts_gpu_two);
-
-    test_suite* ts_gpu_three = BOOST_TEST_SUITE( "three" );
-    ts_gpu->add(ts_gpu_three);
-#endif
-
-    unsigned int constexpr nspecies = 1;
-    unsigned int constexpr repeat = 10;
-
-    for (unsigned int nparticle : {500000, 25000, 1000}) {
-        {
-#ifdef USE_HOST_SINGLE_PRECISION
-            typedef test_suite_host<2, float> test_suite_type;
-#else
-            typedef test_suite_host<2, double> test_suite_type;
-#endif
-            auto ordered = [=]() {
-                test_ordered<test_suite_type>(nparticle, nspecies, repeat);
-            };
-            ts_host_two->add(BOOST_TEST_CASE( ordered ));
-
-            auto unordered = [=]() {
-                test_unordered<test_suite_type>(nparticle, nspecies, repeat);
-            };
-            ts_host_two->add(BOOST_TEST_CASE( unordered ));
-        }
-        {
-#ifdef USE_HOST_SINGLE_PRECISION
-            typedef test_suite_host<3, float> test_suite_type;
-#else
-            typedef test_suite_host<3, double> test_suite_type;
-#endif
-            auto ordered = [=]() {
-                test_ordered<test_suite_type>(nparticle, nspecies, repeat);
-            };
-            ts_host_three->add(BOOST_TEST_CASE( ordered ));
-
-            auto unordered = [=]() {
-                test_unordered<test_suite_type>(nparticle, nspecies, repeat);
-            };
-            ts_host_three->add(BOOST_TEST_CASE( unordered ));
-        }
-#ifdef HALMD_WITH_GPU
-        {
+BOOST_AUTO_TEST_SUITE( gpu )
+    BOOST_AUTO_TEST_SUITE( two )
 # ifdef USE_GPU_SINGLE_PRECISION
-            test_suite_gpu<2, float>::add_test(ts_gpu_two, nparticle, nspecies, repeat);
-            test_suite_gpu<3, float>::add_test(ts_gpu_three, nparticle, nspecies, repeat);
+        BOOST_AUTO_TEST_SUITE( type_float )
+            typedef test_suite_gpu<2, float> test_suite_type;
+
+            BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
+                set_cuda_device device;
+                test_ordered<test_suite_type>(nparticle, nspecies, repeat);
+            }
+            BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
+                set_cuda_device device;
+                test_unordered<test_suite_type>(nparticle, nspecies, repeat);
+            }
+        BOOST_AUTO_TEST_SUITE_END()
 # endif
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-            test_suite_gpu<2, halmd::dsfloat>::add_test(ts_gpu_two, nparticle, nspecies, repeat);
-            test_suite_gpu<3, halmd::dsfloat>::add_test(ts_gpu_three, nparticle, nspecies, repeat);
+        BOOST_AUTO_TEST_SUITE( type_dsfloat )
+            typedef test_suite_gpu<2, halmd::dsfloat> test_suite_type;
+
+            BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
+                set_cuda_device device;
+                test_ordered<test_suite_type>(nparticle, nspecies, repeat);
+            }
+            BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
+                set_cuda_device device;
+                test_unordered<test_suite_type>(nparticle, nspecies, repeat);
+            }
+        BOOST_AUTO_TEST_SUITE_END()
 # endif
-        }
+    BOOST_AUTO_TEST_SUITE_END()
+
+    BOOST_AUTO_TEST_SUITE( three )
+# ifdef USE_GPU_SINGLE_PRECISION
+        BOOST_AUTO_TEST_SUITE( type_float )
+            typedef test_suite_gpu<3, float> test_suite_type;
+
+            BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
+                set_cuda_device device;
+                test_ordered<test_suite_type>(nparticle, nspecies, repeat);
+            }
+            BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
+                set_cuda_device device;
+                test_unordered<test_suite_type>(nparticle, nspecies, repeat);
+            }
+        BOOST_AUTO_TEST_SUITE_END()
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+        BOOST_AUTO_TEST_SUITE( type_dsfloat )
+            typedef test_suite_gpu<3, halmd::dsfloat> test_suite_type;
+
+            BOOST_DATA_TEST_CASE( ordered, dataset, nparticle ) {
+                set_cuda_device device;
+                test_ordered<test_suite_type>(nparticle, nspecies, repeat);
+            }
+            BOOST_DATA_TEST_CASE( unordered, dataset, nparticle ) {
+                set_cuda_device device;
+                test_unordered<test_suite_type>(nparticle, nspecies, repeat);
+            }
+        BOOST_AUTO_TEST_SUITE_END()
+# endif
+    BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END()
 #endif
-    }
-}

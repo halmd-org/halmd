@@ -42,7 +42,7 @@ sigset_t posix_signal::block_signals()
 
     sigset_t set;
     sigfillset(&set);
-    bs::error_code ec(pthread_sigmask(SIG_SETMASK, &set, NULL), bs::get_posix_category());
+    bs::error_code ec(pthread_sigmask(SIG_SETMASK, &set, NULL), bs::generic_category());
     if (ec != bs::errc::success) {
         throw bs::system_error(ec);
     }

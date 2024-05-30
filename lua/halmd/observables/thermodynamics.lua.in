@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2014  Felix Höfling
+-- Copyright © 2010-2023  Felix Höfling
 -- Copyright © 2013       Nicolas Höft
 -- Copyright © 2010-2012  Peter Colberg
 --
@@ -23,6 +23,7 @@
 local log     = require("halmd.io.log")
 local clock   = require("halmd.mdsim.clock")
 local module  = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
 local sampler = require("halmd.observables.sampler")
 local utility = require("halmd.utility")
 
@@ -44,15 +45,31 @@ local h5 = assert(libhalmd.h5)
 -- :param table args: keyword arguments
 -- :param args.group: instance of :mod:`halmd.mdsim.particle_groups`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
+-- :param args.volume: a number or a nullary function yielding the reference volume (*default:* ``box.volume``)
+--
+-- The argument ``volume`` expects a callable ``function()``, which is used to
+-- query the reference volume of the particle group; the volume may change in
+-- the course of the simulation. If ``group`` refers to the whole simulation
+-- domain ``box.volume`` is passed, which is the default::
+--
+--     volume = function() return box.volume end  -- convert box.volume into a callable, thereby capturing box
+--
+-- For a sub-domain, e.g., if ``group`` is an instance of
+-- :class:`region <halmd.mdsim.particle_groups.region>`, returning a constant
+-- value may be appropriate.
 --
 -- .. method:: particle_number()
 --
 --    Returns the number of particles :math:`N` selected by ``args.group``.
 --
+-- .. method:: volume()
+--
+--    Returns the volume :math:`V` as obtained from the function passed upon
+--    construction.
+--
 -- .. method:: density()
 --
---    Returns the number density :math:`\rho = N / V` using the volume from
---    ``args.box``.
+--    Returns the number density :math:`\rho = N / V`.
 --
 -- .. method:: kinetic_energy()
 --
@@ -80,6 +97,11 @@ local h5 = assert(libhalmd.h5)
 --
 --    Returns the instantaneous temperature as given by the kinetic energy:
 --    :math:`k_B T = 2 u_{\text{kin}} / d`.
+--
+-- .. method:: total_force()
+--
+--    Returns the total force:
+--    :math:`\vec F_{\text{tot}} = \sum_{i=1}^N \vec F_i`.
 --
 -- .. method:: center_of_mass_velocity()
 --
@@ -166,13 +188,21 @@ local h5 = assert(libhalmd.h5)
 local M = module(function(args)
     local group = utility.assert_kwarg(args, "group")
     local box = utility.assert_kwarg(args, "box")
+    -- query box volume by default
+    local volume = args.volume or function() return box.volume end
+    -- convert a constant volume into a callable yielding this constant
+    if type(volume) == "number" then
+        local value = volume        -- temporary capture to avoid error "unable to make cast"
+        volume = function() return value end
+    end
+    utility.assert_type(volume, "function")
 
     local particle = assert(group.particle)
     local label = assert(group.label)
     local logger = log.logger({label = ("thermodynamics (%s)"):format(label)})
 
     -- construct instance
-    local self = thermodynamics(particle, group, box, logger)
+    local self = thermodynamics(particle, group, box, volume, logger)
 
     self.dimension = property(function(self) return box.dimension end)
     self.group = property(function(self) return group end)
@@ -192,14 +222,26 @@ local M = module(function(args)
         local module_group = file.root:open_group("h5md"):open_group("modules"):open_group("thermodynamics")
         module_group:write_attribute("version", h5.int_array(), {1, 0})
 
-        -- store particle number and density in 'truncate' mode
-        -- assuming unchanging values
-        -- FIXME should be queried from box and particle_group
+        -- special treatment of particle number and density:
+        -- store them in 'truncate' mode if they are unchanging values,
+        -- otherwise treat them as normal data fields
         local writer = file:writer{location = location, mode = "truncate"}
-        writer.group:write_attribute("dimension", h5.int(), self.dimension)
+        writer.group:write_attribute("dimension", h5.int(), self.dimension) -- always store spatial dimension
+        writer:on_write(self.volume, {"volume"}) -- always store reference volume
 
-        writer:on_write(self.particle_number, {"particle_number"})
-        writer:on_write(self.density, {"density"})
+        for k,v in pairs({"particle_number", "density"}) do
+            if not group.fluctuating then
+                writer:on_write(assert(self[v]), {v})
+                -- remove from set of data fields if present
+                if fields[v] ~= nil then
+                    fields[v] = nil
+                    logger:warning("skip repeated output of " .. v)
+                end
+            else
+                -- append to list of output fields if not already specified by the user
+                if not fields[v] then table.insert(fields, v) end
+            end
+        end
         writer:write()
 
         writer = file:writer{location = location, mode = "append"}
@@ -220,11 +262,7 @@ local M = module(function(args)
         local aux = false
         for k,v in pairs(fields) do
             local name = (type(k) == "string") and k or v
-            if name == "particle_number" or name == "density" then
-                logger:warning("skip repeated output of " .. name)
-            else
-                writer:on_write(assert(self[v]), {name})
-            end
+            writer:on_write(assert(self[v]), {name})
             if aux_table[name] then
                 aux = true
             end
@@ -241,10 +279,13 @@ local M = module(function(args)
         table.insert(conn, sampler:on_sample(writer.write, every, clock.step))
         return writer
     end
-    local conn = {}
-    self.disconnect = utility.signal.disconnect(conn, "thermodynamics module")
 
-    -- FIXME connect profilers
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, ("thermodynamics (%s)"):format(label))
+
+    -- connect runtime accumulators to module profiler
+    halmd.observables.thermodynamics.profile(self, conn)
 
     return self
 end)
@@ -252,19 +293,24 @@ end)
 --
 -- connect runtime accumulators to module profiler
 --
-function M.profile(self, profiler)
+function M.profile(self, conn)
     local label = assert(self.group.label)
+    local runtime = assert(self.runtime)
+
     local profile = function(name, desc)
-        if self.runtime[name] then
-            profiler:on_profile({self, [name] = ("summation of %s of %s particles"):format(desc, label)})
+        if runtime[name] then
+            table.insert(conn, profiler:on_profile(runtime[name], ("summation of %s of %s particles"):format(desc, label)))
         end
     end
     profile("en_kin"       , "kinetic energy"         )
+    profile("force"        , "total force"            )
     profile("v_cm"         , "centre-of-mass velocity")
     profile("r_cm"         , "centre-of-mass"         )
     profile("en_pot"       , "potential energy"       )
     profile("virial"       , "virial"                 )
     profile("stress_tensor", "stress tensor"          )
+
+    return conn
 end
 
 return M

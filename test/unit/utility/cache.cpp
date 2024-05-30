@@ -29,6 +29,7 @@
 #include <boost/iterator/reverse_iterator.hpp>
 #include <vector>
 #include <utility>
+#include <cmath>
 
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/raw_array.hpp>

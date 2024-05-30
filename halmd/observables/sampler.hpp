@@ -1,6 +1,6 @@
 /*
+ * Copyright © 2010-2020 Felix Höfling
  * Copyright © 2010-2012 Peter Colberg
- * Copyright © 2010-2011 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  *
  * This file is part of HALMD.
@@ -52,9 +52,34 @@ public:
     void sample();
 
     /**
-     * Run simulation for given number of steps
+     * Run simulation for given number of steps.
+     * Calls start() upon first invocation.
      */
     void run(step_type steps);
+
+    /**
+     * Initialise simulation by calling module functions that were connected to
+     * the `on_start` signal.
+     *
+     * The function is called by run() upon first invocation.
+     */
+    void start();
+
+    /**
+     * Finalise simulation by calling module functions that were connected to
+     * the `on_finish` signal.
+     *
+     *  The function is called explicitly (in halmd/run.lua) before the
+     *  simulation is shut down.
+     */
+    void finish();
+
+    /**
+     * Returns true if run() was not called since construction of the class object.
+     */
+    bool first_run() {
+        return first_run_;
+    }
 
     /**
      * Connect slot to signal emitted before MD integration step
@@ -86,6 +111,8 @@ private:
     std::shared_ptr<clock_type> clock_;
     /** simulation core */
     std::shared_ptr<core_type> core_;
+    /** flag that is set upon first invocation of run() */
+    bool first_run_;
     /** signal emitted before MD integration step */
     signal<void ()> on_prepare_;
     /** signal emitted after MD integration step */

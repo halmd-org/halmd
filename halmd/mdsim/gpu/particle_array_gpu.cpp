@@ -20,6 +20,8 @@
 
 #include <halmd/algorithm/gpu/iota.hpp>
 #include <halmd/mdsim/gpu/particle_array_gpu.hpp>
+#include <halmd/utility/gpu/device.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -73,6 +75,20 @@ std::shared_ptr<particle_array_gpu<T>> particle_array_gpu<T>::cast(std::shared_p
     return std::static_pointer_cast<particle_array_gpu<T>>(base);
 }
 
+cuda::config get_default_config(size_t n) {
+    cuda::device::properties prop(cuda::device::get());
+    size_t block_size = 128;
+    size_t grid_size = n / block_size;
+    while (grid_size > prop.max_grid_size().x && block_size <= prop.max_threads_per_block()/2) {
+        block_size <<= 1;
+        grid_size = (grid_size + 1) >> 1;
+    }
+    if(grid_size * block_size != n) {
+        throw std::runtime_error("misaligned particle array");
+    }
+    return device::validate(cuda::config(grid_size, block_size));
+}
+
 template<typename T>
 struct particle_array_gpu_helper
 {
@@ -113,8 +129,7 @@ struct particle_array_gpu_helper
     )
     {
         auto output = make_cache_mutable(data);
-        cuda::config dim((output->size() + 127) / 128, 128);
-        cuda::configure(dim.grid, dim.block);
+        configure_kernel(particle_initialize_wrapper<T>::kernel.initialize, get_default_config(output->size()), true);
         particle_initialize_wrapper<T>::kernel.initialize (output->data(), init_value, ghost_init_value, nparticle);
     }
 
@@ -193,8 +208,7 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     )
     {
         auto output = make_cache_mutable(data);
-        cuda::config dim((output->size() + 127) / 128, 128);
-        cuda::configure(dim.grid, dim.block);
+        configure_kernel(dsfloat_particle_initialize_wrapper<dimension>::kernel.initialize, get_default_config(output->size()), true);
         dsfloat_particle_initialize_wrapper<dimension>::kernel.initialize (output->data(), init_value, ghost_init_value, nparticle);
     }
 

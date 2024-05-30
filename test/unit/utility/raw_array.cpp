@@ -1,5 +1,6 @@
 /*
- * Copyright © 2013,2015 Felix Höfling
+ * Copyright © 2013-2020 Felix Höfling
+ * Copyright © 2020      Jaslo Ziska
  * Copyright © 2015      Nicolas Höft
  * Copyright © 2012      Peter Colberg
  *
@@ -24,6 +25,8 @@
 
 #define BOOST_TEST_MODULE raw_array
 #include <boost/test/unit_test.hpp>
+#include <boost/test/data/test_case.hpp>
+#include <boost/test/data/monomorphic.hpp>
 
 #include <algorithm>
 #include <boost/iterator/counting_iterator.hpp>
@@ -33,7 +36,6 @@
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/raw_array.hpp>
 #include <test/tools/ctest.hpp>
-#include <test/tools/init.hpp>
 
 template <typename T>
 static void test_construct(halmd::raw_array<T> const& array, std::size_t size)
@@ -414,71 +416,66 @@ static void test_reserve(halmd::raw_array<T>& array)
     );
 }
 
-template <typename T>
-static void test_suite(std::size_t size)
-{
-    typedef halmd::raw_array<T> array_type;
-
-    using namespace boost::unit_test;
-
-    auto construct = [=]() {
-        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<array_type>() << " of size " << size );
-        array_type array(size);
-        test_construct(array, size);
-    };
-    framework::master_test_suite().add(BOOST_TEST_CASE( construct ));
-
-    auto iterator = [=]() {
-        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<array_type>() << " of size " << size );
-        array_type array(size);
-        test_iterator(array);
-    };
-    framework::master_test_suite().add(BOOST_TEST_CASE( iterator ));
-
-    auto array_subscript = [=]() {
-        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<array_type>() << " of size " << size );
-        array_type array(size);
-        test_array_subscript(array);
-    };
-    framework::master_test_suite().add(BOOST_TEST_CASE( array_subscript ));
-
-    auto move_constructor = [=]() {
-        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<array_type>() << " of size " << size );
-        array_type array(size);
-        test_move_constructor(array);
-    };
-    framework::master_test_suite().add(BOOST_TEST_CASE( move_constructor ));
-
-    auto move_assignment = [=]() {
-        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<array_type>() << " of size " << size );
-        array_type array(size);
-        test_move_assignment(array);
-    };
-    framework::master_test_suite().add(BOOST_TEST_CASE( move_assignment ));
-
-    auto resize = [=]() {
-        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<array_type>() << " of size " << size );
-        array_type array(size);
-        test_resize(array);
-    };
-    framework::master_test_suite().add(BOOST_TEST_CASE( resize ));
-
-    auto reserve = [=]() {
-        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<array_type>() << " of size " << size );
-        array_type array(size);
-        test_reserve(array);
-    };
-    framework::master_test_suite().add(BOOST_TEST_CASE( reserve ));
-}
+/**
+ * BOOST_AUTO_TEST_SUITE only allows test cases to be registered inside it, no function calls.
+ * For this reason the old test_suite function had to be replaced with this macros.
+ * This way no function is called and BOOST_DATA_TEST_CASE is directly registered
+ * inside the test suite.
+ */
+#define TEST_SUITE(type, dataset)                                                                           \
+    BOOST_DATA_TEST_CASE( construct, dataset, size ) {                                                      \
+        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<halmd::raw_array<type>>() << " of size " << size );\
+        halmd::raw_array<type> array(size);                                                                 \
+        test_construct(array, size);                                                                        \
+    }                                                                                                       \
+    BOOST_DATA_TEST_CASE( iterator, dataset, size ) {                                                       \
+        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<halmd::raw_array<type>>() << " of size " << size );\
+        halmd::raw_array<type> array(size);                                                                 \
+        test_iterator(array);                                                                               \
+    }                                                                                                       \
+    BOOST_DATA_TEST_CASE( array_subscript, dataset, size ) {                                                \
+        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<halmd::raw_array<type>>() << " of size " << size );\
+        halmd::raw_array<type> array(size);                                                                 \
+        test_array_subscript(array);                                                                        \
+    }                                                                                                       \
+    BOOST_DATA_TEST_CASE( move_constructor, dataset, size ) {                                               \
+        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<halmd::raw_array<type>>() << " of size " << size );\
+        halmd::raw_array<type> array(size);                                                                 \
+        test_move_constructor(array);                                                                       \
+    }                                                                                                       \
+    BOOST_DATA_TEST_CASE( move_assignment, dataset, size ) {                                                \
+        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<halmd::raw_array<type>>() << " of size " << size );\
+        halmd::raw_array<type> array(size);                                                                 \
+        test_move_assignment(array);                                                                        \
+    }                                                                                                       \
+    BOOST_DATA_TEST_CASE( resize, dataset, size ) {                                                         \
+        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<halmd::raw_array<type>>() << " of size " << size );\
+        halmd::raw_array<type> array(size);                                                                 \
+        test_resize(array);                                                                                 \
+    }                                                                                                       \
+    BOOST_DATA_TEST_CASE( reserve, dataset, size ) {                                                        \
+        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<halmd::raw_array<type>>() << " of size " << size );\
+        halmd::raw_array<type> array(size);                                                                 \
+        test_reserve(array);                                                                                \
+    }
 
 /**
- * Manual test case registration.
+ * Data-driven test case registration.
  */
-HALMD_TEST_INIT( raw_array )
-{
-    for (std::size_t size : {0, 1, 2, 5, 11, 23, 47, 191, 383, 6143, 786431}) {
-        test_suite<unsigned int>(size);
-        test_suite<float>(size);
-        test_suite<double>(size);
-    }
-}
+using namespace boost::unit_test;
+
+// cover border cases: smallest sizes, a power of 2 and neighbours, and a large size which is not a power of 2
+size_t const DATA_ARRAY[] = {0, 1, 2, 1023, 1024, 1025, 3 * 5 * (1UL << 20) + 1};
+auto dataset = data::make(DATA_ARRAY);
+
+BOOST_AUTO_TEST_SUITE( type_unsigned_int )
+    TEST_SUITE(unsigned int, dataset)
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE( type_float )
+    TEST_SUITE(float, dataset)
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE( type_double )
+    TEST_SUITE(double, dataset)
+BOOST_AUTO_TEST_SUITE_END()

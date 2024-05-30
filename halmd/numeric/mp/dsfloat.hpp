@@ -29,7 +29,9 @@
 
 #include <halmd/numeric/mp/dsfun.hpp>
 #include <halmd/utility/tuple.hpp>
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#ifdef HALMD_WITH_GPU
+# include <cuda_wrapper/cuda_wrapper.hpp>
+#endif
 
 #ifndef __CUDACC__
 # include <ostream>
@@ -40,25 +42,15 @@ namespace detail {
 namespace numeric {
 namespace mp {
 
+// forward declaration
 struct dsfloat;
-template<typename T>
-struct dsfloat_ptr;
-template<typename T>
-struct dsfloat_const_ptr;
 
 } // namespace mp
 } // namespace numeric
 } // namespace detail
-
-// import into top-level namespace
-using detail::numeric::mp::dsfloat;
-using detail::numeric::mp::dsfloat_ptr;
-using detail::numeric::mp::dsfloat_const_ptr;
-
 } // namespace halmd
 
-namespace boost
-{
+namespace boost {
 
 //
 // In order to make dsfloat completely act like a number, it is necessary
@@ -67,7 +59,7 @@ namespace boost
 // boost::is_floating_point<dsfloat>.
 //
 template<>
-struct is_floating_point<halmd::dsfloat> : public boost::true_type {};
+struct is_floating_point<halmd::detail::numeric::mp::dsfloat> : public boost::true_type {};
 
 } // namespace boost
 
@@ -357,7 +349,7 @@ struct dsfloat_const_ptr
 };
 
 #ifndef __CUDACC__
-inline std::ostream& operator<<(std::ostream& p, halmd::dsfloat const& val) {
+inline std::ostream& operator<<(std::ostream& p, dsfloat const& val) {
     p << double(val);
     return p;
 }
@@ -366,6 +358,12 @@ inline std::ostream& operator<<(std::ostream& p, halmd::dsfloat const& val) {
 } // namespace mp
 } // namespace numeric
 } // namespace detail
+
+// import into top-level namespace
+using detail::numeric::mp::dsfloat;
+using detail::numeric::mp::dsfloat_ptr;
+using detail::numeric::mp::dsfloat_const_ptr;
+
 } // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_MP_DSFLOAT_CUH */

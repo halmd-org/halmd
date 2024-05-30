@@ -79,7 +79,7 @@ local h5 = assert(libhalmd.h5)
 --        {0, length[2], 0},
 --        {0, 0, length[3]}}
 --
--- .. method:: origin()
+-- .. method:: lowest_corner()
 --
 --    Returns the coordinates of the lowest corner of the box.
 --
@@ -159,7 +159,7 @@ local M = module(function(args)
         end
         group:write_attribute("boundary", h5.string_array(), boundary)
 
-        -- register edges and origin for writing
+        -- register edges and lowest corner for writing
         writer:on_write(self.edges, {"box", "edges"})
 
         if write_once then

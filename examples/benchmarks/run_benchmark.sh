@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2011-2012  Felix Höfling
+# Copyright © 2011-2017 Felix Höfling
 #
 # This file is part of HALMD.
 #
@@ -34,10 +34,10 @@ BENCHMARK_NAME=$1
 COUNT=${2:-5}
 INPUT_FILE=${3:-"${BENCHMARK_NAME}/configuration.h5"}
 SUFFIX=${4:+_$4}
-DEVICE_NAME=${5:-$(nvidia-smi -a | sed -ne '/Product Name/{s/.*Tesla \([A-Z][0-9]\+\).*/\1/p;q}')}
+DEVICE_NAME=${5:-$(nvidia-smi -a | sed -ne '/Product Name/{s/.*: [A-Za-z]* \(.*\)/\1/;s/ //g;p;q}')}
 HALMD_OPTIONS=$6
 
-HALMD_VERSION=$(halmd --version | cut -c 26- | sed -e '1s/-patch.* \([a-z0-9]\+\)\]/-g\1/;q')
+HALMD_VERSION=$(halmd --version | cut -f 5- -d ' ' | sed -e '1s/-patch.* \([a-z0-9]\+\)\]/-g\1/;q')
 BENCHMARK_TAG="${DEVICE_NAME}_${HALMD_VERSION}${SUFFIX}"
 
 SCRIPT="${SCRIPT_DIR}/${BENCHMARK_NAME}/run_benchmark.lua"
@@ -50,12 +50,6 @@ halmd ${HALMD_OPTIONS} "${SCRIPT}" \
   --count "${COUNT}" \
   --verbose
 
-TIMINGS=$(sed -n -e 's/.*MD integration step: \([0-9.]*\).*/\1/p' "${OUTPUT}.log")
-PARTICLES=$(sed -n -e '/number of particles/{s/.*: \([0-9]*\).*/\1/p;q}' "${OUTPUT}.log")
-echo -e "$TIMINGS" | gawk -v N=$PARTICLES '{a += $1; n+=1}END{\
-    a = a/n;
-    print N, "particles"; \
-    print a, "ms per step"; \
-    print 1e6*a/N, "ns per step and particle"; \
-    print 1000/a, "steps per second" \
-}'
+# print results
+/bin/bash ${SCRIPT_DIR}/print_timings.sh "${OUTPUT}.log"
+

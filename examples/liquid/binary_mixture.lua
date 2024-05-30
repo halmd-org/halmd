@@ -102,7 +102,7 @@ function main(args)
     local steps = math.ceil(args.time / args.timestep)
 
     -- H5MD file writer
-    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
 
     -- set up wavevector grid compatible with the periodic simulation box
     -- if the computation of structural information is requested
@@ -127,7 +127,7 @@ function main(args)
     local offset = 0
     for label, sample in utility.sorted(samples) do
         -- select particles of species
-        local group = mdsim.particle_groups.from_range({
+        local group = mdsim.particle_groups.id_range({
             particle = particle
           , range = {offset + 1, offset + sample.nparticle}
           , label = label
@@ -173,7 +173,7 @@ function main(args)
                 if average and average > 0 then
                     halmd.io.log.warning("Averaging of static structure factors not yet supported")
 --                    local total_ssf = observables.utility.accumulator({
---                        aquire = ssf.acquire, every = interval, desc = "ssf " .. ssf.label
+--                        acquire = ssf.acquire, every = interval, desc = "ssf " .. ssf.label
 --                    })
 --                    total_ssf:writer({
 --                        file = file
@@ -225,17 +225,15 @@ function main(args)
 
     -- run simulation
     observables.sampler:run(steps)
-
-    -- log profiler results
-    halmd.utility.profiler:profile()
 end
 
 --
 -- Parse command-line arguments.
 --
 function define_args(parser)
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
-        default = "binary_mixture_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
+        default = "binary_mixture_%Y%m%d_%H%M%S", help = "basename of output files"})
+    parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("input", {type = "string", required = true, action = function(args, key, value)
         readers.h5md.check(value)

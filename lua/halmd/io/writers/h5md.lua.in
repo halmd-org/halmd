@@ -42,6 +42,7 @@ local h5md = libhalmd.io.writers.h5md
 -- :param table args: keyword arguments
 -- :param string args.path: pathname of output file
 -- :param string args.email: email address of file author *(optional)*
+-- :param boolean args.overwrite: if true, overwrite existing file *(default: false)*
 -- :returns: instance of file writer
 --
 -- Create the output file and writes the H5MD metadata.
@@ -73,7 +74,7 @@ local h5md = libhalmd.io.writers.h5md
 --    Example for creating and using a truncate writer::
 --
 --       local writer = file:writer({location = {"particles", "box"}, mode = "truncate"})
---       writer:on_write(box.origin, {"offset"})
+--       writer:on_write(box.lowest_corner, {"offset"})
 --       writer:on_write(box.edges, {"edges"})
 --
 --       local sampler = require("halmd.observables.sampler")
@@ -105,7 +106,8 @@ local h5md = libhalmd.io.writers.h5md
 local M = module(function(args)
     local path = utility.assert_kwarg(args, "path")
     local email = args.email or ""
-    local file = h5md.file(path, "", email) -- retrieve author name automatically if field is empty
+    local overwrite = args.overwrite or false
+    local file = h5md.file(path, "", email, overwrite) -- retrieve author name automatically if field is empty
 
     file.writer = function(self, args)
         local mode = utility.assert_kwarg(args, "mode")

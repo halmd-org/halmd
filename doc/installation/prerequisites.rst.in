@@ -18,18 +18,18 @@ A detailed step-by-step guide for manual installation is given in section
 Build environment
 -----------------
 
-* a :ref:`C++ compiler <supported_compilers>` with sufficient C++11 support,
-  e.g., GCC ≥ 4.6
+* a :ref:`C++ compiler <supported_compilers>` with C++11 support,
+  builds have been tested with GCC and Clang
 
   HALMD makes extensive use of C++11 features. Instructions for a
   semi-automated build of GCC are given in :ref:`automatic`.
 
-* `CMake <http://www.cmake.org/>`_ ≥ 2.8.12
+* `CMake <http://www.cmake.org/>`_ ≥ 2.8.12, latest version tested: 3.11.1
 
   The build process of HALMD depends on CMake, a cross-platform, open-source
   build system.
 
-* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 5.0
+* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 5.0, < 10.0, latest version tested: 9.2
 
   Please refer to the installation instructions shipped with the toolkit. The
   toolkit is not needed for builds without GPU acceleration.
@@ -38,30 +38,36 @@ Build environment
 Third-party libraries
 ---------------------
 
-* `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.55.0
+* `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.55.0 (some unit tests will be disabled in
+  Boost versions less than 1.59.0), latest version tested: 1.72.0
 
   The C++ part of HALMD uses libraries in the Boost C++ collection.
 
   .. note::
 
-    System installations of the Boost C++ Libraries can not be used due to an
-    ABI incompatibility (C++98 vs. C++11). For instructions how to build Boost
-    C++ with the C++11 ABI, see :ref:`automatic`.
+    The the release of the Boost C++ library must not be newer than the CMake
+    release used. Otherwise, indirect library dependencies may not be resolved
+    properly, see :ref:`faq`.
 
-* `Lua interpreter <http://www.lua.org>`_ ≥ 5.1 *or* `Lua Just-In-Time compiler
-  <http://luajit.org/luajit.html>`_ ≥ 2.0
+    On older distributions based on GCC 4, the shipped Boost C++ Libraries can
+    not be used due to an ABI incompatibility (C++98 vs. C++11). For
+    instructions how to build Boost C++ with the C++11 ABI, see
+    :ref:`automatic`.
+
+* `Lua interpreter <http://www.lua.org>`_ ≥ 5.1, < 5.3 *or* `Lua Just-In-Time
+  compiler <http://luajit.org/luajit.html>`_ ≥ 2.0
 
   .. note::
 
-    We recommend Lua 5.2 or later. The Lua JIT compiler is recommended for
-    advanced simulation scripts containing loops, user-defined correlation
-    functions, etc.
+    Lua 5.3 is not supported. The Lua JIT compiler is recommended for advanced
+    simulation scripts containing loops, user-defined correlation functions,
+    etc.
 
-  A simulation with HALMD is setup and configured by means of the Lua scripting
+  A simulation with HALMD is set up and configured by means of the Lua scripting
   language. The fast and lightweight Lua interpreter is embedded in the HALMD
   executable.
 
-* `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ ≥ 1.8
+* `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ ≥ 1.8.13, latest version tested: 1.10.1
 
   "HDF5 is a data model, library, and file format for storing and managing
   data. It supports an unlimited variety of datatypes, and is designed for
@@ -74,7 +80,7 @@ Documentation
 Documentation is generated **optionally** in HTML and PDF format if these
 prerequisites are met:
 
-* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ ≥ 1.1
+* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ ≥ 1.4, latest version tested: 1.6.3
 
   "Sphinx is a tool that makes it easy to create intelligent and beautiful
   documentation."

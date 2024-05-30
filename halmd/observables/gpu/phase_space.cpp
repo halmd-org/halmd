@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2019       Roya Ebrahimi Viand
  * Copyright © 2016       Daniel Kirchner
  * Copyright © 2008-2012  Felix Höfling
  * Copyright © 2008-2012  Peter Colberg
@@ -54,11 +55,6 @@ class phase_space_host_cache {
 public:
     phase_space_host_cache(std::shared_ptr<mdsim::gpu::particle_array_gpu_base const> array)
       : array_(array) {}
-
-    bool up_to_date() const
-    {
-        return array_->cache_observer() == cache_observer_;
-    }
 
     cuda::host::vector<uint8_t>& acquire(void)
     {
@@ -142,9 +138,11 @@ public:
     virtual std::shared_ptr<sample_base> acquire() {
         typedef typename sample_type::data_type data_type;
 
-        if (!host_cache_->up_to_date() || group_observer_ != particle_group_->ordered()) {
-            auto const& data = host_cache_->acquire();
+        if (data_observer_ != array_->parent()->cache_observer() || group_observer_ != particle_group_->ordered()) {
+            auto const& data = host_cache_->acquire();                      // read particle data through host cache
             auto const& group = particle_group_->ordered_host_cached();
+
+            LOG_TRACE("updating sample");
 
             sample_ = std::make_shared<sample_type>(group.size());
             auto& sample_data = sample_->data();
@@ -156,6 +154,7 @@ public:
                 sample_data[id++] = *reinterpret_cast<data_type const*>(&data[offset + i * stride]);
             }
 
+            data_observer_ = array_->parent()->cache_observer();
             group_observer_ = particle_group_->ordered();
         }
         return sample_;
@@ -243,6 +242,8 @@ protected:
     std::shared_ptr<phase_space_host_cache> host_cache_;
     /** cached sample */
     std::shared_ptr<sample_type> sample_;
+    /** cache observer for the particle data */
+    cache<> data_observer_;
     /** cache observer for the index list */
     cache<> group_observer_;
     /** number of GPU threads (currently only used for dsfloat data) */
@@ -354,13 +355,13 @@ public:
      */
     virtual std::shared_ptr<sample_base> acquire()
     {
-        if (!(this->group_observer_ == this->particle_group_->ordered())
-            || !this->host_cache_->up_to_date()
-            || !image_host_cache_->up_to_date()) {
+        if (this->group_observer_ != this->particle_group_->ordered()
+            || this->data_observer_ != this->array_->parent()->cache_observer()
+            || image_observer_ != image_array_->parent()->cache_observer()
+           ) {
             auto const& group = this->particle_group_->ordered_host_cached();
-            auto const& particle_position = this->host_cache_->acquire();
+            auto const& particle_position = this->host_cache_->acquire();         // read particle data through host cache
             auto const& particle_image = image_host_cache_->acquire();
-            this->group_observer_ = this->particle_group_->ordered();
 
             this->sample_ = std::make_shared<sample_type>(group.size());
 
@@ -376,6 +377,10 @@ public:
                 r = *reinterpret_cast<typename sample_type::data_type const*>(&particle_position[position_offset + i * position_stride]);
                 box_->extend_periodic(r, *reinterpret_cast<typename sample_type::data_type const*>(&particle_image[image_offset + i * image_stride]));
             }
+
+            this->group_observer_ = this->particle_group_->ordered();
+            this->data_observer_ = this->array_->parent()->cache_observer();
+            image_observer_ = image_array_->parent()->cache_observer();
         }
         return this->sample_;
     }
@@ -395,7 +400,7 @@ public:
         auto position = make_cache_mutable(mdsim::gpu::particle_array_gpu<
           typename mdsim::gpu::particle<dimension, float_type>::gpu_hp_vector_type
           >::cast(this->array_->parent())->mutable_data());
-        auto image = make_cache_mutable(mdsim::gpu::particle_array_gpu<gpu_vector_type>::cast(this->image_array_->parent())->mutable_data());
+        auto image = make_cache_mutable(mdsim::gpu::particle_array_gpu<gpu_vector_type>::cast(image_array_->parent())->mutable_data());
         auto const& group = read_cache(this->particle_group_->ordered());
         try {
             phase_space_wrapper<dimension>::kernel.r.bind(*position);
@@ -422,6 +427,8 @@ private:
     std::shared_ptr<particle_array_type> image_array_;
     /** host cache of the GPU data backing the sample data */
     std::shared_ptr<phase_space_host_cache> image_host_cache_;
+    /** cache observer for the image data */
+    cache<> image_observer_;
     /** CUDA configuration for launching kernels */
     cuda::config const dim_;
 };
@@ -477,7 +484,7 @@ public:
      */
     virtual std::shared_ptr<sample_base> acquire()
     {
-        if (!(cache_observer_ == array_->data()) || !(group_observer_ == particle_group_->ordered())) {
+        if (!(data_observer_ == array_->data()) || !(group_observer_ == particle_group_->ordered())) {
             auto const& data = read_cache(array_->data());
             auto const& group = read_cache(particle_group_->ordered());
 
@@ -499,7 +506,7 @@ public:
                 throw;
             }
 
-            cache_observer_ = array_->data();
+            data_observer_ = array_->data();
             group_observer_ = particle_group_->ordered();
         }
         return sample_;
@@ -579,10 +586,10 @@ protected:
     std::shared_ptr<particle_group_type> particle_group_;
     /** particle array containing the data to be sampled */
     std::shared_ptr<particle_array_type> array_;
-    /** cache observer for the array data */
-    cache<> cache_observer_;
     /** cached GPU sample */
     std::shared_ptr<sample_type> sample_;
+    /** cache observer for the particle data */
+    cache<> data_observer_;
     /** cache observer for the index list */
     cache<> group_observer_;
     /** CUDA configuration for launching kernels */
@@ -647,15 +654,13 @@ public:
      */
     virtual std::shared_ptr<sample_base> acquire()
     {
-        if (!(this->group_observer_ == this->particle_group_->ordered())
-            || !(this->cache_observer_ == this->array_->data())
-            || !(image_observer_ == image_array_->data())) {
+        if (this->group_observer_ != this->particle_group_->ordered()
+            || this->data_observer_ != this->array_->data()
+            || image_observer_ != image_array_->data()
+           ) {
             auto const& group = read_cache(this->particle_group_->ordered());
             auto const& particle_position = read_cache(this->array_->data());
             auto const& particle_image = read_cache(image_array_->data());
-            this->group_observer_ = this->particle_group_->ordered();
-            this->cache_observer_ = this->array_->data();
-            image_observer_ = image_array_->data();
 
             this->sample_ = std::make_shared<sample_type>(group.size());
 
@@ -677,6 +682,9 @@ public:
                 throw;
             }
 
+            this->group_observer_ = this->particle_group_->ordered();
+            this->data_observer_ = this->array_->data();
+            image_observer_ = image_array_->data();
         }
         return this->sample_;
     }
@@ -691,7 +699,7 @@ public:
 
         // reduce positions on GPU
         auto position = make_cache_mutable(this->array_->mutable_data());
-        auto image = make_cache_mutable(this->image_array_->mutable_data());
+        auto image = make_cache_mutable(image_array_->mutable_data());
         auto const& group = read_cache(this->particle_group_->ordered());
         try {
             phase_space_wrapper<dimension>::kernel.r.bind(*position);

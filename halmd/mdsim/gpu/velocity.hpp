@@ -24,6 +24,7 @@
 #include <halmd/mdsim/gpu/particle_group.hpp>
 #include <halmd/mdsim/gpu/velocity_kernel.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -37,8 +38,11 @@ inline void rescale_velocity(particle_type& particle, double factor)
 {
     auto velocity = make_cache_mutable(particle.velocity());
 
-    cuda::configure(particle.dim().grid, particle.dim().block);
-    get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().rescale(
+    auto const& kernel =
+        get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().rescale;
+
+    configure_kernel(kernel, particle.dim(), false);
+    kernel(
         velocity->data()
       , particle.nparticle()
       , particle.dim().threads()
@@ -55,11 +59,11 @@ inline void rescale_velocity_group(particle_type& particle, particle_group& grou
     auto const& unordered = read_cache(group.unordered());
     auto velocity = make_cache_mutable(particle.velocity());
 
-    cuda::configure(
-        (unordered.size() + particle.dim().threads_per_block() - 1) / particle.dim().threads_per_block()
-      , particle.dim().block
-    );
-    get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().rescale_group(
+    auto const& kernel =
+        get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().rescale_group;
+
+    configure_kernel(kernel, unordered.size());
+    kernel(
         velocity->data()
       , unordered.data()
       , unordered.size()
@@ -76,8 +80,11 @@ inline void shift_velocity(particle_type& particle, fixed_vector<double, particl
 {
     auto velocity = make_cache_mutable(particle.velocity());
 
-    cuda::configure(particle.dim().grid, particle.dim().block);
-    get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift(
+    auto const& kernel =
+        get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift;
+
+    configure_kernel(kernel, particle.dim(), false);
+    kernel(
         velocity->data()
       , particle.nparticle()
       , particle.dim().threads()
@@ -94,11 +101,11 @@ inline void shift_velocity_group(particle_type& particle, particle_group& group,
     auto const& unordered = read_cache(group.unordered());
     auto velocity = make_cache_mutable(particle.velocity());
 
-    cuda::configure(
-        (unordered.size() + particle.dim().threads_per_block() - 1) / particle.dim().threads_per_block()
-      , particle.dim().block
-    );
-    get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_group(
+    auto const& kernel =
+        get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_group;
+
+    configure_kernel(kernel, unordered.size());
+    kernel(
         velocity->data()
       , unordered.data()
       , unordered.size()
@@ -115,8 +122,11 @@ inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double,
 {
     auto velocity = make_cache_mutable(particle.velocity());
 
-    cuda::configure(particle.dim().grid, particle.dim().block);
-    get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_rescale(
+    auto const& kernel =
+        get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_rescale;
+
+    configure_kernel(kernel, particle.dim(), false);
+    kernel(
         velocity->data()
       , particle.nparticle()
       , particle.dim().threads()
@@ -134,11 +144,11 @@ inline void shift_rescale_velocity_group(particle_type& particle, particle_group
     auto const& unordered = read_cache(group.unordered());
     auto velocity = make_cache_mutable(particle.velocity());
 
-    cuda::configure(
-        (unordered.size() + particle.dim().threads_per_block() - 1) / particle.dim().threads_per_block()
-      , particle.dim().block
-    );
-    get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_rescale_group(
+    auto const& kernel =
+        get_velocity_kernel<particle_type::velocity_type::static_size, typename particle_type::float_type>().shift_rescale_group;
+
+    configure_kernel(kernel, unordered.size());
+    kernel(
         velocity->data()
       , unordered.data()
       , unordered.size()

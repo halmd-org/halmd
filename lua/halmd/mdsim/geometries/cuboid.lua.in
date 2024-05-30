@@ -1,0 +1,97 @@
+--
+-- Copyright © 2023      Felix Höfling
+-- Copyright © 2014-2015 Nicolas Höft
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+
+local utility = require("halmd.utility")
+local device  = require("halmd.utility.device")
+local module  = require("halmd.utility.module")
+
+---
+-- Cuboid
+-- ======
+--
+-- Defines a cuboid domain in space and a predicate whether a given position is
+-- inside or outside of the domain.
+--
+
+local cuboid = {
+    single = assert(libhalmd.mdsim.geometries.cuboid_float)
+  , double = assert(libhalmd.mdsim.geometries.cuboid_double)
+}
+
+---
+-- Construct cuboid geometry instance.
+--
+-- :param table args: keyword arguments
+-- :param table args.lowest_corner: coordinates of the lower left corner
+-- :param table args.length: cuboid edge lengths
+-- :param string args.precision: floating point precision *(optional)*
+--
+--    The ``lowest_corner`` specifies the coordinates of the lower left corner
+--    of the cuboid, i.e., the minimal coordinates.
+--
+--    The supported values for ``precision`` are ``single`` and ``double``. If
+--    ``precision`` is not specified, the precision is selected according to
+--    the compute device: ``single`` for GPU computing and ``@HALMD_HOST_PRECISION@`` otherwise.
+--
+-- .. note::
+--
+--    This module does not perform a validation of the meaningfulness of the domain,
+--    i.e. it does not test whether the geometry is placed outside the simulation
+--    domain.
+--
+-- .. attribute:: lowest_corner
+--
+--    Coordinates of lower left corner.
+--
+-- .. attribute:: length
+--
+--    Edge lengths of cuboid.
+--
+-- .. attribute:: volume
+--
+--    The volume of the cuboid.
+--
+local M = module(function(args)
+    utility.assert_type(args, "table")
+    local lowest_corner = utility.assert_type(utility.assert_kwarg(args, "lowest_corner"), "table")
+    local length = utility.assert_type(utility.assert_kwarg(args, "length"), "table")
+    local precision = args.precision or (device.gpu and "single" or "@HALMD_HOST_PRECISION@")
+
+    if not cuboid[precision] then
+         error("Unsupported precision", 2)
+    end
+
+    if #lowest_corner ~= #length  then
+        error("'lowest_corner' and 'length' vectors have mismatching dimensions", 2)
+    end
+
+    -- construct instance
+    local self = cuboid[precision](lowest_corner, length)
+
+    -- attach lowest corner as read-only property
+    self.lowest_corner = property(function(self) return lowest_corner end)
+
+    -- attach edge lengths as read-only property
+    self.length = property(function(self) return length end)
+
+    return self
+end)
+
+return M

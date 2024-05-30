@@ -106,14 +106,14 @@ local accumulator = assert(libhalmd.observables.utility.accumulator)
 --    "averaged_pressure"}``.
 --
 local M = module(function(args)
-    local aquire = utility.assert_kwarg(args, "aquire")
+    local acquire = utility.assert_kwarg(args, "acquire")
     local every = utility.assert_type(utility.assert_kwarg(args, "every"), "number")
     local start = utility.assert_type(args.start or clock.step, "number")
 
     local desc = utility.assert_type(utility.assert_kwarg(args, "desc"), "string")
     local logger = log.logger({label = ("accumulator (%s)"):format(desc)})
 
-    local self = accumulator(aquire, logger)
+    local self = accumulator(acquire, logger)
 
     self.desc = property(function(self) return desc end)
 

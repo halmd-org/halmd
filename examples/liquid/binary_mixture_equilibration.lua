@@ -61,7 +61,7 @@ function main(args)
             table.insert(species, s)
         end
         local label = string.char(string.byte("A") + s)
-        groups[label] = mdsim.particle_groups.from_range({
+        groups[label] = mdsim.particle_groups.id_range({
             particle = particle
           , range = {offset + 1, offset + nparticle}
           , label = label
@@ -105,7 +105,7 @@ function main(args)
     local steps = math.ceil(args.time / args.timestep)
 
     -- H5MD file writer
-    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
 
     -- sample macroscopic state variables for all particles.
     if args.sampling.state_vars > 0 then
@@ -150,15 +150,8 @@ function main(args)
     -- in order to melt the initial fcc crystal
     observables.sampler:run(steps / 10)
 
-    -- disconnect NVT integrator from sampler and profiler
-    integrator.disconnect()
-
     -- run remaining first half of the simulation in NVT ensemble at the target temperature
-    -- FIXME provide method set_temperature()
-    integrator = mdsim.integrators.verlet_nvt_boltzmann({
-        box = box, particle = particle
-      , timestep = args.timestep, temperature = args.temperature, rate = args.rate
-    })
+    integrator:set_temperature(args.temperature)
     observables.sampler:run(steps / 2 - steps / 10)
 
     -- log intermediate profiler results and reset accumulators
@@ -175,9 +168,6 @@ function main(args)
     -- run remaining part of the simulation in NVE ensemble
     -- to prepare for the NVE production run
     observables.sampler:run(steps - steps / 2)
-
-    -- log profiler results
-    utility.profiler:profile()
 end
 
 --
@@ -185,7 +175,8 @@ end
 --
 function define_args(parser)
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
-        default = "binary_mixture_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+        default = "binary_mixture_equilibration_%Y%m%d_%H%M%S", help = "basename of output files"})
+    parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {4000, 1000}, help = "number of particles"})
     parser:add_argument("density", {type = "number", default = 1.2, help = "particle number density"})
@@ -198,7 +189,7 @@ function define_args(parser)
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser:add_argument("initial-temperature", {type = "number", default = 1.5, help = "initial temperature"})
     parser:add_argument("temperature", {type = "number", default = 0.7, help = "target temperature"})
-    parser:add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
+    parser:add_argument("rate", {type = "number", default = 2, help = "heat bath collision rate"})
     parser:add_argument("time", {type = "number", default = 1000, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.002, help = "integration time step"})
 

@@ -27,10 +27,8 @@
 #endif
 
 #include <iterator>
-#ifndef HALMD_NO_CXX11
-# include <tuple>
-# include <type_traits>
-#endif
+#include <tuple>
+#include <type_traits>
 
 namespace halmd {
 
@@ -106,7 +104,6 @@ public:
      */
     zip_iterator() {}
 
-#ifndef HALMD_NO_CXX11
     /**
      * Initialise contained iterators from given tuple of iterators.
      */
@@ -137,7 +134,6 @@ public:
     )
       : first_(std::get<0>(iterator))
     {}
-#endif
 
     /**
      * Returns distance to given iterator.
@@ -190,7 +186,6 @@ public:
      */
     zip_iterator() {}
 
-#ifndef HALMD_NO_CXX11
     /**
      * Initialise contained iterators from given tuple of iterators.
      */
@@ -223,7 +218,6 @@ public:
     )
       : first_(std::get<0>(iterator))
     {}
-#endif
 
     /**
      * Returns distance to given iterator.

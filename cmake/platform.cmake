@@ -3,15 +3,14 @@ set(CMAKE_BUILD_TYPE_INIT "Release")
 if(DEFINED CMAKE_CXX_COMPILER_ID)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
-    # HALMD requires a C++11 compiler, e.g. GCC 4.7. Until major GNU/Linux
-    # distributions have upgraded their stable releases to default to GCC 4.7,
-    # we also support GCC 4.6 in experimental C++0x mode.
-    if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.7")
-      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
-    else()
-      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++0x -pedantic")
+    # HALMD requires a C++11 compiler, e.g. GCC 4.7.
+    # Remove -DNDEBUG from RelWithDebInfo to enable assert() and LOG_DEBUG/LOG_TRACE.
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.7)
+      message(FATAL_ERROR "Minimal supported version of GCC compiler is 4.7")
     endif()
+    set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
@@ -26,6 +25,7 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
       set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
     endif()
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
     # clang doesn't print colored diagnostics when invoked from Ninja
     if (UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
       set(CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT} -fcolor-diagnostics")
@@ -35,6 +35,7 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
 
     set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall")
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
 
@@ -56,29 +57,30 @@ endif()
 if(DEFINED CMAKE_CUDA_COMPILER_ID)
   if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVCC")
 
-    # Compile for CUDA compute version 1.2, and generate PTX 1.2 code
-    # as well as binary code for targets of compute capability 1.3 and 2.0.
-    # This ensures backward and forward compatibility with targets of
-    # compute capability ≥ 1.2 through JIT compilation at program
-    # startup, while providing binary code for Tesla and Fermi GPUs.
+    # Compile for CUDA compute capability 3.5 (Kepler), and generate PTX 3.5 code
+    # as well as binary code for this target. (The sm_XX parameter is adjusted
+    # best in the build tree after the initial configuration.) This ensures
+    # backward and forward compatibility with targets of compute capability ≥
+    # 1.2 through JIT compilation at program startup, while providing binary
+    # code for Kepler GPUs.
     #
-    # Note that we compile with -arch=compute_12 to disable native double
-    # precision (present with compute_13), and to avoid performance penalty
-    # of IEEE-compliant floating-point (present with compute_20).
-    #
-    # We will raise the default compute version later to enable native double
-    # precision, as an alternative to double-single precision, and when all
-    # kernels are optimised for Fermi GPUs.
+    # Note that the MD core modules were developed for compute capability 1.2,
+    # which brings only non-IEEE-compliant, single-precision floating-point
+    # arithmetics. So we consider it safe to disable IEEE-compliance, which
+    # has (small) performance penalties.
     #
     # CUDA versions starting from 6.5 do not support comute version 1.2 anymore,
-    # so in that case the default compute version is raised to 2.0 regardless.
+    # and 2.0 was deprecated in CUDA 9.0, so in these cases the default compute
+    # version is raised to 3.5 (Kepler) regardless.
 
+    #
+    # the following flags must be duplicated in /CMakeLists.txt for CMake without native CUDA support
+    #
     if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 6.5)
-      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12,sm_13,sm_20")
+      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_12 -code=compute_12")
     else()
-      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_20 -code=compute_20,sm_20")
+      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -std=c++11 -arch=compute_35 -code=compute_35,sm_35 -ftz=true -prec-div=false -prec-sqrt=false --fmad=true")
     endif()
-
 
   else()
     message(WARNING "Unsupported CUDA compiler: ${CMAKE_CUDA_COMPILER_ID}")

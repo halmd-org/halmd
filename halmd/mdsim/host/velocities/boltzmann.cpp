@@ -92,9 +92,8 @@ void boltzmann<dimension, float_type>::set()
     }
 
     fixed_vector<double, dimension> v_cm = mv / m;
-    double scale = std::sqrt(nparticle * temp_ * dimension / (mv2 - m * inner_prod(v_cm, v_cm)));
-    LOG_TRACE("shift velocities by " << -v_cm << " and rescale by factor " << scale);
-    shift_rescale_velocity(*particle_, -v_cm, scale);
+    LOG_TRACE("shift velocities by " << -v_cm);
+    shift_velocity(*particle_, -v_cm);
 }
 
 template <int dimension, typename float_type>

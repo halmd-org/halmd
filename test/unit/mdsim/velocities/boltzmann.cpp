@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011-2012 Felix Höfling
+ * Copyright © 2011-2017 Felix Höfling
  * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -102,20 +102,25 @@ void boltzmann<modules_type>::test()
     //
     // test velocity distribution of final state
     //
+    halmd::fixed_vector<double, dimension> v_cm = get_v_cm(*particle, group);
+    double en_kin = get_mean_en_kin(*particle, group);
+    BOOST_TEST_MESSAGE("Centre-of-mass velocity: " << npart << " " << v_cm);
+    BOOST_TEST_MESSAGE("Instantaneous temperature: " << 2 * en_kin / dimension);
+
     // centre-of-mass velocity ⇒ mean of velocity distribution
     // each particle is an independent "measurement",
-    // tolerance is 4.5σ, σ = √(<v_x²> / (N - 1)) where <v_x²> = k T,
+    // tolerance is 4.5σ, σ = √(<v_x²> / (N - 1)) where <v_x²> = k T / m,
     // with this choice, a single test passes with 99.999% probability
     double vcm_tolerance = 4.5 * sqrt(temp / (npart - 1));
     BOOST_TEST_MESSAGE("Absolute tolerance on instantaneous centre-of-mass velocity: " << vcm_tolerance);
     BOOST_CHECK_SMALL(norm_inf(get_v_cm(*particle, group)), vcm_tolerance);  //< norm_inf tests the max. value
 
-    // temperature ⇒ variance of velocity distribution
-    // we have only one measurement of the variance,
-    // tolerance is 4.5σ, σ = √<ΔT²> where <ΔT²> / T² = 2 / (dimension × N)
-    double rel_temp_tolerance = 4.5 * sqrt(2. / (dimension * npart)) / temp;
+    // temperature ⇒ use distribution of molecular kinetic energies from Maxwell—Boltzmann
+    // distribution, each degree of freedom is an independent "measurement",
+    // tolerance is 4.5σ, σ = √<ΔT²> where <ΔT²> / T² = 2 / (dimension × N - 1)
+    double rel_temp_tolerance = 4.5 * sqrt(2. / (dimension * npart - 1));
     BOOST_TEST_MESSAGE("Relative tolerance on instantaneous temperature: " << rel_temp_tolerance);
-    BOOST_CHECK_CLOSE_FRACTION(2 * get_mean_en_kin(*particle, group) / dimension, temp, rel_temp_tolerance);
+    BOOST_CHECK_CLOSE_FRACTION(2 * en_kin / dimension, temp, rel_temp_tolerance);
 
     //
     // test shifting and rescaling
@@ -126,7 +131,7 @@ void boltzmann<modules_type>::test()
     BOOST_CHECK_CLOSE_FRACTION(2 * get_mean_en_kin(*particle, group) / dimension, scale * scale * temp, rel_temp_tolerance);
 
     // shift mean velocity to zero
-    halmd::fixed_vector<double, dimension> v_cm = get_v_cm(*particle, group);
+    v_cm = get_v_cm(*particle, group);
     shift_velocity_group(*particle, group, -v_cm);
     vcm_tolerance = modules_type::tolerance::value;
     BOOST_CHECK_SMALL(norm_inf(get_v_cm(*particle, group)), vcm_tolerance);
@@ -198,11 +203,13 @@ struct gpu_tolerance
     static double const value;
 };
 
+// dsfloat has effectively 43 bits, single float merely 24,
+// multiply by number of particles to get a sharp upper bound
 template<>
-double const gpu_tolerance<halmd::dsfloat>::value = 0.1 * std::numeric_limits<float>::epsilon();
+double const gpu_tolerance<halmd::dsfloat>::value = 10000 * std::numeric_limits<float>::epsilon() / (1U << (43 - 24));
 
 template<>
-double const gpu_tolerance<float>::value = 0.2 * std::numeric_limits<float>::epsilon();
+double const gpu_tolerance<float>::value = std::numeric_limits<float>::epsilon() / 4;    // yields 0.5 ulp, the 4 is empirical
 
 template <int dimension, typename float_type>
 struct gpu_modules

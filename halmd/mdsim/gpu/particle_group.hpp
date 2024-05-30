@@ -1,7 +1,7 @@
 /*
- * Copyright © 2012      Peter Colberg
- * Copyright © 2012      Felix Höfling
+ * Copyright © 2012-2016 Felix Höfling
  * Copyright © 2016      Daniel Kirchner
+ * Copyright © 2012      Peter Colberg
  * Copyright © 2013-2015 Nicolas Höft
  *
  * This file is part of HALMD.
@@ -30,6 +30,7 @@
 #include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_group_kernel.hpp>
 #include <halmd/utility/cache.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
@@ -52,6 +53,8 @@ public:
     typedef cuda::vector<unsigned int> array_type;
     typedef array_type::value_type size_type;
     typedef cuda::host::vector<size_type> host_array_type;
+
+    virtual ~particle_group() {}
 
     /**
      * Returns ordered sequence of particle indices.
@@ -192,6 +195,23 @@ get_v_cm(particle_type const& particle, particle_group& group)
 }
 
 /**
+ * Compute total force on all particles.
+ */
+template <typename particle_type>
+fixed_vector<double, particle_type::force_type::static_size>
+get_total_force(particle_type& particle, particle_group& group)
+{
+    typedef particle_group::array_type group_array_type;
+    unsigned int constexpr dimension = particle_type::force_type::static_size;
+    typedef observables::gpu::total_force<dimension, dsfloat> accumulator_type;
+
+    group_array_type const& unordered = read_cache(group.unordered());
+
+    accumulator_type::get().bind(*particle.force());
+    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())();
+}
+
+/**
  * Compute mean potential energy per particle.
  */
 template <typename particle_type>
@@ -276,11 +296,7 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
     particle_group_wrapper<dimension, float_type>::kernel.u.bind(read_cache(particle_src.orientation()));
     particle_group_wrapper<dimension, float_type>::kernel.v.bind(read_cache(particle_src.velocity()));
 
-    cuda::configure(
-        (ordered.size() + particle_dst.dim().threads_per_block() - 1) / particle_dst.dim().threads_per_block()
-      , particle_dst.dim().block
-    );
-
+    configure_kernel(particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle, ordered.size());
     particle_group_wrapper<dimension, float_type>::kernel.particle_group_to_particle(
         &*ordered.begin()
       , position->data()

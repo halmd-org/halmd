@@ -95,7 +95,7 @@ local M = module(function(args)
     -- connect hilbert module to profiler
     local runtime = assert(self.runtime)
 
-    table.insert(conn, profiler:on_profile(runtime.order, "order particles by permutation" .. label))
+    table.insert(conn, profiler:on_profile(runtime.order, "order particles along Hilbert curve" .. label))
     table.insert(conn, profiler:on_profile(runtime.map, "map particles to Hilbert curve" .. label))
 
     return self

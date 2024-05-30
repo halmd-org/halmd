@@ -31,6 +31,7 @@
 #include <halmd/mdsim/gpu/positions/lattice.hpp>
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 
 using namespace std;
 
@@ -59,7 +60,7 @@ lattice<dimension, float_type>::lattice(
     }
 
     if (*min_element(slab_.begin(), slab_.end()) < 1) {
-        LOG("restrict initial particle positions to slab: " << slab_);
+        LOG("restrict lattice positions to centred slab: " << slab_);
     }
 }
 
@@ -80,7 +81,7 @@ void lattice<dimension, float_type>::set()
 }
 
 /**
- * Place particles on a face-centered cubic (fcc) lattice
+ * Place particles on a face-centreed cubic (fcc) lattice
  *
  * The task is to determine the minimum lattice distance of an fcc lattice
  * that fits into a rectangular parallelepiped (the simulation box) and has
@@ -123,7 +124,7 @@ void lattice<dimension, float_type>::fcc(
     // determine maximal lattice constant
     // use the same floating point precision as the CUDA device,
     // assign lattice coordinates to (sub-)volume of the box
-    LOG_TRACE("generating fcc lattice for " << npart << " particles, box: " << length << ", offset: " << offset);
+    LOG_DEBUG("generating fcc lattice for " << npart << " particles, box: " << length << ", offset: " << offset);
     float u = lattice_type(1).size();
     float V = accumulate(
         length.begin(), length.end()
@@ -149,7 +150,7 @@ void lattice<dimension, float_type>::fcc(
         }
     }
     LOG("placing particles on fcc lattice: a = " << a);
-    LOG_DEBUG("number of fcc unit cells: " << n);
+    LOG("number of fcc unit cells: " << n);
 
     unsigned int N = static_cast<unsigned int>(
         u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())
@@ -161,12 +162,13 @@ void lattice<dimension, float_type>::fcc(
     // insert a vacancy every 'skip' sites
     unsigned int skip = (N - npart) ? static_cast<unsigned int>(ceil(static_cast<double>(N) / (N - npart))) : 0;
     if (skip) {
-        LOG_TRACE("insert a vacancy after every " << skip << " sites");
+        LOG_DEBUG("insert a vacancy after every " << skip << " sites");
     }
 
     try {
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
-        get_lattice_kernel<float_type, lattice_type>().lattice(first, npart, a, skip, offset, n);
+        auto const& lattice_kernel = get_lattice_kernel<float_type, lattice_type>().lattice;
+        configure_kernel(lattice_kernel, particle_->dim(), false);
+        lattice_kernel(first, npart, a, skip, offset, n);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {

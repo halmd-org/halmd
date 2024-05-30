@@ -44,4 +44,6 @@
 // number of threads per grid
 #define GTDIM   (BDIM * TDIM)
 
+#define FULL_MASK 0xFFFFFFFF
+
 #endif /* ! HALMD_UTILITY_GPU_THREAD_CUH */

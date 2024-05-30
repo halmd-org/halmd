@@ -41,7 +41,7 @@ function main(args)
 
     -- construct a phase space reader and sample
     local reader, sample = observables.phase_space.reader({
-        file = file, location = {"particles", "all"}, fields = {"position", "velocity", "species", "mass"}
+        file = file, location = {"particles", "all"}, fields = {"position", "velocity"}
     })
     -- read phase space sample at last step in file
     log.info("number of particles: %d", sample.nparticle)
@@ -59,22 +59,22 @@ function main(args)
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
 
     -- create system state
-    local particle = mdsim.particle({dimension = 3, particles = sample.nparticle})
+    local particle = mdsim.particle({dimension = 3, particles = sample.nparticle, precision = args.precision})
 
     -- setup particles from trajectory sample
     local all_group = mdsim.particle_groups.all({particle = particle, label = "all"})
     -- construct phase space instance
     local phase_space = observables.phase_space({box = box, group = all_group})
-    -- set particle positions, velocities, species
+    -- set particle positions and velocities
     phase_space:set(sample)
     -- write phase space data of group to H5MD file, but only first and last step
-    phase_space:writer({file = file, fields = {"position", "velocity", "species", "mass"}, every = steps})
+    phase_space:writer({file = file, fields = {"position", "velocity"}, every = steps})
 
     -- define interaction of Kob-Andersen mixture using truncated Lennard-Jones potential
     local potential = mdsim.potentials.pair.lennard_jones():truncate({cutoff = cutoff})
     -- compute forces
     local force = mdsim.forces.pair({
-        box = box, particle = particle, potential = potential, -- neighbour_skin = 0.7
+        box = box, particle = particle, potential = potential, neighbour = {skin = 0.7}
     })
 
     -- define velocity-Verlet integrator
@@ -108,4 +108,5 @@ function define_args(parser)
     end, help = "H5MD trajectory file"})
 
     parser:add_argument("count", {type = "number", default = 5, help = "number of repetitions"})
+    parser:add_argument("precision", {type = "string", help = "floating-point precision"})
 end

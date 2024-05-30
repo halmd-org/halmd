@@ -61,7 +61,7 @@ struct hexagonal_lattice_fixture
     }
 };
 
-struct face_centered_cubic_lattice_fixture
+struct face_centreed_cubic_lattice_fixture
 {
     typedef halmd::close_packed_lattice<boost::array<float, 3>, boost::array<size_t, 3> > lattice_type;
     typedef lattice_type::result_type result_type;
@@ -260,8 +260,8 @@ HALMD_TEST_INIT( lattice_primitive )
     auto hexagonal_lattice = test_lattice<hexagonal_lattice_fixture>();
     framework::master_test_suite().add(BOOST_TEST_CASE( hexagonal_lattice ));
 
-    auto face_centered_cubic_lattice = test_lattice<face_centered_cubic_lattice_fixture>();
-    framework::master_test_suite().add(BOOST_TEST_CASE( face_centered_cubic_lattice ));
+    auto face_centreed_cubic_lattice = test_lattice<face_centreed_cubic_lattice_fixture>();
+    framework::master_test_suite().add(BOOST_TEST_CASE( face_centreed_cubic_lattice ));
 
     auto square_lattice = test_lattice<square_lattice_fixture>();
     framework::master_test_suite().add(BOOST_TEST_CASE( square_lattice ));

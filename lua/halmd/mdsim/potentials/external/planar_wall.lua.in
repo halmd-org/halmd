@@ -1,0 +1,221 @@
+--
+-- Copyright © 2014-2015 Sutapa Roy
+-- Copyright © 2010-2014 Felix Höfling
+-- Copyright © 2013      Nicolas Höft
+-- Copyright © 2010      Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
+local numeric           = require("halmd.numeric")
+local utility           = require("halmd.utility")
+local module            = require("halmd.utility.module")
+
+---
+-- Planar wall potential
+-- =====================
+--
+-- This module implements the external potential for a collection of planar walls.
+--
+-- Position vector :math:`{\vec R}_i` of the wall :math:`i` is given by
+-- :math:`{\hat n_i} \cdot {{\vec R}_i} = r_{0,i}` , where :math:`{\hat n} = {\vec n} /
+-- {|\vec n|}` is the normalized outward normal vector to the wall surface.
+-- :math:`d_i= ({\vec r}_i \cdot \hat{n}_i - r_{0,i})` is the distance of
+-- a particle, at position :math:`{\vec r}`, from the wall :math:`i`.
+--
+--
+-- .. math::
+--
+--     U\left(d_i \right) = \varepsilon_i^\alpha \left( \frac{2}{15}
+--     \left(\frac{\sigma_i^\alpha}{d_i} \right)^9 - w_i^\alpha
+--     \left(\frac{\sigma_i^\alpha}{d_i} \right)^3 \right)
+--
+--
+-- is the interaction energy of a particle of species :math:`\alpha` due to
+-- the wall :math:`i`. While computing :math:`U\left(d_i \right)` we always
+-- make :math:`d_i` positive.
+--
+-- The potential is truncated at a cutoff distance :math:`r_c` and further
+-- transformed to a :math:`C^2` continuous function using :class:`halmd.mdsim.forces.pair_trunc`.
+--
+-- The parameters :math:`\varepsilon`, :math:`\sigma`, :math:`w` and
+-- :math:`r_c` depend on both the wall and the species. For example,
+-- :math:`\varepsilon[i][\alpha]` contains :math:`\varepsilon_i^\alpha`, where
+-- indices :math:`i`, :math:`\alpha` run over the wall and species
+-- respectively.
+--
+
+-- grab C++ wrappers
+local planar_wall = {
+    host = {
+        [2] = assert(libhalmd.mdsim.host.potentials.external.planar_wall_2)
+      , [3] = assert(libhalmd.mdsim.host.potentials.external.planar_wall_3)
+    }
+}
+if device.gpu then
+    planar_wall.gpu = {
+        [2] = assert(libhalmd.mdsim.gpu.potentials.external.planar_wall_2)
+      , [3] = assert(libhalmd.mdsim.gpu.potentials.external.planar_wall_3)
+    }
+end
+
+---
+-- Construct the planar wall module.
+--
+-- :param table args: keyword arguments.
+-- :param table args.offset: positions of the walls :math:`r_{0,i}` in MD units.
+-- :param number args.surface_normal: outward normal vectors to the wall surfaces :math:`\vec n` in MD units.
+-- :param matrix args.epsilon: interaction strengths :math:`\varepsilon_i^\alpha` in MD units.
+-- :param matrix args.sigma: interaction ranges :math:`\sigma_i^\alpha` in MD units.
+-- :param matrix args.wetting: wetting parameters :math:`w_i^\alpha` in MD units.
+-- :param matrix args.cutoff: cutoff lengths :math:`r_{c,i}^\alpha` in MD units.
+-- :param number args.smoothing: smoothing parameter :math:`h` for the :math:`C^2` continuous truncation in MD units.
+-- :param string args.memory: select memory location *(optional)*.
+-- :param string args.label: instance label *(optional)*.
+--
+-- If all elements of a parameter sequence are equal, a single value may be
+-- passed instead. In this case, ``species`` must be specified.
+--
+-- If the argument ``species`` is omitted, it is inferred from the length
+-- of the parameter sequences.
+--
+-- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
+-- not specified, the memory location is selected according to the compute
+-- device.
+--
+-- .. attribute:: offset
+--
+--    Sequence with the wall position :math:`r_{0,i}`.
+--
+-- .. attribute:: surface_normal
+--
+--    Sequence with outward normal vector to the wall surface :math:`\vec {n}_i`.
+--
+-- .. attribute:: epsilon
+--
+--    Sequence with interaction strength :math:`\varepsilon_i^\alpha`.
+--
+-- .. attribute:: sigma
+--
+--    Sequence with interaction range :math:`\sigma_i^\alpha`.
+--
+-- .. attribute:: wetting
+--
+--    Sequence with wetting parameter :math:`w_i^\alpha`.
+--
+-- .. attribute:: cutoff
+--
+--    Sequence with cutoff length :math:`r_{c,i}^\alpha`.
+--
+-- .. attribute:: smoothing
+--
+--    Sequence with smoothing parameter :math:`h` for the :math:`C^2` continuous truncation.
+--
+-- .. attribute:: description
+--
+--    Name of potential for profiler.
+--
+-- .. attribute:: memory
+--
+--    Device where the particle memory resides.
+--
+local M = module(function(args)
+    local offset = utility.assert_type(utility.assert_kwarg(args, "offset"), "table")
+    local surface_normal = utility.assert_type(utility.assert_kwarg(args, "surface_normal"), "table")
+    local epsilon = utility.assert_kwarg(args, "epsilon")
+    if type(epsilon) ~= "table" and type(epsilon) ~= "number" then
+        error("bad argument 'epsilon'", 2)
+    end
+    local sigma = utility.assert_kwarg(args, "sigma")
+    if type(sigma) ~= "table" and type(sigma) ~= "number" then
+        error("bad argument 'sigma'", 2)
+    end
+    local wetting = utility.assert_kwarg(args, "wetting")
+    if type(wetting) ~= "table" and type(wetting) ~= "number" then
+        error("bad argument 'wetting'", 2)
+    end
+    local cutoff = utility.assert_kwarg(args, "cutoff")
+    if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
+        error("bad argument 'cutoff'", 2)
+    end
+    local smoothing = utility.assert_type(utility.assert_kwarg(args, "smoothing"), "number")
+
+    local species = utility.assert_type(utility.assert_kwarg(args, "species"), "number")
+
+    local memory = args and args.memory or (device.gpu and "gpu" or "host")
+    local label = args and args.label and utility.assert_type(args.label, "string")
+    label = label and (" (%s)"):format(label) or ""
+    local logger = log.logger({label =  "planar_wall pore" .. label})
+
+    -- determine number of walls from length of offset vector
+    local nwall = #offset
+
+    -- promote single elements to sequences
+    if type(surface_normal[1]) == "number" then
+        surface_normal = numeric.scalar_vector(nwall,  surface_normal)
+    end
+
+    if type(epsilon) == "number" then
+        epsilon = numeric.scalar_matrix(nwall, species, epsilon)
+    end
+
+    if type(sigma) == "number" then
+        sigma = numeric.scalar_matrix(nwall, species, sigma)
+    end
+
+    if type(wetting) == "number" then
+        wetting = numeric.scalar_matrix(nwall, species, wetting)
+    end
+
+    if type(cutoff) == "number" then
+        cutoff = numeric.scalar_matrix(nwall, species, cutoff)
+    end
+
+    if #epsilon ~= nwall or #epsilon[1] ~= species then
+        error("mismatching shape of argument 'epsilon'", 2)
+    end
+
+    -- determine space dimension from shape of surface normals
+    local dimension = #surface_normal[1]
+
+    -- construct instance
+    if not planar_wall[memory] then
+        error(("unsupported memory type '%s'"):format(memory), 2)
+    end
+    if not planar_wall[memory][dimension] then
+        error(("unsupported dimension '%d'"):format(dimension), 2)
+    end
+    local self = planar_wall[memory][dimension](offset, surface_normal, epsilon, sigma, wetting, cutoff, smoothing, logger)
+
+    -- add description for profiler
+    self.description = property(function()
+        return "planar wall " .. label .. " with Lennard-Jones potential"
+    end)
+
+    -- store memory location
+    self.memory = property(function(self) return memory end)
+
+    -- add logger instance
+    self.logger = property(function()
+        return logger
+    end)
+
+    return self
+end)
+
+return M

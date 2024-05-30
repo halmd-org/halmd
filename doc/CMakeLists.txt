@@ -13,7 +13,13 @@ find_package(Sphinx QUIET)
 if(NOT SPHINX_FOUND)
   message(WARNING "Unable to find Sphinx documentation generator")
   set(GENERATE_DOC FALSE)
-endif(NOT SPHINX_FOUND)
+else()
+  message(STATUS "Sphinx documentation generator version: ${SPHINX_VERSION_STRING}")
+  if("${SPHINX_VERSION_STRING}" VERSION_LESS "1.4.0")
+    message(WARNING "Version 1.4 or later of Sphinx documentation generator required")
+    set(GENERATE_DOC FALSE)
+  endif()
+endif()
 
 # Sphinx uses latex and dvipng to render LaTeX formulas.
 find_package(LATEX QUIET)
@@ -43,12 +49,6 @@ endif()
 # Accumulate list of input dependency files for documentation targets,
 # to avoid rebuilding documentation when input files remain unchanged.
 set(HALMD_DOC_INPUT_FILES)
-
-if(${SPHINX_VERSION_STRING} VERSION_LESS "1.4.0")
-  set (SPHINX_IMGMATH_EXT "sphinx.ext.pngmath")
-else()
-  set (SPHINX_IMGMATH_EXT "sphinx.ext.imgmath")
-endif()
 
 configure_file(conf.py.in conf.py)
 list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/conf.py)
@@ -105,6 +105,17 @@ foreach(input ${files})
   list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_BINARY_DIR}/lua/${output})
 endforeach()
 
+# Configure extracted module files (inplace)
+#
+# Alternatively, we may use ${CMAKE_BINARY_DIR}/lua as input files for modules.lua,
+# but there is a dependency problem between lua/CMakeLists.txt and this one.
+file(GLOB_RECURSE files "${CMAKE_CURRENT_BINARY_DIR}/modules/*")
+foreach(output ${files})
+  configure_file("${output}" "${output}.tmp" @ONLY)
+  file(RENAME "${output}.tmp" "${output}")
+endforeach()
+
+# Define documentation targets
 add_custom_command(OUTPUT html
   COMMAND ${SPHINX_EXECUTABLE}
     -q -b html
@@ -171,6 +182,13 @@ add_custom_target(halmd_doc_pdf ALL
 )
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pdf/halmd.pdf"
   DESTINATION "share/doc/halmd"
+)
+
+add_custom_target(halmd_doc)
+add_dependencies(halmd_doc
+  halmd_doc_html
+  halmd_doc_man
+  halmd_doc_pdf
 )
 
 set_directory_properties(PROPERTIES

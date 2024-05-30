@@ -9,7 +9,9 @@ halmd_add_modules(
   libhalmd_mdsim_clock
 )
 
+add_subdirectory(geometries)
+add_subdirectory(host)
+
 if(HALMD_WITH_GPU)
   add_subdirectory(gpu)
 endif(HALMD_WITH_GPU)
-add_subdirectory(host)

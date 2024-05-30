@@ -1,5 +1,6 @@
 /*
  * Copyright © 2011  Peter Colberg
+ * Copyright © 2020 Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -20,6 +21,8 @@
 
 #define BOOST_TEST_MODULE posix_signal
 #include <boost/test/unit_test.hpp>
+#include <boost/test/data/test_case.hpp>
+#include <boost/test/data/monomorphic.hpp>
 
 #include <boost/test/parameterized_test.hpp>
 #include <sys/types.h>
@@ -29,7 +32,6 @@
 #include <halmd/utility/posix_signal.hpp>
 #include <halmd/utility/timer.hpp>
 #include <test/tools/ctest.hpp>
-#include <test/tools/init.hpp>
 #include <boost/version.hpp>
 
 using namespace boost;
@@ -57,53 +59,6 @@ private:
     size_t count_;
 };
 
-class test_signal_wait
-{
-public:
-    test_signal_wait(size_t count) : count_(count) {}
-
-    void operator()(int signum) const
-    {
-        BOOST_TEST_MESSAGE("wait " << posix_signal::name(signum) << ", " << count_ << " iterations");
-        posix_signal sig;
-        posix_signal const& sig_const(sig);
-        signal_handler handler(signum);
-        sig.on_signal(signum, std::ref(handler));
-        for (size_t j = 0; j < count_; ++j) {
-            kill(getpid(), signum);
-            sig_const.wait();
-        }
-        BOOST_CHECK_EQUAL( handler.count(), count_ );
-    }
-
-private:
-    size_t count_;
-};
-
-class test_signal_poll
-{
-public:
-    test_signal_poll(size_t count) : count_(count) {}
-
-    void operator()(int signum) const
-    {
-        BOOST_TEST_MESSAGE("poll " << posix_signal::name(signum) << ", " << count_ << " iterations");
-        posix_signal sig;
-        posix_signal const& sig_const(sig);
-        signal_handler handler(signum);
-        sig.on_signal(signum, std::ref(handler));
-        for (size_t j = 0; j < count_; ++j) {
-            BOOST_CHECK( !sig_const.poll() );
-            kill(getpid(), signum);
-            BOOST_CHECK( sig_const.poll() );
-        }
-        BOOST_CHECK_EQUAL( handler.count(), count_ );
-    }
-
-private:
-    size_t count_;
-};
-
 BOOST_AUTO_TEST_CASE( test_alarm )
 {
     BOOST_TEST_MESSAGE("wait alarm(1)");
@@ -122,37 +77,46 @@ BOOST_AUTO_TEST_CASE( test_alarm )
 }
 
 // FIXME test multiple concurrent posix_signal instances
+using namespace boost::unit_test;
 
-HALMD_TEST_INIT( init_unit_test_suite )
-{
-    using namespace boost::unit_test;
-    using namespace boost::unit_test::framework;
+size_t const DATA_ARRAY_COUNT[] = {1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144};
+int const DATA_ARRAY_SIGNUM[] = {
+    SIGHUP
+  , SIGINT
+  , SIGALRM
+  , SIGTERM
+  , SIGUSR1
+  , SIGUSR2
+  , SIGCONT
+  , SIGTSTP
+  , SIGTTIN
+  , SIGTTOU
+};
+auto dataset = data::make(DATA_ARRAY_COUNT) * data::make(DATA_ARRAY_SIGNUM);
 
-    vector<int> const signum = {
-        SIGHUP
-      , SIGINT
-      , SIGALRM
-      , SIGTERM
-      , SIGUSR1
-      , SIGUSR2
-      , SIGCONT
-      , SIGTSTP
-      , SIGTTIN
-      , SIGTTOU
-    };
-
-    for (size_t i = 1, j = 1, t; j <= 144; t = j, j += i, i = t)
-    {
-#if BOOST_VERSION >= 105900
-        typedef boost::function<void(int)> callback_type;
-#else
-        typedef callback1<int> callback_type;
-#endif
-        master_test_suite().add( BOOST_PARAM_TEST_CASE(
-            callback_type(test_signal_wait(j)), signum.begin(), signum.end()
-        ) );
-        master_test_suite().add( BOOST_PARAM_TEST_CASE(
-            callback_type(test_signal_poll(j)), signum.begin(), signum.end()
-        ) );
+BOOST_DATA_TEST_CASE( test_signal_wait, dataset, count, signum) {
+    BOOST_TEST_MESSAGE("wait " << posix_signal::name(signum) << ", " << count << " iterations");
+    posix_signal sig;
+    posix_signal const& sig_const(sig);
+    signal_handler handler(signum);
+    sig.on_signal(signum, std::ref(handler));
+    for (size_t j = 0; j < count; ++j) {
+        kill(getpid(), signum);
+        sig_const.wait();
     }
+    BOOST_CHECK_EQUAL( handler.count(), count );
+}
+
+BOOST_DATA_TEST_CASE( test_signal_poll, dataset, count, signum) {
+    BOOST_TEST_MESSAGE("poll " << posix_signal::name(signum) << ", " << count << " iterations");
+    posix_signal sig;
+    posix_signal const& sig_const(sig);
+    signal_handler handler(signum);
+    sig.on_signal(signum, std::ref(handler));
+    for (size_t j = 0; j < count; ++j) {
+        BOOST_CHECK( !sig_const.poll() );
+        kill(getpid(), signum);
+        BOOST_CHECK( sig_const.poll() );
+    }
+    BOOST_CHECK_EQUAL( handler.count(), count );
 }

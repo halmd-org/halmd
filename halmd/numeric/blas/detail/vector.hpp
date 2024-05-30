@@ -23,16 +23,12 @@
 
 #include <halmd/config.hpp>
 
-#include <halmd/config.hpp>
-
+#include <algorithm>
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/utility/enable_if.hpp>
-#ifndef HALMD_NO_CXX11
-# include <algorithm>
-# include <cassert>
-# include <initializer_list>
-# include <type_traits>
-#endif
+#include <cassert>
+#include <initializer_list>
+#include <type_traits>
 
 #include <halmd/numeric/blas/detail/array.hpp>
 
@@ -54,8 +50,6 @@ struct fixed_vector
 
     HALMD_GPU_ENABLED fixed_vector() {}
 
-#ifndef HALMD_NO_CXX11
-
     /**
      * Assign values from initializer list.
      */
@@ -66,8 +60,6 @@ struct fixed_vector
         assert( v.size() == _Base::size() );
         std::copy(v.begin(), v.end(), _Base::begin());
     }
-
-#endif /* ! HALMD_NO_CXX11 */
 
     /**
      * Initialization by scalar

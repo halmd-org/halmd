@@ -1,5 +1,7 @@
 --
--- Copyright © 2012  Peter Colberg
+-- Copyright © 2019      Felix Höfling
+-- Copyright © 2016-2017 Daniel Kirchner
+-- Copyright © 2012      Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -156,36 +158,58 @@ local function format_help(self)
     local left = {}
     local right = {}
     local padding = 0
+    local max_padding = 40
     local options = assert(self._desc.options)
     local groups = assert(self._groups)
     for i = 1, #options do
         local option = options[i]
         local name, desc = format_argument(option)
-        if #name > padding then
-            padding = #name
-        end
         table.insert(left, name)
+        if #name > max_padding then
+          -- for overlong lines don't increase padding, but
+          -- output description on next line
+          table.insert(right, "")
+          table.insert(left, "")
+        else
+          if #name > padding then
+              padding = #name
+          end
+        end
         table.insert(right, desc)
+
         local long_name = assert(option.long_name)
         local group = groups[long_name]
         if group then
             local options = assert(group._desc.options)
             for i = 1, #options do
                 local name, desc = format_group_argument(options[i])
-                if #name > padding then
-                    padding = #name
-                end
                 table.insert(left, name)
+                if #name > max_padding then
+                  -- for overlong lines don't increase padding, but
+                  -- output description on next line
+                  table.insert(right, "")
+                  table.insert(left, "")
+                else
+                  if #name > padding then
+                      padding = #name
+                  end
+                end
                 table.insert(right, desc)
             end
         end
     end
+    if padding > max_padding then
+        padding = max_padding
+    end
     local msg = {}
     local args = format_cmdline()
     table.insert(msg, ("Usage: %s [args]\n"):format(args))
-    local fmt = ("  %%-%ds  %%s"):format(padding)
     for i = 1, #left do
-        table.insert(msg, fmt:format(left[i], right[i]))
+        local whitespace = ""
+        if 2 + padding - #left[i] > 0 then
+          whitespace = string.rep(" ", 2 + padding - #left[i])
+        end
+        table.insert(msg, "  "..left[i]..whitespace..right[i])
     end
     return table.concat(msg, "\n")
 end
@@ -346,7 +370,7 @@ end
 --    parser:add_argument("output", {type = "string", action = function(args, key, value)
 --       -- substitute current time
 --       args[key] = os.date(value)
---    end, default = "halmd_%Y%m%d_%H%M%S.h5", help = "H5MD output file"})
+--    end, default = "halmd_%Y%m%d_%H%M%S", help = "prefix of output files"})
 --
 function argument_parser:add_argument(name, args)
     if not name then
@@ -561,6 +585,32 @@ argument_parser.action = {}
 function argument_parser.action.substitute_date_time(args, key, value)
     -- substitute current time
     args[key] = os.date(value)
+end
+
+---
+-- .. class:: halmd.utility.program_options.argument_parser.action
+--
+--    .. method:: substitute_environment(args, key, value)
+--
+--       Action that substitutes environment variables.
+--
+--       :param table args: parsed arguments
+--       :param string key: args table key of this argument
+--       :param value: parsed value of this argument
+--
+--       Helper function that can be used as action argument for
+--       argument_parser:add_argument and substitutes environment variables in
+--       the parsed value of the argument. Variable names must be enclosed by
+--       '%' characters and are obtained from `os.getenv`.
+--
+--       Example::
+--
+--          parser:add_argument("output,o", {type = "string", action = parser.action.substitute_environment,
+--              default = "%HOME%/halmd_%PID%", help = "prefix of output files"})
+--
+function argument_parser.action.substitute_environment(args, key, value)
+    -- substitute environment variables, enclosed by % characters
+    args[key] = value:gsub("%%([%w_]+)%%", os.getenv)
 end
 
 ---

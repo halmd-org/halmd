@@ -34,7 +34,7 @@ local lattice = assert(libhalmd.mdsim.positions.lattice)
 -- Lattice
 -- =======
 --
--- This module places particles on a face-centered cubic (fcc) lattice.
+-- This module places particles on a face-centred cubic (fcc) lattice.
 -- Optionally, the lattice may be restricted to a cuboid ("slab") centred and
 -- aligned with the simulation box.
 --

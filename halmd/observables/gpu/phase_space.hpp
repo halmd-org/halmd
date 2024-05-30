@@ -45,6 +45,7 @@ namespace gpu {
 class phase_space_sampler_gpu
 {
 public:
+    virtual ~phase_space_sampler_gpu() {}
     virtual std::shared_ptr<sample_base> acquire(void) = 0;
     virtual void set(std::shared_ptr<sample_base const> sample) = 0;
     virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler_gpu> self) = 0;
@@ -61,6 +62,7 @@ public:
 class phase_space_sampler_host
 {
 public:
+    virtual ~phase_space_sampler_host() {}
     virtual std::shared_ptr<sample_base> acquire(void) = 0;
     virtual void set(std::shared_ptr<sample_base const> sample) = 0;
     virtual luaponte::object acquire_lua(lua_State* L, std::shared_ptr<phase_space_sampler_host> self) = 0;

@@ -127,7 +127,7 @@ template <
   , typename vector_type
   , typename T
 >
-__global__ void shift_rescale(ptr_type g_v, uint npart, uint nplace, dsfloat temp, dsfloat_ptr<T> const g_mv, dsfloat const* g_mv2, dsfloat const* g_m, uint size)
+__global__ void shift(ptr_type g_v, uint npart, uint nplace, dsfloat temp, dsfloat_ptr<T> const g_mv, dsfloat const* g_mv2, dsfloat const* g_m, uint size)
 {
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type float_type;
@@ -154,14 +154,12 @@ __global__ void shift_rescale(ptr_type g_v, uint npart, uint nplace, dsfloat tem
     }
 
     vector_type vcm = vector_type(mv / m);
-    float_type scale = sqrt(npart * temp * static_cast<int>(dimension) / (mv2 - m * inner_prod(vcm, vcm)));
 
     for (uint i = GTID; i < npart; i += GTDIM) {
         vector_type v;
         float mass;
         tie(v, mass) <<= g_v[i];
         v -= vcm;
-        v *= scale;
         g_v[i] <<= tie(v, mass);
     }
 }
@@ -175,7 +173,7 @@ boltzmann_wrapper<dimension, float_type, rng_type> const boltzmann_wrapper<dimen
   , boltzmann_kernel::gaussian<ptr_type, fixed_vector<float_type, dimension>, rng_type, 128>
   , boltzmann_kernel::gaussian<ptr_type, fixed_vector<float_type, dimension>, rng_type, 256>
   , boltzmann_kernel::gaussian<ptr_type, fixed_vector<float_type, dimension>, rng_type, 512>
-  , boltzmann_kernel::shift_rescale<ptr_type, fixed_vector<float_type, dimension> >
+  , boltzmann_kernel::shift<ptr_type, fixed_vector<float_type, dimension> >
 };
 
 #ifdef USE_GPU_SINGLE_PRECISION

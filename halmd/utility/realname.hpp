@@ -58,7 +58,7 @@ inline std::string realname(uid_t uid = getuid())
     passwd* result;
     boost::system::error_code ec(
         getpwuid_r(uid, &pwd, &*buf.begin(), buf.size(), &result)
-      , boost::system::get_posix_category()
+      , boost::system::generic_category()
     );
     if (ec != boost::system::errc::success) {
         throw boost::system::system_error(ec);

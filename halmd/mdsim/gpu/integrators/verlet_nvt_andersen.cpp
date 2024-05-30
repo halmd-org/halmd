@@ -24,6 +24,7 @@
 #include <memory>
 
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -76,19 +77,18 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_temp
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrate()
 {
-    LOG_TRACE("update positions and velocities");
-
     force_array_type const& force = read_cache(particle_->force());
+
+    LOG_TRACE("update positions and velocities: first leapfrog half-step");
+    scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the force!
     auto position = make_cache_mutable(particle_->position());
     auto velocity = make_cache_mutable(particle_->velocity());
     auto image = make_cache_mutable(particle_->image());
 
-    scoped_timer_type timer(runtime_.integrate);
-
     try {
-        cuda::configure(particle_->dim().grid, particle_->dim().block);
+        configure_kernel(wrapper_type::kernel.integrate, particle_->dim(), true);
         wrapper_type::kernel.integrate(
             position->data()
           , image->data()
@@ -111,14 +111,13 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrat
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize()
 {
-    LOG_TRACE("update velocities");
-
     force_array_type const& force = read_cache(particle_->force());
+
+    LOG_TRACE("update velocities: second leapfrog half-step");
+    scoped_timer_type timer(runtime_.finalize);
 
     // invalidate the particle caches after accessing the force!
     auto velocity = make_cache_mutable(particle_->velocity());
-
-    scoped_timer_type timer(runtime_.finalize);
 
     try {
         // use CUDA execution dimensions of 'random' since

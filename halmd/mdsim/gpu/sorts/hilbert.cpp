@@ -26,6 +26,7 @@
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/gpu/sorts/hilbert.hpp>
+#include <halmd/utility/gpu/configure_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace halmd::algorithm::gpu;
@@ -69,7 +70,7 @@ hilbert<dimension, float_type>::hilbert(
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::order()
 {
-    LOG_TRACE("order particles after Hilbert space-filling curve");
+    LOG_TRACE("order particles along Hilbert space-filling curve");
     {
         scoped_timer_type timer(runtime_.order);
         cuda::vector<unsigned int> g_index(particle_->nparticle());
@@ -96,7 +97,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 
     scoped_timer_type timer(runtime_.map);
 
-    cuda::configure(particle_->dim().grid, particle_->dim().block);
+    configure_kernel(wrapper_type::kernel.map, particle_->dim(), true);
     wrapper_type::kernel.map(
         position.data()
       , g_map
@@ -110,7 +111,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index)
 {
-    cuda::configure(particle_->dim().grid, particle_->dim().block);
+    configure_kernel(wrapper_type::kernel.gen_index, particle_->dim(), true);
     wrapper_type::kernel.gen_index(g_index);
     radix_sort(g_map.begin(), g_map.end(), g_index.begin());
 }

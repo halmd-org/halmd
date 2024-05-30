@@ -11,6 +11,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+from __future__ import unicode_literals
+
 import sys, os
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -21,15 +23,14 @@ import sys, os
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.1'
+needs_sphinx = '1.4'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    '@SPHINX_IMGMATH_EXT@',
+    'sphinx.ext.imgmath',
     'sphinx.ext.graphviz',
     'sphinx.ext.todo',
-    'matplotlib.sphinxext.only_directives',
     'matplotlib.sphinxext.plot_directive',
 ]
 
@@ -219,22 +220,22 @@ latex_logo = '@CMAKE_CURRENT_SOURCE_DIR@/_static/halmd_logo.pdf'
 # -- Options for LaTeX math formula rendering ----------------------------------
 
 # The command name with which to invoke LaTeX.
-pngmath_latex = '@LATEX_COMPILER@'
+imgmath_latex = '@LATEX_COMPILER@'
 
 # The command name with which to invoke dvipng.
-pngmath_dvipng = '@DVIPNG_CONVERTER@'
+imgmath_dvipng = '@DVIPNG_CONVERTER@'
 
 # Additional arguments to give to latex, as a list.
-#pngmath_latex_args = []
+#imgmath_latex_args = []
 
 # Additional LaTeX code to put into the preamble.
-#pngmath_latex_preamble = ''
+#imgmath_latex_preamble = ''
 
 # Additional arguments to give to dvipng, as a list.
-#pngmath_dvipng_args = ['-gamma 1.5', '-D 110']
+#imgmath_dvipng_args = ['-gamma 1.5', '-D 110']
 
 # Correctly align baselines, requires preview-latex package.
-pngmath_use_preview = True
+imgmath_use_preview = True
 
 # -- Options for Graphviz graphs -----------------------------------------------
 
@@ -271,21 +272,22 @@ man_pages = [
 def setup(app):
     # Translate UTF-8 characters not supported by LaTeX
     from sphinx.util.texescape import tex_replacements
-    tex_replacements.append((u'≥', ur'\ensuremath{\ge}'))
-    tex_replacements.append((u'≤', ur'\ensuremath{\le}'))
-    tex_replacements.append((u'⁰', ur'\ensuremath{^0}'))
-    tex_replacements.append((u'¹', ur'\ensuremath{^1}'))
-    tex_replacements.append((u'²', ur'\ensuremath{^2}'))
-    tex_replacements.append((u'³', ur'\ensuremath{^3}'))
-    tex_replacements.append((u'⁴', ur'\ensuremath{^4}'))
-    tex_replacements.append((u'⁵', ur'\ensuremath{^5}'))
-    tex_replacements.append((u'⁶', ur'\ensuremath{^6}'))
-    tex_replacements.append((u'⁷', ur'\ensuremath{^7}'))
-    tex_replacements.append((u'⁸', ur'\ensuremath{^8}'))
-    tex_replacements.append((u'⁹', ur'\ensuremath{^9}'))
-    tex_replacements.append((u'⁻', ur'\ensuremath{^-}'))
-    tex_replacements.append((u'⁺', ur'\ensuremath{^+}'))
-    tex_replacements.append((u'×', ur'\ensuremath{\times}'))
-    tex_replacements.append((u'⌊', ur'\ensuremath{\lfloor}'))
-    tex_replacements.append((u'⌋', ur'\ensuremath{\rfloor}'))
-    tex_replacements.append((u'√', ur'\ensuremath{\sqrt{}}'))
+    tex_replacements.append(('≥', r'\ensuremath{\ge}'))
+    tex_replacements.append(('≤', r'\ensuremath{\le}'))
+    tex_replacements.append(('⁰', r'\ensuremath{^0}'))
+    tex_replacements.append(('¹', r'\ensuremath{^1}'))
+    tex_replacements.append(('²', r'\ensuremath{^2}'))
+    tex_replacements.append(('³', r'\ensuremath{^3}'))
+    tex_replacements.append(('⁴', r'\ensuremath{^4}'))
+    tex_replacements.append(('⁵', r'\ensuremath{^5}'))
+    tex_replacements.append(('⁶', r'\ensuremath{^6}'))
+    tex_replacements.append(('⁷', r'\ensuremath{^7}'))
+    tex_replacements.append(('⁸', r'\ensuremath{^8}'))
+    tex_replacements.append(('⁹', r'\ensuremath{^9}'))
+    tex_replacements.append(('⁻', r'\ensuremath{^-}'))
+    tex_replacements.append(('⁺', r'\ensuremath{^+}'))
+    tex_replacements.append(('×', r'\ensuremath{\times}'))
+    tex_replacements.append(('⌊', r'\ensuremath{\lfloor}'))
+    tex_replacements.append(('⌋', r'\ensuremath{\rfloor}'))
+    tex_replacements.append(('√', r'\ensuremath{\sqrt{}}'))
+    tex_replacements.append(('Θ', r'\ensuremath{\theta}'))

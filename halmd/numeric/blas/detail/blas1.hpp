@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2011  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2019 Felix Höfling
+ * Copyright © 2010-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,6 +22,7 @@
 #ifndef HALMD_NUMERIC_BLAS_DETAIL_BLAS1_HPP
 #define HALMD_NUMERIC_BLAS_DETAIL_BLAS1_HPP
 
+#include <type_traits>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/greater.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -38,6 +40,22 @@ namespace detail {
 // see e.g. boost/numeric/ublas/blas.hpp
 
 /**
+ * overload abs() for unsigned types
+ */
+template <typename T>
+typename boost::enable_if<typename std::is_signed<T>::type, T>::type abs(T const& x)
+{
+    HALMD_GPU_USING(::abs, std::abs);
+    return abs(x);
+}
+
+template <typename T>
+typename boost::disable_if<typename std::is_signed<T>::type, T>::type abs(T const& x)
+{
+    return x;
+}
+
+/**
  * absolute sum or 1-norm, sum(|x_i|)
  */
 template <typename T, size_t N, size_t L, size_t U>
@@ -45,8 +63,7 @@ inline HALMD_GPU_ENABLED
 typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
 norm_1(fixed_vector<T, N> const& v)
 {
-    HALMD_GPU_USING(::abs, std::abs);
-    return abs(v[L]);
+    return detail::abs(v[L]);
 }
 
 template <typename T, size_t N, size_t L, size_t U>
@@ -81,8 +98,7 @@ inline HALMD_GPU_ENABLED
 typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
 norm_inf(fixed_vector<T, N> const& v)
 {
-    HALMD_GPU_USING(::abs, std::abs);
-    return abs(v[L]);
+    return detail::abs(v[L]);
 }
 
 template <typename T, size_t N, size_t L, size_t U>
@@ -108,9 +124,8 @@ inline HALMD_GPU_ENABLED
 typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
 index_norm_inf(fixed_vector<T, N> const& v, size_t& i)
 {
-    HALMD_GPU_USING(::abs, std::abs);
     i = L;
-    return abs(v[L]);
+    return detail::abs(v[L]);
 }
 
 template <typename T, size_t N, size_t L, size_t U>

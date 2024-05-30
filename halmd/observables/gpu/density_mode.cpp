@@ -42,7 +42,7 @@ density_mode<dimension, float_type>::density_mode(
   , logger_(logger)
     // member initialisation
   , nq_(wavevector_->value().size())
-  , dim_(50, 64 << DEVICE_SCALE) // at most 512 threads per block
+  , dim_(50, 64 << DEVICE_SCALE) // at most 1024 threads per block
     // memory allocation
   , g_q_(nq_)
   , g_sin_block_(nq_ * dim_.blocks_per_grid()), g_cos_block_(nq_ * dim_.blocks_per_grid())
