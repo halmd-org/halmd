@@ -44,14 +44,12 @@ brownian<dimension, float_type>::brownian(
   , float_type timestep
   , float_type temperature
   , matrix_type const& diff_const
-  , integration_degrees degrees
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
   , random_(random)
   , box_(box)
   , diff_const_(diff_const)
-  , degrees_(degrees)
   , logger_(logger)
 {
     if (diff_const_.size1() != particle->nspecies()) {
@@ -180,11 +178,6 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
                             .def_readonly("integrate", &runtime::integrate)
                     ]
                     .def_readonly("runtime", &brownian::runtime_)
-                    .enum_("degrees")
-                    [
-                        value("position", integrate_position)
-                        // TODO: no need for enum (or degrees)
-                    ]
 
               , def("brownian", &std::make_shared<brownian
                   , std::shared_ptr<particle_type>
@@ -193,7 +186,6 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
                   , double
                   , double
                   , matrix_type const&
-                  , integration_degrees
                   , std::shared_ptr<logger>
                 >)
             ]

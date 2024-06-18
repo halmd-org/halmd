@@ -40,7 +40,6 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , double timestep
   , double temperature
   , matrix_type const& diff_const
-  , integration_degrees degrees
   , std::shared_ptr<logger> logger
 )
   // dependency injection
@@ -49,7 +48,6 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , box_(box)
   , diff_const_(diff_const)
   , g_param_(diff_const_.size1())
-  , degrees_(degrees)
   , logger_(logger)
 {
     if (diff_const_.size1() != particle->nspecies()) {
@@ -160,11 +158,6 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
                             .def_readonly("integrate", &runtime::integrate)
                     ]
                     .def_readonly("runtime", &brownian::runtime_)
-                    .enum_("degrees")
-                    [
-                        value("position", integrate_position)
-                      , value("both", integrate_both)
-                    ]
 
               , def("brownian", &std::make_shared<brownian
                   , std::shared_ptr<particle_type>
@@ -173,7 +166,6 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
                   , double
                   , double
                   , matrix_type const&
-                  , integration_degrees
                   , std::shared_ptr<logger>
                 >)
             ]

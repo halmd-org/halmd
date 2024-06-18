@@ -47,12 +47,6 @@ local utility           = require("halmd.utility")
 -- grab C++ wrappers
 local brownian = assert(libhalmd.mdsim.integrators.brownian)
 
--- degrees of freedom to integrate
-local integrate_degrees = {
-    position    = assert(brownian.integrate_position),
-    both        = assert(brownian.integrate_both),
-}
-
 ---
 -- Construct Brownian integrator
 --
@@ -89,10 +83,6 @@ local integrate_degrees = {
 --
 --    Diffusion parameters of shape (diff_const_disp, diff_const_rot)
 --
--- .. attribute:: degrees
---
---    Which degrees of freedom to integrate
---
 -- .. method:: disconnect()
 --
 --    Disconnect integrator from core and profiler.
@@ -115,11 +105,6 @@ local M = module(function(args)
         timestep = assert(clock.timestep)
     end
     local rng = random.generator({memory = particle.memory})
-    //TODO lines 119-122 won't be needed
-    local degrees = integrate_degrees[args and args.degrees or "position"]
-    if not degrees then
-        error(("undefined degrees to integrate '%s'"):format(args.degrees), 2)
-    end
     local logger = log.logger({label = "brownian"})
 
     -- construct instance

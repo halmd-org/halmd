@@ -31,7 +31,8 @@ namespace mdsim {
 namespace gpu {
 namespace integrators {
 
-template <int dimension, typename float_type, typename rng_type>
+
+    template <int dimension, typename float_type, typename rng_type>
 struct brownian_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
@@ -44,26 +45,22 @@ struct brownian_wrapper
 
     typedef cuda::function <void (
         ptr_type
-      , coalesced_vector_type*
-      , const_ptr_type
-      , coalesced_vector_type const*
-      , coalesced_pseudo_vector_type const*
-      , float
-      , float
-      , rng_type
-      , unsigned int
-      , unsigned int
-      , vector_type
+        , coalesced_vector_type*
+        , const_ptr_type
+        , coalesced_vector_type const*
+        , coalesced_pseudo_vector_type const*
+        , float
+        , float
+        , rng_type
+        , unsigned int
+        , unsigned int
+        , vector_type
     )> integrate_kernel_type;
 
-    // TODO: change!
     integrate_kernel_type integrate_position;
-    integrate_kernel_type integrate_orientation;
-    integrate_kernel_type integrate_both;
 
     static brownian_wrapper const kernel;
 };
-
 } // namespace integrators
 } // namespace gpu
 } // namespace mdsim

@@ -65,78 +65,6 @@ __device__ void update_displacement(
     r += dr_r + dr_s;
 }
 
-template <typename float_type>
-__device__ void update_orientation(
-    float_type const diff_const
-  , fixed_vector<float_type, 2>& u
-  , float_type const& tau
-  , float timestep
-  , float temperature
-  , float_type eta
-  , float_type ignore
-)
-{
-    fixed_vector<float_type, 2> e;
-
-    // construct trihedron along particle orientation for movement in x-y plane
-    // e1 lies in x-y plane
-    e[0] = -u[1];
-    e[1] = u[0];
-
-    // first term is the random torque, second is the systematic torque
-    float_type omega = eta + tau * diff_const * timestep / temperature;
-
-    u = __cosf(omega) * u + __sinf(omega) * e;
-
-    // ensure normalization, TODO: is this really necessary?
-    if ((float) norm_2(u) > 2e-38){
-        u /= norm_2(u);
-    }
-}
-
-template <typename float_type>
-__device__ void update_orientation(
-    float_type const diff_const
-  , fixed_vector<float_type, 3>& u
-  , fixed_vector<float_type, 3> const& tau
-  , float timestep
-  , float temp
-  , float_type eta1
-  , float_type eta2
-)
-{
-    fixed_vector<float_type, 3> e1, e2;
-
-    //construct trihedron along particle orientation
-    if ((float) u[1] > 2e-38 || (float) u[2] > 2e-38) {
-        e1[0] = 0;
-        e1[1] = u[2];
-        e1[2] = -u[1];
-    } else {
-        e1[0] = u[1];
-        e1[1] = -u[0];
-        e1[2] = 0;
-    }
-    e1 /= norm_2(e1);
-    e2 = cross_prod(u, e1);
-    e2 /= norm_2(e2);
-
-    // first two terms are the random angular velocity, the lst part is the systematic torque
-    fixed_vector<float_type, 3> omega = eta1 * e1 + eta2 * e2 + tau * diff_const * timestep / temp ;
-    float omega_abs = norm_2(omega);
-    omega /= omega_abs;
-    // Ω = eta1 * e1 + eta2 * e2
-    // => Ω × u = (eta1 * e1 × u + eta2  * e2 × u) = eta2 * e1 - eta1 * e2
-    u = (1 - __cosf(omega_abs)) * inner_prod(omega, u) * omega +
-        __cosf(omega_abs) * u +
-        __sinf(omega_abs) * cross_prod(omega, u);
-
-    // ensure normalization
-    if ((float) norm_2(u) != 0){
-        u /= norm_2(u);
-    }
-}
-
 template <
     int dimension
   , bool use_position
@@ -237,10 +165,7 @@ cuda::texture<float2> brownian_wrapper<dimension, float_type, rng_type>::param =
 template <int dimension, typename float_type, typename rng_type>
 brownian_wrapper<dimension, float_type, rng_type> const
 brownian_wrapper<dimension, float_type, rng_type>::kernel = {
-    // TODO: delete!
     brownian_kernel::integrate<dimension, true, false, float_type, ptr_type, const_ptr_type>
-  , brownian_kernel::integrate<dimension, false, true, float_type, ptr_type, const_ptr_type>
-  , brownian_kernel::integrate<dimension, true, true, float_type, ptr_type, const_ptr_type>
 };
 
 // explicit instantiation

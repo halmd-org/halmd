@@ -49,11 +49,6 @@ public:
     typedef typename particle_type::torque_type torque_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
 
-    enum integration_degrees {
-        integrate_position = 1 << 0
-    };
-    // TODO: should also be deleted
-
     brownian(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<random_type> random
@@ -61,7 +56,6 @@ public:
       , float_type timestep
       , float_type temperature
       , matrix_type const& diff_const
-      , integration_degrees degrees = integrate_position  // TODO: Delete
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -139,8 +133,6 @@ private:
     runtime runtime_;
     /** diffusion constant */
     matrix_type diff_const_;
-    /** degrees to integrate */
-    integration_degrees degrees_; // TODO: Delete
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

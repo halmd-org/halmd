@@ -51,12 +51,6 @@ public:
     typedef typename random_type::rng_type rng_type;
     typedef brownian_wrapper<dimension, float_type, rng_type> wrapper_type;
 
-    enum integration_degrees {
-        integrate_position = 1 << 0
-      , integrate_orientation = 1 << 1
-      , integrate_both = integrate_position | integrate_orientation
-    };
-
     static void luaopen(lua_State* L);
 
     brownian(
@@ -66,7 +60,6 @@ public:
       , double timestep
       , double temperature
       , matrix_type const& diff_const
-      , integration_degrees degrees = integrate_position
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -132,8 +125,6 @@ private:
     matrix_type diff_const_;
     /** diffusion parameters at CUDA device */
     cuda::vector<float2> g_param_;
-    /** degrees to integrate */
-    integration_degrees degrees_;
     /** kernel used for integration*/
     // just put integrate_position as placeholder value as cuda::function cannot be constructed without any arguments
     typename wrapper_type::integrate_kernel_type integrate_kernel = wrapper_type::kernel.integrate_position;
