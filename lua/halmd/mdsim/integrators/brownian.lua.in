@@ -115,6 +115,7 @@ local M = module(function(args)
         timestep = assert(clock.timestep)
     end
     local rng = random.generator({memory = particle.memory})
+    //TODO lines 119-122 won't be needed
     local degrees = integrate_degrees[args and args.degrees or "position"]
     if not degrees then
         error(("undefined degrees to integrate '%s'"):format(args.degrees), 2)

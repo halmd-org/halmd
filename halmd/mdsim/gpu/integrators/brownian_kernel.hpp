@@ -56,6 +56,7 @@ struct brownian_wrapper
       , vector_type
     )> integrate_kernel_type;
 
+    // TODO: change!
     integrate_kernel_type integrate_position;
     integrate_kernel_type integrate_orientation;
     integrate_kernel_type integrate_both;

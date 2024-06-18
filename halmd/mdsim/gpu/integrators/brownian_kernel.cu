@@ -237,6 +237,7 @@ cuda::texture<float2> brownian_wrapper<dimension, float_type, rng_type>::param =
 template <int dimension, typename float_type, typename rng_type>
 brownian_wrapper<dimension, float_type, rng_type> const
 brownian_wrapper<dimension, float_type, rng_type>::kernel = {
+    // TODO: delete!
     brownian_kernel::integrate<dimension, true, false, float_type, ptr_type, const_ptr_type>
   , brownian_kernel::integrate<dimension, false, true, float_type, ptr_type, const_ptr_type>
   , brownian_kernel::integrate<dimension, true, true, float_type, ptr_type, const_ptr_type>

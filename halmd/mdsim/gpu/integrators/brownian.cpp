@@ -62,13 +62,7 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
     set_timestep(timestep);
     set_temperature(temperature);
 
-    if (degrees_ == integrate_position) {
-        integrate_kernel = wrapper_type::kernel.integrate_position;
-    } else if (degrees_ == integrate_both) {
-        integrate_kernel = wrapper_type::kernel.integrate_both;
-    } else {
-        throw std::invalid_argument("invalid argument degrees");
-    }
+    integrate_kernel = wrapper_type::kernel.integrate_position;
 
     cuda::host::vector<float2> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {

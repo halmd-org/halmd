@@ -57,6 +57,7 @@ if(HALMD_WITH_GPU)
   )
 endif()
 ]]
+# TODO: understand why this is commented out
 
 # module euler
 cuda_add_executable(test_unit_mdsim_integrators_euler

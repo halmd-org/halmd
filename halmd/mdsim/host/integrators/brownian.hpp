@@ -52,6 +52,7 @@ public:
     enum integration_degrees {
         integrate_position = 1 << 0
     };
+    // TODO: should also be deleted
 
     brownian(
         std::shared_ptr<particle_type> particle
@@ -60,7 +61,7 @@ public:
       , float_type timestep
       , float_type temperature
       , matrix_type const& diff_const
-      , integration_degrees degrees = integrate_position
+      , integration_degrees degrees = integrate_position  // TODO: Delete
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -139,7 +140,7 @@ private:
     /** diffusion constant */
     matrix_type diff_const_;
     /** degrees to integrate */
-    integration_degrees degrees_;
+    integration_degrees degrees_; // TODO: Delete
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

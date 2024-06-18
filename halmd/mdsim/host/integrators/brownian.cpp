@@ -132,31 +132,29 @@ void brownian<dimension, float_type>::integrate()
 
         // In the following do not generate the random numbers in the update_...() functions because we need to
         // cache the second random number (when an odd number of random numbers are required) for the next iteration of
-        // the loop.
-        if (degrees_ & integrate_position) {
-            vector_type f = force[i];
-            vector_type& r = (*position)[i];
+        // the loop
+        vector_type f = force[i];
+        vector_type& r = (*position)[i];
 
-            float_type const diff_const_perp = diff_const_(s, 0);
-            float_type sigma_disp = sqrt(2 * timestep_ * diff_const_perp);
+        float_type const diff_const_perp = diff_const_(s, 0);
+        float_type sigma_disp = sqrt(2 * timestep_ * diff_const_perp);
 
-            // integrate positions
-            vector_type dr;
-            std::tie(dr[0], dr[1]) = random_->normal(sigma_disp);
-            if (dimension % 2 == 1) {
-                if (rng_disp_cached) {
-                    dr[2] = rng_disp_cache;
-                } else {
-                    std::tie(dr[2], rng_disp_cache) = random_->normal(sigma_disp);
-                }
-                rng_disp_cached = !rng_disp_cached;
+        // integrate positions
+        vector_type dr;
+        std::tie(dr[0], dr[1]) = random_->normal(sigma_disp);
+        if (dimension % 2 == 1) {
+            if (rng_disp_cached) {
+                dr[2] = rng_disp_cache;
+            } else {
+                std::tie(dr[2], rng_disp_cache) = random_->normal(sigma_disp);
             }
-
-            update_displacement(diff_const_perp, r, f, dr);
-
-            // enforce periodic boundary conditions
-            (*image)[i] += box_->reduce_periodic(r);
+            rng_disp_cached = !rng_disp_cached;
         }
+
+        update_displacement(diff_const_perp, r, f, dr);
+
+        // enforce periodic boundary conditions
+        (*image)[i] += box_->reduce_periodic(r);
     }
 }
 
@@ -185,7 +183,7 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
                     .enum_("degrees")
                     [
                         value("position", integrate_position)
-//                      , value("both", integrate_both)
+                        // TODO: no need for enum (or degrees)
                     ]
 
               , def("brownian", &std::make_shared<brownian
