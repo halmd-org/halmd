@@ -113,8 +113,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
             (dim_, nparticle_, array_size_, velocity_init_value, velocity_init_value);
     auto gpu_force_array = gpu_data_["force"] = std::make_shared<particle_array_gpu<gpu_force_type>>
             (dim_, nparticle_, array_size_, [this]() { this->update_force_(); });
-    auto gpu_torque_array = gpu_data_["torque"] = std::make_shared<particle_array_gpu<gpu_torque_type>>
-            (dim_, nparticle_, array_size_, [this]() { this->update_force_(); });
     auto gpu_en_pot_array = gpu_data_["potential_energy"] = std::make_shared<particle_array_gpu<gpu_en_pot_type>>
             (dim_, nparticle_, array_size_, [this]() { this->update_force_(); });
     // TODO: automatically handle the larger array size for example with an explicit specialization for a stress_tensor_wrapper type
@@ -129,7 +127,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
 
     // register host wrappers for other data
     host_data_["force"] = std::make_shared<particle_array_host<force_type>>(gpu_force_array, 0, sizeof(gpu_force_type));
-    host_data_["torque"] = std::make_shared<particle_array_host<torque_type>>(gpu_torque_array, 0, sizeof(gpu_torque_type));
     host_data_["image"] = std::make_shared<particle_array_host<image_type>>(gpu_image_array, 0, sizeof(gpu_image_type));
     host_data_["potential_energy"] = std::make_shared<particle_array_host<en_pot_type>>(gpu_en_pot_array, 0, sizeof(gpu_en_pot_type));
     host_data_["potential_stress_tensor"] = std::make_shared<particle_array_host<stress_pot_type>>(gpu_stress_pot_array, 0, sizeof(gpu_stress_pot_type));

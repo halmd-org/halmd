@@ -103,7 +103,6 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
 
     velocity_array_type const& velocity = read_cache(particle_->velocity());
     force_array_type const& force = read_cache(particle_->force());
-    torque_array_type const& torque = read_cache(particle_->torque());
 
     // invalidate the particle caches after accessing the velocity!
     auto position = make_cache_mutable(particle_->position());
@@ -120,7 +119,6 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
           , image->data()
           , velocity.data()
           , force.data()
-          , torque.data()
           , timestep_
           , temperature_
           , random_->rng().rng()

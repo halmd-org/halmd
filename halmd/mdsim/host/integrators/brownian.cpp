@@ -110,7 +110,6 @@ void brownian<dimension, float_type>::integrate()
     LOG_TRACE("update positions")
 
     size_type nparticle = particle_->nparticle();
-    auto const& torque  = read_cache(particle_->torque());
     auto const& force   = read_cache(particle_->force());
     auto const& species = read_cache(particle_->species());
 

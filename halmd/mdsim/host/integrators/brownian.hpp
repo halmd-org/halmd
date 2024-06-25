@@ -46,7 +46,6 @@ public:
     typedef random::host::random random_type;
 
     typedef typename particle_type::vector_type vector_type;
-    typedef typename particle_type::torque_type torque_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
 
     brownian(

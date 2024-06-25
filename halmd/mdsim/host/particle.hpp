@@ -60,7 +60,6 @@ public:
     typedef unsigned int species_type;
     typedef float_type mass_type;
     typedef fixed_vector<float_type, dimension> force_type;
-    typedef typename type_traits<dimension, float_type>::pseudo_vector_type torque_type;
     typedef float_type en_pot_type;
     typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
 
@@ -72,7 +71,6 @@ public:
     typedef raw_array<species_type> species_array_type;
     typedef raw_array<mass_type> mass_array_type;
     typedef raw_array<force_type> force_array_type;
-    typedef raw_array<torque_type> torque_array_type;
     typedef raw_array<en_pot_type> en_pot_array_type;
     typedef raw_array<stress_pot_type> stress_pot_array_type;
 
@@ -313,22 +311,6 @@ public:
     cache<force_array_type>& mutable_force()
     {
         return mutable_data<force_type>("force");
-    }
-
-    /**
-     * Returns const reference to particle torque.
-     */
-    cache<torque_array_type> const& torque()
-    {
-        return data<torque_type>("torque");
-    }
-
-    /**
-     * Returns non-const reference to particle torque.
-     */
-    cache<torque_array_type>& mutable_torque()
-    {
-        return mutable_data<torque_type>("torque");
     }
 
     /**
@@ -647,16 +629,6 @@ inline iterator_type
 get_force(particle_type& particle, iterator_type const& first)
 {
     return particle.template get_data<typename particle_type::force_type>("force", first);
-}
-
-/**
- * Copy torque per particle to given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-get_torque(particle_type& particle, iterator_type const& first)
-{
-    return particle.template get_data<typename particle_type::torque_type>("torque", first);
 }
 
 /**

@@ -101,7 +101,6 @@ private:
     typedef typename particle_type::image_array_type image_array_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
     typedef typename particle_type::force_array_type force_array_type;
-    typedef typename particle_type::torque_array_type torque_array_type;
 
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;
@@ -126,7 +125,6 @@ private:
     /** diffusion parameters at CUDA device */
     cuda::vector<float2> g_param_;
     /** kernel used for integration*/
-    // just put integrate_position as placeholder value as cuda::function cannot be constructed without any arguments
     typename wrapper_type::integrate_kernel_type integrate_kernel = wrapper_type::kernel.integrate_position;
     /** module logger */
     std::shared_ptr<logger> logger_;

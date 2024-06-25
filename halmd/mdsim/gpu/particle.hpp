@@ -68,7 +68,6 @@ public:
     typedef unsigned int species_type;
     typedef float mass_type;
     typedef vector_type force_type;
-    typedef pseudo_vector_type torque_type;
     typedef float en_pot_type;
     typedef stress_tensor_wrapper<typename type_traits<dimension, float>::stress_tensor_type> stress_pot_type;
 
@@ -78,7 +77,6 @@ public:
     typedef id_type gpu_id_type;
     typedef reverse_id_type gpu_reverse_id_type;
     typedef gpu_vector_type gpu_force_type;
-    typedef gpu_pseudo_vector_type gpu_torque_type;
     typedef en_pot_type gpu_en_pot_type;
     typedef float gpu_stress_pot_type;
 
@@ -88,7 +86,6 @@ public:
     typedef cuda::vector<unsigned int> id_array_type;
     typedef cuda::vector<unsigned int>  reverse_id_array_type;
     typedef typename particle_array_gpu<gpu_vector_type>::gpu_vector_type force_array_type;
-    typedef typename particle_array_gpu<gpu_pseudo_vector_type>::gpu_vector_type torque_array_type;
     typedef typename particle_array_gpu<float>::gpu_vector_type en_pot_array_type;
     typedef typename particle_array_gpu<float>::gpu_vector_type stress_pot_array_type;
 
@@ -286,22 +283,6 @@ public:
     cache<force_array_type>& mutable_force()
     {
         return mutable_data<gpu_force_type>("force");
-    }
-
-    /**
-     * Returns const reference to particle torque.
-     */
-    cache<torque_array_type> const& torque()
-    {
-        return data<gpu_torque_type>("torque");
-    }
-
-    /**
-     * Returns non-const reference to particle torque.
-     */
-    cache<torque_array_type>& mutable_torque()
-    {
-        return mutable_data<gpu_torque_type>("torque");
     }
 
     /**
@@ -674,16 +655,6 @@ inline iterator_type
 get_force(particle_type& particle, iterator_type const& first)
 {
     return particle.template get_data<typename particle_type::force_type>("force", first);
-}
-
-/**
- * Copy net torque per particle to given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-get_torque(particle_type& particle, iterator_type const& first)
-{
-    return particle.template get_data<typename particle_type::torque_type>("torque", first);
 }
 
 /**

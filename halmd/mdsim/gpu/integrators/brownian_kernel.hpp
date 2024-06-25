@@ -48,7 +48,6 @@ struct brownian_wrapper
         , coalesced_vector_type*
         , const_ptr_type
         , coalesced_vector_type const*
-        , coalesced_pseudo_vector_type const*
         , float
         , float
         , rng_type

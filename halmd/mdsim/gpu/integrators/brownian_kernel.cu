@@ -68,12 +68,10 @@ __device__ void update_displacement(
 template <
     int dimension
   , bool use_position
-  , bool use_orientation
   , typename float_type
   , typename ptr_type
   , typename const_ptr_type
   , typename gpu_vector_type
-  , typename gpu_pseudo_vector_type
   , typename rng_type
 >
 __global__ void integrate(
@@ -81,7 +79,6 @@ __global__ void integrate(
   , gpu_vector_type* g_image
   , const_ptr_type g_velocity
   , gpu_vector_type const* g_force
-  , gpu_pseudo_vector_type const* g_torque
   , float timestep
   , float temp
   , rng_type rng
@@ -92,8 +89,6 @@ __global__ void integrate(
 {
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef fixed_vector<float, dimension> float_vector_type;
-    typedef typename type_traits<dimension, float_type>::pseudo_vector_type torque_type;
-    typedef typename type_traits<dimension, float>::pseudo_vector_type float_torque_type;
 
     // kernel execution parameters
     unsigned int const thread = GTID;
@@ -165,7 +160,7 @@ cuda::texture<float2> brownian_wrapper<dimension, float_type, rng_type>::param =
 template <int dimension, typename float_type, typename rng_type>
 brownian_wrapper<dimension, float_type, rng_type> const
 brownian_wrapper<dimension, float_type, rng_type>::kernel = {
-    brownian_kernel::integrate<dimension, true, false, float_type, ptr_type, const_ptr_type>
+    brownian_kernel::integrate<dimension, true, float_type, ptr_type, const_ptr_type>
 };
 
 // explicit instantiation
