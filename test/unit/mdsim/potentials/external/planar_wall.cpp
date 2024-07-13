@@ -108,28 +108,28 @@ make_host_potential()
     typedef typename potential_type::vector_type vector_type;
 
     // define interaction parameters
-    unsigned int ntype = 2;  // test a binary mixture
+    unsigned int nspecies = 2;  // test a binary mixture
     unsigned int nwall = 3;  // 3 walls
 
-    typename potential_type::matrix_container_type cutoff(nwall, ntype);
+    typename potential_type::matrix_container_type cutoff(nwall, nspecies);
     cutoff <<=
         1., 2.
       , 10., 10.
       , 1e2, 1e2;
 
-    typename potential_type::matrix_container_type epsilon(nwall, ntype);
+    typename potential_type::matrix_container_type epsilon(nwall, nspecies);
     epsilon <<=
         1., 0.5
       , 2., 0.
       , 0., 1.;
 
-    typename potential_type::matrix_container_type sigma(nwall, ntype);
+    typename potential_type::matrix_container_type sigma(nwall, nspecies);
     sigma <<=
         1., 2.
       , 3., 1.
       , 2., 1.;
 
-    typename potential_type::matrix_container_type wetting(nwall, ntype);
+    typename potential_type::matrix_container_type wetting(nwall, nspecies);
     wetting <<=
         0.4, 0.
       , -1, 1.
