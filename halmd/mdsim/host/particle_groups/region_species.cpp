@@ -117,7 +117,7 @@ region_species<dimension, float_type, geometry_type>::ordered() // ID order
     if (selection_cache != ordered_cache_) {
 //        auto const& id = read_cache(particle_->id());
 
-        LOG_WARNING("sorting selection of particle indices not yet implemented");
+        LOG_WARNING_ONCE("sorting selection of particle indices not yet implemented");
 //        LOG_DEBUG("sorting selection of particle indices");
         scoped_timer_type timer(runtime_.sort_selection);
 
