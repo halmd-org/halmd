@@ -45,7 +45,7 @@ OUTPUT="${BENCHMARK_NAME}/benchmark_${BENCHMARK_TAG}"
 
 # run benchmark
 halmd "${SCRIPT}" \
-  --verbose \
+  --verbose --verbose \
   --trajectory "${INPUT_FILE}" \
   --output "${OUTPUT}" \
   --count "${COUNT}" \
