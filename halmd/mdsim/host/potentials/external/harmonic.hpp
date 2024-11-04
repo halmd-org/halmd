@@ -61,8 +61,8 @@ public:
     std::tuple<vector_type, float_type> operator()(vector_type const& r, unsigned int species) const
     {
         vector_type dr = r - offset_[species];
-        vector_type force = stiffness_[species] * dr;
-        float_type en_pot = inner_prod(force, dr) / 2;
+        vector_type force = - stiffness_[species] * dr;
+        float_type en_pot = - inner_prod(force, dr) / 2;
 
         return std::make_tuple(force, en_pot);
     }
