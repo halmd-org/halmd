@@ -39,7 +39,7 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , std::shared_ptr<box_type const> box
   , double timestep
   , double temperature
-  , matrix_type const& diff_const
+  , double diff_const
   , std::shared_ptr<logger> logger
 )
   // dependency injection
@@ -47,15 +47,9 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , random_(random)
   , box_(box)
   , diff_const_(diff_const)
-  , g_param_(diff_const_.size1())
+  , g_param_(particle->nspecies()) 
   , logger_(logger)
 {
-    if (diff_const_.size1() != particle->nspecies()) {
-        throw std::invalid_argument("diffusion matrix has invalid shape: exactly the number of species are required");
-    }
-    if (diff_const_.size2() != 2) {
-        throw std::invalid_argument("diffusion matrix has invalid shape: exactly 2 values per species are required");
-    }
 
     set_timestep(timestep);
     set_temperature(temperature);
@@ -64,14 +58,12 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
 
     cuda::host::vector<float2> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
-        fixed_vector<float, 2> p;
-        p[0] = diff_const_(i,0);
-        p[1] = diff_const_(i,1);
-        param[i] = p;
+        param[i] = make_float2(diff_const_, diff_const_);
     }
     cuda::copy(param, g_param_);
 
     LOG("diffusion constants: " << diff_const_);
+    
 }
 
 /**
@@ -163,7 +155,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
                   , std::shared_ptr<box_type const>
                   , double
                   , double
-                  , matrix_type const&
+                  , double
                   , std::shared_ptr<logger>
                 >)
             ]

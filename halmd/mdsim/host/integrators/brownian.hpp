@@ -54,7 +54,7 @@ public:
       , std::shared_ptr<box_type const> box
       , float_type timestep
       , float_type temperature
-      , matrix_type const& diff_const
+      , const float_type& diff_const
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -109,7 +109,7 @@ private:
     };
 
     void update_displacement(
-        float_type const diff_const
+      float_type diff_const
       , vector_type& r
       , vector_type const& f
       , vector_type const& eta
@@ -131,7 +131,7 @@ private:
     /** profiling runtime accumulators */
     runtime runtime_;
     /** diffusion constant */
-    matrix_type diff_const_;
+    float_type diff_const_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

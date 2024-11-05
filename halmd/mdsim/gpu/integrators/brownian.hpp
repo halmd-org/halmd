@@ -59,7 +59,7 @@ public:
       , std::shared_ptr<box_type const> box
       , double timestep
       , double temperature
-      , matrix_type const& diff_const
+      , double diff_const
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -73,7 +73,7 @@ public:
     /**
      * Set integration time-step.
      */
-void set_temperature(double temperature);
+    void set_temperature(double temperature);
 
     /**
      * Returns integration time-step.
@@ -121,7 +121,7 @@ private:
     /** temperature of the heat bath */
     float_type temperature_;
     /** diffusion constant */
-    matrix_type diff_const_;
+    double diff_const_;
     /** diffusion parameters at CUDA device */
     cuda::vector<float2> g_param_;
     /** kernel used for integration*/

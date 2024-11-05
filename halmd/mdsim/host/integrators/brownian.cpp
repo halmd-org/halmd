@@ -43,7 +43,7 @@ brownian<dimension, float_type>::brownian(
   , std::shared_ptr<box_type const> box
   , float_type timestep
   , float_type temperature
-  , matrix_type const& diff_const
+  , const float_type& diff_const
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
@@ -52,13 +52,6 @@ brownian<dimension, float_type>::brownian(
   , diff_const_(diff_const)
   , logger_(logger)
 {
-    if (diff_const_.size1() != particle->nspecies()) {
-        throw std::invalid_argument("diffusion matrix has invalid shape: exactly the number of species are required");
-    }
-    if (diff_const_.size2() != 2) {
-        throw std::invalid_argument("diffusion matrix has invalid shape: exactly 2 values per species are required");
-    }
-
     set_timestep(timestep);
     set_temperature(temperature);
 
@@ -90,7 +83,7 @@ void brownian<dimension, float_type>::set_temperature(double temperature)
  */
 template <int dimension, typename float_type>
 void brownian<dimension, float_type>::update_displacement(
-    float_type const diff_const
+    float_type diff_const
   , vector_type& r
   , vector_type const& f
   , vector_type const& eta
@@ -133,7 +126,7 @@ void brownian<dimension, float_type>::integrate()
         vector_type f = force[i];
         vector_type& r = (*position)[i];
 
-        float_type const diff_const_perp = diff_const_(s, 0);
+        float_type diff_const_perp = diff_const_;
         float_type sigma_disp = sqrt(2 * timestep_ * diff_const_perp);
 
         // integrate positions
@@ -184,7 +177,7 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
                   , std::shared_ptr<box_type const>
                   , double
                   , double
-                  , matrix_type const&
+                  , double
                   , std::shared_ptr<logger>
                 >)
             ]
