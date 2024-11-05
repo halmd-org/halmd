@@ -1,0 +1,95 @@
+#!@CMAKE_COMMAND@ -P
+#
+# Copyright © 2014 Felix Höfling
+#
+# This file is part of HALMD.
+#
+# HALMD is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
+#
+
+##
+# Test computation of thermodynamic and dynamic properties for a simple colloid
+# following Langevin dynamics
+
+set(CMAKE_MODULE_PATH "@HALMD_TEST_CMAKE_BINARY_DIR@")
+
+include(execute_halmd)
+
+set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/ornstein_uhlenbeck_validation")
+set(HALMD_WITH_GPU @HALMD_WITH_GPU@)
+
+if(USE_GPU EQUAL 0)
+  if(HALMD_WITH_GPU)
+    set(BACKEND_OPTION "--disable-gpu")
+  endif()
+  set(PARTICLES "1500")
+  message(STATUS "Using host backend with ${PARTICLES} particles")
+elseif(USE_GPU EQUAL 1)
+  set(PARTICLES "4000")
+  message(STATUS "Using GPU backend with ${PARTICLES} particles")
+else()
+  message(FATAL_ERROR "Variable USE_GPU neither set to 0 nor 1")
+endif()
+
+if(NOT DEFINED DIMENSION)
+  message(FATAL_ERROR "Variable DIMENSION undefined")
+else()
+  message(STATUS "Space dimension: ${DIMENSION}")
+endif()
+
+# aspect ratios of simulation box
+if(DIMENSION EQUAL 3)
+  set(ASPECT_RATIOS "1,1,1")
+  set(OFFSET "0,0,0")
+else()
+  set(ASPECT_RATIOS "1,1")
+  set(OFFSET "0,0")
+endif()
+
+execute_halmd(
+  "${BACKEND_OPTION}"
+  "@CMAKE_SOURCE_DIR@/examples/liquid/ornstein_uhlenbeck.lua"
+  --verbose
+  --overwrite
+  --output "${OUTPUT_PREFIX}"
+  --particles ${PARTICLES}
+  --ratios ${ASPECT_RATIOS}
+  --density 0.75
+  --temperature 3
+  --rate 2
+  --timestep 0.01
+  --init_time 80
+  --time 160
+  --diff_const 0.3
+  --stiffness 2
+  --offset ${OFFSET}
+)
+
+execute_process(
+  COMMAND "@CMAKE_CURRENT_BINARY_DIR@/test_integration_validation_ornstein_uhlenbeck"
+    @BOOST_TEST_ARGS@
+    "${OUTPUT_PREFIX}.h5"
+    ${USE_GPU}
+  WORKING_DIRECTORY "@CMAKE_CURRENT_BINARY_DIR@"
+  RESULT_VARIABLE ${OUTPUT_PREFIX}_STATUS
+)
+if(NOT ${OUTPUT_PREFIX}_STATUS STREQUAL "0")
+  message(SEND_ERROR "validation of thermodynamic and dynamic properties failed")
+endif()
+
+file(REMOVE
+  "${OUTPUT_PREFIX}.log"
+  "${OUTPUT_PREFIX}.h5"
+)
