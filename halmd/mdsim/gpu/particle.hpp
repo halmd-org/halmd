@@ -54,9 +54,7 @@ public:
     typedef signal_type::slot_function_type slot_function_type;
 
     typedef typename type_traits<dimension, float>::vector_type vector_type;
-    typedef typename type_traits<dimension, float>::pseudo_vector_type pseudo_vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
-    typedef typename type_traits<dimension, float>::gpu::coalesced_pseudo_vector_type gpu_pseudo_vector_type;
     typedef typename type_traits<4, float_type>::gpu::coalesced_vector_type gpu_hp_vector_type;
 
     typedef unsigned int size_type;

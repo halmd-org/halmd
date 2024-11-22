@@ -31,29 +31,24 @@ namespace mdsim {
 namespace gpu {
 namespace integrators {
 
-
-    template <int dimension, typename float_type, typename rng_type>
+template <int dimension, typename float_type, typename rng_type>
 struct brownian_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
-    typedef typename type_traits<dimension, float>::gpu::coalesced_pseudo_vector_type coalesced_pseudo_vector_type;
     typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
-    typedef typename type_traits<4, float_type>::gpu::const_ptr_type const_ptr_type;
 
     static cuda::texture<float2> param;
 
     typedef cuda::function <void (
         ptr_type
-        , coalesced_vector_type*
-        , const_ptr_type
-        , coalesced_vector_type const*
-        , float
-        , float
-        , rng_type
-        , unsigned int
-        , unsigned int
-        , vector_type
+      , coalesced_vector_type*
+      , coalesced_vector_type const*
+      , float
+      , float
+      , rng_type
+      , unsigned int
+      , vector_type
     )> integrate_kernel_type;
 
     integrate_kernel_type integrate_position;

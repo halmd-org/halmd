@@ -79,20 +79,6 @@ void brownian<dimension, float_type>::set_temperature(double temperature)
 }
 
 /**
- * update both random and systematic parts of displacement
- */
-template <int dimension, typename float_type>
-void brownian<dimension, float_type>::update_displacement(
-    float_type diff_const
-  , vector_type& r
-  , vector_type const& f
-  , vector_type const& eta
-)
-{
-    r += eta + diff_const * f * timestep_ / temperature_;
-}
-
-/**
  * perform Brownian integration: update positions with random displacement
  *
  * @f$ r(t + \Delta t) = \mu F(t) + \sigma d vec{W} @f$
@@ -106,16 +92,14 @@ void brownian<dimension, float_type>::integrate()
     auto const& force   = read_cache(particle_->force());
     auto const& species = read_cache(particle_->species());
 
-    // invalidate the particle caches after accessing the force and torque!
-    auto position    = make_cache_mutable(particle_->position());
-    auto image       = make_cache_mutable(particle_->image());
+    // invalidate the particle caches only after accessing the force!
+    auto position = make_cache_mutable(particle_->position());
+    auto image    = make_cache_mutable(particle_->image());
 
     scoped_timer_type timer(runtime_.integrate);
 
     float_type rng_disp_cache = 0;
     bool rng_disp_cached = false;
-    float_type rng_rot_cache = 0;
-    bool rng_rot_cached = false;
 
     for (size_type i = 0 ; i < nparticle; ++i) {
         unsigned int s = species[i];
@@ -126,10 +110,9 @@ void brownian<dimension, float_type>::integrate()
         vector_type f = force[i];
         vector_type& r = (*position)[i];
 
-        float_type diff_const_perp = diff_const_;
-        float_type sigma_disp = sqrt(2 * timestep_ * diff_const_perp);
+        float_type sigma_disp = sqrt(2 * timestep_ * diff_const_);
 
-        // integrate positions
+        // draw Gaussian random vector
         vector_type dr;
         std::tie(dr[0], dr[1]) = random_->normal(sigma_disp);
         if (dimension % 2 == 1) {
@@ -141,7 +124,8 @@ void brownian<dimension, float_type>::integrate()
             rng_disp_cached = !rng_disp_cached;
         }
 
-        update_displacement(diff_const_perp, r, f, dr);
+        // integrate position: Euler-Maruyama scheme
+        r += dr + (diff_const_ * timestep_ / temperature_) * f;
 
         // enforce periodic boundary conditions
         (*image)[i] += box_->reduce_periodic(r);

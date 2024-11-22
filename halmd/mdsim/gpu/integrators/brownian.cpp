@@ -93,10 +93,9 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
 {
     LOG_TRACE("update positions")
 
-    velocity_array_type const& velocity = read_cache(particle_->velocity());
     force_array_type const& force = read_cache(particle_->force());
 
-    // invalidate the particle caches after accessing the velocity!
+    // invalidate the particle caches only after accessing the force!
     auto position = make_cache_mutable(particle_->position());
     auto image = make_cache_mutable(particle_->image());
     bind_textures();
@@ -109,13 +108,11 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
         integrate_kernel(
             position->data()
           , image->data()
-          , velocity.data()
           , force.data()
           , timestep_
           , temperature_
           , random_->rng().rng()
           , particle_->nparticle()
-          , particle_->dim().threads()
           , static_cast<vector_type>(box_->length())
         );
         cuda::thread::synchronize();
