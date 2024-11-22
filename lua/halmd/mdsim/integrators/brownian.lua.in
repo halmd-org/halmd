@@ -108,7 +108,7 @@ local M = module(function(args)
     local logger = log.logger({label = "brownian"})
 
     -- construct instance
-    local self = brownian(particle, rng, box, timestep, temperature, diff_const, degrees, logger)
+    local self = brownian(particle, rng, box, timestep, temperature, diff_const, logger)
 
     -- capture C++ method set_timestep
     local set_timestep = assert(self.set_timestep)
