@@ -1,5 +1,5 @@
 --
--- Copyright © 2010,2013 Felix Höfling
+-- Copyright © 2010-2023 Felix Höfling
 -- Copyright © 2013      Nicolas Höft
 -- Copyright © 2010      Peter Colberg
 --
@@ -31,15 +31,28 @@ local adapters          = require("halmd.mdsim.potentials.pair.adapters")
 -- Morse potential
 -- ===============
 --
--- This module implements the Morse potential,
+-- This module implements the (distorted) Morse potential,
 --
 -- .. math::
 --
---    U_\text{Morse}\left(r_{ij}\right) = \epsilon_{ij} \left(
---        1 - e^{r_{ij}/\sigma_{ij} - r_{\text{min},ij}}
---    \right)^2 - \epsilon_{ij}
+--    U^{(ij)}_\text{Morse}(r) = \frac{\epsilon_{ij}}{2 B^2 - 1} \left(
+--        e^{-2 (r - r_{\text{min},ij}) B / \sigma_{ij}}
+--        - 2 B^2 e^{-(r - r_{\text{min},ij}) / (B \sigma_{ij})}
+--    \right)
 --
 -- for the interaction between two particles of species :math:`i` and :math:`j`.
+-- This form of the potential contains a distortion parameter :math:`B`, which
+-- is also denoted as :math:`b=B^2` in the literature. The original Morse
+-- potential is obtained for :math:`B=1` and is conveniently written as
+--
+-- .. math::
+--
+--    U^{(ij)}_\text{Morse}(r) = \epsilon_{ij} \left(
+--        1 - e^{-(r - r_{\text{min},ij}) / \sigma_{ij}}
+--    \right)^2 - \epsilon_{ij}
+--
+-- The potential minimum is at :math:`r = r_{\text{min},ij}`. The inverse
+-- length :math:`1/\sigma_{ij}` is also referred to as stiffness parameter.
 --
 
 -- grab C++ wrappers
@@ -55,16 +68,14 @@ if device.gpu then
     smooth_r4.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.smooth_r4)
     shifted.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.shifted)
 end
-
 ---
 -- Construct Morse potential.
 --
 -- :param table args: keyword arguments
---
--- :param table args: keyword arguments
 -- :param table args.epsilon: matrix with elements :math:`\epsilon_{ij}` (*default:* ``1``)
 -- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (*default:* ``1``)
--- :param table args.minimum: Minimum/equilibrium distance :math:`r_\text{min}` in units of :math:`\sigma_{ij}`
+-- :param table args.r_min: position of the potential well (equilibrium distance) :math:`r_\text{min}`
+-- :param table args.distortion: distortion parameter :math:`B` (*default:* ``1``)
 -- :param number args.species: number of particle species *(optional)*
 -- :param string args.memory: select memory location *(optional)*
 -- :param string args.label: instance label *(optional)*
@@ -80,6 +91,12 @@ end
 -- not specified, the memory location is selected according to the compute
 -- device.
 --
+-- .. note::
+--
+--     The keyword ``minimum`` has been deprecated since version 1.1.0. Please
+--     use ``r_min`` instead. For backwards compatibility, values passed via
+--     ``minimum`` are converted to ``r_min``, i.e., multiplied by ``sigma``.
+--
 -- .. attribute:: epsilon
 --
 --    Matrix with elements :math:`\epsilon_{ij}`.
@@ -88,17 +105,27 @@ end
 --
 --    Matrix with elements :math:`\sigma_{ij}`.
 --
--- .. attribute:: r_cut
+-- .. attribute:: r_min
 --
---    Matrix with elements :math:`r_{\text{c}, ij}` in reduced units.
---
--- .. attribute:: r_cut_sigma
---
---    Matrix with elements :math:`r_{\text{c}, ij}` in units of :math:`\sigma_{ij}`.
+--    Matrix with equilibrium distance :math:`r_{\text{min}, ij}` in simulation units.
 --
 -- .. attribute:: r_min_sigma
 --
---    Equilibrium distance :math:`r_{\text{min}, ij}` in units of :math:`\sigma_{ij}`.
+--    Matrix with elements :math:`r_{\text{min}, ij} / \sigma_{ij}`.
+--
+-- .. attribute:: distortion
+--
+--    Matrix with elements :math:`B_{ij}`.
+--
+-- .. attribute:: r_cut
+--
+--    | Matrix with cutoff radius :math:`r_{\text{c}, ij}` in simulation units.
+--    | *This attribute is only available after truncation of the potential (see below).*
+--
+-- .. attribute:: r_cut_sigma
+--
+--    | Matrix with elements :math:`r_{\text{c}, ij} / \sigma_{ij}`.
+--    | *This attribute is only available after truncation of the potential (see below).*
 --
 -- .. attribute:: description
 --
@@ -146,9 +173,18 @@ local M = module(function(args)
     if type(sigma) ~= "table" and type(sigma) ~= "number" then
         error("bad argument 'sigma'", 2)
     end
-    local minimum = args and args.sigma or 1
-    if type(sigma) ~= "table" and type(sigma) ~= "number" then
-        error("bad argument 'sigma'", 2)
+    local r_min = args and args.r_min
+    -- accept 'minimum' for backwards compatibility, needs to multiplied by sigma
+    if not r_min and args.minimum then
+        local fix_r_min = true
+        r_min = args.minimum
+    end
+    if type(r_min) ~= "table" and type(r_min) ~= "number" then
+        error("bad argument 'r_min'", 2)
+    end
+    local distortion = args and args.distortion or 1
+    if type(distortion) ~= "table" and type(distortion) ~= "number" then
+        error("bad argument 'distortion'", 2)
     end
 
     local memory = args and args.memory or (device.gpu and "gpu" or "host")
@@ -160,7 +196,7 @@ local M = module(function(args)
     -- derive number of species from parameter matrices
     local species = args and args.species
         or (type(epsilon) == "table" and #epsilon) or (type(sigma) == "table" and #sigma)
-        or (type(minimum) == "table" and #minimum) or 1
+        or (type(r_min) == "table" and #r_min) or (type(distortion) == "table" and #distortion) or 1
     utility.assert_type(species, "number")
 
     -- promote scalars to matrices
@@ -170,15 +206,28 @@ local M = module(function(args)
     if type(sigma) == "number" then
         sigma = numeric.scalar_matrix(species, species, sigma)
     end
-    if type(minimum) == "number" then
-        minimum = numeric.scalar_matrix(species, species, minimum)
+    if type(r_min) == "number" then
+        r_min = numeric.scalar_matrix(species, species, r_min)
+    end
+    if type(distortion) == "number" then
+        distortion = numeric.scalar_matrix(species, species, distortion)
+    end
+
+    -- backwards compatibility: fix units of minimum position
+    if fix_r_min then
+        logger:warning("The argument \'minimum\' has been deprecated, use \'r_min\' instead (see documentation)")
+        for i = 1, species do
+            for j = 1, species do
+                r_min[i][j] = r_min[i][j] * sigma[i][j]
+            end
+        end
     end
 
     -- construct instance
     if not morse[memory] then
         error(("unsupported memory type '%s'"):format(memory), 2)
     end
-    local self = morse[memory](epsilon, sigma, minimum, logger)
+    local self = morse[memory](epsilon, sigma, r_min, distortion, logger)
 
     -- add description for profiler
     self.description = property(function()

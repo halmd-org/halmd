@@ -67,8 +67,8 @@ void cuboid<dimension, float_type>::luaopen(lua_State* L)
                     .property("volume", &cuboid::volume)
 
               , def(class_name.c_str(), &std::make_shared<cuboid
-                  , vector_type
-                  , vector_type
+                  , vector_type const&
+                  , vector_type const&
                   >)
             ]
         ]

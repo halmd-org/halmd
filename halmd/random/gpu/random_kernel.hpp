@@ -33,11 +33,11 @@ struct random_wrapper
     cuda::function<void (float*, unsigned int, RandomNumberGenerator)> uniform;
     cuda::function<void (unsigned int*, unsigned int, RandomNumberGenerator)> get;
     cuda::function<void (float*, unsigned int, float, float, RandomNumberGenerator)> normal;
-    static random_wrapper const kernel;
+    static random_wrapper kernel;
 };
 
 template <typename RandomNumberGenerator>
-random_wrapper<RandomNumberGenerator> const& get_random_kernel()
+random_wrapper<RandomNumberGenerator>& get_random_kernel()
 {
     return random_wrapper<RandomNumberGenerator>::kernel;
 }

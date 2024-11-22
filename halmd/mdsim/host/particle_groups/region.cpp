@@ -20,6 +20,7 @@
  */
 
 #include <halmd/mdsim/geometries/cuboid.hpp>
+#include <halmd/mdsim/geometries/cylinder.hpp>
 #include <halmd/mdsim/geometries/sphere.hpp>
 #include <halmd/algorithm/host/radix_sort.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -55,11 +56,12 @@ region<dimension, float_type, geometry_type>::region(
 template <int dimension, typename float_type, typename geometry_type>
 void region<dimension, float_type, geometry_type>::update_()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
-    if (position_cache != mask_cache_) {
-        auto const& position = read_cache(particle_->position());
+    auto const& position_cache = particle_->position();
 
-        LOG_TRACE("update selection mask for region");
+    if (position_cache != mask_cache_) {
+        auto const& position = read_cache(position_cache);
+
+        LOG_DEBUG("update selection mask for region");
         scoped_timer_type timer(runtime_.update_mask);
 
         auto mask = make_cache_mutable(mask_);
@@ -104,8 +106,8 @@ region<dimension, float_type, geometry_type>::ordered() // ID order
     if (selection_cache != ordered_cache_) {
 //        auto const& id = read_cache(particle_->id());
 
-        LOG_WARNING("sorting selection of particle indices not yet implemented");
-//        LOG_TRACE("sorting selection of particle indices");
+        LOG_WARNING_ONCE("sorting selection of particle indices not yet implemented");
+//        LOG_DEBUG("sorting selection of particle indices");
         scoped_timer_type timer(runtime_.sort_selection);
 
         auto ordered = make_cache_mutable(ordered_);
@@ -189,11 +191,15 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_particle_groups_region(lua_State* 
 #ifndef USE_HOST_SINGLE_PRECISION
     region<3, double, halmd::mdsim::geometries::cuboid<3, double>>::luaopen(L);
     region<2, double, halmd::mdsim::geometries::cuboid<2, double>>::luaopen(L);
+    region<3, double, halmd::mdsim::geometries::cylinder<3, double>>::luaopen(L);
+    region<2, double, halmd::mdsim::geometries::cylinder<2, double>>::luaopen(L);
     region<3, double, halmd::mdsim::geometries::sphere<3, double>>::luaopen(L);
     region<2, double, halmd::mdsim::geometries::sphere<2, double>>::luaopen(L);
 #else
     region<3, float, halmd::mdsim::geometries::cuboid<3, float>>::luaopen(L);
     region<2, float, halmd::mdsim::geometries::cuboid<2, float>>::luaopen(L);
+    region<3, float, halmd::mdsim::geometries::cylinder<3, float>>::luaopen(L);
+    region<2, float, halmd::mdsim::geometries::cylinder<2, float>>::luaopen(L);
     region<3, float, halmd::mdsim::geometries::sphere<3, float>>::luaopen(L);
     region<2, float, halmd::mdsim::geometries::sphere<2, float>>::luaopen(L);
 #endif

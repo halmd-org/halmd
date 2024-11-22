@@ -55,7 +55,10 @@ public:
             , r_cut_(element_prod(this->sigma(), r_cut_sigma_))
             , rr_cut_(element_prod(r_cut_, r_cut_))
     {
-        LOG("potential cutoff length: r_c = " << r_cut_sigma_);
+        auto logger_ = std::make_shared<logger>("sharp");
+        LOG("apply sharp potential truncation");
+        LOG("potential cutoff distance: r_c / σ = " << r_cut_sigma_);
+        LOG_INFO("potential cutoff distance in simulation units: r_c = " << r_cut_);
     }
 
     bool within_range(float_type rr, unsigned a, unsigned b) const
@@ -120,11 +123,11 @@ public:
     }
 
 private:
-    /** cutoff length in units of sigma */
+    /** cutoff distance in units of sigma */
     matrix_type r_cut_sigma_;
-    /** cutoff length in MD units */
+    /** cutoff distance in MD units */
     matrix_type r_cut_;
-    /** square of cutoff length */
+    /** square of cutoff distance */
     matrix_type rr_cut_;
 };
 

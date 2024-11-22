@@ -54,10 +54,10 @@ namespace gpu {
  */
 template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
-  : // allocate global device memory
+  : // store module parameters
     nparticle_(nparticle)
   , nspecies_(std::max(nspecies, 1u))
-  // set internal flags
+    // set internal flags
   , force_in_progress_(false)
   , force_zero_(true)
   , force_dirty_(true)
@@ -66,7 +66,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
 {
     {
         // FIXME default CUDA kernel execution dimensions
-        cuda::device::properties prop(cuda::device::get());
+        cuda::device::properties prop(device::get());
         int max_block_size = prop.max_threads_per_block();
         // round up to next power of two
         --max_block_size;
@@ -76,9 +76,9 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
         max_block_size |= max_block_size >> 8;
         max_block_size |= max_block_size >> 16;
         max_block_size++;
-        array_size_ = (nparticle_ + max_block_size - 1) / max_block_size;
+        array_size_ = nparticle_ > 0 ? (nparticle_ + max_block_size - 1) / max_block_size : 1;  // ensure array_size_ > 0
         array_size_ *= max_block_size;
-        size_t block_size = 128;
+        size_t block_size = 128;            // must be a power of 2, see, e.g., observables/gpu/density_mode.cpp
         size_t grid_size = array_size_ / block_size;
         while (grid_size > prop.max_grid_size().x && block_size <= prop.max_threads_per_block()/2) {
             block_size <<= 1;
@@ -138,16 +138,16 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
         iota(reverse_id->begin(), reverse_id->end(), 0);
     }
 
-    LOG_DEBUG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
-    LOG_DEBUG("number of CUDA execution threads per block: " << dim_.threads_per_block());
+    LOG_INFO("number of CUDA execution blocks: " << dim_.blocks_per_grid());
+    LOG_INFO("number of CUDA execution threads per block: " << dim_.threads_per_block());
 
     if (typeid(float_type) == typeid(float)) {
         LOG("integrate using single precision");
     }
 
     try {
-        cuda::copy(nparticle_, get_particle_kernel<dimension, float_type>().nbox);
-        cuda::copy(nspecies_, get_particle_kernel<dimension, float_type>().ntype);
+        get_particle_kernel<dimension, float_type>().nbox.set(nparticle_);
+        get_particle_kernel<dimension, float_type>().ntype.set(nspecies_);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy particle parameters to device symbols");
@@ -162,7 +162,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::aux_enable()
 {
-    LOG_TRACE("enable computation of auxiliary variables");
+    LOG_DEBUG("enable computation of auxiliary variables");
     aux_enabled_ = true;
 }
 
@@ -170,7 +170,7 @@ void particle<dimension, float_type>::aux_enable()
  * rearrange particles by permutation
  */
 template <int dimension, typename float_type>
-void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const& g_index)
+void particle<dimension, float_type>::rearrange(cuda::memory::device::vector<unsigned int> const& g_index)
 {
     auto g_position = make_cache_mutable(mutable_data<gpu_position_type>("position"));
     auto g_image = make_cache_mutable(mutable_data<gpu_image_type>("image"));
@@ -184,15 +184,31 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     id_array_type id(array_size_);
 
     configure_kernel(get_particle_kernel<dimension, float_type>().rearrange, dim_, true);
-    get_particle_kernel<dimension, float_type>().r.bind(*g_position);
-    get_particle_kernel<dimension, float_type>().image.bind(*g_image);
-    get_particle_kernel<dimension, float_type>().v.bind(*g_velocity);
-    get_particle_kernel<dimension, float_type>().id.bind(read_cache(id_));
-    get_particle_kernel<dimension, float_type>().rearrange(g_index, position, image, velocity, id, nparticle_);
 
-    position.swap(*g_position);
-    image.swap(*g_image);
-    velocity.swap(*g_velocity);
+    cuda::texture<float4> t_r(*g_position);
+    cuda::texture<gpu_vector_type> t_image(*g_image);
+    cuda::texture<float4> t_v(*g_velocity);
+    cuda::texture<unsigned int> t_id(read_cache(id_));
+
+    get_particle_kernel<dimension, float_type>().rearrange(
+        t_r
+      , t_image
+      , t_v
+      , t_id
+      , g_index
+      , position
+      , image
+      , velocity
+      , id
+      , nparticle_
+    );
+
+    using std::swap;
+
+    swap(position, *g_position);
+    swap(image, *g_image);
+    swap(velocity, *g_velocity);
+
     cuda::copy(id.begin(), id.begin() + id.capacity(), make_cache_mutable(id_)->begin());
 
     auto reverse_id = make_cache_mutable(reverse_id_);

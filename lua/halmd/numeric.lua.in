@@ -1,7 +1,8 @@
 --
--- Copyright © 2013-2014 Felix Höfling
+-- Copyright © 2013-2023 Felix Höfling
 -- Copyright © 2014      Nicolas Höft
 -- Copyright © 2011      Peter Colberg
+-- Copyright © 2023      Viktor Skoblin
 --
 -- This file is part of HALMD.
 --
@@ -165,6 +166,158 @@ function M.diag(m)
 end
 
 ---
+-- Add two vectors elementwisely
+--
+--:param table t1: n-dimensional vector
+--:param table t2: n-dimensional vector
+--:returns: elementwise sum of two vectors
+--
+function M.add(t1, t2)
+    assert (#t1 == #t2)
+    local result = {}
+    for i, x in ipairs(t1) do
+        result[i] = t1[i] + t2[i]
+    end
+    return result
+end
+
+---
+-- Subtract two vectors elementwisely
+--
+--:param table t1: n-dimensional vector
+--:param table t2: n-dimensional vector
+--:returns: elementwise difference of two vectors
+--
+function M.subtract(t1, t2)
+    assert (#t1 == #t2)
+    local result = {}
+    for i, x in ipairs(t1) do
+        result[i] = t1[i] - t2[i]
+    end
+    return result
+end
+
+---
+-- Add a scalar value to all elements of a vector
+--
+--:param table t: n-dimensional vector
+--:param number a: the scalar to add
+--:returns: table with values bigger by a.
+--
+function M.add_scalar(t, a)
+    local result = {}
+    for i, x in ipairs(t) do
+        result[i] = x + a
+    end
+    return result
+end
+
+---
+-- Subtract a scalar value from all elements of a vector
+--
+--:param table t: n-dimensional vector
+--:param number a: the scalar to subtract
+--:returns: table with values less by a.
+--
+function M.subtract_scalar(t, a)
+    local result = {}
+    for i, x in ipairs(t) do
+        result[i] = x - a
+    end
+    return result
+end
+
+---
+-- Multiply two vectors elementwisely
+--
+--:param table t1: n-dimensional vector
+--:param table t2: n-dimensional vector
+--:returns: elementwise product of two vectors
+--
+function M.multiply(t1, t2)
+    assert (#t1 == #t2)
+    local result = {}
+    for i, x in ipairs(t1) do
+        result[i] = t1[i] * t2[i]
+    end
+    return result
+end
+
+---
+-- Multiply all elements of a vector with the same scalar
+--
+--:param number a: the scalar factor
+--:param table t: n-dimensional vector
+--:returns: table with values multiplied by a
+--
+function M.multiply_scalar(a, t)
+    local result = {}
+    for i, x in ipairs(t) do
+        result[i] = a * x
+    end
+    return result
+end
+
+---
+-- Divide two vectors elementwisely
+--
+--:param table t1: n-dimensional vector
+--:param table t2: n-dimensional vector
+--:returns: elementwise division of two vectors
+--
+function M.divide(t1, t2)
+    assert (#t1 == #t2)
+    local result = {}
+    for i, x in ipairs(t1) do
+        result[i] = t1[i] / t2[i]
+    end
+    return result
+end
+
+---
+-- Divide all elements of a vector by the same scalar value
+--
+--:param table t: n-dimensional vector
+--:param number a: the scalar divisor
+--:returns: table with values divided by a
+--
+function M.divide_scalar(t, a)
+    local result = {}
+    for i, x in ipairs(t) do
+        result[i] = x / a
+    end
+    return result
+end
+
+---
+-- Get 1-norm of a vector
+--
+--:param table t: n-dimensional vector
+--:returns: 1-norm of the vector
+--
+function M.norm_1(t)
+    local result = 0
+    for i, x in ipairs(t) do
+        result = result + math.abs(x)
+    end
+    return result
+end
+
+---
+-- Get 2-norm of a vector
+--
+--:param table t: n-dimensional vector
+--:returns: 2-norm of the vector
+--
+function M.norm_2(t)
+    local result = 0
+    for i, x in ipairs(t) do
+        result = result + x * x
+    end
+    return math.sqrt(result)
+end
+
+---
 -- Convert one-dimensional offset to multi-dimensional index
 --
 -- Assumes contiguous storage of the array data in row-major order.
@@ -200,5 +353,46 @@ function M.multi_index_to_offset(index, dims)
     end
     return offset
 end
+
+---
+-- Assert that two floating-point numbers are very close.
+--
+-- Given two floating point numbers :math:`a` and :math:`b` and a tolerance
+-- :math:`\epsilon > 0`, the routine asserts that
+--
+-- .. math::
+--
+--     |a - b| < \epsilon \min(|a|, |b|)
+--
+-- :param number value1: value of :math:`a`
+-- :param number value2: value of :math:`b`
+-- :param number tolerance: value of :math:`\epsilon` *(default: `numeric.limits.double.epsilon`)*
+-- :param number level: call stack level for error message *(default: 2)*
+--
+-- :returns: `value1`
+--
+function M.assert_close(value1, value2, tolerance, level)
+    local tolerance = tolerance or M.limits.double.epsilon
+    local level = level or 2
+
+    local abs = math.abs
+    local left = abs(value1 - value2)
+    local right = tolerance * math.min(abs(value1), abs(value2))
+    if left >= right then
+        error(("difference (%g) exceeds tolerance (%g)"):format(left, right), level + 1)
+    end
+    return var
+end
+
+---
+-- Provide floating-point limits, along the lines of std::numeric_limits in C++:
+--
+-- `limits.double.epsilon` = 2.2204460492503131e-16
+--
+M.limits = {
+    double = {
+        epsilon = 2.2204460492503131e-16    -- DBL_EPSILON
+    }
+}
 
 return M

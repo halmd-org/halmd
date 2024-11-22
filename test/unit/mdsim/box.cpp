@@ -36,6 +36,7 @@
 # include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/mdsim/gpu/box_kernel.cuh>
 # include <test/unit/mdsim/box_kernel.hpp>
+# include <test/tools/cuda.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
 #include <test/tools/ctest.hpp>
@@ -159,27 +160,29 @@ void periodic_gpu()
     unsigned int npos = position.size();
 
     // allocate device memory and host memory for conversion to GPU type
-    cuda::host::vector<coalesced_vector_type> h_position(npos);
-    cuda::host::vector<coalesced_vector_type> h_reduced(npos);
-    cuda::vector<coalesced_vector_type> g_position(npos);
-    cuda::vector<coalesced_vector_type> g_reduced(npos);
+    cuda::memory::host::vector<coalesced_vector_type> h_position(npos);
+    cuda::memory::host::vector<coalesced_vector_type> h_reduced(npos);
+    cuda::memory::device::vector<coalesced_vector_type> g_position(npos);
+    cuda::memory::device::vector<coalesced_vector_type> g_reduced(npos);
 
     // allocate memory for conversion to GPU type and transfer positions to device
     std::copy(position.begin(), position.end(), h_position.begin());
-    cuda::copy(h_position, g_position);
+    cuda::copy(h_position.begin(), h_position.end(), g_position.begin());
 
     // call reduce_periodic kernel
     cuda::config config((npos + warp_size - 1) / warp_size, warp_size);
     BOOST_TEST_MESSAGE("kernel reduce_periodic: using " << config.blocks_per_grid() << " block with "
         << config.threads_per_block() << " threads"
     );
-    cuda::configure(config.grid, config.block);
-    box_kernel_wrapper<dimension, float_type>::kernel.reduce_periodic(g_position, g_reduced, length, npos);
+    box_kernel_wrapper<dimension, float_type>::kernel.reduce_periodic.configure(
+        config.grid, config.block);
+    box_kernel_wrapper<dimension, float_type>::kernel.reduce_periodic(
+        g_position, g_reduced, length, npos);
     cuda::thread::synchronize();
 
     // copy results back to host (but don't convert to vector_type)
-    cuda::copy(g_position, h_position);
-    cuda::copy(g_reduced, h_reduced);
+    cuda::copy(g_position.begin(), g_position.end(), h_position.begin());
+    cuda::copy(g_reduced.begin(), g_reduced.end(), h_reduced.begin());
 
     // perform periodic reduction and extend the reduced vector afterwards
     for (unsigned int i = 0; i < position.size(); ++i) {
@@ -220,10 +223,10 @@ BOOST_AUTO_TEST_CASE(box_periodic_host_3d) {
 }
 
 #ifdef HALMD_WITH_GPU
-BOOST_FIXTURE_TEST_CASE(box_periodic_gpu_2d, device) {
+BOOST_FIXTURE_TEST_CASE(box_periodic_gpu_2d, set_cuda_device) {
     periodic_gpu<2, float>();
 }
-BOOST_FIXTURE_TEST_CASE(box_periodic_gpu_3d, device) {
+BOOST_FIXTURE_TEST_CASE(box_periodic_gpu_3d, set_cuda_device) {
     periodic_gpu<3, float>();
 }
 #endif

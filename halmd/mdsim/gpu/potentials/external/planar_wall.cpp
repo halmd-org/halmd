@@ -1,6 +1,7 @@
 /*
  * Copyright © 2014-2015 Sutapa Roy
  * Copyright © 2014-2015 Felix Höfling
+ * Copyright © 2020      Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -61,6 +62,8 @@ planar_wall<dimension, float_type>::planar_wall(
   , smoothing_(smoothing)
   , g_param_geometry_(surface_normal_.size())
   , g_param_potential_(epsilon_.size1() * epsilon_.size2())
+  , t_param_geometry_(g_param_geometry_)
+  , t_param_potential_(g_param_potential_)
   , logger_(logger)
 {
     unsigned int nwall = epsilon_.size1();
@@ -83,7 +86,7 @@ planar_wall<dimension, float_type>::planar_wall(
     LOG("interaction strength: epsilon = " << epsilon_);
     LOG("interaction range: sigma = " << sigma_);
     LOG("wetting paramter: w = " << wetting_);
-    LOG("cutoff length for wall potential: rc = " << cutoff_);
+    LOG("cutoff distance for wall potential: rc = " << cutoff_);
     LOG("smoothing parameter for wall potential: h = " << smoothing_);
 
     // impose normalisation of surface normals
@@ -92,14 +95,14 @@ planar_wall<dimension, float_type>::planar_wall(
     }
 
     // merge geometry parameters in a single array and copy to device
-    cuda::host::vector<float4> param_geometry(g_param_geometry_.size());
+    cuda::memory::host::vector<float4> param_geometry(g_param_geometry_.size());
     for (size_t i = 0; i < nwall; ++i) {
             param_geometry[i] <<= tie(surface_normal_(i), offset_(i));
     }
-    cuda::copy(param_geometry, g_param_geometry_);
+    cuda::copy(param_geometry.begin(), param_geometry.end(), g_param_geometry_.begin());
 
     // merge potential parameters in a single array and copy to device
-    cuda::host::vector<float4> param_potential(g_param_potential_.size());
+    cuda::memory::host::vector<float4> param_potential(g_param_potential_.size());
     for (size_t i = 0; i < nwall; ++i) {
         for (size_t j = 0; j < nspecies; ++j) {
               using namespace planar_wall_kernel;
@@ -112,11 +115,11 @@ planar_wall<dimension, float_type>::planar_wall(
               param_potential[j * nwall + i] = p;
         }
     }
-    cuda::copy(param_potential, g_param_potential_);
+    cuda::copy(param_potential.begin(), param_potential.end(), g_param_potential_.begin());
 
     // copy CUDA symbols
-    cuda::copy(nwall, planar_wall_wrapper::nwall);
-    cuda::copy(smoothing_, planar_wall_wrapper::smoothing);
+    planar_wall_wrapper::nwall.set(nwall);
+    planar_wall_wrapper::smoothing.set(smoothing_);
 }
 
 template <int dimension, typename float_type>

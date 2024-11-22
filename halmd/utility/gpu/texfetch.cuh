@@ -25,26 +25,24 @@
 
 namespace halmd {
 
-template<typename float_type>
+template<typename T, typename float_type>
 struct texFetch;
 
-template<>
-struct texFetch<float>
+template<typename T>
+struct texFetch<T, float>
 {
-    template<typename T>
-    static __device__ T fetch(texture<T> tex, int i)
+    static __device__ T fetch(cudaTextureObject_t tex, int i)
     {
-        return tex1Dfetch(tex, i);
+        return tex1Dfetch<T>(tex, i);
     }
 };
 
-template<>
-struct texFetch<dsfloat>
+template<typename T>
+struct texFetch<T, dsfloat>
 {
-    template<typename T>
-    static __device__ tuple<T, T> fetch(texture<T> tex, int i)
+    static __device__ tuple<T, T> fetch(cudaTextureObject_t tex, int i)
     {
-        return make_tuple(tex1Dfetch(tex, i), tex1Dfetch(tex, i + GTDIM));
+        return make_tuple(tex1Dfetch<T>(tex, i), tex1Dfetch<T>(tex, i + GTDIM));
     }
 };
 

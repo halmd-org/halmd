@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011-2013 Felix Höfling
+ * Copyright © 2011-2023 Felix Höfling
  * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -24,8 +24,9 @@
 #define BOOST_TEST_MODULE ssf
 #include <boost/test/unit_test.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/numeric/ublas/banded.hpp>
+#include <complex>
 #include <cmath>
 #include <functional>
 #include <limits>
@@ -46,6 +47,7 @@
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/observables/gpu/density_mode.hpp>
 # include <halmd/utility/gpu/device.hpp>
+# include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
@@ -98,6 +100,8 @@ struct lattice
 template <typename modules_type>
 void lattice<modules_type>::test()
 {
+    const double epsilon = numeric_limits<typename vector_type::value_type>::epsilon();
+
     BOOST_TEST_MESSAGE("#particles: " << npart << ", #unit cells: " << ncell <<
                        ", lattice constant: " << lattice_constant);
 
@@ -165,14 +169,82 @@ void lattice<modules_type>::test()
 
     // explicitly trigger computation of density modes
     BOOST_TEST_MESSAGE("compute density modes");
-    density_mode->acquire();
+    auto density_mode_result = density_mode->acquire();
+    BOOST_CHECK(density_mode_result->size() == wavevector->value().size());
 
     // compute static structure factor
     BOOST_TEST_MESSAGE("compute static structure factor");
     ssf_result_type const& result = ssf->sample();
     BOOST_CHECK(result.size() == wavenumber.size());
 
-    // compare with expected result
+    // first, verify results for the density modes against analytical expressions
+    auto q_it = wavevector->value().begin();
+    typedef std::complex<double> complex_type;
+    for (auto const& rho : *density_mode_result) {
+
+        // form factor of fcc/hcp unit cell:
+        // atoms are at positions (0, 0), (½, ½) in two dimensions
+        // and at (0,0,0), (½, ½, 0) (½, 0, ½) (0, ½, ½) in three dimensions.
+        auto q_a = *q_it * lattice_constant;
+        complex_type form_factor = complex_type(
+            1 + cos((q_a[0] + q_a[1]) / 2)
+          , 0 - sin((q_a[0] + q_a[1]) / 2)
+        );
+        if (dimension == 3) {
+            form_factor += complex_type(
+                 cos((q_a[0] + q_a[2]) / 2) + cos((q_a[1] + q_a[2]) / 2)
+              , -sin((q_a[0] + q_a[2]) / 2) - sin((q_a[1] + q_a[2]) / 2)
+            );
+        }
+        // mdsim::positions::lattice adds a common offset of (¼, ¼, ¼)
+        double q_a_sum = std::accumulate(q_a.begin(), q_a.end(), 0.);
+        form_factor *= complex_type(cos(q_a_sum / 4), -sin(q_a_sum / 4));
+
+        // sum over unit cells:
+        // \sum_(nx,ny,…) exp(i (qx nx + qy ny + …) a_lat)
+        // factorise into Cartesian components and employ geometric series for
+        // 0 ≤ n[i] < ncell[i], which for q[i] ≠ 0 yields
+        // [1 - exp(i q[i] ncell[i] a_lat)] / [1 - exp(i q[i] a_lat)]
+        // and ncell[i] otherwise.
+        complex_type rho_ref = form_factor;
+        for (unsigned i = 0; i < dimension; ++i) {
+            // catch case exp(i q_i * a_lat) = 1
+            // test whether q_a[i] is an integer multiple of 2π
+            if (fabs(round(q_a[i] / (2 * M_PI)) - q_a[i] / (2 * M_PI)) < 1e-6) {
+                rho_ref *= ncell[i];
+            }
+            else {
+                // for the wavevectors chosen here, as multiples of 2π / L_box,
+                // the numerator vanishes since L_box = a_lat * ncell.
+                //
+                // complex_type denominator = 1. - std::polar(1., q_a[i]);
+                // assert(std::abs(denominator) > 1e-6);
+                // rho_ref *= (1. - std::polar(1., q_a[i] * ncell[i])) / denominator;
+                rho_ref *= 0;
+            }
+        }
+
+#ifndef NDEBUG
+        typedef fixed_vector<unsigned, dimension> index_type; // caveat: we assume q[i] ≥ 0
+        index_type hkl_ncell = static_cast<index_type>(
+            round(element_prod(q_a, static_cast<decltype(q_a)>(ncell) / (2 * M_PI)))
+        );
+
+        LOG_DEBUG("(hkl) × n_cell = (" << hkl_ncell << "), ρ_q = " << round(1e6 * rho) / 1e6 << ", " <<
+                  "ρ_q(ref) = " << round(1e6 * rho_ref.real()) / 1e6 << " + " << round(1e6 * rho_ref.imag()) / 1e6 << "j");
+#endif
+
+        // the prefactor of the tolerance appears to be pretty large, but
+        // adding up 'npart' cos/sin values to obtain zero seems to be
+        // numerically challenging
+        double tolerance = 50 * npart * epsilon;
+        BOOST_CHECK_SMALL(fabs(rho[0] - rho_ref.real()), tolerance);
+        BOOST_CHECK_SMALL(fabs(rho[1] - rho_ref.imag()), tolerance);
+
+        ++q_it;
+    }
+
+    // compare structure factor with the expected result
     auto shell = wavevector->shell().begin();
     for (unsigned i = 0; i < result.size(); ++i, ++shell) {
         // range with wavevectors of magnitude q
@@ -226,7 +298,6 @@ void lattice<modules_type>::test()
         // well, which are accounted for phenomenologically by the factors 2
         // and 4 below.
         //
-        const double epsilon = numeric_limits<typename vector_type::value_type>::epsilon();
         double tolerance = nq * epsilon;
 
         // check accumulator count, i.e., number of wavevectors
@@ -258,7 +329,7 @@ lattice<modules_type>::lattice()
 
     ncell = (dimension == 3) ? cell_vector{6, 12, 12} : cell_vector{4, 1024};
     if (dimension == 3 && gpu) {
-        ncell[0] *= 19; // prime
+        ncell[0] *= 11; // prime
     }
     nunit_cell = (dimension == 3) ? 4 : 2;  //< number of particles per unit cell
     npart = nunit_cell * accumulate(ncell.begin(), ncell.end(), 1u, multiplies<unsigned>());
@@ -318,18 +389,18 @@ struct gpu_modules
 };
 
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( ssf_gpu_dsfloat_2d, device ) {
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_dsfloat_2d, set_cuda_device ) {
     lattice<gpu_modules<2, dsfloat> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( ssf_gpu_dsfloat_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_dsfloat_3d, set_cuda_device ) {
     lattice<gpu_modules<3, dsfloat> >().test();
 }
 # endif
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( ssf_gpu_float_2d, device ) {
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_float_2d, set_cuda_device ) {
     lattice<gpu_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( ssf_gpu_float_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_float_3d, set_cuda_device ) {
     lattice<gpu_modules<3, float> >().test();
 }
 # endif

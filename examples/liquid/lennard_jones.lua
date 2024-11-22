@@ -1,6 +1,6 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2010-2015 Felix Höfling
+-- Copyright © 2010-2023 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -28,6 +28,11 @@ local dynamics = halmd.observables.dynamics
 local log = halmd.io.log
 local readers = halmd.io.readers
 local writers = halmd.io.writers
+local utility = halmd.utility
+
+-- search definition files in the top-level path relative to the simulation script
+package.path = utility.abspath("../?.lua;") .. package.path
+local definitions = { lennard_jones = require("definitions/lennard_jones") }
 
 --
 -- Setup and run simulation
@@ -69,21 +74,10 @@ function main(args)
     local phase_space = observables.phase_space({box = box, group = all_group})
     phase_space:set(sample)
 
-    -- define Lennard-Jones pair potential
-    -- use default parameters ε=1 and σ=1 for a single species
-    local potential = mdsim.potentials.pair.lennard_jones()
-    -- apply interaction cutoff
-    if args.cutoff > 0 then
-        -- use smooth truncation
-        if args.smoothing > 0 then
-            potential = potential:truncate({"smooth_r4", cutoff = args.cutoff, h = args.smoothing})
-        else
-            potential = potential:truncate({cutoff = args.cutoff})
-        end
-    end
-    -- register computation of pair forces
-    mdsim.forces.pair({
-        box = box, particle = particle, potential = potential
+    -- define Lennard-Jones pair potential (with parameters ε=1 and σ=1 for a single species)
+    -- and register computation of pair forces
+    definitions.lennard_jones.create_pair_force({
+        box = box, particle = particle, cutoff = args.cutoff, smoothing = args.smoothing
     })
 
     -- add velocity-Verlet integrator
@@ -200,9 +194,7 @@ function main(args)
     observables.sampler:sample()
 
     -- estimate remaining runtime
-    observables.runtime_estimate({
-        steps = steps, first = 10, interval = 900, sample = 60
-    })
+    observables.runtime_estimate({steps = steps})
 
     -- run simulation
     observables.sampler:run(steps)

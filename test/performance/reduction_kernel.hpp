@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2021 Jaslo Ziska
+ * Copyright © 2023 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -18,31 +19,22 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_ALGORITHM_GPU_BITS_CUH
-#define HALMD_ALGORITHM_GPU_BITS_CUH
+#ifndef HALMD_TEST_PERFORMANCE_REDUCTION_KERNEL_HPP
+#define HALMD_TEST_PERFORMANCE_REDUCTION_KERNEL_HPP
 
-//
-// Bits and pieces used in GPU algorithms
-//
+#include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/numeric/mp/dsfloat.hpp>
 
-namespace halmd {
-namespace algorithm {
-namespace gpu {
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
-/**
- * swap arguments
- */
+static const size_t NTHREADS = 224; // NTHREADS / 32 is not a power of two
+static const size_t NREDUCES = 10000;
+
 template <typename T>
-__device__ __host__ void swap(T& a, T& b)
+struct reduce_kernel
 {
-    T c = b;
-    b = a;
-    a = c;
-}
+    cuda::function<void (T const*, T*)> sum;
+    static reduce_kernel kernel;
+};
 
-
-} // namespace algorithm
-} // namespace gpu
-} // namespace halmd
-
-#endif /* ! HALMD_ALGORITHM_GPU_BITS_CUH */
+#endif // ! HALMD_TEST_PERFORMANCE_REDUCTION_KERNEL_HPP

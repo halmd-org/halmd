@@ -41,6 +41,7 @@
 # include <halmd/mdsim/gpu/potentials/pair/truncations/shifted.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
+# include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 #include <test/tools/dsfloat.hpp>
@@ -273,10 +274,12 @@ void power_law_hard_core<float_type>::test()
         vector_type f = f_list[i];
 
         // reference values from host module
-        float_type fval, en_pot_;
-        std::tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
-        // the GPU force module stores only a fraction of these values
-        en_pot_ /= 2;
+        float_type fval(0), en_pot_(0);
+        if (host_potential->within_range(inner_prod(r, r), type1, type2)) {
+            std::tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
+            // the GPU force module stores only a fraction of these values
+            en_pot_ /= 2;
+        }
 
         // estimated upper bound on floating-point error for (r - r_core)^n
         float_type const eps = numeric_limits<float>::epsilon();
@@ -348,12 +351,12 @@ power_law_hard_core<float_type>::power_law_hard_core()
 }
 
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( power_law_hard_core_gpu_dsfloat, device ) {
+BOOST_FIXTURE_TEST_CASE( power_law_hard_core_gpu_dsfloat, set_cuda_device ) {
     power_law_hard_core<dsfloat>().test();
 }
 # endif
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( power_law_hard_core_gpu_float, device ) {
+BOOST_FIXTURE_TEST_CASE( power_law_hard_core_gpu_float, set_cuda_device ) {
     power_law_hard_core<float>().test();
 }
 # endif

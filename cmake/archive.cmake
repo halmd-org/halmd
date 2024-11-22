@@ -32,6 +32,13 @@ add_custom_command(OUTPUT ${HALMD_ARCHIVE_INTERMEDIATE_OUTPUT}
     --output=${CMAKE_CURRENT_BINARY_DIR}/${HALMD_ARCHIVE_INTERMEDIATE_OUTPUT}
     --prefix=${HALMD_ARCHIVE_PREFIX}/
     ${HALMD_GIT_COMMIT_TAG}
+  COMMAND tar
+    --append
+    --file=${CMAKE_CURRENT_BINARY_DIR}/${HALMD_ARCHIVE_INTERMEDIATE_OUTPUT}
+    --directory ${CMAKE_BINARY_DIR}
+    --owner=root
+    --group=root
+    "cmake/version.cmake"
   DEPENDS ${CMAKE_BINARY_DIR}/cmake/version.cmake
 )
 
@@ -70,33 +77,34 @@ foreach(lib ${HALMD_ARCHIVE_LIBS})
   )
 endforeach()
 
-set(HALMD_ARCHIVE_INTERMEDIATE_INPUT ${HALMD_ARCHIVE_INTERMEDIATE_OUTPUT})
-set(HALMD_ARCHIVE_INTERMEDIATE_OUTPUT ${HALMD_ARCHIVE_INTERMEDIATE_INPUT}+doc)
+if (HALMD_GENERATE_DOC)
+    set(HALMD_ARCHIVE_INTERMEDIATE_INPUT ${HALMD_ARCHIVE_INTERMEDIATE_OUTPUT})
+    set(HALMD_ARCHIVE_INTERMEDIATE_OUTPUT ${HALMD_ARCHIVE_INTERMEDIATE_INPUT}+doc)
 
-add_custom_command(OUTPUT ${HALMD_ARCHIVE_INTERMEDIATE_OUTPUT}
-  COMMAND cmake -E rename
-    ${HALMD_ARCHIVE_INTERMEDIATE_INPUT}
-    ${HALMD_ARCHIVE_INTERMEDIATE_OUTPUT}
-  COMMAND tar
-    --append
-    --file=${HALMD_ARCHIVE_INTERMEDIATE_OUTPUT}
-    --owner=root
-    --group=root
-    --exclude=.doctrees
-    --exclude=.buildinfo
-    --transform="s,^doc/html/_sources,doc,"
-    --transform="s,^doc/pdf,doc,"
-    --transform="s,^,${HALMD_ARCHIVE_PREFIX}/,"
-    "cmake/version.cmake"
-    "doc/html"
-    "doc/man/${PROGRAM_NAME}.1"
-    "doc/pdf/${PROGRAM_NAME}.pdf"
-  DEPENDS
-    ${HALMD_ARCHIVE_INTERMEDIATE_INPUT}
-    halmd_doc_html
-    halmd_doc_man
-    halmd_doc_pdf
-)
+    add_custom_command(OUTPUT ${HALMD_ARCHIVE_INTERMEDIATE_OUTPUT}
+      COMMAND cmake -E rename
+        ${HALMD_ARCHIVE_INTERMEDIATE_INPUT}
+        ${HALMD_ARCHIVE_INTERMEDIATE_OUTPUT}
+      COMMAND tar
+        --append
+        --file=${HALMD_ARCHIVE_INTERMEDIATE_OUTPUT}
+        --owner=root
+        --group=root
+        --exclude=.doctrees
+        --exclude=.buildinfo
+        --transform="s,^doc/html/_sources,doc,"
+        --transform="s,^doc/pdf,doc,"
+        --transform="s,^,${HALMD_ARCHIVE_PREFIX}/,"
+        "doc/html"
+        "doc/man/${PROGRAM_NAME}.1"
+        "doc/pdf/${PROGRAM_NAME}.pdf"
+      DEPENDS
+        ${HALMD_ARCHIVE_INTERMEDIATE_INPUT}
+        halmd_doc_html
+        halmd_doc_man
+        halmd_doc_pdf
+    )
+endif()
 
 add_custom_command(OUTPUT ${HALMD_ARCHIVE_OUTPUT}
   COMMAND cmake -E rename

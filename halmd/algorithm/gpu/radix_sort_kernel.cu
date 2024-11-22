@@ -234,7 +234,7 @@ __global__ void permute_key_value(
 /**
  * device function wrappers
  */
-radix_sort_wrapper const radix_sort_wrapper::kernel = {
+radix_sort_wrapper radix_sort_wrapper::kernel = {
     radix_sort_kernel::histogram_key
   , radix_sort_kernel::permute_key
   , radix_sort_kernel::permute_key_value

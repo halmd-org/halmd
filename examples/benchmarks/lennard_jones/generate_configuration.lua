@@ -62,7 +62,7 @@ function main(args)
     -- define velocity-Verlet integrator with Andersen thermostat
     local integrator = mdsim.integrators.verlet_nvt_andersen({
         box = box, particle = particle
-      , timestep = timestep, temperature = temperature, rate = 0.1
+      , timestep = timestep, temperature = temperature, rate = 2
     })
 
     -- H5MD file writer
@@ -78,7 +78,7 @@ function main(args)
     })
 
     -- estimate remaining runtime
-    observables.runtime_estimate({steps = steps, first = 10, interval = 900, sample = 60})
+    observables.runtime_estimate({steps = steps})
 
     -- sample initial state
     observables.sampler:sample()

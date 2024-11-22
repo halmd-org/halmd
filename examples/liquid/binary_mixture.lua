@@ -1,6 +1,6 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2011-2014 Felix Höfling
+-- Copyright © 2011-2023 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -28,6 +28,10 @@ local dynamics = halmd.observables.dynamics
 local readers = halmd.io.readers
 local writers = halmd.io.writers
 local utility = halmd.utility
+
+-- search definition files in the top-level path relative to the simulation script
+package.path = utility.abspath("../?.lua;") .. package.path
+local definitions = { kob_andersen = require("definitions/kob_andersen") }
 
 --
 -- Setup and run simulation
@@ -72,30 +76,15 @@ function main(args)
     -- create system state
     local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = nspecies})
 
-    -- truncated Lennard-Jones potential
-    local potential = mdsim.potentials.pair.lennard_jones({
-        epsilon = {
-            {1  , 1.5} -- AA, AB
-          , {1.5, 0.5} -- BA, BB
-        }
-      , sigma = {
-            {1  , 0.8 } -- AA, AB
-          , {0.8, 0.88} -- BA, BB
-        }
+    -- define pair potential of Kob-Andersen binary mixture
+    -- and register computation of pair forces
+    definitions.kob_andersen.create_pair_force({
+        box = box, particle = particle
     })
-    -- smoothing at potential cutoff
-    potential = potential:truncate({"smooth_r4", cutoff = 2.5, h = 0.005})
-    -- compute forces
-    local force = mdsim.forces.pair({
-        box = box
-      , particle = particle
-      , potential = potential
-    })
+
     -- add velocity-Verlet integrator
     local integrator = mdsim.integrators.verlet({
-        box = box
-      , particle = particle
-      , timestep = args.timestep
+        box = box, particle = particle, timestep = args.timestep
     })
 
     -- convert integration time to number of steps
@@ -219,9 +208,7 @@ function main(args)
     observables.sampler:sample()
 
     -- estimate remaining runtime
-    local runtime = observables.runtime_estimate({
-        steps = steps, first = 10, interval = 900, sample = 60
-    })
+    local runtime = observables.runtime_estimate({steps = steps})
 
     -- run simulation
     observables.sampler:run(steps)

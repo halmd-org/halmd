@@ -68,7 +68,7 @@ struct radix_sort_wrapper
       , unsigned int*
     )> permute_key_value;
 
-    static radix_sort_wrapper const kernel;
+    static radix_sort_wrapper kernel;
 };
 
 } // namespace gpu

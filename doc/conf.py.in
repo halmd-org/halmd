@@ -178,6 +178,9 @@ htmlhelp_basename = 'ddoc'
 
 # -- Options for LaTeX output --------------------------------------------------
 
+# use LuaLaTeX to produce PDF output
+latex_engine = 'lualatex'
+
 latex_elements = {
 # The paper size ('letterpaper' or 'a4paper').
 'papersize': 'a4paper',
@@ -270,24 +273,5 @@ man_pages = [
 # -- Global Sphinx setup -------------------------------------------------------
 
 def setup(app):
-    # Translate UTF-8 characters not supported by LaTeX
-    from sphinx.util.texescape import tex_replacements
-    tex_replacements.append(('≥', r'\ensuremath{\ge}'))
-    tex_replacements.append(('≤', r'\ensuremath{\le}'))
-    tex_replacements.append(('⁰', r'\ensuremath{^0}'))
-    tex_replacements.append(('¹', r'\ensuremath{^1}'))
-    tex_replacements.append(('²', r'\ensuremath{^2}'))
-    tex_replacements.append(('³', r'\ensuremath{^3}'))
-    tex_replacements.append(('⁴', r'\ensuremath{^4}'))
-    tex_replacements.append(('⁵', r'\ensuremath{^5}'))
-    tex_replacements.append(('⁶', r'\ensuremath{^6}'))
-    tex_replacements.append(('⁷', r'\ensuremath{^7}'))
-    tex_replacements.append(('⁸', r'\ensuremath{^8}'))
-    tex_replacements.append(('⁹', r'\ensuremath{^9}'))
-    tex_replacements.append(('⁻', r'\ensuremath{^-}'))
-    tex_replacements.append(('⁺', r'\ensuremath{^+}'))
-    tex_replacements.append(('×', r'\ensuremath{\times}'))
-    tex_replacements.append(('⌊', r'\ensuremath{\lfloor}'))
-    tex_replacements.append(('⌋', r'\ensuremath{\rfloor}'))
-    tex_replacements.append(('√', r'\ensuremath{\sqrt{}}'))
-    tex_replacements.append(('Θ', r'\ensuremath{\theta}'))
+    pass
+

@@ -3,6 +3,86 @@
 Changelog
 *********
 
+Version 1.1.0
+=============
+
+**Breaking changes**
+
+*These changes do not break simulation scripts, they affect only the build process*
+
+* increase minimal required versions of the CUDA SDK to 9.0, of GCC to 5.0, and
+  of the Boost C++ library to 1.61, require a C++14 compiler *(Jaslo Ziska)*
+
+* remove unused CMake switches and parameters for build variants: FORCE_DSFUN,
+  HILBERT_ALT_3D, DEVICE_SCALE *(Jaslo Ziska)*
+
+**New features**
+
+* examples: add a definition file and a user script for the simulation of
+  crystal grains of fcc metals at low temperatures. The simulation uses a
+  parametrisation of a modified Morse potential due to MacDonald and MacDonald
+  (1981) *(Felix Höfling)*
+
+* add a :mod:`custom <halmd.mdsim.potentials.pair.custom>` pair potential as a
+  template to be easily adjusted for user-specific pair potentials. *(Felix Höfling)*
+
+* add :mod:`cylinder <halmd.mdsim.geometries.cylinder>` geometry as a predicate
+  for the particle group :mod:`region <halmd.mdsim.particle_groups.region>`.
+  This enables the selection of particles inside or outside of a cylindrical
+  domain of the simulation box. *(Felix Höfling)*
+
+* Lua interface: add module :mod:`constants <halmd.utility.constants>` to
+  provide some natural constants and unit conversion factors *(Felix Höfling)*
+
+* Lua interface: add :mod:`helper functions <halmd.utility>` ``concat(t1,t2)``
+  and ``repeat_element(x, n)`` and some BLAS level 1 operations on :mod:`numeric
+  Lua tables <halmd.numeric>` *(Viktor Skoblin)*
+
+* new logging level [INFO], which is between the standard level (MESSAGE) and
+  [DEBUG] and which is also contained in release builds. *(Felix Höfling)*
+
+**Improvements**
+
+* include the :mod:`Mie <halmd.mdsim.potentials.pair.mie>` pair potential as a
+  renamed version of the deprecated :mod:`modified_lennard_jones
+  <halmd.mdsim.potentials.pair.modified_lennard_jones>` potential. A
+  transitional module is kept for backwards compatibility. *(Felix Höfling)*
+
+* generalise the :mod:`Morse <halmd.mdsim.potential.pair.morse` pair potential
+  to include a distortion parameter for the simulation of fcc metals *(Felix Höfling)*
+
+* new force algorithm to speed up calculation of truncated pair forces in case
+  of small particle numbers. In such situations, GPU utilisation is increased
+  by unrolling the loop over neighbour lists and processing it in parallel
+  within a thread warp.  The algorithm is selected upon construction of the
+  :mod:`neighbour <halmd.mdsim.neighbour>` module *(Jaslo Ziska)*
+
+* :ref:`benchmark <benchmarks>` of the Kob-Andersen mixture: add a version for
+  a tiny system, decrease skin width and increase neighbour list occupancy *(Felix Höfling)*
+
+* example scripts for liquids: factor out definition of interactions to make
+  them re-usable in different simulation scripts *(Felix Höfling)*
+
+* more verbose logging output on potential parameters, units and truncation
+  schemes. *(Felix Höfling)*
+
+* add default output parameters to :mod:`runtime estimator
+  <halmd.observables.runtime_estimate>` in order to simplify user scripts
+  *(Felix Höfling)*
+
+* support CUDA SDK 11.2 and Nvidida GPUs Tesla A40 and A100 *(Jaslo Ziska)*
+
+**Internal changes**
+
+* algorithm/gpu/reduce: new CUDA kernel based on warp shuffle intrinsics *(Jaslo Ziska)*
+
+* make C++14 the new language standard *(Jaslo Ziska)*
+
+* update shipped CUB library to version 1.9.10-1  *(Jaslo Ziska)*
+
+* increase default GPU target architecture to compute capability 6.1 *(Felix Höfling)*
+
+
 Version 1.0.2
 =============
 
@@ -36,9 +116,12 @@ Version 1.0.1
 **Improvements**
 
 * documentation: minor amendments and corrections *(Felix Höfling)*
+
 * some improvements to example scripts *(Felix Höfling)*
+
 * :ref:`benchmarks <benchmarks>`: optimise neighbour list parameters, add
   results for RTX 2080 Super *(Felix Höfling)*
+
 * improve stability of build process *(Jaslo Ziska, Felix Höfling)*
 
 
@@ -102,8 +185,8 @@ Version 1.0.0
 
 **Improvements**
 
-* usage documentation: add :ref:`tutorial <tutorial>` on diffusion in a simple
-  liquid *(Jake Atwell)*
+* usage documentation: add :ref:`tutorial <tutorial-diffusion>` on diffusion in
+  a simple liquid *(Jake Atwell)*
 
 * examples: simplify scripts for basic simulations of a one-component
   Lennard-Jones fluid *(Felix Höfling)*

@@ -21,12 +21,6 @@
 #ifndef HALMD_NUMERIC_MP_DSFLOAT_CUH
 #define HALMD_NUMERIC_MP_DSFLOAT_CUH
 
-#include <boost/type_traits/is_arithmetic.hpp>
-#include <boost/type_traits/is_integral.hpp>
-#include <boost/type_traits/is_floating_point.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
-
 #include <halmd/numeric/mp/dsfun.hpp>
 #include <halmd/utility/tuple.hpp>
 #ifdef HALMD_WITH_GPU
@@ -36,6 +30,7 @@
 #ifndef __CUDACC__
 # include <ostream>
 #endif
+#include <type_traits>
 
 namespace halmd {
 namespace detail {
@@ -50,18 +45,18 @@ struct dsfloat;
 } // namespace detail
 } // namespace halmd
 
-namespace boost {
+namespace std {
 
 //
 // In order to make dsfloat completely act like a number, it is necessary
 // to specify it as floating point number by the means of
-// boost::is_floating_point<>. Therefore, add a specialization for
-// boost::is_floating_point<dsfloat>.
+// std::is_floating_point<>. Therefore, add a specialization for
+// std::is_floating_point<dsfloat>.
 //
 template<>
-struct is_floating_point<halmd::detail::numeric::mp::dsfloat> : public boost::true_type {};
+struct is_floating_point<halmd::detail::numeric::mp::dsfloat> : public std::true_type {};
 
-} // namespace boost
+} // namespace std
 
 namespace halmd {
 namespace detail {
@@ -84,21 +79,21 @@ struct dsfloat
 
     template <typename T>
     HALMD_GPU_ENABLED dsfloat(T a0,
-      typename boost::enable_if<boost::is_same<T, float> >::type* dummy = 0)
+      typename std::enable_if<std::is_same<T, float>::value>::type* dummy = 0)
     {
         dsfeq(hi, lo, a0);
     }
 
     template <typename T>
     HALMD_GPU_ENABLED dsfloat(T a0,
-      typename boost::enable_if<boost::is_integral<T> >::type* dummy = 0)
+      typename std::enable_if<std::is_integral<T>::value>::type* dummy = 0)
     {
         dsfeq(hi, lo, a0);
     }
 
     template <typename T>
     HALMD_GPU_ENABLED dsfloat(T a,
-      typename boost::enable_if<boost::is_same<T, double> >::type* dummy = 0)
+      typename std::enable_if<std::is_same<T, double>::value>::type* dummy = 0)
     {
         dsdeq(hi, lo, a);
     }
@@ -135,6 +130,9 @@ struct dsfloat
     }
     HALMD_GPU_ENABLED bool operator==(dsfloat const& rhs) const {
         return (hi == rhs.hi) && (lo == rhs.lo);
+    }
+    HALMD_GPU_ENABLED bool operator!=(dsfloat const& rhs) const {
+        return !operator==(rhs);
     }
 };
 
@@ -202,14 +200,14 @@ inline HALMD_GPU_ENABLED dsfloat operator+(dsfloat v, dsfloat const& w)
 }
 
 template <typename T>
-inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<std::is_arithmetic<T>::value, dsfloat>::type
 operator+(T const& v, dsfloat const& w)
 {
     return static_cast<dsfloat>(v) + w;
 }
 
 template <typename T>
-inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<std::is_arithmetic<T>::value, dsfloat>::type
 operator+(dsfloat const& v, T const& w)
 {
     return v + static_cast<dsfloat>(w);
@@ -225,14 +223,14 @@ inline HALMD_GPU_ENABLED dsfloat operator-(dsfloat v, dsfloat const& w)
 }
 
 template <typename T>
-inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<std::is_arithmetic<T>::value, dsfloat>::type
 operator-(T const& v, dsfloat const& w)
 {
     return static_cast<dsfloat>(v) - w;
 }
 
 template <typename T>
-inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<std::is_arithmetic<T>::value, dsfloat>::type
 operator-(dsfloat const& v, T const& w)
 {
     return v - static_cast<dsfloat>(w);
@@ -248,14 +246,14 @@ inline HALMD_GPU_ENABLED dsfloat operator*(dsfloat v, dsfloat const& w)
 }
 
 template <typename T>
-inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<std::is_arithmetic<T>::value, dsfloat>::type
 operator*(T const& v, dsfloat const& w)
 {
     return static_cast<dsfloat>(v) * w;
 }
 
 template <typename T>
-inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<std::is_arithmetic<T>::value, dsfloat>::type
 operator*(dsfloat const& v, T const& w)
 {
     return v * static_cast<dsfloat>(w);
@@ -271,14 +269,14 @@ inline HALMD_GPU_ENABLED dsfloat operator/(dsfloat v, dsfloat const& w)
  * Division
  */
 template <typename T>
-inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<std::is_arithmetic<T>::value, dsfloat>::type
 operator/(T const& v, dsfloat const& w)
 {
     return static_cast<dsfloat>(v) / w;
 }
 
 template <typename T>
-inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename std::enable_if<std::is_arithmetic<T>::value, dsfloat>::type
 operator/(dsfloat const& v, T const& w)
 {
     return v / static_cast<dsfloat>(w);

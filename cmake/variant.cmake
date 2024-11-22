@@ -1,22 +1,5 @@
-set(HALMD_VARIANT_HILBERT_ALT_3D FALSE CACHE BOOL
-  "Use alternative 3D Hilbert curve vertex rules")
-if(HALMD_VARIANT_HILBERT_ALT_3D)
-  add_definitions(-DUSE_HILBERT_ALT_3D)
-endif(HALMD_VARIANT_HILBERT_ALT_3D)
-
 if(HALMD_WITH_GPU)
   add_definitions(-DHALMD_WITH_GPU)
-
-  set(HALMD_VARIANT_FORCE_DSFUN TRUE CACHE BOOL
-    "Use double-single precision functions in cell summation")
-  if(HALMD_VARIANT_FORCE_DSFUN)
-    add_definitions(-DUSE_FORCE_DSFUN)
-  endif(HALMD_VARIANT_FORCE_DSFUN)
-
-  set(HALMD_DEVICE_SCALE "3" CACHE STRING
-    "Scale/size of the CUDA device (try to reduce in case of insufficient resources)")
-  add_definitions(-DDEVICE_SCALE=${HALMD_DEVICE_SCALE})
-
 endif(HALMD_WITH_GPU)
 
 #
@@ -71,4 +54,3 @@ endif()
 
 message(STATUS "Floating-point precision of host backend: ${HALMD_HOST_PRECISION}")
 message(STATUS "Default floating-point precision of GPU backend: ${HALMD_DEFAULT_GPU_PRECISION}")
-

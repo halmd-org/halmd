@@ -24,8 +24,6 @@
 #include <halmd/config.hpp>
 
 #include <algorithm>
-#include <boost/type_traits/is_convertible.hpp>
-#include <boost/utility/enable_if.hpp>
 #include <cassert>
 #include <initializer_list>
 #include <type_traits>
@@ -76,7 +74,7 @@ struct fixed_vector
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, N> const& v,
-      typename boost::enable_if<boost::is_convertible<U, T> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, T>::value>::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);

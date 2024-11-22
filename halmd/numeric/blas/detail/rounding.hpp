@@ -23,8 +23,7 @@
 
 #include <halmd/config.hpp>
 
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
+#include <type_traits>
 #ifndef __CUDACC__
 # include <cmath>
 #endif
@@ -46,7 +45,7 @@ namespace detail {
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_same<T, double>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_same<T, double>::value, fixed_vector<T, N>>::type
 fdivide(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -57,7 +56,7 @@ fdivide(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
 
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_same<T, float>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_same<T, float>::value, fixed_vector<T, N>>::type
 fdivide(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -71,7 +70,7 @@ fdivide(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::is_same<T, float>, fixed_vector<T, N> >::type
+typename std::enable_if<std::is_same<T, float>::value, fixed_vector<T, N>>::type
 saturate(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {

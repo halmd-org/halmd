@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2019  Felix Höfling
+ * Copyright © 2021       Jaslo Ziska
  * Copyright © 2015       Nicolas Höft
  * Copyright © 2008-2011  Peter Colberg
  *
@@ -20,76 +21,18 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/utility/enable_if.hpp>
-
+#include <halmd/algorithm/gpu/reduction.cuh>
+#include <halmd/algorithm/gpu/transform.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
-#define MAX_BLOCK_SIZE 1024
+using namespace halmd::algorithm::gpu;
 
 namespace halmd {
 namespace observables {
 namespace gpu {
 namespace density_mode_kernel {
-
-// pass wavevectors via texture
-template<int dimension>
-struct wavevector
-{
-    // instantiate a separate texture for each aligned vector type
-    typedef texture<typename density_mode_wrapper<dimension>::coalesced_vector_type> type;
-    static type tex_;
-};
-// instantiate static members
-template<int dimension> wavevector<dimension>::type wavevector<dimension>::tex_;
-
-// recursive reduction function,
-// terminate for threads=0
-template <unsigned threads, typename T>
-__device__ typename boost::disable_if_c<threads>::type
-sum_reduce(T*, T*) {}
-
-// reduce two array simultaneously by summation,
-// size of a,b must be at least 2 * threads
-template <unsigned threads, typename T>
-__device__ typename boost::enable_if_c<threads>::type
-sum_reduce(T* a, T* b)
-{
-    if (TID < threads) {
-        a[TID] += a[TID + threads];
-        b[TID] += b[TID + threads];
-    }
-
-    if (threads >= warpSize) {
-        __syncthreads();
-    }
-    else {
-        // on hardware of compute capability ≥ 7.0 (Volta),
-        // warps are no longer guaranteed to be executed in lock-step
-#if CUDART_VERSION >= 9000
-        // select warp lanes with TID < threads,
-        // fix compilation of operator<< for large values of 'threads'
-        unsigned mask = (1U << (threads & (warpSize - 1))) - 1;
-        __syncwarp(mask);
-#else
-        __syncthreads();    // only needed if the _hardware_ is Volta or later
-#endif
-    }
-
-    // recursion ends by calling sum_reduce<0>
-    sum_reduce<threads / 2>(a, b);
-}
-
-
-/* FIXME
-typedef void (*sum_reduce_type)(float*, float*);
-__device__ sum_reduce_type sum_reduce_select[] = {
-    &sum_reduce<0>, &sum_reduce<1>, &sum_reduce<2>, &sum_reduce<4>,
-    &sum_reduce<8>, &sum_reduce<16>, &sum_reduce<32>, &sum_reduce<64>,
-    &sum_reduce<128>, &sum_reduce<256>
-};
-*/
 
 // FIXME provide complex data type for CUDA
 
@@ -99,49 +42,42 @@ __device__ sum_reduce_type sum_reduce_select[] = {
  *
  *  @returns block sums of sin(q·r), cos(q·r) for each wavevector
  */
-template <typename vector_type, typename coalesced_vector_type>
+template <int dimension>
 __global__ void compute(
-    coalesced_vector_type const* g_r
+    cudaTextureObject_t wavevector
+  , float4 const* g_r
   , unsigned int const* g_idx, int npart
-  , float* g_sin_block, float* g_cos_block, int nq
+  , float2* g_rho_block, int nq
 )
 {
-    enum { dimension = vector_type::static_size };
+    typedef fixed_vector<float, 2> complex_type;    // replacement for std::complex
+    typedef fixed_vector<float, dimension> vector_type;
+    typedef typename density_mode_wrapper<dimension>::coalesced_vector_type coalesced_vector_type;
 
-    __shared__ float sin_[MAX_BLOCK_SIZE];
-    __shared__ float cos_[MAX_BLOCK_SIZE];
+    complex_type rho_;
 
     // outer loop over wavevectors
     for (int i=0; i < nq; i++) {
-        vector_type q = tex1Dfetch(wavevector<dimension>::tex_, i);
-        sin_[TID] = 0;
-        cos_[TID] = 0;
+        vector_type q = tex1Dfetch<coalesced_vector_type>(wavevector, i);
+        rho_ = 0;
         for (int j = GTID; j < npart; j += GTDIM) {
             // retrieve particle position via index array
             unsigned int idx = g_idx[j];
             vector_type r = g_r[idx];
 
             float q_r = inner_prod(q, r);
-            sin_[TID] += sin(q_r);
-            cos_[TID] += cos(q_r);
+            // FIXME for huge simulation boxes, it may be necessary to use the
+            // double precision versions cos() and sin() here
+            rho_[0] += cosf(q_r);
+            rho_[1] += sinf(q_r);
         }
-        __syncthreads();
 
         // accumulate results within block
-        if (TDIM == 1024) sum_reduce<512>(sin_, cos_);
-        else if (TDIM == 512) sum_reduce<256>(sin_, cos_);
-        else if (TDIM == 256) sum_reduce<128>(sin_, cos_);
-        else if (TDIM == 128) sum_reduce<64>(sin_, cos_);
-        else if (TDIM == 64) sum_reduce<32>(sin_, cos_);
-        else if (TDIM == 32) sum_reduce<16>(sin_, cos_);
-        else if (TDIM == 16) sum_reduce<8>(sin_, cos_);
-        else if (TDIM == 8) sum_reduce<4>(sin_, cos_);
+        reduce<sum_>(rho_);
 
         if (TID == 0) {
-            g_sin_block[i * BDIM + BID] = sin_[0];
-            g_cos_block[i * BDIM + BID] = cos_[0];
+            g_rho_block[i * BDIM + BID] = rho_;
         }
-        __syncthreads();    // FIXME needed here? would __syncwarp() be sufficient?
     }
 }
 
@@ -150,49 +86,32 @@ __global__ void compute(
  *
  *  @param bdim  number of blocks (grid size) in the preceding call to compute()
  */
-__global__ void finalise(
-    float const* g_sin_block, float const* g_cos_block
-  , float* g_sin, float* g_cos
-  , int nq, int bdim)
+__global__ void finalise(float2 const* g_rho_block, float2* g_rho, int nq, int bdim)
 {
-    __shared__ float s_sum[MAX_BLOCK_SIZE];
-    __shared__ float c_sum[MAX_BLOCK_SIZE];
+    typedef fixed_vector<float, 2> complex_type;    // replacement for std::complex
 
     // outer loop over wavevectors, distributed over block grid
     for (int i = BID; i < nq; i += BDIM) {
-        s_sum[TID] = 0;
-        c_sum[TID] = 0;
+        complex_type rho_sum = 0;
         for (int j = TID; j < bdim; j += TDIM) {
-            s_sum[TID] += g_sin_block[i * bdim + j];
-            c_sum[TID] += g_cos_block[i * bdim + j];
+            rho_sum += static_cast<complex_type>(g_rho_block[i * bdim + j]);
         }
-        __syncthreads();
 
         // accumulate results within block
-        if (TDIM == 1024) sum_reduce<512>(s_sum, c_sum);
-        else if (TDIM == 512) sum_reduce<256>(s_sum, c_sum);
-        else if (TDIM == 256) sum_reduce<128>(s_sum, c_sum);
-        else if (TDIM == 128) sum_reduce<64>(s_sum, c_sum);
-        else if (TDIM == 64) sum_reduce<32>(s_sum, c_sum);
-        else if (TDIM == 32) sum_reduce<16>(s_sum, c_sum);
-        else if (TDIM == 16) sum_reduce<8>(s_sum, c_sum);
-        else if (TDIM == 8) sum_reduce<4>(s_sum, c_sum);
+        reduce<sum_>(rho_sum);
 
         // store result in global memory
         if (TID == 0) {
-            g_sin[i] = s_sum[0];
-            g_cos[i] = c_sum[0];
+            g_rho[i] = rho_sum;
         }
-        __syncthreads();    // FIXME needed here?
     }
 }
 
 } // namespace density_mode_kernel
 
 template <int dimension>
-density_mode_wrapper<dimension> const density_mode_wrapper<dimension>::kernel = {
-    density_mode_kernel::wavevector<dimension>::tex_
-  , density_mode_kernel::compute<fixed_vector<float, dimension> >
+density_mode_wrapper<dimension> density_mode_wrapper<dimension>::kernel = {
+    density_mode_kernel::compute<dimension>
   , density_mode_kernel::finalise
 };
 

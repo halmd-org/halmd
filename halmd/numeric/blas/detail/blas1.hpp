@@ -23,9 +23,6 @@
 #define HALMD_NUMERIC_BLAS_DETAIL_BLAS1_HPP
 
 #include <type_traits>
-#include <boost/mpl/int.hpp>
-#include <boost/mpl/greater.hpp>
-#include <boost/utility/enable_if.hpp>
 
 #include <halmd/config.hpp>
 #include <halmd/numeric/blas/detail/vector.hpp>
@@ -43,14 +40,14 @@ namespace detail {
  * overload abs() for unsigned types
  */
 template <typename T>
-typename boost::enable_if<typename std::is_signed<T>::type, T>::type abs(T const& x)
+typename std::enable_if<std::is_signed<T>::value, T>::type abs(T const& x)
 {
     HALMD_GPU_USING(::abs, std::abs);
     return abs(x);
 }
 
 template <typename T>
-typename boost::disable_if<typename std::is_signed<T>::type, T>::type abs(T const& x)
+typename std::enable_if<!std::is_signed<T>::value, T>::type abs(T const& x)
 {
     return x;
 }
@@ -60,7 +57,7 @@ typename boost::disable_if<typename std::is_signed<T>::type, T>::type abs(T cons
  */
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
+typename std::enable_if<(U <= L), T>::type
 norm_1(fixed_vector<T, N> const& v)
 {
     return detail::abs(v[L]);
@@ -68,7 +65,7 @@ norm_1(fixed_vector<T, N> const& v)
 
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
+typename std::enable_if<(U > L), T>::type
 norm_1(fixed_vector<T, N> const& v)
 {
     return norm_1<T, N, L, (L + U) / 2>(v) + norm_1<T, N, (L + U) / 2 + 1, U>(v);
@@ -95,7 +92,7 @@ inline HALMD_GPU_ENABLED T norm_2(fixed_vector<T, N> const& v)
  */
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
+typename std::enable_if<(U <= L), T>::type
 norm_inf(fixed_vector<T, N> const& v)
 {
     return detail::abs(v[L]);
@@ -103,7 +100,7 @@ norm_inf(fixed_vector<T, N> const& v)
 
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
+typename std::enable_if<(U > L), T>::type
 norm_inf(fixed_vector<T, N> const& v)
 {
     HALMD_GPU_USING(::max, std::max);
@@ -121,7 +118,7 @@ inline HALMD_GPU_ENABLED T norm_inf(fixed_vector<T, N> const& v)
  */
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
+typename std::enable_if<(U <= L), T>::type
 index_norm_inf(fixed_vector<T, N> const& v, size_t& i)
 {
     i = L;
@@ -130,7 +127,7 @@ index_norm_inf(fixed_vector<T, N> const& v, size_t& i)
 
 template <typename T, size_t N, size_t L, size_t U>
 inline HALMD_GPU_ENABLED
-typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
+typename std::enable_if<(U > L), T>::type
 index_norm_inf(fixed_vector<T, N> const& v, size_t& i)
 {
     size_t j, k;

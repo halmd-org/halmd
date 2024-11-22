@@ -65,7 +65,7 @@ void verlet<dimension, float_type>::integrate()
 {
     force_array_type const& force = read_cache(particle_->force());
 
-    LOG_TRACE("update positions and velocities: first leapfrog half-step");
+    LOG_DEBUG("update positions and velocities: first leapfrog half-step");
     scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the force!
@@ -99,7 +99,7 @@ void verlet<dimension, float_type>::finalize()
 {
     force_array_type const& force = read_cache(particle_->force());
 
-    LOG_TRACE("update velocities: second leapfrog half-step");
+    LOG_DEBUG("update velocities: second leapfrog half-step");
     scoped_timer_type timer(runtime_.finalize);
 
     // invalidate the particle caches after accessing the force!

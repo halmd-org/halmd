@@ -199,7 +199,7 @@ function M.reader(args)
     log.logger():info("reading box specification from /" .. table.concat(location, "/"))
 
     -- append "box" to location path
-    location[#location + 1] = "box"
+    location = utility.concat(location, {"box"})
 
     -- FIXME mode depends on data present, see phase_space
     local self = file:reader({location = location, mode = "truncate"})

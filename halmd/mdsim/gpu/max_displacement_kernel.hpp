@@ -34,25 +34,17 @@ struct max_displacement_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
 
-    typedef cuda::function<void (
+    /** maximum squared particle displacement */
+    cuda::function<void (
         float4 const* g_r
       , float4 const* g_r0
       , float* g_rr
       , unsigned int
       , vector_type
-    )> displacement_impl_type;
-
-    /** maximum squared particle displacement */
-    displacement_impl_type displacement_impl[6];
+    )> displacement;
 
     static max_displacement_wrapper kernel;
 };
-
-template <int dimension>
-max_displacement_wrapper<dimension> const& get_max_displacement_kernel()
-{
-    return max_displacement_wrapper<dimension>::kernel;
-}
 
 } // namespace mdsim
 } // namespace gpu

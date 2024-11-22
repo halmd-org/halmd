@@ -47,7 +47,7 @@ struct euler_wrapper
       , vector_type
     )> integrate;
 
-    static euler_wrapper const kernel;
+    static euler_wrapper kernel;
 };
 
 } // namespace integrators

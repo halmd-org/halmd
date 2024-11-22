@@ -227,7 +227,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
     species_array_type const& species2   = *particle2_->species();
     size_type nparticle1 = particle1_->nparticle();
 
-    LOG_TRACE("compute forces");
+    LOG_DEBUG("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -251,7 +251,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
             // squared particle distance
             float_type rr = inner_prod(r, r);
 
-            // truncate potential at cutoff length
+            // truncate potential at cutoff distance
             if (!potential_->within_range(rr, a, b))
                 continue;
 
@@ -281,7 +281,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
     species_array_type const& species2   = *particle2_->species();
     size_type nparticle1 = particle1_->nparticle();
 
-    LOG_TRACE("compute forces with auxiliary variables");
+    LOG_DEBUG("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute_aux);
 
@@ -312,7 +312,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
             // squared particle distance
             float_type rr = inner_prod(r, r);
 
-            // truncate potential at cutoff length
+            // truncate potential at cutoff distance
             if (rr >= potential_->rr_cut(a, b))
                 continue;
 

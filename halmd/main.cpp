@@ -31,6 +31,10 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/version.h>
 
+#ifdef HALMD_WITH_GPU
+# include <halmd/utility/gpu/device.hpp>
+#endif
+
 using namespace halmd;
 using namespace std;
 
@@ -52,6 +56,8 @@ int main(int argc, char **argv)
         desc.add_options()
 #ifdef HALMD_WITH_GPU
             ("disable-gpu", "disable GPU acceleration")
+            ("gpu-device", po::value<int>()->default_value(-1),
+             "GPU device to use")
 #endif
             ("help", "display this help and exit")
             ("version", "output version information and exit")
@@ -116,6 +122,8 @@ int main(int argc, char **argv)
             luaponte::object package = luaponte::globals(script.L)["package"]["loaded"];
             package["halmd.utility.device"] = luaponte::newtable(script.L);
 #ifdef HALMD_WITH_GPU
+        } else {
+            device::set(vm["gpu-device"].as<int>());
         }
 #endif
 

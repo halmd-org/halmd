@@ -105,7 +105,7 @@ void from_particle<dimension, float_type>::update()
     size_type nparticle1 = particle1_->nparticle();
     size_type nparticle2 = particle2_->nparticle();
 
-    LOG_TRACE("update neighbour lists");
+    LOG_DEBUG("update neighbour lists");
 
     scoped_timer_type timer(runtime_.update);
 

@@ -28,7 +28,6 @@
 #include <limits>
 #include <ostream>
 
-#if BOOST_VERSION >= 105900
 namespace boost {
 namespace math {
 namespace fpc {
@@ -39,25 +38,6 @@ struct tolerance_based<halmd::dsfloat> : boost::true_type{};
 } // namespace fpc
 } // namespace math
 } // namespace boost
-#else
-namespace boost {
-namespace test_tools {
-namespace tt_detail {
-template<>
-struct fpt_limits<halmd::dsfloat> {
-    static halmd::dsfloat min_value()
-    {
-        return std::numeric_limits<float>::min();
-    }
-    static halmd::dsfloat max_value()
-    {
-        return std::numeric_limits<float>::max();
-    }
-};
-} // namespace tt_detail
-} // namespace test_tools
-} // namespace boost
-#endif
 
 // FIXME define numeric_limits for dsfloat
 // see, e.g., http://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html

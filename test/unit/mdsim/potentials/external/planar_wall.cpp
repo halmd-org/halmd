@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/config.hpp>
@@ -36,7 +37,7 @@
 # include <halmd/mdsim/gpu/forces/external.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/potentials/external/planar_wall.hpp>
-# include <halmd/utility/gpu/device.hpp>
+# include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 #include <test/tools/dsfloat.hpp>
@@ -107,28 +108,28 @@ make_host_potential()
     typedef typename potential_type::vector_type vector_type;
 
     // define interaction parameters
-    unsigned int ntype = 2;  // test a binary mixture
+    unsigned int nspecies = 2;  // test a binary mixture
     unsigned int nwall = 3;  // 3 walls
 
-    typename potential_type::matrix_container_type cutoff(nwall, ntype);
+    typename potential_type::matrix_container_type cutoff(nwall, nspecies);
     cutoff <<=
         1., 2.
       , 10., 10.
       , 1e2, 1e2;
 
-    typename potential_type::matrix_container_type epsilon(nwall, ntype);
+    typename potential_type::matrix_container_type epsilon(nwall, nspecies);
     epsilon <<=
         1., 0.5
       , 2., 0.
       , 0., 1.;
 
-    typename potential_type::matrix_container_type sigma(nwall, ntype);
+    typename potential_type::matrix_container_type sigma(nwall, nspecies);
     sigma <<=
         1., 2.
       , 3., 1.
       , 2., 1.;
 
-    typename potential_type::matrix_container_type wetting(nwall, ntype);
+    typename potential_type::matrix_container_type wetting(nwall, nspecies);
     wetting <<=
         0.4, 0.
       , -1, 1.
@@ -324,12 +325,12 @@ planar_wall<float_type>::planar_wall()
 }
 
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( planar_wall_gpu_dsfloat, device ) {
+BOOST_FIXTURE_TEST_CASE( planar_wall_gpu_dsfloat, set_cuda_device ) {
     planar_wall<dsfloat>().test();
 }
 #endif
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE( planar_wall_gpu_float, device ) {
+BOOST_FIXTURE_TEST_CASE( planar_wall_gpu_float, set_cuda_device ) {
     planar_wall<float>().test();
 }
 #endif

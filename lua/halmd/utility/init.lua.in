@@ -1,6 +1,7 @@
 --
--- Copyright © 2013 Felix Höfling
--- Copyright © 2011 Peter Colberg
+-- Copyright © 2013-2023 Felix Höfling
+-- Copyright © 2023      Viktor Skoblin
+-- Copyright © 2011      Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -26,7 +27,7 @@ local module = require("halmd.utility.module")
 -- =========
 --
 -- .. toctree::
---    :maxdepth: 2
+--    :maxdepth: 1
 --    :glob:
 --
 --    *
@@ -86,6 +87,52 @@ function M.reverse(t)
 end
 
 ---
+-- Create a shallow copy of a table, i.e., return a new table with shallow
+-- copies of all the original table's elements.
+--
+function M.table_shallow_copy(t)
+    local t2 = {}
+    for k,v in pairs(t) do
+        t2[k] = v
+    end
+    return t2
+end
+
+---
+-- Return an array with `x` `n`-times repeated (at keys 1, …, `n`).
+--
+-- If `x` is a table, shallow copies of its elements are created.
+--
+function M.repeat_element(x, n)
+    local result = {}
+    if type(x) == "table" then
+        for i = 1, n do
+            table.insert(result, M.table_shallow_copy(x))
+        end
+    else
+        for i = 1, n do
+            table.insert(result, x)
+        end
+    end
+    return result
+end
+
+---
+-- Concatenates two tables t1 and t2.
+--
+-- Only the array part of the tables are used, i.e., elements with integer
+-- indices.
+--
+function M.concat(t1, t2)
+    local unpack = unpack or table.unpack -- compatiblity for Lua 5.1 and 5.2
+    local result = { unpack(t1) }
+    for i = 1, #t2 do
+        table.insert(result, t2[i])
+    end
+    return result
+end
+
+---
 -- Functions on strings
 -- --------------------
 --
@@ -97,11 +144,11 @@ end
 -- :param string s: formatting string
 -- :param table t: (key, value) pairs
 --
--- :returns: interpolated copy of string 's'
+-- :returns: interpolated copy of string ``s``
 --
--- Occurrences of '{key:fmt}' in the formatting string are substituted by
--- '("%fmt"):format(value)', where 'fmt' is one of the C-printf formatting
--- codes. The method is added to the `string` type as `string.interp`.
+-- Occurrences of ``{key:fmt}`` in the formatting string are substituted by
+-- ``("%fmt"):format(value)``, where ``fmt`` is one of the C-printf formatting
+-- codes. The method is added to the ``string`` type as ``string.interp``.
 --
 -- Example:
 --
@@ -120,6 +167,39 @@ end
 getmetatable("").__index.interp = M.interp -- make method known to string type
 
 ---
+-- Functions on filesystem paths
+-- -----------------------------
+--
+
+---
+-- Return directory name of given path.
+--
+-- :param string path: pathname of a file, etc.
+--
+-- :returns: directory component of ``path``
+--
+-- The function splits ``path`` at the most-right ``/``. It returns the empty
+-- string as the default.
+--
+function M.dirname(path)
+    return path:match("@?(.*/)") or ""
+end
+
+---
+-- Convert relative path to an absolute path.
+--
+-- :param string relpath: pathname
+--
+-- :returns: absolute version of ``relpath``
+--
+-- The function prepends the absolute path of the currently executed Lua script
+-- ``arg[0]`` to ``relpath``.
+--
+function M.abspath(relpath)
+    return M.dirname(arg[0]) .. relpath
+end
+
+---
 -- Assertions
 -- ----------
 --
@@ -131,7 +211,7 @@ getmetatable("").__index.interp = M.interp -- make method known to string type
 -- :param string key: parameter key
 -- :param number level: call stack level for error message *(default: 2)*
 --
--- :returns: `args[key]`
+-- :returns: ``args[key]``
 --
 function M.assert_kwarg(args, key, level)
     local level = level or 2
@@ -150,7 +230,7 @@ end
 -- :param string name: Lua type name
 -- :param number level: call stack level for error message *(default: 2)*
 --
--- :returns: `var`
+-- :returns: ``var``
 --
 function M.assert_type(var, name, level)
     local level = level or 2

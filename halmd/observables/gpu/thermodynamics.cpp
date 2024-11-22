@@ -46,6 +46,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , volume_(volume ? volume : [=](){ return box->volume(); })
   , logger_(logger)
 {
+    LOG_INFO("current reference volume: " << volume_());
 }
 
 template <int dimension, typename float_type>
@@ -70,7 +71,7 @@ double thermodynamics<dimension, float_type>::en_kin()
     cache<size_type> const& group_cache = group_->size();
 
     if (en_kin_cache_ != std::tie(velocity_cache, group_cache)) {
-        LOG_TRACE("acquire kinetic energy");
+        LOG_DEBUG("acquire kinetic energy");
         scoped_timer_type timer(runtime_.en_kin);
         en_kin_ = get_mean_en_kin(*particle_, *group_);
         en_kin_cache_ = std::tie(velocity_cache, group_cache);
@@ -89,7 +90,7 @@ thermodynamics<dimension, float_type>::total_force()
     cache<size_type> const& group_cache = group_->size();
 
     if (force_cache_ != std::tie(force_cache, group_cache)) {
-        LOG_TRACE("acquire total force");
+        LOG_DEBUG("acquire total force");
         scoped_timer_type timer(runtime_.force);
         force_ = get_total_force(*particle_, *group_);
         force_cache_ = std::tie(force_cache, group_cache);
@@ -108,7 +109,7 @@ thermodynamics<dimension, float_type>::v_cm()
     cache<size_type> const& group_cache = group_->size();
 
     if (v_cm_cache_ != std::tie(velocity_cache, group_cache)) {
-        LOG_TRACE("acquire centre-of-mass velocity");
+        LOG_DEBUG("acquire centre-of-mass velocity");
         scoped_timer_type timer(runtime_.v_cm);
         std::tie(v_cm_, mean_mass_) = get_v_cm_and_mean_mass(*particle_, *group_);
         v_cm_cache_ = std::tie(velocity_cache, group_cache);
@@ -127,7 +128,7 @@ thermodynamics<dimension, float_type>::r_cm()
     cache<size_type> const& group_cache = group_->size();
 
     if (r_cm_cache_ != std::tie(position_cache, group_cache)) {
-        LOG_TRACE("acquire centre of mass");
+        LOG_DEBUG("acquire centre of mass");
         scoped_timer_type timer(runtime_.v_cm);
         r_cm_ = get_r_cm(*particle_, *group_, *box_);
         r_cm_cache_ = std::tie(position_cache, group_cache);
@@ -145,7 +146,7 @@ double thermodynamics<dimension, float_type>::mean_mass()
     cache<size_type> const& group_cache = group_->size();
 
     if (v_cm_cache_ != std::tie(velocity_cache, group_cache)) {
-        LOG_TRACE("acquire mean particle mass");
+        LOG_DEBUG("acquire mean particle mass");
         scoped_timer_type timer(runtime_.v_cm);
         std::tie(v_cm_, mean_mass_) = get_v_cm_and_mean_mass(*particle_, *group_);
         v_cm_cache_ = std::tie(velocity_cache, group_cache);
@@ -163,7 +164,7 @@ double thermodynamics<dimension, float_type>::en_pot()
     cache<size_type> const& group_cache = group_->size();
 
     if (en_pot_cache_ != std::tie(en_pot_cache, group_cache)) {
-        LOG_TRACE("acquire potential energy");
+        LOG_DEBUG("acquire potential energy");
         scoped_timer_type timer(runtime_.en_pot);
         en_pot_ = get_mean_en_pot(*particle_, *group_);
         en_pot_cache_ = std::tie(en_pot_cache, group_cache);
@@ -181,7 +182,7 @@ double thermodynamics<dimension, float_type>::virial()
     cache<size_type> const& group_cache = group_->size();
 
     if (virial_cache_ != std::tie(stress_pot_cache, group_cache)) {
-        LOG_TRACE("acquire virial");
+        LOG_DEBUG("acquire virial");
         scoped_timer_type timer(runtime_.virial);
         virial_ = get_mean_virial(*particle_, *group_);
         virial_cache_ = std::tie(stress_pot_cache, group_cache);
@@ -201,7 +202,7 @@ thermodynamics<dimension, float_type>::stress_tensor()
     cache<size_type> const& group_cache = group_->size();
 
     if (stress_tensor_cache_ != std::tie(stress_pot_cache, velocity_cache, group_cache)) {
-        LOG_TRACE("acquire stress tensor");
+        LOG_DEBUG("acquire stress tensor");
         scoped_timer_type timer(runtime_.stress_tensor);
         stress_tensor_ = get_stress_tensor(*particle_, *group_);
         stress_tensor_cache_ = std::tie(stress_pot_cache, velocity_cache, group_cache);

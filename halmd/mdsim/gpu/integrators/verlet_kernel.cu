@@ -100,7 +100,7 @@ __global__ void finalize(
 } // namespace verlet_kernel
 
 template <int dimension, typename float_type>
-verlet_wrapper<dimension, float_type> const verlet_wrapper<dimension, float_type>::wrapper = {
+verlet_wrapper<dimension, float_type> verlet_wrapper<dimension, float_type>::wrapper = {
     verlet_kernel::integrate<dimension, float_type, ptr_type>
   , verlet_kernel::finalize<dimension, float_type, ptr_type>
 };

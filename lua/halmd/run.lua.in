@@ -32,7 +32,8 @@ return function()
     parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
         local level = {
             -- console, file
-            {"warning", "info" },
+            {"warning", "message" },
+            {"message", "message" },
             {"info"   , "info" },
             {"debug"  , "debug"},
             {"trace"  , "trace"},

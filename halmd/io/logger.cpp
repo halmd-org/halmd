@@ -22,16 +22,10 @@
 
 // increase compiler compatibility, e.g. with Clang 2.8
 #define BOOST_LOG_NO_UNSPECIFIED_BOOL
+#include <boost/core/null_deleter.hpp>
 #include <boost/log/attributes/clock.hpp>
 #include <boost/log/support/date_time.hpp>
 #include <boost/log/expressions.hpp>
-#include <boost/version.hpp>
-#if BOOST_VERSION >= 105600
-# include <boost/core/null_deleter.hpp>
-#else
-# include <boost/utility/empty_deleter.hpp>
-#endif
-#include <boost/version.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -52,11 +46,7 @@ void logging::open_console(severity_level level)
 {
     boost::shared_ptr<console_backend_type> backend(boost::make_shared<console_backend_type>());
     backend->add_stream(
-#if BOOST_VERSION >= 105600
         boost::shared_ptr<std::ostream>(&std::clog, boost::null_deleter())
-#else
-        boost::shared_ptr<std::ostream>(&std::clog, boost::empty_deleter())
-#endif
     );
     backend->auto_flush(true);
 
@@ -115,6 +105,8 @@ static inline std::ostream& operator<<(std::ostream& os, logging::severity_level
         os << "TRACE"; break;
       case logging::debug:
         os << "DEBUG"; break;
+      case logging::info:
+        os << "INFO"; break;
       case logging::warning:
         os << "WARNING"; break;
       case logging::error:
@@ -130,7 +122,7 @@ void logging::set_formatter(boost::shared_ptr<backend_type> backend)
 {
     backend->set_formatter(expressions::stream
         << expressions::format_date_time<boost::posix_time::ptime>("TimeStamp", "[%d-%m-%Y %H:%M:%S.%f]")
-        << expressions::if_(severity != logging::info)
+        << expressions::if_(severity != logging::message)
            [
                expressions::stream << " [" << severity << "]"
            ]
@@ -181,6 +173,7 @@ HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
                 [
                     value("error", logging::error)
                   , value("warning", logging::warning)
+                  , value("message", logging::message)
                   , value("info", logging::info)
                   , value("debug", logging::debug)
                   , value("trace", logging::trace)

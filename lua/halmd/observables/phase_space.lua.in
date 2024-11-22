@@ -241,6 +241,11 @@ local M = module(function(args)
           , "table")
         local every = args.every
 
+        if group.fluctuating then
+            logger:error("writing a selection of particles with fluctuating number is not yet supported")
+            error("Aborting", 2)
+        end
+
         local writer = file:writer({location = location, mode = "append"})
 
         -- register data fields with writer,
@@ -272,14 +277,14 @@ local M = module(function(args)
 
     if particle.memory == "gpu" then
         self.set = function(self, samples)
-            logger:info(("setting particles from phase space sample"):format(label))
+            logger:message(("setting particles from phase space sample"):format(label))
             for name,sample in pairs(samples) do
                 phase_space:set(name, sample, sample.gpu and sample:gpu() or false)
             end
         end
     else
         self.set = function(self, samples)
-            logger:info(("setting particles from phase space sample"):format(label))
+            logger:message(("setting particles from phase space sample"):format(label))
             for name,sample in pairs(samples) do
                 phase_space:set(name, sample)
             end

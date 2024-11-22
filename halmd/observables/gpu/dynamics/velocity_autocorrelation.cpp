@@ -48,7 +48,7 @@ unsigned int velocity_autocorrelation<dimension, data_type>::defaults::blocks() 
 
 template <int dimension, typename data_type>
 unsigned int velocity_autocorrelation<dimension, data_type>::defaults::threads() {
-    return 32 << DEVICE_SCALE;
+    return 256;
 }
 
 template <int dimension, typename data_type>

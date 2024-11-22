@@ -1,6 +1,7 @@
 /*
  * Copyright © 2014-2015 Sutapa Roy
  * Copyright © 2014-2015 Felix Höfling
+ * Copyright © 2020      Jaslo Ziska
  *
  * This file is part of HALMD.
  *
@@ -21,9 +22,10 @@
 
 #include <halmd/mdsim/gpu/forces/external_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/external/planar_wall_kernel.hpp>
-#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 #include <halmd/utility/tuple.hpp>
+
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -32,111 +34,78 @@ namespace potentials {
 namespace external {
 namespace planar_wall_kernel {
 
-/** array of potential parameters for all particle species */
-static texture<float4> param_potential_;
-/** array of geometry parameters for all walls */
-static texture<float4> param_geometry_;
 /** parameter for C2-smooth trunctation */
 static __constant__ float smoothing_;
 /** number of walls */
 static __constant__ int nwall_;
 
-/**
- * planar_wall external potential
- */
 template <int dimension>
-class planar_wall
+__device__ tuple<typename planar_wall<dimension>::vector_type, float>
+planar_wall<dimension>::operator()(vector_type const& r) const
 {
-public:
-    typedef fixed_vector<float, dimension> vector_type;
+    float en_pot = 0;
+    vector_type force = 0;
 
-    /**
-     * Construct planar_wall potential.
-     *
-     * Fetch parameters from texture cache for this particle species.
-     */
-    HALMD_GPU_ENABLED planar_wall(unsigned int species)
-      : species_(species)
-    {}
+    // loop over walls
+    for (unsigned int i = 0; i < nwall_; ++i) {
 
-     /**
-     * Compute force and potential energy due to planar_wall walls.
-     * Form of the potential is given here:
-     * u_i(d)=epsilon_i*[(2/15)*(sigma_i/d)**9-wetting_i*(sigma_i/d)**3].
-     */
-    HALMD_GPU_ENABLED tuple<vector_type, float> operator()(vector_type const& r) const
-    {
-        float en_pot = 0;
-        vector_type force = 0;
+        // fetch geometry parameters from texture cache
+        vector_type surface_normal;
+        float offset;
+        tie(surface_normal, offset) <<= tex1Dfetch<float4>(t_param_geometry_, i);
 
-        // loop over walls
-        for (unsigned int i = 0; i < nwall_; ++i) {
+        // compute absolute distance to wall i
+        float d = inner_prod(r, surface_normal) - offset;
 
-            // fetch geometry parameters from texture cache
-            vector_type surface_normal;
-            float offset;
-            tie(surface_normal, offset) <<= tex1Dfetch(param_geometry_, i);
+        // fetch potential parameters from texture cache
+        fixed_vector<float, 4> param_potential = tex1Dfetch<float4>(t_param_potential_, species_ * nwall_ + i);
+        float epsilon = param_potential[EPSILON];
+        float sigma = param_potential[SIGMA];
+        float w = param_potential[WETTING];
+        float cutoff = param_potential[CUTOFF];
 
-            // compute absolute distance to wall i
-            float d = inner_prod(r, surface_normal) - offset;
+        // truncate interaction
+        if (fabs(d) >= cutoff)
+            continue;
 
-            // fetch potential parameters from texture cache
-            fixed_vector<float, 4> param_potential = tex1Dfetch(param_potential_, species_ * nwall_ + i);
-            float epsilon = param_potential[EPSILON];
-            float sigma = param_potential[SIGMA];
-            float w = param_potential[WETTING];
-            float cutoff = param_potential[CUTOFF];
+        // cutoff energy due to wall i
+        float dc3i = halmd::pow(sigma / cutoff, 3);
+        float dc6i = float(2) / 15 * dc3i * dc3i;
+        float eps_dc3i = epsilon * dc3i;
+        float en_cut = eps_dc3i * (dc6i - w);
 
-            // truncate interaction
-            if (fabs(d) >= cutoff)
-                continue;
+        // energy and force due to wall i
+        float d3i = halmd::pow(sigma / d, 3);
+        float d6i = float(2) / 15 * d3i * d3i;
+        float eps_d3i = (d > 0 ? 1 : -1) * epsilon * d3i;
+        float en_sub = eps_d3i * (d6i - w) - en_cut;
+        float fval = 3 * eps_d3i * (3 * d6i - w) / d;
 
-            // cutoff energy due to wall i
-            float dc3i = halmd::pow(sigma / cutoff, 3);
-            float dc6i = float(2) / 15 * dc3i * dc3i;
-            float eps_dc3i = epsilon * dc3i;
-            float en_cut = eps_dc3i * (dc6i - w);
+        // apply smooth truncation
+        float dd = (fabs(d) - cutoff) / smoothing_;
+        float x2 = dd * dd;
+        float x4 = x2 * x2;
+        float x4i = 1 / (1 + x4);
+        float h0_r = x4 * x4i;
 
-            // energy and force due to wall i
-            float d3i = halmd::pow(sigma / d, 3);
-            float d6i = float(2) / 15 * d3i * d3i;
-            float eps_d3i = (d > 0 ? 1 : -1) * epsilon * d3i;
-            float en_sub = eps_d3i * (d6i - w) - en_cut;
-            float fval = 3 * eps_d3i * (3 * d6i - w) / d;
+        // first derivative
+        float h1_r = 4 * dd * x2 * x4i * x4i;
 
-            // apply smooth truncation
-            float dd = (fabs(d) - cutoff) / smoothing_;
-            float x2 = dd * dd;
-            float x4 = x2 * x2;
-            float x4i = 1 / (1 + x4);
-            float h0_r = x4 * x4i;
+        // apply smoothing function to obtain C¹ force function
+        fval = h0_r * fval - h1_r * en_sub / smoothing_;
 
-            // first derivative
-            float h1_r = 4 * dd * x2 * x4i * x4i;
+        // apply smoothing function to obtain C² potential function
+        en_sub = h0_r * en_sub;
 
-            // apply smoothing function to obtain C¹ force function
-            fval = h0_r * fval - h1_r * en_sub / smoothing_;
-
-            // apply smoothing function to obtain C² potential function
-            en_sub = h0_r * en_sub;
-
-            // accumulate force and potential energy
-            force += fval * surface_normal;
-            en_pot += en_sub;
-        }
-        return make_tuple(force, en_pot);
+        // accumulate force and potential energy
+        force += fval * surface_normal;
+        en_pot += en_sub;
     }
-
-
-private:
-    /** species of interacting particle */
-    unsigned int species_;
-};
+    return make_tuple(force, en_pot);
+}
 
 } // namespace planar_wall_kernel
 
-cuda::texture<float4> planar_wall_wrapper::param_potential = planar_wall_kernel::param_potential_;
-cuda::texture<float4> planar_wall_wrapper::param_geometry = planar_wall_kernel::param_geometry_;
 cuda::symbol<float> planar_wall_wrapper::smoothing = planar_wall_kernel::smoothing_;
 cuda::symbol<int> planar_wall_wrapper::nwall = planar_wall_kernel::nwall_;
 

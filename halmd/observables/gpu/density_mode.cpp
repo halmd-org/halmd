@@ -42,14 +42,14 @@ density_mode<dimension, float_type>::density_mode(
   , logger_(logger)
     // member initialisation
   , nq_(wavevector_->value().size())
-  , dim_(50, 64 << DEVICE_SCALE) // at most 1024 threads per block
+  , dim_(particle_->dim())
     // memory allocation
   , g_q_(nq_)
-  , g_sin_block_(nq_ * dim_.blocks_per_grid()), g_cos_block_(nq_ * dim_.blocks_per_grid())
-  , g_sin_(nq_), g_cos_(nq_)
-  , h_sin_(nq_), h_cos_(nq_)
+  , g_rho_block_(nq_ * dim_.blocks_per_grid())
+  , g_rho_(nq_)
+  , h_rho_(nq_)
 {
-    LOG_DEBUG(
+    LOG_INFO(
         "CUDA configuration: " << dim_.blocks_per_grid() << " blocks of "
         << dim_.threads_per_block() << " threads each"
     );
@@ -58,11 +58,11 @@ density_mode<dimension, float_type>::density_mode(
         // cast from fixed_vector<double, ...> to fixed_vector<float, ...>
         // and finally to gpu_vector_type (float4 or float2)
         auto const& q = wavevector_->value();
-        cuda::host::vector<gpu_vector_type> h_q(nq_);
+        cuda::memory::host::vector<gpu_vector_type> h_q(nq_);
         for (unsigned int i = 0; i < q.size(); ++i) {
             h_q[i] = static_cast<vector_type>(q[i]);
         }
-        cuda::copy(h_q, g_q_);
+        cuda::copy(h_q.begin(), h_q.end(), g_q_.begin());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy wavevectors to device");
@@ -86,7 +86,7 @@ density_mode<dimension, float_type>::acquire()
         auto const& group = read_cache(group_cache);
         auto const& position = read_cache(position_cache);
 
-        LOG_TRACE("acquire sample");
+        LOG_DEBUG("acquire sample");
 
         scoped_timer_type timer(runtime_.acquire);
 
@@ -97,22 +97,23 @@ density_mode<dimension, float_type>::acquire()
 
         // compute density modes
         try {
-            cuda::configure(dim_.grid, dim_.block);
-            wrapper_type::kernel.q.bind(g_q_);
+            cuda::texture<gpu_vector_type> t_wavevector(g_q_);
 
+            wrapper_type::kernel.compute.configure(dim_.grid, dim_.block);
             // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
             wrapper_type::kernel.compute(
-                position.data(), &*group.begin(), group.size()
-              , g_sin_block_, g_cos_block_, nq_
+                t_wavevector
+              , position.data(), &*group.begin(), group.size()
+              , g_rho_block_.data(), nq_
             );
             cuda::thread::synchronize();
 
             // finalise block sums for each wavevector
-            cuda::configure(
-                nq_                        // #blocks: one per wavevector
+            wrapper_type::kernel.finalise.configure(
+                nq_                        // #blocks: one per wavevector, at most 2^31 - 1 ≈ 2 × 10^9
               , dim_.block                 // #threads per block, must be a power of 2
             );
-            wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, nq_, dim_.blocks_per_grid());
+            wrapper_type::kernel.finalise(g_rho_block_.data(), g_rho_.data(), nq_, dim_.blocks_per_grid());
         }
         catch (cuda::error const&) {
             LOG_ERROR("failed to compute density modes on GPU");
@@ -120,11 +121,11 @@ density_mode<dimension, float_type>::acquire()
         }
 
         // copy data from device and store in density_mode sample
-        cuda::copy(g_sin_, h_sin_);
-        cuda::copy(g_cos_, h_cos_);
-        auto rho_q = begin(*result_);
+        cuda::copy(g_rho_.begin(), g_rho_.end(), h_rho_.begin());
+        auto rho = begin(*result_);
         for (unsigned int i = 0; i < nq_; ++i) {
-            *rho_q++ = {{ h_cos_[i], -h_sin_[i] }};
+            // convert from float2 to result type
+            *rho++ = fixed_vector<double, 2>({{ h_rho_[i].x, -h_rho_[i].y }}); // FIXME check minus sign on imaginary part
         }
 
         // update cache observers

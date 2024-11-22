@@ -22,16 +22,6 @@
 #define TEST_TOOLS_CTEST_HPP
 
 #include <boost/test/unit_test_suite.hpp> // BOOST_GLOBAL_FIXTURE
-#include <boost/version.hpp>
-// avoid warnings about superfluous semicola
-// after BOOST_GLOBAL_FIXTURE for boost < 1.59
-// unfortunately this is not supported for older
-// versions of GCC
-#if BOOST_VERSION < 105900 && defined(__GNUC__)
-#  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8))
-#    pragma GCC diagnostic ignored "-Wpedantic"
-#  endif
-#endif
 
 /**
  * Print CTEST_FULL_OUTPUT to avoid ctest truncation of output.

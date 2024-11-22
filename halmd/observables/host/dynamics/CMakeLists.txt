@@ -1,10 +1,12 @@
 halmd_add_library(halmd_observables_host_dynamics
   mean_quartic_displacement.cpp
   mean_square_displacement.cpp
+  self_intermediate_scattering_function.cpp
   velocity_autocorrelation.cpp
 )
 halmd_add_modules(
   libhalmd_observables_host_dynamics_mean_quartic_displacement
   libhalmd_observables_host_dynamics_mean_square_displacement
+  libhalmd_observables_host_dynamics_self_intermediate_scattering_function
   libhalmd_observables_host_dynamics_velocity_autocorrelation
 )

@@ -22,7 +22,7 @@
 #define TEST_UNIT_UTILITY_LUA_FIXTURE_HPP
 
 #include <tuple>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 107100
 # include <boost/test/tools/output_test_stream.hpp>
@@ -116,41 +116,49 @@ struct function_fixture : lua_test_fixture
 
     static std::function<void (int)> wrap_slot1()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot1, _1);
     }
 
     static std::function<void (int, int)> wrap_slot2()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot2, _1, _2);
     }
 
     static std::function<void (int, int, int)> wrap_slot3()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot3, _1, _2, _3);
     }
 
     static std::function<void (int, int, int, int)> wrap_slot4()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot4, _1, _2, _3, _4);
     }
 
     static std::function<void (int, int, int, int, int)> wrap_slot5()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot5, _1, _2, _3, _4, _5);
     }
 
     static std::function<void (int, int, int, int, int, int)> wrap_slot6()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot6, _1, _2, _3, _4, _5, _6);
     }
 
     static std::function<void (int, int, int, int, int, int, int)> wrap_slot7()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot7, _1, _2, _3, _4, _5, _6, _7);
     }
 
     static std::function<void (int, int, int, int, int, int, int, int)> wrap_slot8()
     {
+        using namespace boost::placeholders;
         return boost::bind(&slot8, _1, _2, _3, _4, _5, _6, _7, _8);
     }
 

@@ -1,0 +1,147 @@
+--
+-- Copyright © 2013-2024 Felix Höfling
+-- Copyright © 2012      Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+local utility = require("halmd.utility")
+local module = require("halmd.utility.module")
+
+-- grab C++ wrappers
+local self_intermediate_scattering_function = assert(libhalmd.observables.dynamics.self_intermediate_scattering_function)
+
+---
+-- Self-Intermediate Scattering Function
+-- =====================================
+--
+-- The module computes the (real part of the) self-intermediate scattering function
+--
+-- .. math::
+--
+--     F(\vec k, t) = \frac{1}{N} \bigl\langle \sum_{n=1}^{N}
+--     \exp\boldsymbol(\text{i} \vec k \cdot [\vec r_n(t) - r_n(0)] \boldsymbol)
+--     \bigr\rangle
+--
+-- from the particle positions :math:`r_n(t)` of the given phase space sample
+-- The result is averaged over wavevectors of similar magnitude according to
+-- the shells defined by :class:`halmd.observables.utility.wavevector`.
+--
+-- For details see, e.g., Hansen & McDonald: Theory of simple liquids, chapter 7.4.
+--
+-- The auxiliary module :class:`halmd.observables.utility.wavevector` provides
+-- suitable wavevectors that are compatible with the reciprocal lattice of the
+-- periodic simulation box.
+--
+
+---
+-- Construct self-intermediate scattering function.
+--
+-- :param args: keyword arguments
+-- :param args.phase_space: instance of :class:`halmd.observables.phase_space`
+-- :param args.wavevector: instance of :class:`halmd.observables.utility.wavevector`
+-- :param string args.label: module label *(optional)*
+-- :returns: instance of self-intermediate scattering function module
+--
+-- The optional argument ``label`` defaults to ``phase_space.group.label``.
+--
+-- .. method:: acquire()
+--
+--    Acquire phase space position sample.
+--
+--    :returns: phase space position sample
+--
+-- .. method:: disconnect()
+--
+--    Disconnect module from profiler.
+--
+-- .. attribute:: wavevector
+--
+--    The ``wavevector`` instance passed upon construction.
+--
+-- .. attribute:: label
+--
+--    The module label passed upon construction or derived from the phase space
+--    sampler.
+--
+-- .. attribute:: desc
+--
+--    Module description.
+--
+-- .. class:: writer(args)
+--
+--    Construct file writer.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param args.location: location within file *(optional)*
+--    :type args.location: string table
+--    :return: file writer as returned by ``file:writer()``.
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. It defaults to ``{"dynamics",
+--    self.label, "self_intermediate_scattering_function"}``.
+--
+local M = module(function(args)
+     local phase_space = utility.assert_kwarg(args, "phase_space")
+     local wavevector = utility.assert_kwarg(args, "wavevector")
+     local label = args and args.label or assert(phase_space.group.label)
+     -- always get host sample since no GPU implementation is there yet FIXME
+--     local acquire = assert(phase_space.acquire_position())
+     local acquire
+     if phase_space.memory == "gpu" then
+        acquire = assert(phase_space:acquire("position", false))
+     else
+        acquire = assert(phase_space:acquire("position"))
+     end
+
+     -- construct instance
+     local self = self_intermediate_scattering_function(acquire, wavevector)
+
+     -- attach acquire function as read-only property
+     self.acquire = property(function(self)
+          return acquire
+     end)
+
+    -- attach label
+    self.label = property(function(self) return label end)
+
+     -- attach module description
+     self.desc = property(function(self)
+          return ("self-intermediate scattering function of %s particles"):format(label)
+     end)
+
+    -- attach writer function as property
+    self.writer = property(function(self) return function(self, args)
+            local file = utility.assert_kwarg(args, "file")
+            local location = utility.assert_type(
+                args.location or {"dynamics", label, "intermediate_scattering_function"}
+              , "table")
+
+            -- write wavenumbers
+            local writer = file:writer({location = location, mode = "truncate"})
+            local conn = writer:on_write(wavevector.wavenumber, {"wavenumber"})
+            writer:write() -- FIXME pass arguments directly to write(), avoiding on_write
+            conn:disconnect()
+
+            return writer
+    end end)
+
+    return self
+end)
+
+return M

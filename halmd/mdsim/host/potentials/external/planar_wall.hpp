@@ -153,9 +153,10 @@ public:
         return smoothing_;
     }
 
+    // size of parameter arrays, must match number of particle species
     unsigned int size() const
     {
-        return offset_.size();
+        return epsilon_.size2();
     }
 
     /**
@@ -174,7 +175,7 @@ private:
     matrix_container_type sigma_;
     /** wetting parameters for wall potential in MD units */
     matrix_container_type wetting_;
-    /** cutoff length for wall potential in MD units */
+    /** cutoff distance for wall potential in MD units */
     matrix_container_type cutoff_;
     /** smoothing parameter for potential smoothing in MD units */
     float_type smoothing_;

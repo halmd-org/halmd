@@ -37,32 +37,17 @@ namespace particle_kernel {
 static __constant__ unsigned int nbox_;
 /** number of particle types */
 static __constant__ unsigned int ntype_;
-/** number of particles per type */
-static texture<unsigned int> ntypes_;
-/** positions, types */
-static texture<float4> r_;
-/** velocities, masses */
-static texture<float4> v_;
-/** IDs */
-static texture<unsigned int> id_;
-
-/** minimum image vectors */
-template<int dimension>
-struct image
-{
-    // instantiate a separate texture for each aligned vector type
-    typedef texture<typename particle_wrapper<dimension, float>::aligned_vector_type> type;
-    static type tex_;
-};
-// instantiate static members
-template<int dimension> image<dimension>::type image<dimension>::tex_;
 
 /**
  * rearrange particles by a given permutation
  */
 template <int dimension, typename float_type, typename ptr_type, typename aligned_vector_type>
 __global__ void rearrange(
-    unsigned int const* g_index
+    cudaTextureObject_t t_r
+  , cudaTextureObject_t t_image
+  , cudaTextureObject_t t_v
+  , cudaTextureObject_t t_id
+  , unsigned int const* g_index
   , ptr_type g_r
   , aligned_vector_type* g_image
   , ptr_type g_v
@@ -74,27 +59,22 @@ __global__ void rearrange(
     int const i = (GTID < npart) ? g_index[GTID] : GTID;
 
     // copy position and velocity as float4 values, and image vector
-    g_r[GTID] = texFetch<float_type>::fetch(r_, i);
-    g_v[GTID] = texFetch<float_type>::fetch(v_, i);
+    g_r[GTID] = texFetch<float4, float_type>::fetch(t_r, i);
+    g_v[GTID] = texFetch<float4, float_type>::fetch(t_v, i);
 
     // select correct image texture depending on the space dimension
-    g_image[GTID] = tex1Dfetch(image<dimension>::tex_, i);
+    g_image[GTID] = tex1Dfetch<aligned_vector_type>(t_image, i);
 
     // copy particle IDs
-    g_id[GTID] = tex1Dfetch(id_, i);
+    g_id[GTID] = tex1Dfetch<unsigned int>(t_id, i);
 }
 
 } // namespace particle_kernel
 
 template <int dimension, typename float_type>
-particle_wrapper<dimension, float_type> const particle_wrapper<dimension, float_type>::kernel = {
+particle_wrapper<dimension, float_type> particle_wrapper<dimension, float_type>::kernel = {
     particle_kernel::nbox_
   , particle_kernel::ntype_
-  , particle_kernel::ntypes_
-  , particle_kernel::r_
-  , particle_kernel::image<dimension>::tex_
-  , particle_kernel::v_
-  , particle_kernel::id_
   , particle_kernel::rearrange<dimension, float_type, ptr_type>
 };
 
@@ -117,7 +97,7 @@ static __global__ void particle_initialize_kernel (
 }
 
 template<typename T>
-particle_initialize_wrapper<T> const particle_initialize_wrapper<T>::kernel = {
+particle_initialize_wrapper<T> particle_initialize_wrapper<T>::kernel = {
   particle_initialize_kernel<T>
 };
 
@@ -134,7 +114,7 @@ static __global__ void dsfloat_particle_initialize_kernel (
 }
 
 template<size_t N>
-dsfloat_particle_initialize_wrapper<N> const dsfloat_particle_initialize_wrapper<N>::kernel = {
+dsfloat_particle_initialize_wrapper<N> dsfloat_particle_initialize_wrapper<N>::kernel = {
   dsfloat_particle_initialize_kernel<ptr_type, type>
 };
 #endif // USE_GPU_DOUBLE_SINGLE_PRECISION

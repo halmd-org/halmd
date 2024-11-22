@@ -48,7 +48,7 @@ struct verlet_wrapper
       , float
     )> finalize;
 
-    static verlet_wrapper const wrapper;
+    static verlet_wrapper wrapper;
 };
 
 } // namespace mdsim
