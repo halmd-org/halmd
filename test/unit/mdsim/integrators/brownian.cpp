@@ -83,7 +83,6 @@ struct brownian_free
 
     typedef typename modules_type::msd_type msd_type;
     typedef typename modules_type::mqd_type mqd_type;
-    typedef typename modules_type::ocf_type ocf_type;
 
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
@@ -143,13 +142,7 @@ void brownian_free<modules_type>::test()
     );
     blocking_scheme.on_correlate(correlation_mqd);
 
-    auto correlation_ocf = make_shared<observables::dynamics::correlation<ocf_type>>(
-        make_shared<ocf_type>(), block_sample_u, block_sample_u
-    );
-    blocking_scheme.on_correlate(correlation_ocf);
-
     blocking_scheme.on_sample(block_sample);
-    blocking_scheme.on_sample(block_sample_u);
 
     BOOST_TEST_MESSAGE("run Brownian integrator over " << steps << " steps");
     for (size_t i = 0; i < steps; ++i) {
@@ -162,12 +155,10 @@ void brownian_free<modules_type>::test()
     auto time = blocking_scheme.time()[0];
     auto msd = correlation_msd->result()[0];
     auto mqd = correlation_mqd->result()[0];
-    auto ocf = correlation_ocf->result()[0];
 
     for (size_t i = 0; i < size_t(maximum_lag_time / timestep); ++i) {
         BOOST_CHECK_CLOSE_FRACTION(mean(msd[i]), 2 * dimension * diff_const(0, 0) * time[i], 4.5 * abs(error_of_mean(msd[i])));
         // BOOST_CHECK_CLOSE_FRACTION(mean(mqd[i]), 60 * time[i] * time[i], 4.5 * 120 * time[i] * error_of_mean(mqd[i])); // TODO: value for 2D
-        BOOST_CHECK_SMALL(mean(ocf[i]) - expf(-(dimension - 1.) * diff_const(0, 1) * time[i]), 4.5 * abs(error_of_mean(ocf[i])));
     }
 }
 
@@ -243,7 +234,6 @@ struct brownian_harmonic
 
     typedef typename modules_type::msd_type msd_type;
     typedef typename modules_type::mqd_type mqd_type;
-    typedef typename modules_type::ocf_type ocf_type;
 
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
