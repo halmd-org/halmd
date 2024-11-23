@@ -110,7 +110,7 @@ function main(args)
 
     -- add Brownian integrator
     local integrator = mdsim.integrators.brownian({
-        box = box, particle = particle, timestep = args.timestep, temperature = args.temperature, diff_const = args.diff_const
+        box = box, particle = particle, timestep = args.timestep, temperature = args.temperature, diffusion = { args.diffusion }
     })
 
     -- run simulation
@@ -147,7 +147,7 @@ end
 --
 function define_args(parser)
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
-        default = "ornstein_uhlenbeck_D{diff_const:.2f}_T{temperature:.2f}_%Y%m%d_%H%M%S", help = "basename of output files"})
+        default = "ornstein_uhlenbeck_D{diffusion:.2f}_T{temperature:.2f}_%Y%m%d_%H%M%S", help = "basename of output files"})
     parser:add_argument("overwrite", {type = "boolean", default = false, help = "overwrite output file"})
 
     parser:add_argument("random-seed", {type = "integer", action = parser.action.random_seed,
@@ -165,7 +165,7 @@ function define_args(parser)
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser:add_argument("stiffness", {type = "vector", dtype = "number", default = {2}, help = "stiffness matrix/constant for harmonic potential"})
     parser:add_argument("offset", {type = "vector", dtype = "number", default = {0,0,0}, help = "offset for harmonic potential"})
-    parser:add_argument("diff_const", {type = "number", default = 0.3, help = "diffusion constant"})
+    parser:add_argument("diffusion", {type = "number", default = 0.3, help = "diffusion constant"})
     parser:add_argument("temperature", {type = "number", default = 3, help = "initial system temperature"})
     parser:add_argument("rate", {type = "number", default = 2, help = "heat bath collision rate"})
     parser:add_argument("init_time", {type = "number", default = 100, help = "initialization time"})

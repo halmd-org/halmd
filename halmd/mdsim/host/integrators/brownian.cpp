@@ -43,19 +43,23 @@ brownian<dimension, float_type>::brownian(
   , std::shared_ptr<box_type const> box
   , float_type timestep
   , float_type temperature
-  , const float_type& diff_const
+  , scalar_container_type const& diffusion
   , std::shared_ptr<logger> logger
 )
   : particle_(particle)
   , random_(random)
   , box_(box)
-  , diff_const_(diff_const)
+  , diffusion_(diffusion)
   , logger_(logger)
 {
     set_timestep(timestep);
     set_temperature(temperature);
 
-    LOG("diffusion constants: " << diff_const_);
+    if (diffusion_.size() != particle_->nspecies()) {
+        throw std::invalid_argument("diffusion constants have mismatching shape");
+    }
+
+    LOG("diffusion constants: " << diffusion_);
 }
 
 /**
@@ -98,8 +102,8 @@ void brownian<dimension, float_type>::integrate()
 
     scoped_timer_type timer(runtime_.integrate);
 
-    float_type rng_disp_cache = 0;
-    bool rng_disp_cached = false;
+    float_type rng_cache = 0;
+    bool rng_cached = false;
 
     for (size_type i = 0 ; i < nparticle; ++i) {
         unsigned int s = species[i];
@@ -110,22 +114,23 @@ void brownian<dimension, float_type>::integrate()
         vector_type f = force[i];
         vector_type& r = (*position)[i];
 
-        float_type sigma_disp = sqrt(2 * timestep_ * diff_const_);
+        float_type diffusion = diffusion_[s];
+        float_type sigma = sqrt(2 * timestep_ * diffusion);
 
         // draw Gaussian random vector
         vector_type dr;
-        std::tie(dr[0], dr[1]) = random_->normal(sigma_disp);
-        if (dimension % 2 == 1) {
-            if (rng_disp_cached) {
-                dr[2] = rng_disp_cache;
+        std::tie(dr[0], dr[1]) = random_->normal(sigma);
+        if (dimension == 3) {
+            if (rng_cached) {
+                dr[2] = rng_cache;
             } else {
-                std::tie(dr[2], rng_disp_cache) = random_->normal(sigma_disp);
+                std::tie(dr[2], rng_cache) = random_->normal(sigma);
             }
-            rng_disp_cached = !rng_disp_cached;
+            rng_cached = !rng_cached;
         }
 
         // integrate position: Euler-Maruyama scheme
-        r += dr + (diff_const_ * timestep_ / temperature_) * f;
+        r += dr + (diffusion * timestep_ / temperature_) * f;
 
         // enforce periodic boundary conditions
         (*image)[i] += box_->reduce_periodic(r);
@@ -161,7 +166,7 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
                   , std::shared_ptr<box_type const>
                   , double
                   , double
-                  , double
+                  , scalar_container_type const&
                   , std::shared_ptr<logger>
                 >)
             ]

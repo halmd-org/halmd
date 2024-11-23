@@ -46,7 +46,7 @@ public:
     typedef random::host::random random_type;
 
     typedef typename particle_type::vector_type vector_type;
-    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
+    typedef boost::numeric::ublas::vector<float_type> scalar_container_type;
 
     brownian(
         std::shared_ptr<particle_type> particle
@@ -54,7 +54,7 @@ public:
       , std::shared_ptr<box_type const> box
       , float_type timestep
       , float_type temperature
-      , const float_type& diff_const
+      , scalar_container_type const& diffusion
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -109,12 +109,12 @@ private:
     };
 
     void update_displacement(
-      float_type diff_const
+        float_type diffusion
       , vector_type& r
       , vector_type const& f
       , vector_type const& eta
     );
-    
+
     /**
      * set rng and random seed
      */
@@ -131,7 +131,7 @@ private:
     /** profiling runtime accumulators */
     runtime runtime_;
     /** diffusion constant */
-    float_type diff_const_;
+    scalar_container_type diffusion_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

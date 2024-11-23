@@ -79,9 +79,9 @@ local brownian = assert(libhalmd.mdsim.integrators.brownian)
 --
 --    Temperature of heat bath.
 --
--- .. attribute:: diff_const
+-- .. attribute:: diffusion
 --
---    Diffusion parameters of shape (diff_const_disp, diff_const_rot)
+--    Diffusion parameters of shape (diffusion_disp, diffusion_rot)
 --
 -- .. method:: disconnect()
 --
@@ -96,8 +96,8 @@ local brownian = assert(libhalmd.mdsim.integrators.brownian)
 local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
     local box = utility.assert_kwarg(args, "box")
-    local temperature = utility.assert_kwarg(args, "temperature")
-    local diff_const = utility.assert_kwarg(args, "diff_const")
+    local temperature = utility.assert_type(utility.assert_kwarg(args, "temperature"), "number")
+    local diffusion = utility.assert_type(utility.assert_kwarg(args, "diffusion"), "table")
     local timestep = args.timestep
     if timestep then
         clock:set_timestep(timestep)
@@ -108,7 +108,7 @@ local M = module(function(args)
     local logger = log.logger({label = "brownian"})
 
     -- construct instance
-    local self = brownian(particle, rng, box, timestep, temperature, diff_const, logger)
+    local self = brownian(particle, rng, box, timestep, temperature, diffusion, logger)
 
     -- capture C++ method set_timestep
     local set_timestep = assert(self.set_timestep)

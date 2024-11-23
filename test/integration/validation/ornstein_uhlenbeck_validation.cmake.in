@@ -72,7 +72,7 @@ execute_halmd(
   --timestep 0.01
   --init_time 80
   --time 160
-  --diff_const 0.3
+  --diffusion 0.3
   --stiffness 2
   --offset ${OFFSET}
 )

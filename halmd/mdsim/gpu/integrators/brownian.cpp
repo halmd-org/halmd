@@ -40,29 +40,31 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , std::shared_ptr<box_type const> box
   , double timestep
   , double temperature
-  , double diff_const
+  , scalar_container_type const& diffusion
   , std::shared_ptr<logger> logger
 )
   // dependency injection
   : particle_(particle)
   , random_(random)
   , box_(box)
-  , diff_const_(diff_const)
-  , g_param_(particle->nspecies()) 
+  , diffusion_(diffusion)
+  , g_param_(particle->nspecies())
   , logger_(logger)
 {
-
     set_timestep(timestep);
     set_temperature(temperature);
 
-    cuda::host::vector<float2> param(g_param_.size());
-    for (size_t i = 0; i < param.size(); ++i) {
-        param[i] = make_float2(diff_const_, diff_const_);
+    if (diffusion_.size() != particle_->nspecies()) {
+        throw std::invalid_argument("diffusion constants have mismatching shape");
     }
-    cuda::copy(param, g_param_);
 
-    LOG("diffusion constants: " << diff_const_);
-    
+    cuda::memory::host::vector<float> param(g_param_.size());
+    for (size_t i = 0; i < param.size(); ++i) {
+        param[i] = diffusion_[i];
+    }
+    cuda::copy(param.begin(), param.end(), g_param_.begin());
+
+    LOG("diffusion constants: " << diffusion_);
 }
 
 /**
@@ -155,7 +157,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
                   , std::shared_ptr<box_type const>
                   , double
                   , double
-                  , double
+                  , scalar_container_type const&
                   , std::shared_ptr<logger>
                 >)
             ]

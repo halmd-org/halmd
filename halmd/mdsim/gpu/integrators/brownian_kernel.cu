@@ -1,5 +1,6 @@
 /*
- * Copyright © 2016      Manuel Dibak
+ * Copyright © 2024 Felix Höfling
+ * Copyright © 2016 Manuel Dibak
  *
  * This file is part of HALMD.
  *
@@ -46,7 +47,7 @@ __global__ void integrate(
   , gpu_vector_type* g_image
   , gpu_vector_type const* g_force
   , float timestep
-  , float temp
+  , float temperature
   , rng_type rng
   , unsigned int nparticle
   , fixed_vector<float, dimension> box_length
@@ -59,49 +60,44 @@ __global__ void integrate(
     unsigned int const thread = GTID;
     unsigned int const nthread = GTDIM;
 
-    // read position, species, image from global memory
-    vector_type r;
-    unsigned int species;
-    float mass;
-
-    float_type rng_disp_cache = 0;
-    bool rng_disp_cached = false;
+    float_type rng_cache = 0;
+    bool rng_cached = false;
 
     //read random number generator state from global device memory
     typename rng_type::state_type state = rng[thread];
 
     for (unsigned int i = thread; i < nparticle; i += nthread) {
-        // read position (do this either way because we need the species)
+        // read position and species from global memory
+        vector_type r;
+        unsigned int species;
         tie(r, species) <<= g_position[i];
 
-        // diffusion constants (we will need at least one of those)
-        fixed_vector<float, 2> diff_const = tex1Dfetch(param_, species);
-
+        // read force from global memory
         vector_type f = static_cast<float_vector_type>(g_force[i]);
 
         // read diffusion constant from texture
-        float diff_const_disp = tex1Dfetch<float>(t_param, species);
-        float_type const sigma_disp = sqrtf(2 * diff_const_disp * timestep);
+        float diffusion = tex1Dfetch<float>(t_param, species);
+        float_type const sigma = sqrtf(2 * diffusion * timestep);
 
         // draw Gaussian random vector
         vector_type dr;
-        tie(dr[0], dr[1]) =  random::gpu::normal(rng, state, 0, sigma_disp);
+        tie(dr[0], dr[1]) =  random::gpu::normal(rng, state, 0, sigma);
         if (dimension == 3) {
-            if (rng_disp_cached) {
-                dr[2] = rng_disp_cache;
+            if (rng_cached) {
+                dr[2] = rng_cache;
             } else {
-                tie(dr[2], rng_disp_cache) = random::gpu::normal(rng, state, 0, sigma_disp);
+                tie(dr[2], rng_cache) = random::gpu::normal(rng, state, 0, sigma);
             }
-            rng_disp_cached = !rng_disp_cached;
+            rng_cached = !rng_cached;
         }
 
         // Brownian integration: Euler-Maruyama scheme
-        r += dr + (diff_const * timestep / temperature) * f;
+        r += dr + (diffusion * timestep / temperature) * f;
 
         // enforce periodic boundary conditions
         float_vector_type image = box_kernel::reduce_periodic(r, box_length);
 
-        // store position and image (do this here because the orientation doesn't change the position or species)
+        // store position and image in global memory
         g_position[i] <<= tie(r, species);
         if (!(image == float_vector_type(0))) {
             g_image[i] = image + static_cast<float_vector_type>(g_image[i]);
