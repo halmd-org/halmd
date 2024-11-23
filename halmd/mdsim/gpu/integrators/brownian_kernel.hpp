@@ -38,10 +38,9 @@ struct brownian_wrapper
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
     typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
 
-    static cuda::texture<float2> param;
-
     typedef cuda::function <void (
-        ptr_type
+        cudaTextureObject_t             // parameters: diffusion constants per species
+      , ptr_type
       , coalesced_vector_type*
       , coalesced_vector_type const*
       , float
@@ -51,9 +50,9 @@ struct brownian_wrapper
       , vector_type
     )> integrate_kernel_type;
 
-    integrate_kernel_type integrate_position;
+    integrate_kernel_type integrate;
 
-    static brownian_wrapper const kernel;
+    static brownian_wrapper kernel;
 };
 } // namespace integrators
 } // namespace gpu

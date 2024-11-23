@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011-2012  Michael Kopp and Felix Höfling
+ * Copyright © 2011-2024 Felix Höfling
+ * Copyright © 2011      Michael Kopp
  *
  * This file is part of HALMD.
  *
@@ -54,8 +55,6 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
     set_timestep(timestep);
     set_temperature(temperature);
 
-    integrate_kernel = wrapper_type::kernel.integrate_position;
-
     cuda::host::vector<float2> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         param[i] = make_float2(diff_const_, diff_const_);
@@ -98,15 +97,19 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
     // invalidate the particle caches only after accessing the force!
     auto position = make_cache_mutable(particle_->position());
     auto image = make_cache_mutable(particle_->image());
-    bind_textures();
+
     scoped_timer_type timer(runtime_.integrate);
 
     try {
+        cuda::texture<float> t_param(g_param_);
+
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
-        cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
-        integrate_kernel(
-            position->data()
+        wrapper_type::kernel.integrate.configure(random_->rng().dim.grid,
+            random_->rng().dim.block);
+        wrapper_type::kernel.integrate(
+            t_param
+          , position->data()
           , image->data()
           , force.data()
           , timestep_

@@ -33,9 +33,6 @@ namespace gpu {
 namespace integrators {
 namespace brownian_kernel {
 
-/** array of diffusion constants */
-static texture<float2> param_;
-
 template <
     int dimension
   , typename float_type
@@ -44,7 +41,8 @@ template <
   , typename rng_type
 >
 __global__ void integrate(
-    ptr_type g_position
+    cudaTextureObject_t t_param
+  , ptr_type g_position
   , gpu_vector_type* g_image
   , gpu_vector_type const* g_force
   , float timestep
@@ -81,7 +79,8 @@ __global__ void integrate(
 
         vector_type f = static_cast<float_vector_type>(g_force[i]);
 
-        float_type const diff_const_disp = diff_const[0];
+        // read diffusion constant from texture
+        float diff_const_disp = tex1Dfetch<float>(t_param, species);
         float_type const sigma_disp = sqrtf(2 * diff_const_disp * timestep);
 
         // draw Gaussian random vector
@@ -116,10 +115,7 @@ __global__ void integrate(
 } // namespace brownian_kernel
 
 template <int dimension, typename float_type, typename rng_type>
-cuda::texture<float2> brownian_wrapper<dimension, float_type, rng_type>::param = brownian_kernel::param_;
-
-template <int dimension, typename float_type, typename rng_type>
-brownian_wrapper<dimension, float_type, rng_type> const
+brownian_wrapper<dimension, float_type, rng_type>
 brownian_wrapper<dimension, float_type, rng_type>::kernel = {
     brownian_kernel::integrate<dimension, float_type, ptr_type>
 };

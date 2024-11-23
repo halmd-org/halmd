@@ -91,24 +91,11 @@ public:
         return temperature_;
     }
 
-    void bind_textures() const
-    {
-        brownian_wrapper<dimension, float_type, rng_type>::param.bind(g_param_);
-    }
-
 private:
     typedef typename particle_type::position_array_type position_array_type;
     typedef typename particle_type::image_array_type image_array_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
     typedef typename particle_type::force_array_type force_array_type;
-
-    typedef utility::profiler::accumulator_type accumulator_type;
-    typedef utility::profiler::scoped_timer_type scoped_timer_type;
-
-    struct runtime
-    {
-        accumulator_type integrate;
-    };
 
     /** system state */
     std::shared_ptr<particle_type> particle_;
@@ -128,6 +115,15 @@ private:
     typename wrapper_type::integrate_kernel_type integrate_kernel = wrapper_type::kernel.integrate_position;
     /** module logger */
     std::shared_ptr<logger> logger_;
+
+    typedef utility::profiler::accumulator_type accumulator_type;
+    typedef utility::profiler::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type integrate;
+    };
+
     /** profiling runtime accumulators */
     runtime runtime_;
 };
