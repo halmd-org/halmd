@@ -61,6 +61,7 @@
 # include <halmd/observables/gpu/dynamics/mean_square_displacement.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
+# include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
@@ -473,30 +474,30 @@ BOOST_AUTO_TEST_CASE(brownian_harmonic_host_3d) {
 
 #ifdef HALMD_WITH_GPU
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_2d, device) {
+BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_2d, set_cuda_device) {
     brownian_free<gpu_modules_free<2, float>>().test();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_3d, device) {
+BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_3d, set_cuda_device) {
     brownian_free<gpu_modules_free<3, float>>().test();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_harmonic_gpu_2d, device) {
+BOOST_FIXTURE_TEST_CASE(brownian_harmonic_gpu_2d, set_cuda_device) {
     brownian_harmonic<gpu_modules_harmonic<2, float>>().test();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_harmonic_gpu_3d, device) {
+BOOST_FIXTURE_TEST_CASE(brownian_harmonic_gpu_3d, set_cuda_device) {
     brownian_harmonic<gpu_modules_harmonic<3, float>>().test();
 }
 # endif
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_2d, device) {
+BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_2d, set_cuda_device) {
     brownian_free<gpu_modules_free<2, dsfloat>>().test();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_3d, device) {
+BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_3d, set_cuda_device) {
     brownian_free<gpu_modules_free<3, dsfloat>>().test();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_harmonic_gpu_2d, device) {
+BOOST_FIXTURE_TEST_CASE(brownian_harmonic_gpu_2d, set_cuda_device) {
     brownian_harmonic<gpu_modules_harmonic<2, dsfloat>>().test();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_harmonic_gpu_3d, device) {
+BOOST_FIXTURE_TEST_CASE(brownian_harmonic_gpu_3d, set_cuda_device) {
     brownian_harmonic<gpu_modules_harmonic<3, dsfloat>>().test();
 }
 # endif
