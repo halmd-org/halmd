@@ -1,7 +1,7 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2010-2014 Felix Höfling
--- Copyright © 2010-2012 Peter Colberg
+-- Copyright © 2024 Max Orteu
+-- Copyright © 2024 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -35,33 +35,16 @@ function main(args)
     -- total number of particles from sum of particles per species
     local nparticle = args.particles
 
-    -- derive edge lengths from number of particles, density and edge ratios
-    local volume = nparticle / args.density
-    local ratios = args.ratios
-    local dimension = #ratios
-    local unit_edge = math.pow(volume / numeric.prod(ratios), 1 / dimension)
-    local length = {}
-
-    if dimension == 2 then
-        length = {100, 100} 
-    else
-        length = {100, 100, 100} 
-    end
-    -- create simulation domain with periodic boundary conditions
-    local box = mdsim.box({length = length})
+    -- create square/cubic simulation domain with periodic boundary conditions
+    local dimension = args.dimension
+    local box = mdsim.box({length = utility.repeat_element(args.length, dimension)})
 
     -- create system state
     local particle = mdsim.particle({dimension = dimension, particles = nparticle})
 
-    local position_table = particle.data["position"]
-    for i = 1, #position_table do
-        if dimension == 2 then
-            position_table[i] = {1,1}
-        else 
-            position_table[i] = {1,1,1}
-        end
-        particle.data["position"] = position_table
-    end
+    -- place all particles at the same, given position
+    local init_position = utility.repeat_element(1, dimension)
+    particle.data["position"] = utility.repeat_element(init_position, nparticle)
 
     -- set initial particle velocities
     local boltzmann = mdsim.velocities.boltzmann({
@@ -70,19 +53,24 @@ function main(args)
     }):set()
 
     -- define harmonic potential
-    local potential_args = {
-        stiffness = args.stiffness,
-        offset = args.offset
-    }
-    local potential = mdsim.potentials.external.harmonic(potential_args)
+    local potential = mdsim.potentials.external.harmonic({
+        stiffness = args.stiffness
+      , offset = args.offset or utility.repeat_element(0, dimension)
+    })
 
     -- register computation of external forces
     mdsim.forces.external({
         box = box, particle = particle, potential = potential
     })
 
+    -- add Brownian integrator
+    local integrator = mdsim.integrators.brownian({
+        box = box, particle = particle, timestep = args.timestep, temperature = args.temperature, diffusion = { args.diffusion }
+    })
+
     -- convert integration time to number of steps
     local init_steps = math.ceil(args.init_time / args.timestep)
+    local steps = math.ceil(args.time / args.timestep)
 
     -- H5MD file writer
     local file = writers.h5md({path = ("%s.h5"):format(args.output), overwrite = args.overwrite})
@@ -93,7 +81,7 @@ function main(args)
     -- sample phase space
     local phase_space = observables.phase_space({box = box, group = all_group})
     -- write trajectory of particle groups to H5MD file
-    local interval = args.sampling.trajectory or init_steps
+    local interval = args.sampling.trajectory or steps
     if interval > 0 then
         phase_space:writer({file = file, fields = {"position"}, every = interval})
     end
@@ -105,40 +93,33 @@ function main(args)
           :writer({file = file, fields = {"potential_energy", "center_of_mass"}, every = interval})
     end
 
-    -- sample initial state
+    -- sample initial state and run initial relaxation phase
     observables.sampler:sample()
-
-    -- add Brownian integrator
-    local integrator = mdsim.integrators.brownian({
-        box = box, particle = particle, timestep = args.timestep, temperature = args.temperature, diffusion = { args.diffusion }
-    })
-
-    -- run simulation
     observables.sampler:run(init_steps)
 
-
-    -- -- simulation after initialization
-
-    -- -- convert integration time to number of steps
-    local steps = math.ceil((args.time - args.init_time) / args.timestep)
-
-    -- time correlation functions
+    -- define time correlation functions
     local interval = args.sampling.correlation
     if interval > 0 then
         -- setup blocking scheme
         local max_lag = steps * integrator.timestep / 10
-        local blocking_scheme = dynamics.blocking_scheme({max_lag = max_lag, every = interval, size = 10})
+        local blocking_scheme = dynamics.blocking_scheme({
+            max_lag = max_lag
+          , every = interval
+          , size = 10
+          , separation = init_steps / interval  -- ensure uncorrelated samples
+        })
 
         -- compute mean-square displacement
         local msd = dynamics.mean_square_displacement({phase_space = phase_space})
         blocking_scheme:correlation({tcf = msd, file = file})
+
         -- compute mean-quartic displacement
         local mqd = dynamics.mean_quartic_displacement({phase_space = phase_space})
         blocking_scheme:correlation({tcf = mqd, file = file})
     end
 
-    -- run simulation
-    observables.sampler:run(steps)
+    -- continue simulation in stationary ensemble
+    observables.sampler:run(steps - init_steps)
 
 end
 
@@ -154,20 +135,18 @@ function define_args(parser)
         help = "seed for random number generator"})
 
     parser:add_argument("particles", {type = "integer", default = 5000, help = "number of particles"})
-    parser:add_argument("density", {type = "number", default = 0.75, help = "particle number density"})
-    parser:add_argument("ratios", {type = "vector", dtype = "number", action = function(args, key, value)
-        if #value ~= 2 and #value ~= 3 then
-            error(("box ratios has invalid dimension '%d'"):format(#value), 0)
+    parser:add_argument("length", {type = "number", default = 100, help = "edge length of simulation box"})
+    parser:add_argument("dimension", {type = "integer", dtype = "number", action = function(args, key, value)
+        if value ~= 2 and value ~= 3 then
+            error(("invalid dimension of space: %d"):format(#value), 0)
         end
         args[key] = value
-    end, default = {1, 1, 1}, help = "relative aspect ratios of simulation box"})
+    end, default = 3, help = "dimension of space"})
 
-    parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
-    parser:add_argument("stiffness", {type = "vector", dtype = "number", default = {2}, help = "stiffness matrix/constant for harmonic potential"})
-    parser:add_argument("offset", {type = "vector", dtype = "number", default = {0,0,0}, help = "offset for harmonic potential"})
+    parser:add_argument("stiffness", {type = "vector", dtype = "number", default = {2}, help = "stiffness constant of harmonic potential"})
+    parser:add_argument("offset", {type = "vector", dtype = "number", help = "offset: minimum position of harmonic potential"})
     parser:add_argument("diffusion", {type = "number", default = 0.3, help = "diffusion constant"})
     parser:add_argument("temperature", {type = "number", default = 3, help = "initial system temperature"})
-    parser:add_argument("rate", {type = "number", default = 2, help = "heat bath collision rate"})
     parser:add_argument("init_time", {type = "number", default = 100, help = "initialization time"})
     parser:add_argument("time", {type = "number", default = 200, help = "total integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.01, help = "integration time step"})

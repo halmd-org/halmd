@@ -31,14 +31,14 @@ endif()
 
 # Ornstein-Uhlenbeck Validation Test
 add_executable(test_integration_validation_ornstein_uhlenbeck
-  ornstein_uhlenbeck_validation.cpp
+  ornstein_uhlenbeck.cpp
 )
 target_link_libraries(test_integration_validation_ornstein_uhlenbeck
   ${HALMD_TEST_LIBRARIES}
 )
 
 configure_file(
-  ornstein_uhlenbeck_validation.cmake.in
+  ornstein_uhlenbeck.cmake.in
   test_integration_validation_ornstein_uhlenbeck.cmake
   @ONLY
 )

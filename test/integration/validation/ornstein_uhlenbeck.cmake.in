@@ -20,24 +20,25 @@
 #
 
 ##
-# Test computation of thermodynamic and dynamic properties for a simple colloid
-# following Langevin dynamics
+# Test computation of thermodynamic and dynamic properties for independent
+# colloidal particles in a harmonic potential trap, following Brownian
+# dynamics (i.e., fully overdamped Langevin dynamics)
 
 set(CMAKE_MODULE_PATH "@HALMD_TEST_CMAKE_BINARY_DIR@")
 
 include(execute_halmd)
 
-set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/ornstein_uhlenbeck_validation")
+set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/ornstein_uhlenbeck")
 set(HALMD_WITH_GPU @HALMD_WITH_GPU@)
 
 if(USE_GPU EQUAL 0)
   if(HALMD_WITH_GPU)
     set(BACKEND_OPTION "--disable-gpu")
   endif()
-  set(PARTICLES "1500")
+  set(PARTICLES "500")
   message(STATUS "Using host backend with ${PARTICLES} particles")
 elseif(USE_GPU EQUAL 1)
-  set(PARTICLES "4000")
+  set(PARTICLES "8000")
   message(STATUS "Using GPU backend with ${PARTICLES} particles")
 else()
   message(FATAL_ERROR "Variable USE_GPU neither set to 0 nor 1")
@@ -49,39 +50,26 @@ else()
   message(STATUS "Space dimension: ${DIMENSION}")
 endif()
 
-# aspect ratios of simulation box
-if(DIMENSION EQUAL 3)
-  set(ASPECT_RATIOS "1,1,1")
-  set(OFFSET "0,0,0")
-else()
-  set(ASPECT_RATIOS "1,1")
-  set(OFFSET "0,0")
-endif()
-
 execute_halmd(
   "${BACKEND_OPTION}"
   "@CMAKE_SOURCE_DIR@/examples/liquid/ornstein_uhlenbeck.lua"
   --verbose
-  --overwrite
   --output "${OUTPUT_PREFIX}"
   --particles ${PARTICLES}
-  --ratios ${ASPECT_RATIOS}
-  --density 0.75
-  --temperature 3
-  --rate 2
-  --timestep 0.01
-  --init_time 80
-  --time 160
-  --diffusion 0.3
+  --dimension ${DIMENSION}
   --stiffness 2
-  --offset ${OFFSET}
+  --diffusion 0.3
+  --temperature 3
+  --init_time 50    # 10 times the relaxation time, 1 / γ = kT / D K
+  --time 200
+  --timestep 0.01   # 1/500 of the relaxation time
+  --sampling correlation=1  # test time correlations at finest resolution
 )
 
 execute_process(
   COMMAND "@CMAKE_CURRENT_BINARY_DIR@/test_integration_validation_ornstein_uhlenbeck"
     @BOOST_TEST_ARGS@
     "${OUTPUT_PREFIX}.h5"
-    ${USE_GPU}
   WORKING_DIRECTORY "@CMAKE_CURRENT_BINARY_DIR@"
   RESULT_VARIABLE ${OUTPUT_PREFIX}_STATUS
 )
