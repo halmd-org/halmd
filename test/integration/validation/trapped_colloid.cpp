@@ -21,7 +21,7 @@
 
 #include <halmd/config.hpp>
 
-#define BOOST_TEST_MODULE ornstein_uhlenbeck
+#define BOOST_TEST_MODULE trapped_colloid
 #include <boost/test/unit_test.hpp>
 
 #include <halmd/io/utility/hdf5.hpp>
@@ -36,9 +36,13 @@
 using namespace halmd;
 
 /**
- * test simulation results for Brownian integrator with harmonic potential
+ * test simulation results for overdamped Brownian integrator with an external
+ * harmonic potential:
+ * @f[ \dot{\vec r}(t) = - K \vec r(t) + \sqrt{2D} \vec\xi(t), @f]
+ * where @f$ \vec\xi(t) @f$ is unit white noise.
  *
- * reference values come from analytical solution for Ornstein-Uhlenbeck process
+ * reference values come from the analytical solution of the Ornstein-Uhlenbeck
+ * process
  */
 
 #ifndef USE_HOST_SINGLE_PRECISION

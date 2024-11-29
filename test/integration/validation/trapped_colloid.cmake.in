@@ -29,7 +29,7 @@ set(CMAKE_MODULE_PATH "@HALMD_TEST_CMAKE_BINARY_DIR@")
 
 include(execute_halmd)
 
-set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/ornstein_uhlenbeck")
+set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/trapped_colloid")
 set(HALMD_WITH_GPU @HALMD_WITH_GPU@)
 
 if(USE_GPU EQUAL 0)
@@ -53,7 +53,7 @@ endif()
 
 execute_halmd(
   "${BACKEND_OPTION}"
-  "@CMAKE_SOURCE_DIR@/examples/liquid/ornstein_uhlenbeck.lua"
+  "@CMAKE_SOURCE_DIR@/examples/colloid/harmonic_trap.lua"
   --verbose
   --output "${OUTPUT_PREFIX}"
   --particles ${PARTICLES}
@@ -68,7 +68,7 @@ execute_halmd(
 )
 
 execute_process(
-  COMMAND "@CMAKE_CURRENT_BINARY_DIR@/test_integration_validation_ornstein_uhlenbeck"
+  COMMAND "@CMAKE_CURRENT_BINARY_DIR@/test_integration_validation_trapped_colloid"
     @BOOST_TEST_ARGS@
     "${OUTPUT_PREFIX}.h5"
   WORKING_DIRECTORY "@CMAKE_CURRENT_BINARY_DIR@"
