@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2024 Max Orteu
  * Copyright © 2023 Jaslo Ziska
  * Copyright © 2015 Manuel Dibak
  *

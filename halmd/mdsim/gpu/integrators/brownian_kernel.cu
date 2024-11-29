@@ -1,5 +1,6 @@
 /*
  * Copyright © 2024 Felix Höfling
+ * Copyright © 2024 Max Orteu
  * Copyright © 2016 Manuel Dibak
  *
  * This file is part of HALMD.
