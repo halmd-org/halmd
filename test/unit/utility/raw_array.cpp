@@ -91,62 +91,62 @@ static void test_construct(halmd::raw_array<T> const& array, std::size_t size)
     >::value, "const_reference is T const&");
 
     static_assert(std::is_same<
-        decltype((static_cast<array_type*>(0))->begin())
+        decltype(std::declval<array_type>().begin())
       , typename array_type::iterator
     >::value, "begin() returns iterator");
 
     static_assert(std::is_same<
-        decltype((*static_cast<array_type const*>(0)).begin())
+        decltype(std::declval<const array_type>().begin())
       , typename array_type::const_iterator
     >::value, "begin() const returns const_iterator");
 
     static_assert(std::is_same<
-        decltype(begin(*static_cast<array_type*>(0)))
+        decltype(begin(std::declval<array_type&>()))
       , typename array_type::iterator
     >::value, "begin(…) returns iterator");
 
     static_assert(std::is_same<
-        decltype(begin(*static_cast<array_type const*>(0)))
+        decltype(begin(std::declval<array_type const&>()))
       , typename array_type::const_iterator
     >::value, "begin(…) returns const iterator");
 
     static_assert(std::is_same<
-        decltype(cbegin(*static_cast<array_type const*>(0)))
+        decltype(cbegin(std::declval<array_type const&>()))
       , typename array_type::const_iterator
     >::value, "cbegin(…) returns const_iterator");
 
     static_assert(std::is_same<
-        decltype((*static_cast<array_type*>(0)).end())
+        decltype(std::declval<array_type>().end())
       , typename array_type::iterator
     >::value, "end() returns iterator");
 
     static_assert(std::is_same<
-        decltype((*static_cast<array_type const*>(0)).end())
+        decltype(std::declval<const array_type>().end())
       , typename array_type::const_iterator
     >::value, "end() const returns const_iterator");
 
     static_assert(std::is_same<
-        decltype(end(*static_cast<array_type*>(0)))
+        decltype(end(std::declval<array_type&>()))
       , typename array_type::iterator
     >::value, "end(…) returns iterator");
 
     static_assert(std::is_same<
-        decltype(end(*static_cast<array_type const*>(0)))
+        decltype(end(std::declval<array_type const&>()))
       , typename array_type::const_iterator
     >::value, "end(…) returns const iterator");
 
     static_assert(std::is_same<
-        decltype(cend(*static_cast<array_type const*>(0)))
+        decltype(cend(std::declval<array_type const&>()))
       , typename array_type::const_iterator
     >::value, "cend(…) returns const_iterator");
 
     static_assert(std::is_same<
-        decltype((*static_cast<array_type*>(0))[0])
+        decltype(std::declval<array_type>()[0])
       , typename array_type::reference
     >::value, "operator[] returns reference");
 
     static_assert(std::is_same<
-        decltype((*static_cast<array_type const*>(0))[0])
+        decltype(std::declval<const array_type>()[0])
       , typename array_type::const_reference
     >::value, "operator[] const returns const_reference");
 }
