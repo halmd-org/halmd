@@ -27,6 +27,7 @@ local module = require("halmd.utility.module")
 -- ===========
 --
 -- .. toctree::
+--    :titlesonly:
 --    :maxdepth: 2
 --    :glob:
 --

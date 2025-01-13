@@ -36,6 +36,7 @@ local timer_service = assert(libhalmd.utility.timer_service)
 --    :returns: connection
 --
 -- .. method:: on_periodic(slot, interval, start)
+--    :noindex:
 --
 --    Connect function to call periodically at given interval.
 --
