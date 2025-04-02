@@ -11,7 +11,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 
 import sys, os
 
@@ -189,7 +189,7 @@ latex_elements = {
 'pointsize': '11pt',
 
 # Additional stuff for the LaTeX preamble.
-'preamble': r'\usepackage{unicode-math}',
+'preamble': '\\usepackage{unicode-math}',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
