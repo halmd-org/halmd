@@ -141,7 +141,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   # Require thread-safe Boost libraries
   set(Boost_USE_MULTITHREADED TRUE)
 
-  find_package(Boost 1.61.0 QUIET REQUIRED COMPONENTS
+  find_package(Boost 1.66.0 QUIET REQUIRED COMPONENTS
     date_time
     filesystem
     log

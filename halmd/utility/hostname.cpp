@@ -30,7 +30,7 @@ namespace halmd {
  */
 std::string host_name()
 {
-    boost::asio::io_service ios;
+    boost::asio::io_context ios;
     boost::system::error_code ec;
     namespace bai = boost::asio::ip;
     bai::tcp::resolver resolver(ios);
