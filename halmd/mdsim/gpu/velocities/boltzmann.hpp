@@ -93,7 +93,7 @@ private:
     /** temperature */
     float_type temp_;
     /** block sum of momentum */
-    dsfloat_cuda_vector<gpu_vector_type> g_mv_;
+    dsfloat_vector<cuda::memory::device::vector<gpu_vector_type>> g_mv_;
     /** block sum of kinetic energy without 1/2 */
     cuda::memory::device::vector<dsfloat> g_mv2_;
     /** block sum of mass */

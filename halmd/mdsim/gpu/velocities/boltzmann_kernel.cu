@@ -130,7 +130,7 @@ __global__ void shift(ptr_type g_v, uint npart, uint nplace, dsfloat temp, dsflo
     dsfloat m = 0;
 
     for (uint i = TID; i < size; i += TDIM) {
-        s_mv[i] = fixed_vector<dsfloat, dimension>(get<0>(g_mv[i]), get<1>(g_mv[i]));
+        s_mv[i] = g_mv[i];
         s_mv2[i] = g_mv2[i];
         s_m[i] = g_m[i];
     }

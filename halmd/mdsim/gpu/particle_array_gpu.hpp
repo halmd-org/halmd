@@ -108,7 +108,7 @@ template<size_t dimension>
 struct particle_array_gpu_traits<fixed_vector<dsfloat, dimension> >
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type base_value_type;
-    typedef dsfloat_cuda_vector<base_value_type> gpu_vector_type;
+    typedef dsfloat_vector<cuda::memory::device::vector<base_value_type>> gpu_vector_type;
 };
 
 template<>

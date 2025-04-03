@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2025  Felix Höfling
  * Copyright © 2017  Daniel Kirchner
  *
  * This file is part of HALMD.
@@ -21,23 +22,24 @@
 #ifndef HALMD_UTILITY_GPU_DSFLOAT_CUDA_VECTOR_HPP
 #define HALMD_UTILITY_GPU_DSFLOAT_CUDA_VECTOR_HPP
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
-
 #include <halmd/numeric/mp/dsfloat.hpp>
 
 namespace halmd {
 
-template<typename T>
-class dsfloat_cuda_vector
+/*
+ * The template parameter must model a ContiguousContainer, e.g., std::vector.
+ */
+template<typename container_type>
+class dsfloat_vector
 {
 public:
-    typedef dsfloat_cuda_vector<T> vector_type;
-    typedef T value_type;
-    typedef dsfloat_ptr<T> pointer;
-    typedef dsfloat_const_ptr<T> const const_pointer;
+    typedef dsfloat_vector<container_type> vector_type;
+    typedef typename container_type::value_type value_type;
+    typedef dsfloat_ptr<value_type> pointer;
+    typedef dsfloat_const_ptr<value_type> const const_pointer;
     typedef size_t size_type;
 
-    dsfloat_cuda_vector(size_type size) : data_(size)
+    dsfloat_vector(size_type size) : data_(size)
     {
         data_.reserve(size * 2);
     }
@@ -85,22 +87,22 @@ public:
         return data();
     }
 
-    operator cuda::memory::device::vector<T> const&() const
+    operator container_type const&() const
     {
         return data_;
     }
 
-    operator cuda::memory::device::vector<T>&()
+    operator container_type&()
     {
         return data_;
     }
 
 private:
-    cuda::memory::device::vector<T> data_;
+    container_type data_;
 };
 
 template<typename T>
-inline void swap(dsfloat_cuda_vector<T>& lhs, dsfloat_cuda_vector<T>& rhs) noexcept
+inline void swap(dsfloat_vector<T>& lhs, dsfloat_vector<T>& rhs) noexcept
 {
     lhs.swap(rhs);
 }

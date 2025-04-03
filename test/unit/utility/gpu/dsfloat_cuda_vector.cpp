@@ -39,6 +39,9 @@
 
 using namespace halmd;
 
+template <typename T>
+using dsfloat_cuda_vector = dsfloat_vector<cuda::memory::device::vector<T>>;
+
 /**
  * Test performance of implementations: dsfloat_cuda_vector vs. float4 pointers
  */

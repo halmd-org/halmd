@@ -36,6 +36,12 @@
 using namespace std;
 using namespace halmd;
 
+template <typename T>
+using dsfloat_cuda_vector = dsfloat_vector<cuda::memory::device::vector<T>>;
+
+template <typename T>
+using dsfloat_host_vector = dsfloat_vector<cuda::memory::host::vector<T>>;
+
 #if BOOST_VERSION < 106500
 BOOST_GLOBAL_FIXTURE(set_cuda_device);
 #else
