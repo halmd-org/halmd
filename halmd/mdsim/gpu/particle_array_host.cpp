@@ -26,18 +26,24 @@ namespace gpu {
 
 template<typename T>
 particle_array_host<T>::particle_array_host(
-  std::shared_ptr<particle_array_gpu_base> const& parent
-, size_t offset
-, size_t stride
-, bool coalesced) : parent_(parent), offset_(offset), stride_(stride), coalesced_(coalesced) {
-}
+    std::shared_ptr<particle_array_gpu_base> const& parent
+  , size_t offset
+  , size_t stride
+  , bool coalesced
+)
+  : parent_(parent)
+  , offset_(offset)
+  , stride_(stride)
+  , coalesced_(coalesced)
+{}
 
 template<typename T>
-particle_array_host<T>::~particle_array_host() {
-}
+particle_array_host<T>::~particle_array_host()
+{}
 
 template<typename T>
-std::shared_ptr<particle_array_host<T>> particle_array_host<T>::cast(std::shared_ptr<particle_array_host_base> base) {
+std::shared_ptr<particle_array_host<T>> particle_array_host<T>::cast(std::shared_ptr<particle_array_host_base> base)
+{
     if(base->type() != typeid(T)) {
         throw std::runtime_error("invalid cast");
     }

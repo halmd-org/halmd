@@ -93,17 +93,13 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     struct {
         fixed_vector<float, 3> position;
         unsigned int species;
-    } position_init_value = {
-      fixed_vector<float, 3> (0.0f), 0
-    }, position_ghost_init_value = {
-      fixed_vector<float, 3> (0.0f), -1U
-    };
+    } position_init_value = { fixed_vector<float, 3> (0.0f), 0 }
+    , position_ghost_init_value = { fixed_vector<float, 3> (0.0f), -1U };
+
     struct {
         fixed_vector<float, 3> velocity;
         float mass;
-    } velocity_init_value = {
-      fixed_vector<float, 3> (0.0f), 1.0f
-    };
+    } velocity_init_value = { fixed_vector<float, 3> (0.0f), 1.0f };
     // register particle arrays
     auto gpu_position_array = gpu_data_["position"] = std::make_shared<particle_array_gpu<gpu_position_type>>
             (dim_, nparticle_, array_size_, position_init_value, position_ghost_init_value);
