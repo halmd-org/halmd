@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_TEST_UNIT_DSFLOAT_DSFLOAT_HPP
-#define HALMD_TEST_UNIT_DSFLOAT_DSFLOAT_HPP
+#ifndef HALMD_TEST_UNIT_NUMERIC_MP_DSFLOAT_CUDA_VECTOR_KERNEL_HPP
+#define HALMD_TEST_UNIT_NUMERIC_MP_DSFLOAT_CUDA_VECTOR_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/utility/gpu/thread.cuh>
@@ -54,4 +54,4 @@ struct dsfloat_kernel_overloaded_wrapper
     static dsfloat_kernel_overloaded_wrapper kernel;
 };
 
-#endif /* ! HALMD_TEST_UNIT_DSFLOAT_DSFLOAT_HPP */
+#endif /* ! HALMD_TEST_UNIT_NUMERIC_MP_DSFLOAT_CUDA_VECTOR_KERNEL_HPP*/

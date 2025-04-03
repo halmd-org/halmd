@@ -19,7 +19,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <test/unit/utility/gpu/dsfloat_cuda_vector_kernel.hpp>
+#include <test/unit/numeric/mp/dsfloat_cuda_vector_kernel.hpp>
 
 using namespace halmd;
 
