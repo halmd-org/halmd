@@ -29,9 +29,8 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/velocities/boltzmann_kernel.hpp>
-#include <halmd/numeric/mp/dsfloat.hpp>
+#include <halmd/numeric/mp/dsfloat_vector.hpp>
 #include <halmd/random/gpu/random.hpp>
-#include <halmd/utility/gpu/dsfloat_cuda_vector.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {

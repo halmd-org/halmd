@@ -29,6 +29,8 @@
 #include <halmd/config.hpp> // HALMD_GPU_DOUBLE_PRECISION
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/numeric/cast.hpp>
+#include <halmd/numeric/mp/dsfloat_vector.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <test/tools/ctest.hpp>
 #include <test/tools/cuda.hpp>
 #include <test/unit/numeric/blas/fixed_vector_cuda_vector_converter_kernel.hpp>

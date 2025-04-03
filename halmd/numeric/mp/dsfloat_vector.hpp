@@ -19,8 +19,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_GPU_DSFLOAT_CUDA_VECTOR_HPP
-#define HALMD_UTILITY_GPU_DSFLOAT_CUDA_VECTOR_HPP
+#ifndef HALMD_NUMERIC_MP_DSFLOAT_VECTOR_HPP
+#define HALMD_NUMERIC_MP_DSFLOAT_VECTOR_HPP
 
 #include <halmd/numeric/mp/dsfloat.hpp>
 
@@ -109,4 +109,4 @@ inline void swap(dsfloat_vector<T>& lhs, dsfloat_vector<T>& rhs) noexcept
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_GPU_DSFLOAT_CUDA_VECTOR_HPP */
+#endif /* ! HALMD_NUMERIC_MP_DSFLOAT_VECTOR_HPP */

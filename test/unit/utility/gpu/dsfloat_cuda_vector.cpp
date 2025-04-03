@@ -27,7 +27,7 @@
 #include <vector>
 
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/utility/gpu/dsfloat_cuda_vector.hpp>
+#include <halmd/numeric/mp/dsfloat_vector.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 

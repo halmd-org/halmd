@@ -23,10 +23,10 @@
 
 #include <typeinfo>
 #include <halmd/io/logger.hpp>
+#include <halmd/mdsim/gpu/particle_kernel.hpp>
+#include <halmd/numeric/mp/dsfloat_vector.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/gpu/dsfloat_cuda_vector.hpp>
-#include <halmd/mdsim/gpu/particle_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
