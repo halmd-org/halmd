@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011-2019 Felix Höfling
+ * Copyright © 2011-2025 Felix Höfling
  * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -23,6 +23,9 @@
 #include <boost/test/unit_test.hpp>
 
 #include <vector>
+#ifdef HALMD_WITH_GPU
+#  include <cuda_wrapper/cuda_wrapper.hpp>
+#endif
 
 #include <halmd/utility/demangle.hpp>
 #include <halmd/numeric/blas/blas.hpp>
@@ -46,6 +49,28 @@ BOOST_AUTO_TEST_CASE( t )               \
 }                                       \
 template <typename T>                   \
 void test_ ## t()                       \
+
+#ifdef HALMD_WITH_GPU
+
+/**
+ * define test case template to test various CUDA types
+ */
+#define TEST_CASE_CUDA_TYPE_SIZE(t)     \
+template <typename T, size_t N>         \
+void test_ ## t();                      \
+BOOST_AUTO_TEST_CASE( t )               \
+{                                       \
+    test_ ## t<float2, 2>();            \
+    test_ ## t<float3, 2>();            \
+    test_ ## t<float4, 2>();            \
+    test_ ## t<float3, 3>();            \
+    test_ ## t<float4, 3>();            \
+    test_ ## t<float4, 4>();            \
+}                                       \
+template <typename T, size_t N>         \
+void test_ ## t()                       \
+
+#endif
 
 /**
  * define test case template to test with various sizes
@@ -175,6 +200,28 @@ TEST_CASE_VECTOR_TYPE( initialiser_list )
     // partial initialisation
     // x = { 1 };   // compiles, but triggers an assertion if compiled in Debug mode
 }
+
+#ifdef HALMD_WITH_GPU
+
+TEST_CASE_CUDA_TYPE_SIZE( dsfloat_from_cuda )
+{
+    BOOST_TEST_MESSAGE("Testing " << (demangled_name<fixed_vector<dsfloat, N>>()) << " from " << demangled_name<T>());
+
+    fixed_vector<halmd::dsfloat, N> x;
+    fixed_vector<float, N> hi, lo;
+    for (size_t i = 0; i < N; ++i) {
+        x[i] = (i + 1) + 1e-9 / (i + 1);
+        tie(hi[i], lo[i]) = split(x[i]);
+    }
+
+    T cuda_hi(hi), cuda_lo(lo);   // convert to float2, ...
+    dsfloat_ptr<T> ptr = { &cuda_hi, &cuda_lo };
+
+    fixed_vector<dsfloat, N> y(ptr[0]);
+    BOOST_CHECK_EQUAL(x, y);
+}
+
+#endif
 
 BOOST_AUTO_TEST_SUITE_END() // construction
 

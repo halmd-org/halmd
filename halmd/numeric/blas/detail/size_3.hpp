@@ -417,6 +417,12 @@ struct fixed_vector<dsfloat, 3> : fixed_array<dsfloat, 3>
             (*this)[i] = value_type(v[i], w[i]);
         }
     }
+
+    template <typename U>         // U = float3, float4
+    HALMD_GPU_ENABLED fixed_vector(halmd::tuple<U&, U&> v)
+    {
+        *this = fixed_vector<dsfloat, 3>(get<0>(v), get<1>(v));
+    }
 };
 
 /**
