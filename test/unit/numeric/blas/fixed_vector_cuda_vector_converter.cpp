@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2025  Felix Höfling
  * Copyright © 2012  Peter Colberg
  *
  * This file is part of HALMD.
@@ -29,6 +30,7 @@
 #include <halmd/config.hpp> // HALMD_GPU_DOUBLE_PRECISION
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/numeric/cast.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <test/tools/ctest.hpp>
 #include <test/tools/cuda.hpp>
 #include <test/unit/numeric/blas/fixed_vector_cuda_vector_converter_kernel.hpp>
@@ -129,6 +131,37 @@ typedef boost::mpl::vector<
     pair<fixed_vector<float, 2>, unsigned int>
 >::type float_int_types;
 
+// basic conversion of a single array entry on the host, via CPU registers
+BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_float_int_basic, pair_type, float_int_types )
+{
+    typedef typename pair_type::first_type vector_type;
+    typedef typename vector_type::value_type vector_value_type;
+    typedef typename pair_type::second_type scalar_type;
+
+    double vector_eps = epsilon<vector_value_type>()();
+
+    BOOST_TEST_MESSAGE("Splitting and merging of pair of " << demangled_name<vector_type>() << " and "
+        << demangled_name<scalar_type>() << " to float4, tolerance: " << vector_eps);
+
+    vector_type u;
+    for (size_t j = 0; j < vector_type::static_size; ++j) {
+        u[j] = index_to_value<vector_value_type>()(0, j);
+    }
+    scalar_type v = index_to_value<scalar_type>()(0);
+    float4 input;
+    input <<= halmd::tie(u, v);
+
+    volatile float w = input.w;          // make sure that 'input' is not optimized out,
+    float4 output = input;               // note that tie() is not defined for 'volatile float4'
+    output.w = w;
+
+    halmd::tie(u, v) <<= output;
+    for (size_t j = 0; j < vector_type::static_size; ++j) {
+        BOOST_CHECK_CLOSE_FRACTION( u[j], index_to_value<vector_value_type>()(0, j), vector_eps );
+    }
+    BOOST_CHECK_EQUAL( v, index_to_value<scalar_type>()(0) );
+}
+
 BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_float_int_converter_one, pair_type, float_int_types )
 {
     typedef typename pair_type::first_type vector_type;
@@ -137,6 +170,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_float_int_converter_one, pair_type, 
 
     double vector_eps = epsilon<vector_value_type>()();
 
+    // set up input array in pinned host memory
     cuda::config dim(2, 32);
     cuda::memory::host::vector<float4> h_input(dim.threads());
     for (size_t i = 0; i < h_input.size(); ++i) {
@@ -158,6 +192,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_float_int_converter_one, pair_type, 
         BOOST_CHECK_EQUAL( v, index_to_value<scalar_type>()(i) );
     }
 
+    // copy to GPU memory
     cuda::memory::device::vector<float4> g_input(h_input.size());
     cuda::copy(h_input.begin(), h_input.end(), g_input.begin());
     cuda::memory::device::vector<float4> g_output(h_input.size());
@@ -167,12 +202,14 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_float_int_converter_one, pair_type, 
     cuda::memory::device::vector<scalar_type> g_v(h_input.size());
     cuda::memset(g_v.begin(), g_v.end(), 0);
 
+    // call CUDA kernel for the conversion
     float_kernel<vector_type, scalar_type>::kernel.converter_one.configure(
         dim.grid, dim.block);
     float_kernel<vector_type, scalar_type>::kernel.converter_one(g_input,
         g_output, g_u, g_v);
     cuda::thread::synchronize();
 
+    // copy output back to host memory
     cuda::memory::host::vector<float4> h_output(h_input.size());
     cuda::copy(g_output.begin(), g_output.end(), h_output.begin());
     cuda::memory::host::vector<vector_type> h_u(h_input.size());
@@ -180,6 +217,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_float_int_converter_one, pair_type, 
     cuda::memory::host::vector<scalar_type> h_v(h_input.size());
     cuda::copy(g_v.begin(), g_v.end(), h_v.begin());
 
+    // verify result
     for (size_t i = 0; i < h_output.size(); ++i) {
         vector_type u;
         scalar_type v;
@@ -205,6 +243,38 @@ typedef boost::mpl::vector<
     pair<fixed_vector<float, 3>, float>,
     pair<fixed_vector<float, 2>, float>
 >::type float_float_types;
+
+// basic conversion of a single array entry on the host, via CPU registers
+BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_float_float_basic, pair_type, float_float_types )
+{
+    typedef typename pair_type::first_type vector_type;
+    typedef typename vector_type::value_type vector_value_type;
+    typedef typename pair_type::second_type scalar_type;
+
+    double vector_eps = epsilon<vector_value_type>()();
+    double scalar_eps = epsilon<scalar_type>()();
+
+    BOOST_TEST_MESSAGE("Splitting and merging of pair of " << demangled_name<vector_type>() << " and "
+        << demangled_name<scalar_type>() << " to float4, tolerance: " << vector_eps);
+
+    vector_type u;
+    for (size_t j = 0; j < vector_type::static_size; ++j) {
+        u[j] = index_to_value<vector_value_type>()(0, j);
+    }
+    scalar_type v = index_to_value<scalar_type>()(0);
+    float4 input;
+    input <<= halmd::tie(u, v);
+
+    volatile float w = input.w;          // make sure that 'input' is not optimized out,
+    float4 output = input;               // note that tie() is not defined for 'volatile float4'
+    output.w = w;
+
+    halmd::tie(u, v) <<= output;
+    for (size_t j = 0; j < vector_type::static_size; ++j) {
+        BOOST_CHECK_CLOSE_FRACTION( u[j], index_to_value<vector_value_type>()(0, j), vector_eps );
+    }
+    BOOST_CHECK_CLOSE_FRACTION( v, index_to_value<scalar_type>()(0), scalar_eps );
+}
 
 BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_float_float_converter_one, pair_type, float_float_types )
 {
@@ -297,6 +367,40 @@ typedef boost::mpl::vector<
 #endif
 >::type double_int_types;
 
+// basic conversion of a single array entry on the host, via CPU registers
+BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_double_int_basic, pair_type, double_int_types )
+{
+    typedef typename pair_type::first_type vector_type;
+    typedef typename vector_type::value_type vector_value_type;
+    typedef typename pair_type::second_type scalar_type;
+
+    double vector_eps = epsilon<vector_value_type>()();
+
+    BOOST_TEST_MESSAGE("Splitting and merging of pair of " << demangled_name<vector_type>() << " and "
+        << demangled_name<scalar_type>() << " to float4, tolerance: " << vector_eps);
+
+    vector_type u;
+    for (size_t j = 0; j < vector_type::static_size; ++j) {
+        u[j] = index_to_value<vector_value_type>()(0, j);
+    }
+    scalar_type v = index_to_value<scalar_type>()(0);
+    float4 input_hi, input_lo;
+    tie(input_hi, input_lo) <<= halmd::tie(u, v);
+
+    volatile float w_hi = input_hi.w;          // make sure that 'input_hi' is not optimized out,
+    volatile float w_lo = input_lo.w;          // note that tie() is not defined for 'volatile float4'
+    float4 output_hi = input_hi;
+    float4 output_lo = input_lo;
+    output_hi.w = w_hi;
+    output_lo.w = w_lo;
+
+    halmd::tie(u, v) <<= tie(output_hi, output_lo);
+    for (size_t j = 0; j < vector_type::static_size; ++j) {
+        BOOST_CHECK_CLOSE_FRACTION( u[j], index_to_value<vector_value_type>()(0, j), vector_eps );
+    }
+    BOOST_CHECK_EQUAL( v, index_to_value<scalar_type>()(0) );
+}
+
 BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_double_int_converter_two, pair_type, double_int_types )
 {
     typedef typename pair_type::first_type vector_type;
@@ -383,6 +487,41 @@ typedef boost::mpl::vector<
     pair<fixed_vector<double , 2>, double>
 #endif
 >::type double_float_types;
+
+// basic conversion of a single array entry on the host, via CPU registers
+BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_double_float_basic, pair_type, double_float_types )
+{
+    typedef typename pair_type::first_type vector_type;
+    typedef typename vector_type::value_type vector_value_type;
+    typedef typename pair_type::second_type scalar_type;
+
+    double vector_eps = epsilon<vector_value_type>()();
+    double scalar_eps = epsilon<scalar_type>()();
+
+    BOOST_TEST_MESSAGE("Splitting and merging of pair of " << demangled_name<vector_type>() << " and "
+        << demangled_name<scalar_type>() << " to float4, tolerance: " << vector_eps);
+
+    vector_type u;
+    for (size_t j = 0; j < vector_type::static_size; ++j) {
+        u[j] = index_to_value<vector_value_type>()(0, j);
+    }
+    scalar_type v = index_to_value<scalar_type>()(0);
+    float4 input_hi, input_lo;
+    tie(input_hi, input_lo) <<= halmd::tie(u, v);
+
+    volatile float w_hi = input_hi.w;          // make sure that 'input_hi' is not optimized out,
+    volatile float w_lo = input_lo.w;          // note that tie() is not defined for 'volatile float4'
+    float4 output_hi = input_hi;
+    float4 output_lo = input_lo;
+    output_hi.w = w_hi;
+    output_lo.w = w_lo;
+
+    halmd::tie(u, v) <<= tie(output_hi, output_lo);
+    for (size_t j = 0; j < vector_type::static_size; ++j) {
+        BOOST_CHECK_CLOSE_FRACTION( u[j], index_to_value<vector_value_type>()(0, j), vector_eps );
+    }
+    BOOST_CHECK_CLOSE_FRACTION( double(v), index_to_value<scalar_type>()(0), scalar_eps );
+}
 
 BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_double_float_converter_two, pair_type, double_float_types )
 {
