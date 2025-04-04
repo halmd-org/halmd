@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.11)
 project(HALMD NONE)
 
 set(CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/platform.cmake")
@@ -155,13 +155,6 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
   find_package(HDF5 QUIET REQUIRED COMPONENTS CXX)
   find_package(LuaLibs QUIET REQUIRED)
-
-  # detect HDF5 version manually for cmake < 3.3
-  if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} LESS 3.3)
-    find_path(H5PUBCONF_PATH H5pubconf.h PATHS ${HDF5_INCLUDE_DIRS} NO_DEFAULT_PATH)
-    file(STRINGS "${H5PUBCONF_PATH}/H5pubconf.h" HDF5_VERSION LIMIT_COUNT 1 REGEX "#define H5_VERSION \"(.*)\"")
-    string(REGEX REPLACE "#define H5_VERSION \"(.*)\"" "\\1" HDF5_VERSION "${HDF5_VERSION}")
-  endif()
 
   # be verbose about library versions (but suppress all the gory details given by find_package)
   message(STATUS "Boost version: ${Boost_VERSION}")
