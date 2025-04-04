@@ -181,6 +181,9 @@ htmlhelp_basename = 'ddoc'
 # use LuaLaTeX to produce PDF output
 latex_engine = 'lualatex'
 
+# use Xindy to prepare the index of general terms
+latex_use_xindy = True
+
 latex_elements = {
 # The paper size ('letterpaper' or 'a4paper').
 'papersize': 'a4paper',
