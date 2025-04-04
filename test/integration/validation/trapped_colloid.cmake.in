@@ -58,9 +58,9 @@ execute_halmd(
   --output "${OUTPUT_PREFIX}"
   --particles ${PARTICLES}
   --dimension ${DIMENSION}
-  --stiffness 2
+  --stiffness 1.8
   --diffusion 0.3
-  --temperature 3
+  --temperature 2.7
   --init_time 50    # 10 times the relaxation time, 1 / γ = kT / D K
   --time 200
   --timestep 0.01   # 1/500 of the relaxation time

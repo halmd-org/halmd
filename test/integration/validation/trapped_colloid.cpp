@@ -55,8 +55,8 @@ const float eps_float = std::numeric_limits<float>::epsilon();
 // simulation parameters
 struct
 {
-    double T = 3;       // temperature
-    double K = 2;       // potential stiffness
+    double T = 2.7;     // temperature
+    double K = 1.8;     // potential stiffness
     double D = 0.3;     // diffusion constant
     double gamma = D * K / T;
     double sigma2 = 2 * D;

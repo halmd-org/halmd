@@ -117,7 +117,7 @@ struct brownian_free
     void test();
 };
 
-/** solve the differential equation @f$ \dot r = v = const. @f$ */
+/** solve the stochastic differential equation @f$ dr = \sqrt{2D} dW @f$ */
 template <typename modules_type>
 void brownian_free<modules_type>::test()
 {
@@ -159,7 +159,7 @@ void brownian_free<modules_type>::test()
     auto mqd = correlation_mqd->result()[0];
 
     for (size_t i = 0; i < size_t(maximum_lag_time / timestep); ++i) {
-        BOOST_CHECK_CLOSE_FRACTION(mean(msd[i]), 2 * dimension * diffusion(0) * time[i], 4.5 * 10 * error_of_mean(msd[i])); // FIXME
+        BOOST_CHECK_CLOSE_FRACTION(mean(msd[i]), 2 * dimension * diffusion(0) * time[i], 4.5 * 10 * error_of_mean(msd[i])); // FIXME why the factor 10?
         // BOOST_CHECK_CLOSE_FRACTION(mean(mqd[i]), 60 * time[i] * time[i], 4.5 * 120 * time[i] * error_of_mean(mqd[i])); // TODO: value for 2D
     }
 }
@@ -172,18 +172,18 @@ brownian_free<modules_type>::brownian_free()
 {
     typedef fixed_vector<double, dimension> vector_type;
 
-    timestep = 0.01;
+    timestep = 0.015;
     maximum_lag_time = 7;
 
     // run for as many steps as possible, wrap around the box for about 10 times
     // adjusted so total simulation length is constant when timestep changes
     steps = (gpu ? 10 : 10) * maximum_lag_time / timestep;
-    resolution = 0.01;
-    block_size = 10000;
+    resolution = timestep;
+    block_size = 500;
 
     // a low density implies large values of the position vectors
     density = 1e-6;
-    temperature = 2;
+    temperature = 1.7;
     // optimize filling of fcc lattice, use only few particles on the host
     npart = gpu ? 2500 : 25;
 
@@ -265,7 +265,7 @@ struct brownian_harmonic
     void test();
 };
 
-/** solve the differential equation @f$ \dot r = v = const. @f$ */
+/** solve the stochastic differential equation @f$ dr = -K r dt + \sqrt{2D} dW @f$ */
 template <typename modules_type>
 void brownian_harmonic<modules_type>::test()
 {
@@ -304,13 +304,14 @@ void brownian_harmonic<modules_type>::test()
 
     auto time = blocking_scheme.time()[0];
     auto msd = correlation_msd->result()[0];
-    auto mqd = correlation_mqd->result()[0];
+    // auto mqd = correlation_mqd->result()[0];     // not yet checked against analytic solution
 
+    // verify result for MSD and compare to analytic solution
     for (size_t i = 0; i < size_t(maximum_lag_time / timestep); ++i) {
         BOOST_CHECK_CLOSE_FRACTION(
             mean(msd[i])
           , 2 * dimension * temperature / stiffness(0) * (1 - expf(-diffusion(0) / temperature * stiffness(0) * time[i]))
-          , 4.5 * 10 * error_of_mean(msd[i]) // FIXME
+          , 4.5 * 10 * error_of_mean(msd[i]) // FIXME understand why the factor of 10 is needed
         );
     }
 }
@@ -321,12 +322,12 @@ void brownian_harmonic<modules_type>::test()
 template <typename modules_type>
 brownian_harmonic<modules_type>::brownian_harmonic()
 {
-    timestep = 0.01;
+    timestep = 0.015;
     maximum_lag_time = 7;
 
     steps = (gpu ? 10 : 3) * maximum_lag_time / timestep;
-    resolution = 0.01;
-    block_size = 10000;
+    resolution = timestep;
+    block_size = 500;
 
     temperature = 1.5;
     npart = gpu ? 1000 : 10;
@@ -338,10 +339,10 @@ brownian_harmonic<modules_type>::brownian_harmonic()
 
     // diffusion constant
     diffusion = typename integrator_type::scalar_container_type(1);
-    diffusion <<= 1.;
+    diffusion <<= 1.3;
 
     stiffness = typename potential_type::scalar_container_type(1);
-    stiffness <<= 1.;
+    stiffness <<= 0.8;
 
     typename potential_type::vector_container_type offset(1);
     offset <<= typename potential_type::vector_type(0);
