@@ -1,0 +1,84 @@
+#!@CMAKE_COMMAND@ -P
+#
+# Copyright © 2024      Max Orteu
+# Copyright © 2014-2024 Felix Höfling
+#
+# This file is part of HALMD.
+#
+# HALMD is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
+#
+
+##
+# Test computation of thermodynamic and dynamic properties for independent
+# colloidal particles in a harmonic potential trap, following Brownian
+# dynamics (i.e., fully overdamped Langevin dynamics)
+
+set(CMAKE_MODULE_PATH "@HALMD_TEST_CMAKE_BINARY_DIR@")
+
+include(execute_halmd)
+
+set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/trapped_colloid")
+set(HALMD_WITH_GPU @HALMD_WITH_GPU@)
+
+if(USE_GPU EQUAL 0)
+  if(HALMD_WITH_GPU)
+    set(BACKEND_OPTION "--disable-gpu")
+  endif()
+  set(PARTICLES "500")
+  message(STATUS "Using host backend with ${PARTICLES} particles")
+elseif(USE_GPU EQUAL 1)
+  set(PARTICLES "8000")
+  message(STATUS "Using GPU backend with ${PARTICLES} particles")
+else()
+  message(FATAL_ERROR "Variable USE_GPU neither set to 0 nor 1")
+endif()
+
+if(NOT DEFINED DIMENSION)
+  message(FATAL_ERROR "Variable DIMENSION undefined")
+else()
+  message(STATUS "Space dimension: ${DIMENSION}")
+endif()
+
+execute_halmd(
+  "${BACKEND_OPTION}"
+  "@CMAKE_SOURCE_DIR@/examples/colloid/harmonic_trap.lua"
+  --verbose
+  --output "${OUTPUT_PREFIX}"
+  --particles ${PARTICLES}
+  --dimension ${DIMENSION}
+  --stiffness 1.8
+  --diffusion 0.3
+  --temperature 2.7
+  --init_time 50    # 10 times the relaxation time, 1 / γ = kT / D K
+  --time 200
+  --timestep 0.01   # 1/500 of the relaxation time
+  --sampling correlation=1  # test time correlations at finest resolution
+)
+
+execute_process(
+  COMMAND "@CMAKE_CURRENT_BINARY_DIR@/test_integration_validation_trapped_colloid"
+    @BOOST_TEST_ARGS@
+    "${OUTPUT_PREFIX}.h5"
+  WORKING_DIRECTORY "@CMAKE_CURRENT_BINARY_DIR@"
+  RESULT_VARIABLE ${OUTPUT_PREFIX}_STATUS
+)
+if(NOT ${OUTPUT_PREFIX}_STATUS STREQUAL "0")
+  message(SEND_ERROR "validation of thermodynamic and dynamic properties failed")
+endif()
+
+file(REMOVE
+  "${OUTPUT_PREFIX}.log"
+  "${OUTPUT_PREFIX}.h5"
+)

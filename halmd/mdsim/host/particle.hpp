@@ -520,6 +520,7 @@ set_image(particle_type& particle, iterator_type const& first)
     return particle.template set_data<typename particle_type::image_type>("image", first);
 }
 
+
 /**
  * Copy particle velocities to given array.
  */

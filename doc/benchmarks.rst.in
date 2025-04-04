@@ -53,8 +53,8 @@ Parameters:
 
 Results were obtained from 1 independent measurement based on release version
 1.0.0. Each run consisted of NVT equilibration at :math:`T^*=1.2` over
-:math:`\Delta t^*=100` (10⁴ steps), followed by benchmarking 10⁴ NVE 5
-times steps in a row.
+:math:`\Delta t^*=100` (10⁴ steps), followed by benchmarking 10⁴ NVE steps
+5 times steps in a row.
 
 Supercooled binary mixture (Kob-Andersen)
 =========================================

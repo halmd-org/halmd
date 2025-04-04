@@ -72,8 +72,8 @@ HALMD_GPU_ENABLED tuple<typename harmonic<dimension>::vector_type, float>
 harmonic<dimension>::operator()(vector_type const& r) const
 {
     vector_type dr = r - offset_;
-    vector_type force = stiffness_ * dr;
-    float en_pot = inner_prod(force, dr) / 2;
+    vector_type force = - stiffness_ * dr;
+    float en_pot = - inner_prod(force, dr) / 2;
 
     return make_tuple(force, en_pot);
 }
