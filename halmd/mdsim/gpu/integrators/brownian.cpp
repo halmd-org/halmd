@@ -51,18 +51,12 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , g_param_(particle->nspecies())
   , logger_(logger)
 {
-    set_timestep(timestep);
-    set_temperature(temperature);
-
     if (diffusion_.size() != particle_->nspecies()) {
         throw std::invalid_argument("diffusion constants have mismatching shape");
     }
 
-    cuda::memory::host::vector<float> param(g_param_.size());
-    for (size_t i = 0; i < param.size(); ++i) {
-        param[i] = diffusion_[i];
-    }
-    cuda::copy(param.begin(), param.end(), g_param_.begin());
+    set_timestep(timestep);
+    set_temperature(temperature);       // assigns g_param_: noise, mobility
 
     LOG("diffusion constants: " << diffusion_);
 }
@@ -85,7 +79,23 @@ void brownian<dimension, float_type, RandomNumberGenerator>::set_temperature(dou
 {
     temperature_ = temperature;
     LOG("temperature: " << float(temperature_));
+
+    // re-compute and copy parameters to CUDA device
+    cuda::memory::host::vector<float2> param(g_param_.size());
+    scalar_container_type noise(param.size());
+    scalar_container_type mobility(param.size());
+    for (size_t i = 0; i < param.size(); ++i) {
+        fixed_vector<float, 2> p(0);
+        p[brownian_param::NOISE]    = noise[i] = sqrt(2 * diffusion_[i]);
+        p[brownian_param::MOBILITY] = mobility[i] = diffusion_[i] / temperature_;
+        param[i] = p;
+    }
+    cuda::copy(param.begin(), param.end(), g_param_.begin());
+
+    LOG_INFO("noise strengths: " << noise);
+    LOG_INFO("mobility constants: " << mobility);
 }
+
 /**
  * perform Brownian integration: update positions from random distribution
  */
@@ -103,7 +113,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     try {
-        cuda::texture<float> t_param(g_param_);
+        cuda::texture<float2> t_param(g_param_);
 
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
@@ -115,10 +125,9 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
           , image->data()
           , force.data()
           , timestep_
-          , temperature_
-          , random_->rng().rng()
           , particle_->nparticle()
           , static_cast<vector_type>(box_->length())
+          , random_->rng().rng()
         );
         cuda::thread::synchronize();
     }

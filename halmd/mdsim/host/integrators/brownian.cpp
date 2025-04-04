@@ -51,15 +51,21 @@ brownian<dimension, float_type>::brownian(
   , random_(random)
   , box_(box)
   , diffusion_(diffusion)
+  , mobility_(diffusion.size())
+  , noise_(diffusion.size())
   , logger_(logger)
 {
-    set_timestep(timestep);
-    set_temperature(temperature);
-
     if (diffusion_.size() != particle_->nspecies()) {
         throw std::invalid_argument("diffusion constants have mismatching shape");
     }
 
+    set_timestep(timestep);
+    set_temperature(temperature);       // assigns mobility_
+
+    for (size_t i = 0; i < diffusion_.size(); ++i) {
+        noise_[i] = sqrt(2 * diffusion_[i]);
+    }
+    LOG_INFO("noise strengths: " << noise_);
     LOG("diffusion constants: " << diffusion_);
 }
 
@@ -81,6 +87,11 @@ void brownian<dimension, float_type>::set_temperature(double temperature)
 {
     temperature_= temperature;
     LOG("temperature: " << temperature_);
+
+    for (size_t i = 0; i < diffusion_.size(); ++i) {
+        mobility_[i] = diffusion_[i] / temperature_;
+    }
+    LOG_INFO("mobility constants: " << mobility_);
 }
 
 /**
@@ -106,6 +117,8 @@ void brownian<dimension, float_type>::integrate()
     float_type rng_cache = 0;
     bool rng_cached = false;
 
+    float_type sqrt_timestep_ = sqrt(timestep_);
+
     for (size_type i = 0 ; i < nparticle; ++i) {
         unsigned int s = species[i];
 
@@ -115,23 +128,22 @@ void brownian<dimension, float_type>::integrate()
         vector_type f = force[i];
         vector_type& r = (*position)[i];
 
-        float_type diffusion = diffusion_[s];
-        float_type sigma = sqrt(2 * timestep_ * diffusion);
 
         // draw Gaussian random vector
         vector_type dr;
-        std::tie(dr[0], dr[1]) = random_->normal(sigma);
+        std::tie(dr[0], dr[1]) = random_->normal(float_type(1));
         if (dimension == 3) {
             if (rng_cached) {
                 dr[2] = rng_cache;
             } else {
-                std::tie(dr[2], rng_cache) = random_->normal(sigma);
+                std::tie(dr[2], rng_cache) = random_->normal(float_type(1));
             }
             rng_cached = !rng_cached;
         }
+        dr *= noise_[s] * sqrt_timestep_;
 
         // integrate position: Euler-Maruyama scheme
-        r += dr + (diffusion * timestep_ / temperature_) * f;
+        r += dr + (mobility_[s] * timestep_) * f;
 
         // enforce periodic boundary conditions
         (*image)[i] += box_->reduce_periodic(r);

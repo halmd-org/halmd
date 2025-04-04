@@ -130,8 +130,12 @@ private:
     float_type temperature_;
     /** profiling runtime accumulators */
     runtime runtime_;
-    /** diffusion constant */
+    /** diffusion constant per species */
     scalar_container_type diffusion_;
+    /** mobility constant per species */
+    scalar_container_type mobility_;
+    /** noise strength \sqrt(2 D) per species */
+    scalar_container_type noise_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

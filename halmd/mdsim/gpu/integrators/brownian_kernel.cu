@@ -48,10 +48,9 @@ __global__ void integrate(
   , gpu_vector_type* g_image
   , gpu_vector_type const* g_force
   , float timestep
-  , float temperature
-  , rng_type rng
   , unsigned int nparticle
   , fixed_vector<float, dimension> box_length
+  , rng_type rng
 )
 {
     typedef fixed_vector<float_type, dimension> vector_type;
@@ -67,6 +66,8 @@ __global__ void integrate(
     //read random number generator state from global device memory
     typename rng_type::state_type state = rng[thread];
 
+    float_type sqrt_timestep = sqrtf(timestep);
+
     for (unsigned int i = thread; i < nparticle; i += nthread) {
         // read position and species from global memory
         vector_type r;
@@ -77,23 +78,26 @@ __global__ void integrate(
         vector_type f = static_cast<float_vector_type>(g_force[i]);
 
         // read diffusion constant from texture
-        float diffusion = tex1Dfetch<float>(t_param, species);
-        float_type const sigma = sqrtf(2 * diffusion * timestep);
+        fixed_vector<float, 2> param = tex1Dfetch<float2>(t_param, species);
+        float_type noise    = param[brownian_param::NOISE];
+        float_type mobility = param[brownian_param::MOBILITY];
+        float_type const sigma = noise * sqrt_timestep;
 
         // draw Gaussian random vector
         vector_type dr;
-        tie(dr[0], dr[1]) =  random::gpu::normal(rng, state, 0, sigma);
+        tie(dr[0], dr[1]) =  random::gpu::normal(rng, state);
         if (dimension == 3) {
             if (rng_cached) {
                 dr[2] = rng_cache;
             } else {
-                tie(dr[2], rng_cache) = random::gpu::normal(rng, state, 0, sigma);
+                tie(dr[2], rng_cache) = random::gpu::normal(rng, state);
             }
             rng_cached = !rng_cached;
         }
+        dr *= sigma;
 
         // Brownian integration: Euler-Maruyama scheme
-        r += dr + (diffusion * timestep / temperature) * f;
+        r += dr + (mobility * timestep) * f;
 
         // enforce periodic boundary conditions
         float_vector_type image = box_kernel::reduce_periodic(r, box_length);

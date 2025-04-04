@@ -31,6 +31,15 @@ namespace mdsim {
 namespace gpu {
 namespace integrators {
 
+/**
+ * indices of integration parameters in float2 array
+ */
+enum brownian_param {
+    NOISE     /**< noise strength, sqrt(2 D) */
+  , MOBILITY  /**< mobility constant, D / (kB T) */
+};
+
+
 template <int dimension, typename float_type, typename rng_type>
 struct brownian_wrapper
 {
@@ -44,16 +53,16 @@ struct brownian_wrapper
       , coalesced_vector_type*
       , coalesced_vector_type const*
       , float
-      , float
-      , rng_type
       , unsigned int
       , vector_type
+      , rng_type
     )> integrate_kernel_type;
 
     integrate_kernel_type integrate;
 
     static brownian_wrapper kernel;
 };
+
 } // namespace integrators
 } // namespace gpu
 } // namespace mdsim

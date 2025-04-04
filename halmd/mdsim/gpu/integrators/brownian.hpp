@@ -107,10 +107,10 @@ private:
     float_type timestep_;
     /** temperature of the heat bath */
     float_type temperature_;
-    /** diffusion constant */
+    /** diffusion constant per species */
     scalar_container_type diffusion_;
-    /** parameters at CUDA device: diffusion constant */
-    cuda::vector<float> g_param_;
+    /** parameters at CUDA device: noise strength, mobility */
+    cuda::vector<float2> g_param_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
