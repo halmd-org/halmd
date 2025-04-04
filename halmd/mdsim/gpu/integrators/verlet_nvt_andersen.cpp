@@ -131,7 +131,6 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize
           , sqrt_temperature_
           , coll_prob_
           , particle_->nparticle()
-          , particle_->dim().threads()
           , random_->rng().rng()
         );
         cuda::thread::synchronize();

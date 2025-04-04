@@ -51,7 +51,6 @@ struct verlet_nvt_andersen_wrapper
       , float
       , float
       , unsigned int
-      , unsigned int
       , rng_type
     )> finalize;
 

@@ -84,13 +84,12 @@ __global__ void integrate(
  *
  * CUDA execution dimensions must agree with random number generator
  *
- * @param g_velocity particle velocities (array of size \code{} 2 * nplace \endcode for dsfloat arithmetic)
- * @param g_force particle forces (array of size \code{} nplace \endcode)
+ * @param g_velocity particle velocities (pair of arrays for \code{} dsfloat \endcode arithmetics)
+ * @param g_force particle forces (simple array for \code{} float \endcode arithmetics)
  * @param timestep integration time-step
  * @param sqrt_temperature square-root of heat bath temperature
  * @param coll_prob collision probability with heat bath
  * @param npart number of particles
- * @param nplace number of placeholder particles
  * @param rng random number generator
  */
 template <int dimension, typename float_type, typename ptr_type, typename gpu_vector_type, typename rng_type>
@@ -101,7 +100,6 @@ __global__ void finalize(
   , float sqrt_temperature
   , float coll_prob
   , unsigned int npart
-  , unsigned int nplace
   , rng_type rng
 )
 {
