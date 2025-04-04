@@ -3,6 +3,59 @@
 Changelog
 *********
 
+Version 1.1.1
+=============
+
+**Bug fixes**
+
+* fix erroneous computation of
+  :mod:`density modes <halmd.observables.density_mode>` due to an issue with
+  the GPU reduction kernels *(Felix Höfling)*
+
+* fix bug in construction of
+  :mod:`simulation box writer <halmd.mdsim.box.writer>`, which caused a
+  modification of the ``location`` argument passed by the calling code
+  *(Felix Höfling)*
+
+**Improvements**
+
+* documentation: add tutorial and recipes on wetting films of a slit pore
+  *(Jung Nguyen)*
+
+* documentation: describe published science based on *HAL's MD package*, add
+  benchmark results for Nvidia H100 GPUs *(Felix Höfling)*
+
+* new Lua helper functions ``dirname()`` and ``abspath()`` in
+  :mod:`utility <halmd.utility>` make it easier to include Lua scripts, e.g.,
+  for system definition files *(Felix Höfling)*
+
+* improve logging output of several modules, differentiate logging levels of
+  :mod:`runtime profiler <halmd.utility.profiler>` *(Felix Höfling)*
+
+* improve robustness of construction of several modules for boundary cases of
+  parameter values: :mod:`particle <halmd.mdsim.particle>`, external potential
+  :mod:`planar_wall <halmd.mdsim.potentials.external.planar_wall>`, computation of
+  :mod:`density modes <halmd.observables.density_mode>` and
+  :mod:`time correlation functions <halmd.observables.dynamics.blocking_scheme>`
+  *(Felix Höfling)*
+
+* improve robustness of
+  :mod:`phase space writer <halmd.observables.phase_space.writer>` interface:
+  refuse construction on a fluctuating particle group, which is not yet
+  supported although foreseen by the H5MD file format *(Giorgia Marcelli)*
+
+**Internal changes**
+
+* add ``-debug`` suffix to name of HALMD binary if not building in CMake's
+  Release mode *(Felix Höfling)*
+
+* documentation: switch to LuaLaTeX in Sphinx configuration, convert plotting
+  scripts to Python 3, respect CMake switch ``GENERATE_DOC=OFF``
+  *(Felix Höfling, Max Orteu)*
+
+* support C++ compiler GCC 12 *(Felix Höfling)*
+
+
 Version 1.1.0
 =============
 
