@@ -233,6 +233,9 @@ local M = module(function(args)
     local label = assert(group.label)
     local logger = log.logger({label = ("thermodynamics (%s)"):format(label)})
 
+    -- log module construction
+    log.message(("define thermodynamic observables for %s particles"):format(label))
+
     -- construct instance
     local self = thermodynamics(particle, group, box, volume, logger)
 

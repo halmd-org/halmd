@@ -28,10 +28,8 @@ local observables = halmd.observables
 local writers = halmd.io.writers
 local utility = halmd.utility
 
--- The next line is not needed if the definition files are located
--- in the same folder as the simulation script. The regular expression
--- is used to construct a path relative to the current script.
-package.path = arg[0]:match("@?(.*/)") .. "../?.lua;" .. package.path
+-- search definition files in the top-level path relative to the simulation script
+package.path = utility.abspath("../?.lua;") .. package.path
 local definitions = {
     fcc_metals = require("definitions/fcc_metals_morse_MacDonaldMacDonald_1981")
 }

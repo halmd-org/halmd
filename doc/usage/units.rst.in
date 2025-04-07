@@ -9,11 +9,11 @@ the associated unit. Within a given simulation, the only constraint is that all
 units are derived from the same set of base units, e.g., for length, time,
 mass, temperature, and current/charge.
 
-For example, an interaction range ":math:`\sigma = 1`" of the Lennard-Jones
-potential may be interpreted as :math:`\sigma = 1\,\text{m}`, :math:`\sigma =
-1\,\text{pm}`, or even :math:`\sigma = 3.4\,\AA` (for argon). Another more
-abstract interpretation of ":math:`\sigma = 1`" is that all lengths are
-measured relative to :math:`\sigma`.
+For example, an interaction range specified as ":math:`\sigma = 1`" of the
+Lennard-Jones potential may be interpreted as :math:`\sigma = 1\,\text{m}`,
+:math:`\sigma = 1\,\text{pm}`, or even :math:`\sigma = 3.4\,Å` (for
+argon). Another more abstract interpretation of ":math:`\sigma = 1`" is that
+all lengths are measured relative to :math:`\sigma`.
 
 Typical choices for base units along with some derived units are given in the table:
 

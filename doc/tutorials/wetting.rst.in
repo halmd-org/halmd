@@ -1,0 +1,129 @@
+.. _tutorial-wetting:
+
+Wetting and drying of a flat, smooth surface
+============================================
+
+The wetting behaviour of a Lennard-Jones (LJ) fluid within a slit pore is
+simulated. The aim is to calculate the density profile :math:`\rho(x)`
+perpendicular to the wall surfaces for a range of wetting parameters :math:`w`.
+The set-up and the choice of parameters follows approximately the work of
+Evans *et al.* [1]_.
+
+|
+
+.. image:: /_images/density_profiles.png
+          :alt: Normalised density profiles for various wetting parameters
+          :align: center
+          :width: 75%
+
+Prerequisites
+-------------
+
+You need a proper installation of *HAL’s MD package* and, for the analysis
+part, Python with the `h5py <http://www.h5py.org>`_ package. The HDF5 tools
+(e.g., ``h5ls``) are not required, but of advantage.
+
+These simulation scripts are found in the folder
+``/share/doc/halmd/examples`` relative to the installation path:
+
+  - wetting/potential.lua
+  - wetting/wetting_equilibration.lua
+  - wetting/wetting_production.lua
+  - plotting/density_profile.py
+  - plotting/plot_density_profile.py
+
+
+Set-up
+------
+
+A Lennard-Jones (LJ) fluid is confined within a slit pore delimited by two
+identical planar walls separated by a distance :math:`D=30\sigma` along the
+:math:`x`-direction of the simulation box, where :math:`\sigma` is the
+interaction range of the LJ potential. Periodic boundary conditions are applied
+in the directions parallel to the planar walls.
+
+The wetting behaviour of a LJ fluid is simulated using the smoothly truncated
+LJ potential for particle pair interactions and the planar wall potential for
+the particle--wall interaction.
+
+
+Equilibration phase
+-------------------
+
+Melting of the initial lattice configuration with an NVT simulation::
+
+    halmd wetting_equilibration.lua -v \
+        --output wetting_thermalisation \
+        --density 0.75 \
+        --wetting 6.0 \
+        --pore-width 30 \
+        --temperature 0.9 \
+        --time 500 \
+        --sampling trajectory=1000
+
+
+Production phase
+----------------
+
+The same script is then used for production, with all sampling turned on::
+
+    halmd wetting_production.lua -v \
+        --output wetting_production \
+        --input wetting_thermalisation.h5 \
+        --wetting 6.0 \
+        --pore-width 30 \
+        --time 1000 \
+        --sampling trajectory=1000 structure=1000
+
+
+Analysis of density profiles
+----------------------------
+
+The density profile can be obtained from the data on the wavevectors
+compatible with the reciprocal space of the periodic simulation box
+and the particles' positions.  The Python script provided at
+``plotting/density_profile.py`` extracts this data from the output file
+``wetting_product.h5`` generated during the production phase to compute
+the 1D density profile. Another Python script, ``plotting/plot_density_profile.py``,
+is employed to visualise the computed profile. An example call of the latter script is::
+
+    python plot_density_profile.py --inputs wetting_production.h5
+
+The calculation of the 1D density profile in ``plotting/density_profile.py``
+involves the following steps:
+
+Firstly, the complex Fourier modes are computed from the wavevectors and particle positions
+along the x-direction (``coord_index=0``).
+
+.. literalinclude:: /examples/plotting/density_profile.py
+  :lines: 29-41
+
+Next, the wavevectors are transformed to the corresponding grid indices of the simulation
+box in real space.
+
+.. literalinclude:: /examples/plotting/density_profile.py
+  :lines: 44-70
+
+In the ``compute_1D_density`` function, inverse Fourier transformation is applied on
+the modes to obtain the density. Due to symmetry, the density at the two ends
+of the pore slit is set to be equal. The function returns the normalised density
+with respect to bulk density and the position grid.
+
+.. literalinclude:: /examples/plotting/density_profile.py
+  :lines: 44-70
+
+To observe the normalised density profiles at vapour liquid coexistence for various
+wetting parameters :math:`w`, one should first execute the two Lua simulation scripts
+(``wetting/wetting_equilibration.lua`` and ``wetting/wetting_production.lua``)
+for :math:`w \in \{0.1, 0.5, 1.0, 1.5, 3.0, 6.0\}`. Once the output files are obtained,
+the profiles can be visualised in a single plot by running the following command::
+
+   python plot_density_profile.py --inputs wetting_production_*.h5
+
+|
+
+.. [1] Robert Evans, Maria C. Stewart, Nigel B. Wilding,
+       *Drying and wetting transitions of a Lennard-Jones fluid: Simulations and density functional theory*,
+       J. Chem. Phys. **147**, 044701 (2017)
+       `[Link] <https://doi.org/10.1063/1.4993515>`__
+

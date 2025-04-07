@@ -100,6 +100,8 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    typedef float2 gpu_complex_type;      // use as a replacement for std::complex
+
     typedef typename mdsim::type_traits<dimension, float>::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
     typedef density_mode_wrapper<dimension> wrapper_type;
@@ -126,18 +128,12 @@ private:
     cuda::config const dim_;
     /** wavevectors */
     cuda::memory::device::vector<gpu_vector_type> g_wavevector_;
-    /** block sums of sin(q r) for each wavevector on the device */
-    cuda::memory::device::vector<float> g_sin_block_;
-    /** block sums of cos(q r) for each wavevector on the device */
-    cuda::memory::device::vector<float> g_cos_block_;
-    /** sin(q r) for each wavevector on the device */
-    cuda::memory::device::vector<float> g_sin_;
-    /** cos(q r) for each wavevector on the device */
-    cuda::memory::device::vector<float> g_cos_;
-    /** sin(q r) for each wavevector as page-locked host memory */
-    cuda::memory::host::vector<float> h_sin_;
-    /** cos(q r) for each wavevector as page-locked host memory */
-    cuda::memory::host::vector<float> h_cos_;
+    /** block sums of exp(i q r) for each wavevector on the device */
+    cuda::memory::device::vector<gpu_complex_type> g_rho_block_;
+    /** exp(i q r) for each wavevector on the device */
+    cuda::memory::device::vector<gpu_complex_type> g_rho_;
+    /** exp(i q r) for each wavevector as page-locked host memory */
+    cuda::memory::host::vector<gpu_complex_type> h_rho_;
 
     typedef halmd::utility::profiler::accumulator_type accumulator_type;
     typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;

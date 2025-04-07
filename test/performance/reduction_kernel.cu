@@ -89,13 +89,13 @@ reduce_kernel<T> reduce_kernel<T>::kernel = {
 // explicit template instantiations
 template class reduce_kernel<int>;
 template class reduce_kernel<fixed_vector<int, 2>>;
-#ifdef USE_GPU_SINGLE_PRECISION
+template class reduce_kernel<fixed_vector<int, 3>>;
 template class reduce_kernel<float>;
+template class reduce_kernel<fixed_vector<float, 2>>;
 template class reduce_kernel<fixed_vector<float, 3>>;
-#endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 template class reduce_kernel<dsfloat>;
-template class reduce_kernel<fixed_vector<dsfloat, 2>>;
+template class reduce_kernel<fixed_vector<dsfloat, 3>>;
 #endif
 #ifdef USE_GPU_DOUBLE_PRECISION
 template class reduce_kernel<double>;

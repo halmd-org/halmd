@@ -27,6 +27,7 @@ local module = require("halmd.utility.module")
 -- =========
 --
 -- .. toctree::
+--    :titlesonly:
 --    :maxdepth: 2
 --    :glob:
 --
@@ -144,11 +145,11 @@ end
 -- :param string s: formatting string
 -- :param table t: (key, value) pairs
 --
--- :returns: interpolated copy of string 's'
+-- :returns: interpolated copy of string ``s``
 --
--- Occurrences of '{key:fmt}' in the formatting string are substituted by
--- '("%fmt"):format(value)', where 'fmt' is one of the C-printf formatting
--- codes. The method is added to the `string` type as `string.interp`.
+-- Occurrences of ``{key:fmt}`` in the formatting string are substituted by
+-- ``("%fmt"):format(value)``, where ``fmt`` is one of the C-printf formatting
+-- codes. The method is added to the ``string`` type as ``string.interp``.
 --
 -- Example:
 --
@@ -167,6 +168,39 @@ end
 getmetatable("").__index.interp = M.interp -- make method known to string type
 
 ---
+-- Functions on filesystem paths
+-- -----------------------------
+--
+
+---
+-- Return directory name of given path.
+--
+-- :param string path: pathname of a file, etc.
+--
+-- :returns: directory component of ``path``
+--
+-- The function splits ``path`` at the most-right ``/``. It returns the empty
+-- string as the default.
+--
+function M.dirname(path)
+    return path:match("@?(.*/)") or ""
+end
+
+---
+-- Convert relative path to an absolute path.
+--
+-- :param string relpath: pathname
+--
+-- :returns: absolute version of ``relpath``
+--
+-- The function prepends the absolute path of the currently executed Lua script
+-- ``arg[0]`` to ``relpath``.
+--
+function M.abspath(relpath)
+    return M.dirname(arg[0]) .. relpath
+end
+
+---
 -- Assertions
 -- ----------
 --
@@ -178,7 +212,7 @@ getmetatable("").__index.interp = M.interp -- make method known to string type
 -- :param string key: parameter key
 -- :param number level: call stack level for error message *(default: 2)*
 --
--- :returns: `args[key]`
+-- :returns: ``args[key]``
 --
 function M.assert_kwarg(args, key, level)
     local level = level or 2
@@ -197,7 +231,7 @@ end
 -- :param string name: Lua type name
 -- :param number level: call stack level for error message *(default: 2)*
 --
--- :returns: `var`
+-- :returns: ``var``
 --
 function M.assert_type(var, name, level)
     local level = level or 2

@@ -3,12 +3,11 @@ Recipes
 
 This section provides recipes and code snippets for how to accomplish specific
 tasks in a simulation script.
-
 **Contributions are highly welcome.**
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :glob:
 
    *

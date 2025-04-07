@@ -98,7 +98,7 @@ void verlet_nvt_hoover<dimension, float_type>::
 set_mass(chain_type const& mass)
 {
     mass_xi_ = mass;
-    LOG("`mass' of heat bath variables: " << mass_xi_);
+    LOG_INFO("`mass' of heat bath variables: " << mass_xi_);
 }
 
 /**

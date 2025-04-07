@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2010-2024 Felix Höfling
  * Copyright © 2010-2011 Peter Colberg
  *
  * This file is part of HALMD.
@@ -149,8 +149,16 @@ void profiler::log() const
     double maximum_runtime = total_runtime(*accumulators.back().first);
     BOOST_FOREACH(accumulator_pair_type const& acc, accumulators) {
         double fraction = total_runtime(*acc.first) / maximum_runtime;
+        logging::severity_level log_level = logging::info;  // default logging level: INFO
+        if (fraction >= 0.20) {                             // increase level of profilers that cover more than 20% of the total runtime
+            log_level = logging::message;
+        }
+        if (count(*acc.first) == 0) {                       // show empty profilers only at DEBUG level
+            log_level = logging::debug;
+        }
+
         HALMD_LOG(
-            count(*acc.first) > 0 ? logging::info : logging::debug
+            log_level
           , "[" << std::setw(5) << std::fixed << std::setprecision(1) << fraction * 100 << "%] "
                 << acc.second << ": " << *acc.first
         );

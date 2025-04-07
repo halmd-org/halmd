@@ -241,7 +241,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   #
   if(HALMD_USE_GIT)
     add_subdirectory(doc)
-  else()
+  elseif(EXISTS "${CMAKE_SOURCE_DIR}/doc/")
     install(DIRECTORY "${CMAKE_SOURCE_DIR}/doc/"
       DESTINATION "share/doc/halmd"
       PATTERN "man" EXCLUDE

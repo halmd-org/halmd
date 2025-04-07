@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2025  Felix Höfling
  * Copyright © 2012  Peter Colberg
  *
  * This file is part of HALMD.
@@ -23,17 +24,20 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
+#include <halmd/numeric/mp/dsfloat.hpp>
+using halmd::dsfloat_ptr;
+
 template <typename U, typename V>
 struct float_kernel
 {
-    cuda::function<void (float4*, float4*, U*, V*) > converter_one;
+    cuda::function<void (float4*, float4*, U*, V*) > converter;
     static float_kernel kernel;
 };
 
 template <typename U, typename V>
 struct double_kernel
 {
-    cuda::function<void (float4*, float4*, U*, V*) > converter_two;
+    cuda::function<void (dsfloat_ptr<float4>, dsfloat_ptr<float4>, U*, V*) > converter;
     static double_kernel kernel;
 };
 

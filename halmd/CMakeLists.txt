@@ -92,6 +92,10 @@ add_executable(halmd
   main.cpp
   "${CMAKE_CURRENT_BINARY_DIR}/modules.cpp"
 )
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+  set_target_properties(halmd PROPERTIES SUFFIX "-debug")
+endif()
+
 target_link_libraries(halmd
   # with newer version of GNU ld, indirect linking through intermediate
   # libraries does not work anymore, so we have to explicitly link halmd

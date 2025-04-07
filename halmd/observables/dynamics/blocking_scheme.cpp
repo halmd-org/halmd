@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <exception>
 
 #include <halmd/observables/dynamics/blocking_scheme.hpp>
@@ -33,8 +34,8 @@ namespace dynamics {
 
 blocking_scheme::blocking_scheme(
     std::shared_ptr<clock_type const> clock
-  , double maximum_lag_time
-  , double resolution
+  , time_type maximum_lag_time
+  , time_type resolution
   , unsigned int block_size
   , unsigned int shift
   , unsigned int separation
@@ -66,14 +67,18 @@ blocking_scheme::blocking_scheme(
         LOG("disable shifted coarse-graining blocks");
     }
 
+    // convert resolution and max lag time to steps using rounding to avoid truncation, e.g.,
+    // avoid that s = 0 if resolution ≈ timestep_ up to floating-point precision
     if (resolution <= 0) {
-        throw invalid_argument("Resolution must be greater than zero.");
+        throw invalid_argument("Resolution must be a positive value.");
     }
+    step_type max_interval = static_cast<step_type>(std::round(maximum_lag_time / timestep_));
+    step_type s = static_cast<step_type>(std::round(resolution / timestep_));
+    resolution = s * timestep_;
+
     LOG("minimal separation of samples in time: " << separation_ * resolution);
 
     // set up sampling intervals for each level
-    step_type max_interval = static_cast<step_type>(maximum_lag_time / clock_->timestep());
-    step_type s = static_cast<step_type>(resolution / clock_->timestep());
     assert(s > 0);
     while (s <= max_interval)
     {
@@ -250,8 +255,8 @@ void blocking_scheme::luaopen(lua_State* L)
                 class_<blocking_scheme, std::shared_ptr<blocking_scheme> >("blocking_scheme")
                     .def(constructor<
                         std::shared_ptr<clock_type const>
-                      , double
-                      , double
+                      , time_type
+                      , time_type
                       , unsigned int
                       , unsigned int
                       , unsigned int

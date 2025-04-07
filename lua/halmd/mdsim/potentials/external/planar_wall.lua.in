@@ -86,12 +86,12 @@ end
 -- :param matrix args.wetting: wetting parameters :math:`w_i^\alpha` in MD units.
 -- :param matrix args.cutoff: cutoff distances :math:`r_{c,i}^\alpha` in MD units.
 -- :param number args.smoothing: smoothing parameter :math:`h` for the :math:`C^2` continuous truncation in MD units.
+-- :param number args.species: number of particle species *(optional)*
 -- :param string args.memory: select memory location *(optional)*.
 -- :param string args.label: instance label *(optional)*.
 --
 -- If all elements of a parameter sequence are equal, a single value may be
 -- passed instead. In this case, ``species`` must be specified.
---
 -- If the argument ``species`` is omitted, it is inferred from the length
 -- of the parameter sequences.
 --

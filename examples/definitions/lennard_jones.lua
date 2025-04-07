@@ -34,6 +34,9 @@ local M = {}
 --
 -- returns the created force and potential modules
 --
+
+-- the following code is part of the documentation in doc/recipes/create_slit_pore.rst.in,
+-- line number must not be changed
 function M.create_pair_force(args)
     local box = utility.assert_kwarg(args, "box")
     local particle = utility.assert_kwarg(args, "particle")
@@ -43,7 +46,7 @@ function M.create_pair_force(args)
     -- define Lennard-Jones pair potential,
     local potential = mdsim.potentials.pair.lennard_jones()
     -- optionally, apply interaction cutoff
-    if cutoff > 0 then
+    if cutoff then
         -- use smooth truncation
         if smoothing > 0 then
             potential = potential:truncate({"smooth_r4", cutoff = cutoff, h = smoothing})
@@ -59,5 +62,7 @@ function M.create_pair_force(args)
 
     return force, potential
 end
+
+-- end of usage in doc/recipes/create_slit_pore.rst.in
 
 return M
