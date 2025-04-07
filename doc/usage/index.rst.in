@@ -6,9 +6,7 @@ Usage
 
    start
    scripts
+   units
    h5md
    plotting
    multi-gpu
-
-   diffusion
-   wetting
