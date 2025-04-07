@@ -28,7 +28,7 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 static const size_t NTHREADS = 224; // NTHREADS / 32 is not a power of two
-static const size_t NREDUCES = 10000;
+static const size_t NREDUCES = 5000;
 
 template <typename T>
 struct reduce_kernel
