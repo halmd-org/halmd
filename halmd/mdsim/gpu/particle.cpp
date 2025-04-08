@@ -142,7 +142,15 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     LOG_INFO("number of CUDA execution threads per block: " << dim_.threads_per_block());
 
     if (typeid(float_type) == typeid(float)) {
-        LOG("integrate using single precision");
+        LOG("using single floating-point precision");
+    }
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    else if (typeid(float_type) == typeid(dsfloat)) {
+        LOG("using double-single floating-point precision");
+    }
+#endif
+    else {
+        LOG_ERROR("unknown floating-point precision");
     }
 
     try {
