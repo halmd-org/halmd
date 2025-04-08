@@ -42,18 +42,34 @@ add_test(unit/mdsim/integrators/brownian/harmonic/host/3d
   test_unit_mdsim_integrators_brownian --run_test=brownian_harmonic_host_3d --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  add_test(unit/mdsim/integrators/brownian/free/gpu/2d
-    test_unit_mdsim_integrators_brownian --run_test=brownian_free_gpu_2d --log_level=test_suite
-  )
-  add_test(unit/mdsim/integrators/brownian/free/gpu/3d
-    test_unit_mdsim_integrators_brownian --run_test=brownian_free_gpu_3d --log_level=test_suite
-  )
-  add_test(unit/mdsim/integrators/brownian/harmonic/gpu/2d
-    test_unit_mdsim_integrators_brownian --run_test=brownian_harmonic_gpu_2d --log_level=test_suite
-  )
-  add_test(unit/mdsim/integrators/brownian/harmonic/gpu/3d
-    test_unit_mdsim_integrators_brownian --run_test=brownian_harmonic_gpu_3d --log_level=test_suite
-  )
+  if(HALMD_VARIANT_GPU_SINGLE_PRECISION)
+    add_test(unit/mdsim/integrators/brownian/free/gpu/float/2d
+      test_unit_mdsim_integrators_brownian --run_test=brownian_free_gpu_float_2d --log_level=test_suite
+    )
+    add_test(unit/mdsim/integrators/brownian/free/gpu/float/3d
+      test_unit_mdsim_integrators_brownian --run_test=brownian_free_gpu_float_3d --log_level=test_suite
+    )
+    add_test(unit/mdsim/integrators/brownian/harmonic/gpu/float/2d
+      test_unit_mdsim_integrators_brownian --run_test=brownian_harmonic_gpu_float_2d --log_level=test_suite
+    )
+    add_test(unit/mdsim/integrators/brownian/harmonic/gpu/float/3d
+      test_unit_mdsim_integrators_brownian --run_test=brownian_harmonic_gpu_float_3d --log_level=test_suite
+    )
+  endif()
+  if(HALMD_VARIANT_GPU_DOUBLE_SINGLE_PRECISION)
+    add_test(unit/mdsim/integrators/brownian/free/gpu/dsfloat/2d
+      test_unit_mdsim_integrators_brownian --run_test=brownian_free_gpu_dsfloat_2d --log_level=test_suite
+    )
+    add_test(unit/mdsim/integrators/brownian/free/gpu/dsfloat/3d
+      test_unit_mdsim_integrators_brownian --run_test=brownian_free_gpu_dsfloat_3d --log_level=test_suite
+    )
+    add_test(unit/mdsim/integrators/brownian/harmonic/gpu/dsfloat/2d
+      test_unit_mdsim_integrators_brownian --run_test=brownian_harmonic_gpu_dsfloat_2d --log_level=test_suite
+    )
+    add_test(unit/mdsim/integrators/brownian/harmonic/gpu/dsfloat/3d
+      test_unit_mdsim_integrators_brownian --run_test=brownian_harmonic_gpu_dsfloat_3d --log_level=test_suite
+    )
+  endif()
 endif()
 
 # module euler
