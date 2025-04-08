@@ -87,7 +87,6 @@ struct ideal_gas
     double timestep;
     unsigned int npart;
     float_vector_type box_ratios;
-    typename modules_type::slab_type slab;
 
     typedef typename modules_type::tolerance tolerance;
 
@@ -157,13 +156,12 @@ ideal_gas<modules_type>::ideal_gas()
     for (unsigned int i = 0; i < dimension; ++i) {
         edges(i, i) = edge_length * box_ratios[i];
     }
-    slab = 1;
 
     // create modules
     particle = std::make_shared<particle_type>(npart, 1);
     box = std::make_shared<box_type>(edges);
     random = std::make_shared<random_type>();
-    position = std::make_shared<position_type>(particle, box, slab);
+    position = std::make_shared<position_type>(particle, box, 1);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
     integrator = std::make_shared<integrator_type>(particle, box, timestep);
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
@@ -256,8 +254,6 @@ struct host_tolerance
 template <int dimension, typename float_type>
 struct host_modules
 {
-    typedef fixed_vector<float_type, dimension> vector_type;
-    typedef vector_type slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::integrators::verlet<dimension, float_type> integrator_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
@@ -301,8 +297,6 @@ struct gpu_tolerance<float> {
 template <int dimension, typename float_type>
 struct gpu_modules
 {
-    typedef fixed_vector<float_type, dimension> vector_type;
-    typedef fixed_vector<double, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::integrators::verlet<dimension, float_type> integrator_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;

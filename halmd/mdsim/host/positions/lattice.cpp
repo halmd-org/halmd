@@ -69,8 +69,8 @@ void lattice<dimension, float_type>::set()
     auto image = make_cache_mutable(particle_->image());
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
-    vector_type length = element_prod(static_cast<vector_type>(box_->length()), slab_);
-    vector_type offset = -length / 2;
+    position_type length = static_cast<position_type>(element_prod(box_->length(), slab_));
+    position_type offset = -length / 2;
     fcc(position->begin(), position->begin() + particle_->nparticle(), length, offset);
 
     // assign particle image vectors
@@ -111,11 +111,11 @@ void lattice<dimension, float_type>::set()
 template <int dimension, typename float_type> template <typename position_iterator>
 void lattice<dimension, float_type>::fcc(
     position_iterator first, position_iterator last
-  , vector_type const& length, vector_type const& offset
+  , position_type const& length, position_type const& offset
 )
 {
     typedef fixed_vector<unsigned int, dimension> index_type;
-    typedef close_packed_lattice<vector_type, index_type> lattice_type;
+    typedef close_packed_lattice<position_type, index_type> lattice_type;
 
     scoped_timer_type timer(runtime_.set);
 
@@ -126,11 +126,11 @@ void lattice<dimension, float_type>::fcc(
     double a = pow(V, 1. / dimension);
     index_type n(length / a);
     while (npart > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
-        vector_type t;
+        position_type t;
         for (size_t i = 0; i < dimension; ++i) {
             t[i] = length[i] / (n[i] + 1);
         }
-        typename vector_type::iterator it = max_element(t.begin(), t.end());
+        typename position_type::iterator it = max_element(t.begin(), t.end());
         a = *it;
         // recompute n to preserve aspect ratios of box, ensure that
         // no compoment decreases and that at least one component
@@ -166,7 +166,7 @@ void lattice<dimension, float_type>::fcc(
             ++i;
         }
 
-        vector_type& r = *r_it = lattice(i);
+        position_type& r = *r_it = lattice(i);
         // scale by lattice constant
         r *= a;
         // shift origin of lattice to offset

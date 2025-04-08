@@ -100,7 +100,7 @@ struct lattice
     unsigned npart;
     float density;
     float lattice_constant;
-    typename modules_type::slab_type slab;
+    vector_type slab;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<particle_type> particle;
@@ -128,8 +128,6 @@ void lattice<modules_type>::test()
 {
     using namespace boost::placeholders;
 
-    typedef typename modules_type::vector_type vector_type;
-    typedef typename modules_type::slab_type slab_type;
     BOOST_TEST_MESSAGE("#particles: " << npart << ", #unit cells: " << ncell <<
                        ", lattice constant: " << lattice_constant << ", slab extents: " << slab);
 
@@ -164,20 +162,20 @@ void lattice<modules_type>::test()
     // compute structure factor
     vector<double> ssf = compute_ssf(position_sample, q);
     // centre of mass
-    slab_type r_cm(
+    vector_type r_cm(
         accumulate(
             position_sample->data().begin(), position_sample->data().end(), vector_type(0)
           , plus<vector_type>()
         ) / npart
     );
     // minimal and maximal coordinates
-    slab_type r_min(
+    vector_type r_min(
         accumulate(
             position_sample->data().begin(), position_sample->data().end(), vector_type(0)
           , bind(wrap_element_min<vector_type>, _1, _2)
         )
     );
-    slab_type r_max(
+    vector_type r_max(
         accumulate(
             position_sample->data().begin(), position_sample->data().end(), vector_type(0)
           , bind(wrap_element_max<vector_type>, _1, _2)
@@ -192,11 +190,11 @@ void lattice<modules_type>::test()
     }
 
     // check centre and corners
-    slab_type corner = .5 * element_prod(static_cast<slab_type>(box->length()), slab);  //< upper right corner
-    slab_type offset = lattice_constant;                               //< diagonal of the unit cell
-    BOOST_CHECK_SMALL(norm_1(r_cm) / norm_1(corner), 2 * static_cast<typename slab_type::value_type>(eps));
-    BOOST_CHECK_SMALL(norm_1(r_min + corner - offset / 4) / norm_1(corner), static_cast<typename slab_type::value_type>(eps));
-    BOOST_CHECK_SMALL(norm_1(r_max - corner + offset / 4) / norm_1(corner), static_cast<typename slab_type::value_type>(eps));
+    vector_type corner = .5 * element_prod(static_cast<vector_type>(box->length()), slab);  //< upper right corner
+    vector_type offset = lattice_constant;                                                  //< diagonal of the unit cell
+    BOOST_CHECK_SMALL(norm_1(r_cm) / norm_1(corner), 2 * static_cast<float_type>(eps));
+    BOOST_CHECK_SMALL(norm_1(r_min + corner - offset / 4) / norm_1(corner), static_cast<float_type>(eps));
+    BOOST_CHECK_SMALL(norm_1(r_max - corner + offset / 4) / norm_1(corner), static_cast<float_type>(eps));
 }
 
 template <typename modules_type>
@@ -204,7 +202,6 @@ lattice<modules_type>::lattice()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
     typedef fixed_vector<unsigned, dimension> cell_vector;
-    typedef typename modules_type::slab_type slab_type;
 
     ncell = (dimension == 3) ? cell_vector{3, 6, 6} : cell_vector{4, 1024};
     nunit_cell = (dimension == 3) ? 4 : 2;  //< number of particles per unit cell
@@ -217,7 +214,7 @@ lattice<modules_type>::lattice()
         edges(i, i) = lattice_constant * box_ratios[i];
     }
 
-    slab = (dimension == 3) ? slab_type{1., .5, 1.} : slab_type{1., 1.};
+    slab = (dimension == 3) ? vector_type{1., .5, 1.} : vector_type{1., 1.};
     double slab_vol_frac = accumulate(slab.begin(), slab.end(), 1., multiplies<double>());
     // adjust density to make sure that the slab can accomodate an fcc lattice with the
     // same lattice spacing (a mismatch is a likely reason for failure of the test)
@@ -225,7 +222,7 @@ lattice<modules_type>::lattice()
 
     particle = std::make_shared<particle_type>(npart, 1);
     box = std::make_shared<box_type>(edges);
-    position = std::make_shared<position_type>(particle, box, slab);
+    position = std::make_shared<position_type>(particle, box, static_cast<typename box_type::vector_type>(slab));
     std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
     phase_space = std::make_shared<phase_space_type>(particle, particle_group, box);
 }
@@ -233,8 +230,6 @@ lattice<modules_type>::lattice()
 template <int dimension, typename float_type>
 struct host_modules
 {
-    typedef fixed_vector<float_type, dimension> vector_type;
-    typedef fixed_vector<float_type, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
@@ -265,8 +260,6 @@ BOOST_AUTO_TEST_CASE( lattice_host_3d ) {
 template <int dimension, typename float_type>
 struct gpu_modules
 {
-    typedef fixed_vector<float_type, dimension> vector_type;
-    typedef fixed_vector<double, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;

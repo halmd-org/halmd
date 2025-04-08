@@ -87,7 +87,6 @@ struct test_euler
     typedef typename modules_type::position_sample_type position_sample_type;
     typedef typename modules_type::velocity_sample_type velocity_sample_type;
     typedef typename modules_type::phase_space_type phase_space_type;
-    typedef typename modules_type::vector_type hp_vector_type;
 
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
@@ -102,7 +101,6 @@ struct test_euler
     double timestep;
     unsigned int npart;
     vector_type box_ratios;
-    typename modules_type::slab_type slab;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<particle_type> particle;
@@ -226,14 +224,13 @@ test_euler<modules_type>::test_euler()
     for (unsigned int i = 0; i < dimension; ++i) {
         edges(i, i) = edge_length * box_ratios[i];
     }
-    slab = 1;
 
     // create modules
     particle = std::make_shared<particle_type>(npart, 1);
     box = std::make_shared<box_type>(edges);
     integrator = std::make_shared<integrator_type>(particle, box, timestep);
     random = std::make_shared<random_type>();
-    position = std::make_shared<position_type>(particle, box, slab);
+    position = std::make_shared<position_type>(particle, box, 1);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
     std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
     phase_space = std::make_shared<phase_space_type>(particle, particle_group, box);
@@ -251,8 +248,6 @@ test_euler<modules_type>::test_euler()
 template <int dimension, typename float_type>
 struct host_modules
 {
-    typedef fixed_vector<float_type, dimension> vector_type;
-    typedef fixed_vector<float_type, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
@@ -323,8 +318,6 @@ BOOST_AUTO_TEST_CASE( euler_host_3d_overdamped ) {
 template <int dimension, typename float_type>
 struct gpu_modules
 {
-    typedef fixed_vector<float_type, dimension> vector_type;
-    typedef fixed_vector<double, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;

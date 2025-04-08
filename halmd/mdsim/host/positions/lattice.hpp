@@ -40,8 +40,9 @@ class lattice
 {
 public:
     typedef host::particle<dimension, float_type> particle_type;
-    typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
+    typedef typename particle_type::vector_type position_type;
+    typedef typename box_type::vector_type vector_type;     // always values of type double
 
     static void luaopen(lua_State* L);
 
@@ -80,7 +81,7 @@ private:
     template <typename position_iterator>
     void fcc(
         position_iterator first, position_iterator last
-      , vector_type const& length, vector_type const& offset
+      , position_type const& length, position_type const& offset
     );
 
     /** profiling runtime accumulators */

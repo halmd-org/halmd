@@ -44,7 +44,7 @@ template <int dimension, typename float_type>
 lattice<dimension, float_type>::lattice(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
-  , typename box_type::vector_type const& slab
+  , vector_type const& slab
   , std::shared_ptr<logger> logger
 )
   // dependency injection
@@ -118,7 +118,7 @@ void lattice<dimension, float_type>::fcc(
   , gpu_vector_type const& length, gpu_vector_type const& offset
 )
 {
-    typedef close_packed_lattice<vector_type, index_type> lattice_type;
+    typedef close_packed_lattice<gpu_vector_type, index_type> lattice_type;
 
     scoped_timer_type timer(runtime_.set);
     // determine maximal lattice constant
@@ -200,7 +200,7 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
               , def("lattice", &std::make_shared<lattice
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<box_type const>
-                  , typename box_type::vector_type const&
+                  , vector_type const&
                   , std::shared_ptr<logger>
                   >)
             ]

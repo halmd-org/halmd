@@ -101,8 +101,6 @@ struct brownian_free
     double resolution;
     unsigned int block_size;
     unsigned int npart;
-    fixed_vector<double, dimension> box_ratios;
-    fixed_vector<double, dimension> slab;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<clock_type> clock;
@@ -170,8 +168,6 @@ void brownian_free<modules_type>::test()
 template <typename modules_type>
 brownian_free<modules_type>::brownian_free()
 {
-    typedef fixed_vector<double, dimension> vector_type;
-
     timestep = 0.015;
     maximum_lag_time = 7;
 
@@ -187,19 +183,18 @@ brownian_free<modules_type>::brownian_free()
     // optimize filling of fcc lattice, use only few particles on the host
     npart = gpu ? 2500 : 25;
 
-    box_ratios = (dimension == 3) ? vector_type{1., 2., 1.01} : vector_type{1., 2.};
+    vector_type box_ratios = (dimension == 3) ? vector_type{1., 2., 1.01} : vector_type{1., 2.};
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
     double volume = npart / density;
-    double edge_length = pow(volume / det, 1. / dimension);
+    double base_length = pow(volume / det, 1. / dimension);
     boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
     for (unsigned int i = 0; i < dimension; ++i) {
-        edges(i, i) = edge_length * box_ratios[i];
+        edges(i, i) = base_length * box_ratios[i];
     }
-    slab = 1;
 
     // diffusion constant
     diffusion = typename integrator_type::scalar_container_type(1);
-    diffusion <<= 1.;
+    diffusion <<= 1;
 
     particle = std::make_shared<particle_type>(npart, 1);
     particle_group = std::make_shared<particle_group_type>(particle);
@@ -208,7 +203,7 @@ brownian_free<modules_type>::brownian_free()
     integrator = std::make_shared<integrator_type>(
         particle, random, box, timestep, temperature, diffusion
     );
-    position = std::make_shared<position_type>(particle, box, slab);
+    position = std::make_shared<position_type>(particle, box, 1);
     clock = std::make_shared<clock_type>();
     clock->set_timestep(integrator->timestep());
     phase_space = std::make_shared<phase_space_type>(particle, particle_group, box);

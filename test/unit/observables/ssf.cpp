@@ -84,7 +84,6 @@ struct lattice
     unsigned npart;
     float density;
     float lattice_constant;
-    typename modules_type::slab_type slab;
 
     shared_ptr<box_type> box;
     shared_ptr<particle_type> particle;
@@ -340,17 +339,15 @@ lattice<modules_type>::lattice()
     for (unsigned int i = 0; i < dimension; ++i) {
         edges(i, i) = lattice_constant * box_ratios[i];
     }
-    slab = 1;
 
     particle = std::make_shared<particle_type>(npart, 1);
     box = std::make_shared<box_type>(edges);
-    position = std::make_shared<position_type>(particle, box, slab);
+    position = std::make_shared<position_type>(particle, box, 1);
 }
 
 template <int dimension, typename float_type>
 struct host_modules
 {
-    typedef fixed_vector<float_type, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
@@ -379,7 +376,6 @@ BOOST_AUTO_TEST_CASE( ssf_host_3d ) {
 template <int dimension, typename float_type>
 struct gpu_modules
 {
-    typedef fixed_vector<double, dimension> slab_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
