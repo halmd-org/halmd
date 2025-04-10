@@ -84,6 +84,7 @@ local blocking_scheme_adaptor = assert(libhalmd.observables.samples.blocking_sch
 -- :param args.location: default location within file
 -- :type args.location: string table
 -- :param string args.desc: module description
+-- :param table args.aux_enable: sequence of :class:`halmd.mdsim.particle` instances *(optional)*
 --
 -- The argument ``acquire`` is a callable or a table of up to 2 callables that
 -- yield the samples to be correlated.
@@ -95,6 +96,13 @@ local blocking_scheme_adaptor = assert(libhalmd.observables.samples.blocking_sch
 -- The argument ``location`` defines the default value of ``writer()``. For
 -- H5MD files, it obeys the structure {``"dynamics"``, particle group, name of
 -- correlation function}.
+--
+-- The parameter ``aux_enable`` is useful if ``acquire()`` depends on one of
+-- the auxiliary force variables, see :meth:`halmd.mdsim.particle.aux_enable`
+-- for details. In sampling steps of the correlation function, each ``particle``
+-- instance listed in ``aux_enable`` is notified to update the auxiliary
+-- variables before the sampling step. Thereby, redundant force calculations
+-- can be avoided.
 --
 -- .. method:: acquire()
 --
@@ -113,6 +121,11 @@ local blocking_scheme_adaptor = assert(libhalmd.observables.samples.blocking_sch
 -- .. attribute:: desc
 --
 --    Module description.
+--
+-- .. attribute:: aux_enable
+--
+--    Sequence of particle instances that require auxiliary variables
+--    during sampling.
 --
 -- .. class:: writer(args)
 --
@@ -134,6 +147,7 @@ local M = module(function(args)
     local shape     = utility.assert_type(args.shape or {}, "table")
     local location  = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
     local desc      = utility.assert_type(utility.assert_kwarg(args, "desc"), "string")
+    local aux_enable = utility.assert_type(args.aux_enable or {}, "table")
 
     -- ensure that acquire is a table
     if not (type(acquire) == "table") then
@@ -165,6 +179,10 @@ local M = module(function(args)
         local writer = file:writer({location = location, mode = "truncate"})
         return writer
     end end)
+
+    self.aux_enable = property(function(self)
+        return aux_enable
+    end)
 
     return self
 end)
