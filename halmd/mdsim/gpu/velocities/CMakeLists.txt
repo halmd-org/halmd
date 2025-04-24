@@ -1,7 +1,10 @@
 halmd_add_library(halmd_mdsim_gpu_velocities
   boltzmann.cpp
+  rescale.cpp
   boltzmann_kernel.cu
+  rescale_kernel.cu
 )
 halmd_add_modules(
   libhalmd_mdsim_gpu_velocities_boltzmann
+  libhalmd_mdsim_gpu_velocities_rescale
 )
