@@ -43,29 +43,40 @@ rescale<dimension, float_type>::rescale(
 template <int dimension, typename float_type>
 void rescale<dimension, float_type>::set()
 {
-    auto const& en_pot = read_cache(particle_->potential_energy());
+    auto const& en_pot_array = read_cache(particle_->potential_energy());
 
     scoped_timer_type timer(runtime_.set);
 
     LOG_DEBUG("Rescale particle velocities to match target energy, for each particle");
 
-    auto velocity = make_cache_mutable(particle_->velocity());
+    //auto velocity = make_cache_mutable(particle_->velocity());
+    auto& velocity = *make_cache_mutable(particle_->velocity());
     std::size_t n = particle_->nparticle();
-    float_type target_total_energy = static_cast<float_type>(target_energy_);
     
-    // Loop over all particles to compute current total energy and rescale velocities
-    for (std::size_t i = 0; i < n; ++i) {
-        float_type ke = 0.0;
-        for (int d = 0; d < dimension; ++d)
-            ke += 0.5 * velocity(i, d) * velocity(i, d);  // assuming mass = 1
+    // Step 1: Compute total potential energy
+    float_type en_pot = 0;
+    for (std::size_t i = 0; i < n; ++i)
+        en_pot += en_pot_array[i];
 
-        float_type total_energy = ke + en_pot(i);
-        float_type scaling = std::sqrt(target_total_energy / total_energy);
-
+    // Step 2: Compute current total kinetic energy
+    float_type en_kin = 0;
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        const auto& v = velocity[i];
         for (int d = 0; d < dimension; ++d)
-            velocity(i, d) *= scaling;
+            en_kin += 0.5 * v[d] * v[d];  // assumes mass = 1
+    }
+
+    // Step 3: Compute rescaling factor
+    float_type target_total_energy = static_cast<float_type>(target_energy_);
+    float_type scaling = std::sqrt((target_total_energy - en_pot) / en_kin);
+
+    // Step 4: Apply rescaling factor to all velocities
+    for (std::size_t i = 0; i < n; ++i){
+        velocity[i]*= scaling;
     }
 }
+
 
 template <int dimension, typename float_type>
 void rescale<dimension, float_type>::luaopen(lua_State* L)
@@ -100,24 +111,23 @@ void rescale<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_host_velocities_rescale(lua_State* L)
 {
-#ifdef USE_HOST_SINGLE_PRECISION
+#ifndef USE_HOST_SINGLE_PRECISION
+    rescale<3, double>::luaopen(L);
+    rescale<2, double>::luaopen(L);
+#else
     rescale<3, float>::luaopen(L);
     rescale<2, float>::luaopen(L);
-#endif
-#ifdef USE_HOST_DOUBLE_SINGLE_PRECISION
-    rescale<3, dsfloat>::luaopen(L);
-    rescale<2, dsfloat>::luaopen(L);
 #endif
     return 0;
 }
 
-#ifdef USE_HOST_SINGLE_PRECISION
+// explicit instantiation
+#ifndef USE_HOST_SINGLE_PRECISION
+template class rescale<3, double>;
+template class rescale<2, double>;
+#else
 template class rescale<3, float>;
 template class rescale<2, float>;
-#endif
-#ifdef USE_HOST_DOUBLE_SINGLE_PRECISION
-template class rescale<3, dsfloat>;
-template class rescale<2, dsfloat>;
 #endif
 
 } // namespace velocities
