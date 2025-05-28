@@ -47,33 +47,57 @@ void rescale<dimension, float_type>::set()
 
     scoped_timer_type timer(runtime_.set);
 
-    LOG_DEBUG("Rescale particle velocities to match target energy, for each particle");
+    LOG_DEBUG("rescale particle velocities to match target energy, for each particle");
 
     //auto velocity = make_cache_mutable(particle_->velocity());
     auto& velocity = *make_cache_mutable(particle_->velocity());
     std::size_t n = particle_->nparticle();
     
-    // Step 1: Compute total potential energy
-    float_type en_pot = 0;
-    for (std::size_t i = 0; i < n; ++i)
-        en_pot += en_pot_array[i];
-
-    // Step 2: Compute current total kinetic energy
-    float_type en_kin = 0;
     for (std::size_t i = 0; i < n; ++i)
     {
-        const auto& v = velocity[i];
-        for (int d = 0; d < dimension; ++d)
-            en_kin += 0.5 * v[d] * v[d];  // assumes mass = 1
-    }
+        auto& v = velocity[i];
+        float mass;
+        float_type en_kin = mass * inner_prod(v, v) / 2;  // assumes mass = 1
+        float_type en_pot = en_pot_array[i];
+  
+        float_type target_total_energy = static_cast<float_type>(target_energy_);
+        float_type energy_diff = target_total_energy - en_pot;
 
-    // Step 3: Compute rescaling factor
-    float_type target_total_energy = static_cast<float_type>(target_energy_);
-    float_type scaling = std::sqrt((target_total_energy - en_pot) / en_kin);
+        if ( i < 10 ) {
+            LOG_DEBUG("en_kin[" << i << "] = " << en_kin);
+        }
 
-    // Step 4: Apply rescaling factor to all velocities
-    for (std::size_t i = 0; i < n; ++i){
-        velocity[i]*= scaling;
+        // Safety checks
+        if (en_kin <= 0) {
+            LOG_DEBUG("kinetic energy is zero for particle " << i << ". Initializing first velocity component.");
+
+            // Give the particle a small velocity to avoid zero kinetic energy
+            v[0] = static_cast<float_type>(1e-3);
+
+            for (int d = 1; d < dimension; ++d)
+                v[d] = static_cast<float_type>(0.0); // ensure no hidden noise
+
+            en_kin = mass * inner_prod(v, v) / 2;
+
+        
+        }   
+
+
+        if (energy_diff <= 0.0) {
+            LOG_ERROR("target energy is less than or equal to potential energy.");
+            throw std::runtime_error("target energy too low to match current potential energy.");
+        }
+
+        // Step 3: Compute rescaling factor
+        float_type scaling = std::sqrt(energy_diff / en_kin);
+
+
+        // Step 4: Apply rescaling factor to all velocities
+        if ( i < 10 ) {
+            LOG_DEBUG("scaling factor: " << scaling);
+        }
+
+        v *= scaling;
     }
 }
 
