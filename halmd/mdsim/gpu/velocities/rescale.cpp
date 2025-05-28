@@ -48,7 +48,7 @@ void rescale<dimension, float_type>::set()
 
     scoped_timer_type timer(runtime_.set);
 
-    LOG_DEBUG("Rescale particle velocities to match target energy, for each particle");
+    LOG_DEBUG("rescale particle velocities to match target energy, for each particle");
 
     // Access particle velocity buffer
     auto velocity = make_cache_mutable(particle_->velocity());

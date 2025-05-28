@@ -47,9 +47,20 @@ __global__ void rescale(ptr_type g_v, float const* g_en_pot, uint npart, float t
 
         // kinetic energy of this particle
         float_type en_kin = mass * inner_prod(v, v) / 2;
+        float_type energy_diff = target_energy - en_pot;
+
+        // safety fix: avoid zero kinetic energy
+        if (en_kin <= static_cast<float_type>(0.0)) {
+            // initialize v to a small value
+            v[0] = static_cast<float_type>(1e-3);
+            for (int d = 1; d < sizeof(v) / sizeof(v[0]); ++d)
+                v[d] = static_cast<float_type>(0.0);
+            en_kin = mass * inner_prod(v, v) / 2;
+        }
+        
 
         // Compute velocity scaling factor to match target total energy
-        float_type scale = sqrtf((target_energy - en_pot) / en_kin);
+        float_type scale = sqrtf(energy_diff / en_kin);
         v *= scale;   // rescale to match target kinetic energy
 
         // write back rescaled velocities to global memory
