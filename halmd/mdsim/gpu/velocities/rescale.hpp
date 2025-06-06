@@ -64,7 +64,7 @@ private:
     typedef rescale_wrapper<dimension, float_type> wrapper_type;
 
     std::shared_ptr<particle_type> particle_;
-    float_type target_energy_;
+    float target_energy_;
     std::shared_ptr<logger> logger_;
 
     typedef utility::profiler::accumulator_type accumulator_type;

@@ -38,41 +38,43 @@ __global__ void rescale(ptr_type g_v, float const* g_en_pot, uint npart, float t
 {
     typedef typename vector_type::value_type float_type;
 
-    if (GTID == 0) {
+    unsigned int const i = GTID;    // map threads globally to array indices
+    if (i == 0) {
         *retcode = success;
     }
+    __syncthreads();
 
-    for (uint i = GTID; i < npart; i += GTDIM) {
-        // read velocity, mass, and potential energy from global memory
-        vector_type v;
-        float mass;
-        tie(v, mass) <<= g_v[i];
-        float en_pot = g_en_pot[i];
+    if (i >= npart) return;
 
-        // kinetic energy of this particle
-        float_type en_kin = mass * inner_prod(v, v) / 2;
-        float_type energy_diff = target_energy - en_pot;
+    // read velocity, mass, and potential energy from global memory
+    vector_type v;
+    float mass;
+    tie(v, mass) <<= g_v[i];
+    float en_pot = g_en_pot[i];
 
-        // safety guard: target energy is less than potential energy
-        if (energy_diff <= float_type(0)) {
-            atomicAnd(retcode, static_cast<int>(failure));
-        }
-        // safety guard: handle zero kinetic energy (i.e., v = 0)
-        else if (en_kin == float_type(0)) {
-            // let v point along the first axis, set magnitude to match the desired kinetic energy
-            v[0] = sqrtf(2 * energy_diff / mass);
-            atomicAnd(retcode, static_cast<int>(warning));
-        }
-        else {
-            // compute velocity scaling factor to match target total energy
-            // and rescale velocities
-            float_type scale = sqrtf(energy_diff / en_kin);
-            v *= scale;
-        }
+    // kinetic energy of this particle
+    float_type en_kin = mass * inner_prod(v, v) / 2;
+    float_type energy_diff = target_energy - en_pot;
 
-        // write back rescaled velocities to global memory
-        g_v[i] <<= tie(v, mass);
+    // safety guard: target energy is less than potential energy
+    if (energy_diff < float_type(0)) {
+        atomicOr(retcode, static_cast<int>(failure));
     }
+    // safety guard: handle zero kinetic energy (i.e., v = 0)
+    else if (en_kin == float_type(0)) {
+        // let v point along the first axis, set magnitude to match the desired kinetic energy
+        v[0] = sqrt(2 * energy_diff / mass);
+        atomicOr(retcode, static_cast<int>(warning));
+    }
+    else {
+        // compute velocity scaling factor to match target total energy
+        // and rescale velocities
+        float_type scale = sqrt(energy_diff / en_kin);
+        v *= scale;
+    }
+
+    // write back rescaled velocities to global memory
+    g_v[i] <<= tie(v, mass);
 }
 
 } // namespace rescale_kernel

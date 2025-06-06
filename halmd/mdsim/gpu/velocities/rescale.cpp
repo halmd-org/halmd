@@ -57,15 +57,16 @@ void rescale<dimension, float_type>::set()
     LOG_DEBUG("rescale particle velocities to match target energy, for each particle");
 
     // access particle velocity array
-    auto velocity = make_cache_mutable(particle_->velocity());
+    auto& velocity = *make_cache_mutable(particle_->velocity());
     cuda::memory::device::vector<int> retcode(1);
 
     // configure and launch the rescale kernel
-    // This performs for each particle: (1) calculate total energy and scaling factor, (2) apply velocity scaling
+    // This performs for each particle:
+    // (1) calculate total energy and scaling factor, (2) apply velocity scaling
     configure_kernel(wrapper_type::kernel.rescale, particle_->dim(), true);
 
     wrapper_type::kernel.rescale(
-        velocity->data()              // velocities (device pointer)
+        velocity.data()               // velocities (device pointer)
       , en_pot.data()                 // potential energy (device pointer)
       , particle_->nparticle()        // number of particles
       , target_energy_                // target energy per particle
@@ -81,7 +82,7 @@ void rescale<dimension, float_type>::set()
         LOG_WARNING_ONCE("kinetic energy is zero for some particle(s). Initialising first velocity component");
     }
     else if (r & failure) {
-        LOG_ERROR("target energy is less than or equal to potential energy");
+        LOG_ERROR("target energy is less than potential energy");
         throw std::runtime_error("target energy can not be matched by velocity rescaling");
     }
 }

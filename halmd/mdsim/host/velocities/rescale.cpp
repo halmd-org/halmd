@@ -61,16 +61,16 @@ void rescale<dimension, float_type>::set()
     for (size_type i = 0; i < particle_->nparticle(); ++i)
     {
         auto& v = velocity[i];
-        float mass_ = mass[i];
+        float_type mass_ = mass[i];
         float_type en_kin = mass_ * inner_prod(v, v) / 2;
         float_type en_pot = en_pot_array[i];
 
         float_type target_total_energy = static_cast<float_type>(target_energy_);
         float_type energy_diff = target_total_energy - en_pot;
 
-        if (energy_diff <= float_type(0)) {
+        if (energy_diff < float_type(0)) {
             LOG_ERROR("target energy (" << target_total_energy
-                      << ") is less than or equal to potential energy (" << en_pot
+                      << ") is less than potential energy (" << en_pot
                       << ") of particle #" << i
                      );
             throw std::runtime_error("target energy can not be matched by velocity rescaling");
@@ -82,7 +82,7 @@ void rescale<dimension, float_type>::set()
             LOG_DEBUG("zero velocity of particle #" << i);
 
             // let v point along the first axis, set magnitude to match the desired kinetic energy
-            v[0] = sqrtf(2 * energy_diff / mass_);
+            v[0] = std::sqrt(2 * energy_diff / mass_);
         }
         else {
             // compute rescaling factor and apply to all velocities
