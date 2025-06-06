@@ -30,14 +30,21 @@ namespace mdsim {
 namespace gpu {
 namespace velocities {
 
+// return codes of CUDA kernel
+enum {
+    success = 0x0   // everything OK
+  , warning = 0x1   // zero velocity encountered, workaround used
+  , failure = 0x2   // target energy too low, terminate
+};
+
 template <int dimension, typename float_type>
 struct rescale_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
     typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
 
-    // Declare the rescale kernel function
-    cuda::function<void(ptr_type, float const*, uint, float)> rescale;
+    // declare the rescale kernel function
+    cuda::function<void(ptr_type, float const*, uint, float, int*)> rescale;
 
     static rescale_wrapper kernel;
 };

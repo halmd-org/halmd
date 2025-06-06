@@ -34,9 +34,13 @@ template <
     typename ptr_type
   , typename vector_type
 >
-__global__ void rescale(ptr_type g_v, float const* g_en_pot, uint npart, float target_energy)
+__global__ void rescale(ptr_type g_v, float const* g_en_pot, uint npart, float target_energy, int* retcode)
 {
     typedef typename vector_type::value_type float_type;
+
+    if (GTID == 0) {
+        *retcode = success;
+    }
 
     for (uint i = GTID; i < npart; i += GTDIM) {
         // read velocity, mass, and potential energy from global memory
@@ -49,9 +53,12 @@ __global__ void rescale(ptr_type g_v, float const* g_en_pot, uint npart, float t
         float_type en_kin = mass * inner_prod(v, v) / 2;
         float_type energy_diff = target_energy - en_pot;
 
-
+        // safety guard: target energy is less than potential energy
+        if (energy_diff <= float_type(0)) {
+            atomicAnd(retcode, static_cast<int>(failure));
+        }
         // safety guard: handle zero kinetic energy (i.e., v = 0)
-        if (en_kin == float_type(0)) {
+        else if (en_kin == float_type(0)) {
             // let v point along the first axis, set magnitude to match the desired kinetic energy
             v[0] = sqrtf(2 * energy_diff / mass);
             atomicAnd(retcode, static_cast<int>(warning));

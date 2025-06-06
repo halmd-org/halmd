@@ -58,6 +58,7 @@ void rescale<dimension, float_type>::set()
 
     // access particle velocity array
     auto velocity = make_cache_mutable(particle_->velocity());
+    cuda::memory::device::vector<int> retcode(1);
 
     // configure and launch the rescale kernel
     // This performs for each particle: (1) calculate total energy and scaling factor, (2) apply velocity scaling
@@ -68,8 +69,21 @@ void rescale<dimension, float_type>::set()
       , en_pot.data()                 // potential energy (device pointer)
       , particle_->nparticle()        // number of particles
       , target_energy_                // target energy per particle
+      , retcode.data()                // return code
     );
-    cuda::thread::synchronize();
+    // cuda::thread::synchronize();   // cuda::copy below is blocking
+
+    // obtain return code and test bits
+    int r;
+    cuda::copy(retcode.begin(), retcode.begin() + 1, &r);
+
+    if (r & warning) {
+        LOG_WARNING_ONCE("kinetic energy is zero for some particle(s). Initialising first velocity component");
+    }
+    else if (r & failure) {
+        LOG_ERROR("target energy is less than or equal to potential energy");
+        throw std::runtime_error("target energy can not be matched by velocity rescaling");
+    }
 }
 
 template <int dimension, typename float_type>
