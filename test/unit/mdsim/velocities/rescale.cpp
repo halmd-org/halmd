@@ -119,7 +119,7 @@ void rescale_test<modules_type>::test()
 
 
     // apply rescale module
-    rescale_type rescaler(particle, thermo, target_energy);
+    rescale_type rescaler(particle, target_energy);
     rescaler.set();
 
     // Re-evaluate energies
@@ -161,7 +161,6 @@ rescale_test<modules_type>::rescale_test()
     box = std::make_shared<box_type>(edges);
     random = std::make_shared<random_type>();
     boltzmann = std::make_shared<boltzmann_type>(particle, random, temp);
-    // = std::make_shared<thermo_type>(particle);
     auto group = std::make_shared<particle_group_type>(particle);
     auto logger = std::make_shared<halmd::logger>();
 

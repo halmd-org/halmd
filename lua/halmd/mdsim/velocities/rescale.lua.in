@@ -85,7 +85,7 @@ local M = module(function(args)
     local logger = log.logger({label = ("rescale (%s)"):format(label)})
 
     -- Construct and return C++ instance
-    return rescale(particle, thermo, energy, logger)
+    return rescale(particle, target_energy, logger)
 end)
 
 return M

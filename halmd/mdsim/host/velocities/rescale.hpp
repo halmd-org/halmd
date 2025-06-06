@@ -29,13 +29,11 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/profiler.hpp>
-#include <halmd/observables/host/thermodynamics.hpp> 
 
 namespace halmd {
 namespace mdsim {
-namespace host { // changed from gpu to host
+namespace host {
 namespace velocities {
 
 template <int dimension, typename float_type>
@@ -43,28 +41,24 @@ class rescale
 {
 public:
     typedef host::particle<dimension, float_type> particle_type;
-    typedef observables::host::thermodynamics<dimension, float_type> thermo_type;
 
     rescale(
         std::shared_ptr<particle_type> particle,
-        std::shared_ptr<thermo_type> thermo,
         double target_energy,
         std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     void set();
 
-    void set_target_energy(double energy) { target_energy_ = energy; }
+    // read and write access to target energy
+    void set_target_energy(double energy);
     double target_energy() const { return target_energy_; }
 
     static void luaopen(lua_State* L);
 
 private:
     std::shared_ptr<particle_type> particle_;
-    std::shared_ptr<thermo_type> thermo_;
-
     float_type target_energy_;
-
     std::shared_ptr<logger> logger_;
 
     typedef utility::profiler::accumulator_type accumulator_type;

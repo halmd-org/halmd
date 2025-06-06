@@ -30,15 +30,21 @@ namespace velocities {
 template <int dimension, typename float_type>
 rescale<dimension, float_type>::rescale(
     std::shared_ptr<particle_type> particle,
-    std::shared_ptr<thermo_type> thermo,
     double target_energy,
     std::shared_ptr<halmd::logger> logger
 )
   : particle_(particle),
-    thermo_(thermo),
-    target_energy_(target_energy),
     logger_(logger)
-{}
+{
+    set_target_energy(target_energy);
+}
+
+template <int dimension, typename float_type>
+void rescale<dimension, float_type>::set_target_energy(double energy)
+{
+    target_energy_ = energy;
+    LOG("target energy: " << target_energy_);
+}
 
 template <int dimension, typename float_type>
 void rescale<dimension, float_type>::set()
@@ -114,17 +120,16 @@ void rescale<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<rescale>()
                     .def("set", &rescale::set)
-                    .def("set_target_energy", &rescale::set_target_energy)
-                    .def("target_energy", &rescale::target_energy)
+                    .property("target_energy", &rescale::target_energy, &rescale::set_target_energy)
                     .scope
                     [
                         class_<runtime>("runtime")
                             .def_readonly("set", &runtime::set)
                     ]
                     .def_readonly("runtime", &rescale::runtime_)
+
               , def("rescale", &std::make_shared<rescale
                   , std::shared_ptr<particle_type>
-                  , std::shared_ptr<thermo_type>
                   , double
                   , std::shared_ptr<logger>
                 >)

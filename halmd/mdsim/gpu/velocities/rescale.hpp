@@ -18,8 +18,6 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-//  rescale the system to a target total energy at specific intervals
-
 #ifndef HALMD_MDSIM_GPU_VELOCITIES_RESCALE_HPP
 #define HALMD_MDSIM_GPU_VELOCITIES_RESCALE_HPP
 
@@ -30,28 +28,24 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/velocities/rescale_kernel.hpp>
-#include <halmd/numeric/mp/dsfloat.hpp>
-#include <halmd/random/gpu/random.hpp>
-#include <halmd/utility/gpu/dsfloat_cuda_vector.hpp>
 #include <halmd/utility/profiler.hpp>
-#include <halmd/observables/gpu/thermodynamics.hpp> // for energy reading
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
 namespace velocities {
 
+// rescale all particle velocities to a target total energy
+
 template <int dimension, typename float_type>
 class rescale
 {
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
-    typedef observables::gpu::thermodynamics<dimension, float_type> thermo_type;
 
     // constructor 
     rescale(
         std::shared_ptr<particle_type> particle
-      , std::shared_ptr<thermo_type> thermo  // use to fetch kinetic/potential energy
       , double target_energy
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
@@ -59,8 +53,8 @@ public:
     // initialize
     void set();
 
-    // return energy targeted and rate
-    void set_target_energy(double energy) { target_energy_ = energy; }
+    // read and write access to target energy
+    void set_target_energy(double energy);
     double target_energy() const { return target_energy_; }
 
     // bind class to lua
@@ -74,8 +68,6 @@ private:
     typedef rescale_wrapper<dimension, float_type> wrapper_type;
 
     std::shared_ptr<particle_type> particle_;
-    std::shared_ptr<thermo_type> thermo_;
-
     float_type target_energy_;
 
     std::shared_ptr<logger> logger_;
