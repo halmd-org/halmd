@@ -18,7 +18,6 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local utility           = require("halmd.utility")
 local module            = require("halmd.utility.module")
@@ -27,8 +26,8 @@ local module            = require("halmd.utility.module")
 -- Rescale velocities
 -- ==================
 --
--- This module rescales particle velocities such that the total energy of the system
--- matches a desired target value.
+-- This module rescales particle velocities such that the total energy of each
+-- particle matches the given target value.
 --
 -- The rescaling is applied according to the following procedure:
 --
@@ -66,7 +65,7 @@ local rescale = assert(libhalmd.mdsim.velocities.rescale)
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
--- :param number args.energy: desired total energy (kinetic + potential)
+-- :param number args.target_energy: desired total energy (kinetic + potential)
 --
 -- .. method:: set()
 --
@@ -78,8 +77,8 @@ local rescale = assert(libhalmd.mdsim.velocities.rescale)
 --
 
 local M = module(function(args)
-    local particle = utility.assert_kwarg(args, "particle")
-    local energy   = utility.assert_kwarg(args, "energy")
+    local particle      = utility.assert_kwarg(args, "particle")
+    local target_energy = utility.assert_kwarg(args, "target_energy")
 
     local label  = assert(particle.label)
     local logger = log.logger({label = ("rescale (%s)"):format(label)})

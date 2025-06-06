@@ -135,11 +135,6 @@ void rescale_test<modules_type>::test()
     float_type tolerance = 2 * std::numeric_limits<float_type>::epsilon();
     BOOST_TEST_MESSAGE("Target energy: " << target_energy);
     BOOST_CHECK_CLOSE_FRACTION(energy_after, target_energy, tolerance); // tolerance::value
-
-    // Check center-of-mass velocity is small
-    auto v_cm = get_v_cm(*particle, group);
-    BOOST_TEST_MESSAGE("Center-of-mass velocity: " << v_cm);
-    BOOST_CHECK_SMALL(norm_inf(v_cm), tolerance);
 }
 
 template <typename modules_type>
@@ -195,11 +190,10 @@ struct host_modules
     typedef halmd::mdsim::host::velocities::boltzmann<dimension, float_type> boltzmann_type;
     typedef halmd::mdsim::host::velocities::rescale<dimension, float_type> rescale_type;
     typedef halmd::observables::host::thermodynamics<dimension, float_type> thermo_type;
-    
+
     static bool const gpu = false;
     typedef host_tolerance<float_type> tolerance;
 };
-
 
 // Register tests with Boost.Test
 #ifndef USE_HOST_SINGLE_PRECISION

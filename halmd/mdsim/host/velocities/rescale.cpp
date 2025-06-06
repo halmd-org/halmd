@@ -50,60 +50,45 @@ template <int dimension, typename float_type>
 void rescale<dimension, float_type>::set()
 {
     auto const& en_pot_array = read_cache(particle_->potential_energy());
+    auto const& mass = read_cache(particle_->mass());
 
     scoped_timer_type timer(runtime_.set);
 
     LOG_DEBUG("rescale particle velocities to match target energy, for each particle");
 
-    //auto velocity = make_cache_mutable(particle_->velocity());
     auto& velocity = *make_cache_mutable(particle_->velocity());
-    std::size_t n = particle_->nparticle();
-    
-    for (std::size_t i = 0; i < n; ++i)
+
+    for (size_type i = 0; i < particle_->nparticle(); ++i)
     {
         auto& v = velocity[i];
-        float mass;
-        float_type en_kin = mass * inner_prod(v, v) / 2;  // assumes mass = 1
+        float mass_ = mass[i];
+        float_type en_kin = mass_ * inner_prod(v, v) / 2;
         float_type en_pot = en_pot_array[i];
-  
+
         float_type target_total_energy = static_cast<float_type>(target_energy_);
         float_type energy_diff = target_total_energy - en_pot;
 
-        if ( i < 10 ) {
-            LOG_DEBUG("en_kin[" << i << "] = " << en_kin);
+        if (energy_diff <= float_type(0)) {
+            LOG_ERROR("target energy (" << target_total_energy
+                      << ") is less than or equal to potential energy (" << en_pot
+                      << ") of particle #" << i
+                     );
+            throw std::runtime_error("target energy can not be matched by velocity rescaling");
         }
 
-        // Safety checks
-        if (en_kin <= 0) {
-            LOG_DEBUG("kinetic energy is zero for particle " << i << ". Initializing first velocity component.");
+        // safety guard: handle zero kinetic energy (i.e., v = 0)
+        if (en_kin == float_type(0)) {
+            LOG_WARNING_ONCE("kinetic energy is zero for some particle(s). Initialising first velocity component.");
+            LOG_DEBUG("zero velocity of particle #" << i);
 
-            // Give the particle a small velocity to avoid zero kinetic energy
-            v[0] = static_cast<float_type>(1e-3);
-
-            for (int d = 1; d < dimension; ++d)
-                v[d] = static_cast<float_type>(0.0); // ensure no hidden noise
-
-            en_kin = mass * inner_prod(v, v) / 2;
-
-        
-        }   
-
-
-        if (energy_diff <= 0.0) {
-            LOG_ERROR("target energy is less than or equal to potential energy.");
-            throw std::runtime_error("target energy too low to match current potential energy.");
+            // let v point along the first axis, set magnitude to match the desired kinetic energy
+            v[0] = sqrtf(2 * energy_diff / mass_);
         }
-
-        // Step 3: Compute rescaling factor
-        float_type scaling = std::sqrt(energy_diff / en_kin);
-
-
-        // Step 4: Apply rescaling factor to all velocities
-        if ( i < 10 ) {
-            LOG_DEBUG("scaling factor: " << scaling);
+        else {
+            // compute rescaling factor and apply to all velocities
+            float_type scaling = std::sqrt(energy_diff / en_kin);
+            v *= scaling;
         }
-
-        v *= scaling;
     }
 }
 

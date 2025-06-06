@@ -18,29 +18,26 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-
 local log = halmd.io.log
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 
 local function compute_and_assert_energy(particle, args)
-    local mass = args.mass or 1
+    local mass = args.mass
     local stiffness = args.stiffness
-    local tolerance = 1e-6
     local dimension = #particle.data.velocity[1]
     local nparticle = #particle.data.velocity
-    local expected = args.target_energy 
+    local expected = args.target_energy
+    local tolerance = 1e-6
 
-    --local failed = 0
-
-    local velocity = particle.data["velocity"] --these provide nan values 
+    local velocity = particle.data["velocity"]
     local position = particle.data["position"]
 
+    local failed = 0
     for i = 1, nparticle do
-        local v = velocity[i] --these provide nan values 
+        local v = velocity[i]
         local r = position[i]
-        local v_str = ""
-    
+
         local v2, r2 = 0, 0
         for d = 1, dimension do
             v2 = v2 + v[d]^2
@@ -49,24 +46,19 @@ local function compute_and_assert_energy(particle, args)
 
         -- Check for invalid values
         if v2 ~= v2 or r2 ~= r2 then
-            log.error(("NaN detected in particle %d: v² = %.6f, r² = %.6f"):format(i, v2, r2))
+            log.error(("NaN detected in particle %d: |v|² = %g, |r|² = %g"):format(i, v2, r2))
             failed = failed + 1
         else
-            local kinetic = 0.5 * mass * v2
-            local potential = 0.5 * stiffness * r2
+            local kinetic = mass * v2 / 2
+            local potential = stiffness * r2 / 2
             local energy = kinetic + potential
 
-            if energy ~= energy then
-                log.error(("NaN energy for particle %d: kinetic = %.6f, potential = %.6f"):format(i, kinetic, potential))
-                failed = failed + 1
-            end
-            assert(math.abs(energy - expected) <= tolerance * expected,("particle %d: energy %.6f != expected %.6f"):format(i, energy, expected))
-            
+            assert(math.abs(energy - expected) <= tolerance * expected,
+                ("particle #%d: difference (%g) between total energy (%g) and target value (%g) exceeds tolerance (%g)")
+                   :format(i, math.abs(energy - expected), energy, expected, tolerance))
         end
     end
-
 end
-
 
 -- Shared test runner
 local function run_rescale_test(args)
@@ -85,9 +77,8 @@ local function run_rescale_test(args)
 
     if not args.zero_velocities then
         mdsim.velocities.boltzmann({
-            particle = particle,
-            group = group,
-            temperature = args.temperature or 1.0
+            particle = particle, group = group
+          , temperature = args.temperature or 1
         }):set()
     end
 
@@ -99,47 +90,40 @@ local function run_rescale_test(args)
             offset[i] = 0
         end
         local potential = mdsim.potentials.external.harmonic({
-            stiffness = stiffness,
-            offset = offset
+            stiffness = stiffness
+          , offset = offset
         })
         mdsim.forces.external({box = box, particle = particle, potential = potential})
     end
 
     local thermo = observables.thermodynamics({group = group, box = box})
 
-    -- sample initial state
-   -- observables.sampler:sample()
-
     local target_energy = args.target_energy
-    local e_kin = thermo:kinetic_energy()
-    local e_pot = thermo:potential_energy()
+    local en_kin = thermo:kinetic_energy()
+    local en_pot = thermo:potential_energy()
 
-    if target_energy <= e_pot then
-        error(("Invalid target energy: %.6f is less than potential energy %.6f"):format(target_energy, e_pot))
-    end
+--    if target_energy <= en_pot then
+--        error(("Invalid target energy: %.6f is less than potential energy %.6f"):format(target_energy, en_pot))
+--    end
 
-    log.message(("target energy:    %.6f"):format(target_energy))
-    log.message(("computed total:   %.6f"):format(e_kin + e_pot))
-    log.message(("kinetic energy:   %.6f"):format(e_kin))
-    log.message(("potential energy: %.6f"):format(e_pot))
+    log.info(("total energy:     %.6f"):format(en_kin + en_pot))
+    log.info(("kinetic energy:   %.6f"):format(en_kin))
+    log.info(("potential energy: %.6f"):format(en_pot))
 
     mdsim.velocities.rescale({
-        particle = particle,
-        energy = target_energy
+        particle = particle
+      , target_energy = target_energy
     }):set()
 
-    log.message(("target energy:    %.6f"):format(target_energy))
-    log.message(("computed total energy after rescaling:   %.6f"):format(thermo:internal_energy()))
-    log.message(("kinetic energy after rescaling:   %.6f"):format(thermo:kinetic_energy()))
-    log.message(("potential energy after rescaling: %.6f"):format(thermo:potential_energy()))
+    log.info(("total energy after rescaling:     %.6f"):format(thermo:internal_energy()))
+    log.info(("kinetic energy after rescaling:   %.6f"):format(thermo:kinetic_energy()))
+    log.info(("potential energy after rescaling: %.6f"):format(thermo:potential_energy()))
 
     compute_and_assert_energy(particle, args)
-
 end
 
 -- Test cases
 test = {}
-
 
 test["energy_target"] = function(args)
     args.target_energy = 50
@@ -198,10 +182,10 @@ end
 
 -- Entry point
 function main(args)
-        -- run selected test case or, by default, all tests
+    -- run selected test case or, by default, all tests
     local test_case = args.run_test
     local cases = test_case and { test_case } or {"energy_target", "zero_initial_velocity", "no_potential_energy"}
-    -- assert(test[args.run_test], "Unknown test case: " .. args.run_test)
+
     for i,case in ipairs(cases) do
         log.message(("Running test case '%s' ..."):format(case))
         assert(test[case], ("test case '%s' is not registered"):format(case))

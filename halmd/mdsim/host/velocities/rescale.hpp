@@ -41,6 +41,7 @@ class rescale
 {
 public:
     typedef host::particle<dimension, float_type> particle_type;
+    typedef typename particle_type::size_type size_type;
 
     rescale(
         std::shared_ptr<particle_type> particle,
@@ -48,6 +49,7 @@ public:
         std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
+    // set velocities by rescaling
     void set();
 
     // read and write access to target energy

@@ -43,14 +43,14 @@ class rescale
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
 
-    // constructor 
+    // constructor
     rescale(
         std::shared_ptr<particle_type> particle
       , double target_energy
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
-    // initialize
+    // set velocities by rescaling
     void set();
 
     // read and write access to target energy
@@ -61,15 +61,10 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    // I do not know if this is needed. 
-//    typedef typename particle_type::velocity_array_type velocity_array_type;
-//    typedef typename particle_type::vector_type vector_type;
-//    typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef rescale_wrapper<dimension, float_type> wrapper_type;
 
     std::shared_ptr<particle_type> particle_;
     float_type target_energy_;
-
     std::shared_ptr<logger> logger_;
 
     typedef utility::profiler::accumulator_type accumulator_type;

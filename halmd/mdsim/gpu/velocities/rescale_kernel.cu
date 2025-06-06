@@ -31,8 +31,8 @@ namespace rescale_kernel {
  * rescale velocities to match target value of total energy, separately for each particle
  */
 template <
-    typename ptr_type,
-    typename vector_type
+    typename ptr_type
+  , typename vector_type
 >
 __global__ void rescale(ptr_type g_v, float const* g_en_pot, uint npart, float target_energy)
 {
@@ -49,19 +49,19 @@ __global__ void rescale(ptr_type g_v, float const* g_en_pot, uint npart, float t
         float_type en_kin = mass * inner_prod(v, v) / 2;
         float_type energy_diff = target_energy - en_pot;
 
-        // safety fix: avoid zero kinetic energy
-        if (en_kin <= static_cast<float_type>(0.0)) {
-            // initialize v to a small value
-            v[0] = static_cast<float_type>(1e-3);
-            for (int d = 1; d < sizeof(v) / sizeof(v[0]); ++d)
-                v[d] = static_cast<float_type>(0.0);
-            en_kin = mass * inner_prod(v, v) / 2;
-        }
-        
 
-        // Compute velocity scaling factor to match target total energy
-        float_type scale = sqrtf(energy_diff / en_kin);
-        v *= scale;   // rescale to match target kinetic energy
+        // safety guard: handle zero kinetic energy (i.e., v = 0)
+        if (en_kin == float_type(0)) {
+            // let v point along the first axis, set magnitude to match the desired kinetic energy
+            v[0] = sqrtf(2 * energy_diff / mass);
+            atomicAnd(retcode, static_cast<int>(warning));
+        }
+        else {
+            // compute velocity scaling factor to match target total energy
+            // and rescale velocities
+            float_type scale = sqrtf(energy_diff / en_kin);
+            v *= scale;
+        }
 
         // write back rescaled velocities to global memory
         g_v[i] <<= tie(v, mass);
@@ -70,13 +70,13 @@ __global__ void rescale(ptr_type g_v, float const* g_en_pot, uint npart, float t
 
 } // namespace rescale_kernel
 
-// Wrapper instantiation
+// wrapper instantiation
 template <int dimension, typename float_type>
 rescale_wrapper<dimension, float_type> rescale_wrapper<dimension, float_type>::kernel = {
     rescale_kernel::rescale<ptr_type, fixed_vector<float_type, dimension>>
 };
 
-// Explicit instantiations
+// explicit instantiations
 #ifdef USE_GPU_SINGLE_PRECISION
 template class rescale_wrapper<3, float>;
 template class rescale_wrapper<2, float>;

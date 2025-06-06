@@ -56,18 +56,18 @@ void rescale<dimension, float_type>::set()
 
     LOG_DEBUG("rescale particle velocities to match target energy, for each particle");
 
-    // Access particle velocity buffer
+    // access particle velocity array
     auto velocity = make_cache_mutable(particle_->velocity());
 
-    // Configure and launch the rescale kernel
+    // configure and launch the rescale kernel
     // This performs for each particle: (1) calculate total energy and scaling factor, (2) apply velocity scaling
     configure_kernel(wrapper_type::kernel.rescale, particle_->dim(), true);
 
     wrapper_type::kernel.rescale(
-        velocity->data(),             // velocities (device pointer)
-        en_pot.data(),                // potential energy (device pointer)
-        particle_->nparticle(),       // number of particles
-        target_energy_                // target energy per particle
+        velocity->data()              // velocities (device pointer)
+      , en_pot.data()                 // potential energy (device pointer)
+      , particle_->nparticle()        // number of particles
+      , target_energy_                // target energy per particle
     );
     cuda::thread::synchronize();
 }
