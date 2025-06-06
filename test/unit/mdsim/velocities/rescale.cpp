@@ -33,14 +33,14 @@
 #include <halmd/mdsim/host/velocities/rescale.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
-#include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
-# include <halmd/mdsim/gpu/velocity.hpp>
+# include <halmd/mdsim/gpu/velocities/rescale.hpp>
+# include <halmd/observables/gpu/thermodynamics.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/tools/cuda.hpp>
@@ -80,9 +80,7 @@ struct rescale_test
 
     typedef typename modules_type::tolerance tolerance;
 
-    std::shared_ptr<box_type> box;
     std::shared_ptr<particle_type> particle;
-    std::shared_ptr<random_type> random;
     std::shared_ptr<boltzmann_type> boltzmann;
     std::shared_ptr<thermo_type> thermo;
 
@@ -108,32 +106,23 @@ void rescale_test<modules_type>::test()
     BOOST_TEST_MESSAGE("generate Maxwell-Boltzmann distribution");
     boltzmann->set();
 
-    // compute initial energy
-    double en_kin_before = thermo->en_kin();
-    double en_pot_before = thermo->en_pot();
-    double energy_before = en_kin_before + en_pot_before;
-
-    BOOST_TEST_MESSAGE("Energy before rescale: total = " << energy_before
-        << ", kinetic = " << en_kin_before
-        << ", potential = " << en_pot_before);
-
+    // output energies before rescaling
+    BOOST_TEST_MESSAGE("Energy before rescaling: total = " << thermo->en_tot()
+        << ", kinetic = " << thermo->en_kin()
+        << ", potential = " << thermo->en_pot());
 
     // apply rescale module
     rescale_type rescaler(particle, target_energy);
     rescaler.set();
 
-    // Re-evaluate energies
-    double en_kin_after = thermo->en_kin();
-    double en_pot_after = thermo->en_pot();
-    double energy_after = en_kin_after + en_pot_after;
+    // output energies after rescaling
+    double energy_after = thermo->en_tot();
+    BOOST_TEST_MESSAGE("Energy after rescaling: total = " << energy_after
+        << ", kinetic = " << thermo->en_kin()
+        << ", potential = " << thermo->en_pot());
 
-    BOOST_TEST_MESSAGE("Energy after rescale: total = " << energy_after
-        << ", kinetic = " << en_kin_after
-        << ", potential = " << en_pot_after);
-
-    // Check total energy is close to target
+    // check that total energy is close to target value
     float_type tolerance = 2 * std::numeric_limits<float_type>::epsilon();
-    BOOST_TEST_MESSAGE("Target energy: " << target_energy);
     BOOST_CHECK_CLOSE_FRACTION(energy_after, target_energy, tolerance); // tolerance::value
 }
 
@@ -142,31 +131,31 @@ rescale_test<modules_type>::rescale_test()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
 
-    npart = gpu ? 10000 : 300;
-    temp = 2.0;
+    npart = gpu ? 3000 : 30;
+    temp = 2.2;
     density = 0.3;
-    target_energy = 1.0;
+    target_energy = 1.3;
 
-    double box_length = std::pow(npart / density, 1. / dimension);
+    double volume = npart / density;
+    double box_length = std::pow(volume, 1. / dimension);
     boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
     for (unsigned int i = 0; i < dimension; ++i)
         edges(i, i) = box_length;
 
+    // construct test modules, keep their dependencies only locally
     particle = std::make_shared<particle_type>(npart, 1);
-    box = std::make_shared<box_type>(edges);
-    random = std::make_shared<random_type>();
+
+    auto random = std::make_shared<random_type>();
     boltzmann = std::make_shared<boltzmann_type>(particle, random, temp);
+
     auto group = std::make_shared<particle_group_type>(particle);
+    auto box = std::make_shared<box_type>(edges);
     auto logger = std::make_shared<halmd::logger>();
-
     thermo = std::make_shared<thermo_type>(
-        particle,
-        group,
-        box,
-        [=]() { return std::pow(box_length, dimension); },
-        logger
+        particle, group, box
+      , [=]() { return volume; }
+      , logger
     );
-
 }
 
 // tolerance helper
@@ -216,3 +205,51 @@ BOOST_AUTO_TEST_CASE(rescale_host_3d)
 }
 #endif
 
+#ifdef HALMD_WITH_GPU
+template<typename T>
+struct gpu_tolerance
+{
+    static double const value;
+};
+
+// dsfloat has effectively 43 bits, single float merely 24,
+// multiply by number of particles to get a sharp upper bound
+template<>
+double const gpu_tolerance<halmd::dsfloat>::value = 10000 * std::numeric_limits<float>::epsilon() / (1U << (43 - 24));
+
+template<>
+double const gpu_tolerance<float>::value = std::numeric_limits<float>::epsilon() / 4;    // yields 0.5 ulp, the 4 is empirical
+
+template <int dimension, typename float_type>
+struct gpu_modules
+{
+    typedef halmd::mdsim::box<dimension> box_type;
+    typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef halmd::mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
+
+    typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
+    typedef halmd::mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> boltzmann_type;
+    typedef halmd::mdsim::gpu::velocities::rescale<dimension, float_type> rescale_type;
+    typedef halmd::observables::gpu::thermodynamics<dimension, float_type> thermo_type;
+
+    static bool const gpu = true;
+    typedef gpu_tolerance<float_type> tolerance;
+};
+
+# ifdef USE_GPU_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( rescale_gpu_float_2d, set_cuda_device ) {
+    rescale_test<gpu_modules<2, float>>().test();
+}
+BOOST_FIXTURE_TEST_CASE( rescale_gpu_float_3d, set_cuda_device ) {
+    rescale_test<gpu_modules<3, float>>().test();
+}
+# endif
+# ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+BOOST_FIXTURE_TEST_CASE( rescale_gpu_dsfloat_2d, set_cuda_device ) {
+    rescale_test<gpu_modules<2, halmd::dsfloat>>().test();
+}
+BOOST_FIXTURE_TEST_CASE( rescale_gpu_dsfloat_3d, set_cuda_device ) {
+    rescale_test<gpu_modules<3, halmd::dsfloat>>().test();
+}
+# endif
+#endif // HALMD_WITH_GPU
