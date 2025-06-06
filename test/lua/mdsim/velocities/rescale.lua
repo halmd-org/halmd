@@ -154,12 +154,34 @@ test["adding_mass"] = function(args)
     run_rescale_test(args)
 end
 
+-- test parameter passing and resetting
+test["parameters"] = function(args)
+    local particle = mdsim.particle({dimension = args.dimension, particles = args.particles, species = 1})
+    local target_energy = 1.5
+
+    -- construct module
+    local rescale = mdsim.velocities.rescale({
+        particle = particle
+      , target_energy = target_energy
+    })
+
+    -- query passed parameters
+    assert(rescale.target_energy == target_energy,
+        ("mismatching parameter value (target_energy): %g ≠ %g"):format(rescale.target_energy, target_energy))
+
+    -- change parameters
+    target_energy = target_energy + 1
+    rescale.target_energy = target_energy
+    assert(rescale.target_energy == target_energy,
+        ("mismatching parameter value (target_energy): %g ≠ %g"):format(rescale.target_energy, target_energy))
+end
+
 
 -- Argument parser
 function define_args(parser)
     parser:add_argument("run_test", {
         type = "string",
-        help = "select test: energy_target, no_potential_energy, zero_initial_velocity, adding_mass"
+        help = "select test: energy_target, no_potential_energy, zero_initial_velocity, adding_mass, parameters"
     })
     parser:add_argument("target_energy", {
         type = "number", default = 10,
@@ -184,7 +206,7 @@ end
 function main(args)
     -- run selected test case or, by default, all tests
     local test_case = args.run_test
-    local cases = test_case and { test_case } or {"energy_target", "zero_initial_velocity", "no_potential_energy"}
+    local cases = test_case and { test_case } or {"energy_target", "zero_initial_velocity", "no_potential_energy", "parameters"}
 
     for i,case in ipairs(cases) do
         log.message(("Running test case '%s' ..."):format(case))
