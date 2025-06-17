@@ -1,6 +1,6 @@
 #
 # Copyright © 2011-2017 Peter Colberg
-# Copyright © 2013-2017 Felix Höfling
+# Copyright © 2013-2025 Felix Höfling
 # Copyright © 2013      Nicolas Höft
 #
 # This program is free software: you can redistribute it and/or
@@ -43,6 +43,7 @@ PATCH     = patch
 RM        = rm -rf
 SED       = sed
 SHA256SUM = sha256sum --check
+SHA512SUM = sha512sum --check
 TAR       = tar
 TOUCH     = touch
 WGET      = wget
@@ -68,12 +69,12 @@ env: env-cmake env-lua env-luajit env-boost env-hdf5 env-git env-python-sphinx e
 ##
 
 CMAKE_MAJOR_VERSION = 3
-CMAKE_MINOR_VERSION = 22
-CMAKE_PATCH_VERSION = 2
+CMAKE_MINOR_VERSION = 31
+CMAKE_PATCH_VERSION = 4
 CMAKE_VERSION = $(CMAKE_MAJOR_VERSION).$(CMAKE_MINOR_VERSION).$(CMAKE_PATCH_VERSION)
 CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
 CMAKE_TARBALL_URL = https://cmake.org/files/v$(CMAKE_MAJOR_VERSION).$(CMAKE_MINOR_VERSION)/$(CMAKE_TARBALL)
-CMAKE_TARBALL_SHA256 = 3c1c478b9650b107d452c5bd545c72e2fad4e37c09b89a1984b9a2f46df6aced
+CMAKE_TARBALL_SHA256 = a6130bfe75f5ba5c73e672e34359f7c0a1931521957e8393a5c2922c8b0f7f25
 CMAKE_SOURCE_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_BUILD_DIR = $(CMAKE_SOURCE_DIR)/build
 CMAKE_CONFIGURE_FLAGS = --sphinx-man
@@ -190,10 +191,9 @@ env-lua:
 ## LuaJIT
 ##
 
-LUAJIT_VERSION = 2.1.0-beta3
-LUAJIT_TARBALL = LuaJIT-$(LUAJIT_VERSION).tar.gz
-LUAJIT_TARBALL_URL = http://luajit.org/download/$(LUAJIT_TARBALL)
-LUAJIT_TARBALL_SHA256 = 1ad2e34b111c802f9d0cdf019e986909123237a28c746b21295b63c9e785d9c3
+LUAJIT_VERSION = 2.1
+LUAJIT_ARCHIVE = LuaJIT-$(LUAJIT_VERSION).tar.gz
+LUAJIT_ARCHIVE_URL = https://github.com/LuaJIT/LuaJIT/archive/refs/heads/v$(LUAJIT_VERSION).tar.gz
 LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
 LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
 LUAJIT_CFLAGS = -fPIC -DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_CPU_SSE2
@@ -203,16 +203,15 @@ LUAJIT_CFLAGS += -DLUAJIT_USE_VALGRIND
 endif
 
 .fetch-luajit-$(LUAJIT_VERSION):
-	@$(RM) $(LUAJIT_TARBALL)
-	$(WGET) $(LUAJIT_TARBALL_URL)
-	@echo '$(LUAJIT_TARBALL_SHA256)  $(LUAJIT_TARBALL)' | $(SHA256SUM)
+	@$(RM) $(LUAJIT_ARCHIVE)
+	$(WGET) $(LUAJIT_ARCHIVE_URL) -O $(LUAJIT_ARCHIVE)
 	@$(TOUCH) $@
 
 fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
 
 .extract-luajit-$(LUAJIT_VERSION): .fetch-luajit-$(LUAJIT_VERSION)
 	$(RM) $(LUAJIT_BUILD_DIR)
-	$(TAR) -xzf $(LUAJIT_TARBALL)
+	$(TAR) -xzf $(LUAJIT_ARCHIVE)
 	@$(TOUCH) $@
 
 extract-luajit: .extract-luajit-$(LUAJIT_VERSION)
@@ -233,7 +232,7 @@ clean-luajit:
 
 distclean-luajit: clean-luajit
 	@$(RM) .fetch-luajit-$(LUAJIT_VERSION)
-	$(RM) $(LUAJIT_TARBALL)
+	$(RM) $(LUAJIT_ARCHIVE)
 
 env-luajit:
 	@echo 'export PATH="$(LUAJIT_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
@@ -244,7 +243,7 @@ env-luajit:
 ## luatrace
 ##
 
-LUATRACE_VERSION = 6150cfd
+LUATRACE_VERSION = d9d8918
 LUATRACE_GIT_URL = https://github.com/geoffleyland/luatrace.git
 LUATRACE_BUILD_DIR = luatrace-$(LUATRACE_VERSION)
 LUATRACE_INSTALL_DIR = $(PREFIX)/luatrace-$(LUATRACE_VERSION)
@@ -272,15 +271,15 @@ distclean-luatrace: clean-luatrace
 ## Boost C++ libraries with C++11 ABI
 ##
 
-BOOST_VERSION = 1.78.0
-BOOST_RELEASE = 1_78_0
+BOOST_VERSION = 1.87.0
+BOOST_RELEASE = 1_87_0
 BOOST_ABI = c++11
 BOOST_TOOLSET = gcc
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
-BOOST_TARBALL_URL = https://boostorg.jfrog.io/artifactory/main/release/$(BOOST_VERSION)/source/$(BOOST_TARBALL)
-BOOST_TARBALL_SHA256 = 8681f175d4bdb26c52222665793eef08490d7758529330f98d3b29dd0735bccc
+BOOST_TARBALL_URL = https://archives.boost.io/release/$(BOOST_VERSION)/source/$(BOOST_TARBALL)
+BOOST_TARBALL_SHA256 = af57be25cb4c4f4b413ed692fe378affb4352ea50fbe294a11ef548f4d527d89
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
-BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)-$(BOOST_ABI)
+BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged toolset=$(BOOST_TOOLSET) cxxflags="-fPIC -std=$(BOOST_ABI)" dll-path=$(BOOST_INSTALL_DIR)/lib
 
 ifndef USE_BZIP2
@@ -338,12 +337,12 @@ env-boost:
 ##
 ## HDF5 library
 ##
-HDF5_VERSION = 1.12.1
+HDF5_VERSION = 1.14.5
 HDF5_MAJOR_VERSION = $(shell echo $(HDF5_VERSION) | cut -f1 -d.)
 HDF5_MINOR_VERSION = $(shell echo $(HDF5_VERSION) | cut -f2 -d.)
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
 HDF5_TARBALL_URL = https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_MAJOR_VERSION).$(HDF5_MINOR_VERSION)/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
-HDF5_TARBALL_SHA256 = aaf9f532b3eda83d3d3adc9f8b40a9b763152218fa45349c3bc77502ca1f8f1c
+HDF5_TARBALL_SHA256 = ec2e13c52e60f9a01491bb3158cb3778c985697131fc6a342262d32a26e58e44
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
 HDF5_CONFIGURE_FLAGS = --enable-shared --enable-cxx --enable-fortran
@@ -522,18 +521,17 @@ env-git:
 ## python-sphinx
 ##
 
-PYTHON_SPHINX_VERSION = 1.8.5
+PYTHON_SPHINX_VERSION = 8.1.3
 PYTHON_SPHINX_TARBALL = Sphinx-$(PYTHON_SPHINX_VERSION).tar.gz
-PYTHON_SPHINX_TARBALL_HASH = 10/91/ceb2e0d763e0c626f7afd7e3272a5bb76dd06eed1f0b908270ea31984062
-PYTHON_SPHINX_TARBALL_URL = https://files.pythonhosted.org/packages/2a/86/8e1e8400bb6eca5ed960917952600fce90599e1cb0d20ddedd81ba163370/Sphinx-1.8.5.tar.gz#sha256=c7658aab75c920288a8cf6f09f244c6cfdae30d82d803ac1634d9f223a80ca08
-PYTHON_SPHINX_TARBALL_SHA256 = c7658aab75c920288a8cf6f09f244c6cfdae30d82d803ac1634d9f223a80ca08
+PYTHON_SPHINX_TARBALL_URL = https://github.com/sphinx-doc/sphinx/archive/v${PYTHON_SPHINX_VERSION}.tar.gz
+PYTHON_SPHINX_TARBALL_SHA256 = 0fcc28999fe8e4fcc49a4ab01e3e987f6fbb3af32995db74e6fc8f8d01dcaaca
 PYTHON_SPHINX_BUILD_DIR = Sphinx-$(PYTHON_SPHINX_VERSION)
 PYTHON_SPHINX_INSTALL_DIR = $(PREFIX)/python-sphinx-$(PYTHON_SPHINX_VERSION)
 PYTHON_SPHINX_PYTHONPATH = $(PYTHON_SPHINX_INSTALL_DIR)/lib/python
 
 .fetch-python-sphinx-$(PYTHON_SPHINX_VERSION):
 	@$(RM) $(PYTHON_SPHINX_TARBALL)
-	$(WGET) $(PYTHON_SPHINX_TARBALL_URL)
+	$(WGET) $(PYTHON_SPHINX_TARBALL_URL) -O $(PYTHON_SPHINX_TARBALL)
 	@echo '$(PYTHON_SPHINX_TARBALL_SHA256)  $(PYTHON_SPHINX_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
@@ -808,16 +806,16 @@ env-clang:
 ## GMP (GNU Multiple Precision Arithmetic Library)
 ##
 
-GMP_VERSION = 6.1.2
+GMP_VERSION = 6.2.1
 GMP_TARBALL = gmp-$(GMP_VERSION).tar.bz2
-GMP_TARBALL_URL = ftp://ftp.gnu.org/gnu/gmp/$(GMP_TARBALL)
-GMP_TARBALL_SHA256 = 5275bb04f4863a13516b2f39392ac5e272f5e1bb8057b18aec1c9b79d73d8fb2
+GMP_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(GMP_TARBALL)
+GMP_TARBALL_SHA512 = 8904334a3bcc5c896ececabc75cda9dec642e401fb5397c4992c4fabea5e962c9ce8bd44e8e4233c34e55c8010cc28db0545f5f750cbdbb5f00af538dc763be9
 GMP_BUILD_DIR = gmp-$(GMP_VERSION)
 
 .fetch-gmp-$(GMP_VERSION):
 	@$(RM) $(GMP_TARBALL)
 	$(WGET) $(GMP_TARBALL_URL)
-	@echo '$(GMP_TARBALL_SHA256)  $(GMP_TARBALL)' | $(SHA256SUM)
+	@echo '$(GMP_TARBALL_SHA512)  $(GMP_TARBALL)' | $(SHA512SUM)
 	@$(TOUCH) $@
 
 fetch-gmp: .fetch-gmp-$(GMP_VERSION)
@@ -841,16 +839,16 @@ distclean-gmp: clean-gmp
 ## MPFR (Multiple-precision floating-point computations with correct rounding)
 ##
 
-MPFR_VERSION = 3.1.4
+MPFR_VERSION = 4.1.0
 MPFR_TARBALL = mpfr-$(MPFR_VERSION).tar.bz2
 MPFR_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(MPFR_TARBALL)
-MPFR_TARBALL_SHA256 = d3103a80cdad2407ed581f3618c4bed04e0c92d1cf771a65ead662cc397f7775
+MPFR_TARBALL_SHA512 = 410208ee0d48474c1c10d3d4a59decd2dfa187064183b09358ec4c4666e34d74383128436b404123b831e585d81a9176b24c7ced9d913967c5fce35d4040a0b4
 MPFR_BUILD_DIR = mpfr-$(MPFR_VERSION)
 
 .fetch-mpfr-$(MPFR_VERSION):
 	@$(RM) $(MPFR_TARBALL)
 	$(WGET) $(MPFR_TARBALL_URL)
-	@echo '$(MPFR_TARBALL_SHA256)  $(MPFR_TARBALL)' | $(SHA256SUM)
+	@echo '$(MPFR_TARBALL_SHA512)  $(MPFR_TARBALL)' | $(SHA512SUM)
 	@$(TOUCH) $@
 
 fetch-mpfr: .fetch-mpfr-$(MPFR_VERSION)
@@ -874,16 +872,16 @@ distclean-mpfr: clean-mpfr
 ## MPC (arithmetic of complex numbers with arbitrarily high precision and correct rounding)
 ##
 
-MPC_VERSION = 1.0.3
+MPC_VERSION = 1.2.1
 MPC_TARBALL = mpc-$(MPC_VERSION).tar.gz
 MPC_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(MPC_TARBALL)
-MPC_TARBALL_SHA256 = 617decc6ea09889fb08ede330917a00b16809b8db88c29c31bfbb49cbf88ecc3
+MPC_TARBALL_SHA512 = 3279f813ab37f47fdcc800e4ac5f306417d07f539593ca715876e43e04896e1d5bceccfb288ef2908a3f24b760747d0dbd0392a24b9b341bc3e12082e5c836ee
 MPC_BUILD_DIR = mpc-$(MPC_VERSION)
 
 .fetch-mpc-$(MPC_VERSION):
 	@$(RM) $(MPC_TARBALL)
 	$(WGET) $(MPC_TARBALL_URL)
-	@echo '$(MPC_TARBALL_SHA256)  $(MPC_TARBALL)' | $(SHA256SUM)
+	@echo '$(MPC_TARBALL_SHA512)  $(MPC_TARBALL)' | $(SHA512SUM)
 	@$(TOUCH) $@
 
 fetch-mpc: .fetch-mpc-$(MPC_VERSION)
@@ -907,16 +905,16 @@ distclean-mpc: clean-mpc
 ## ISL (Integer Set Library)
 ##
 
-ISL_VERSION = 0.16.1
+ISL_VERSION = 0.24
 ISL_TARBALL = isl-$(ISL_VERSION).tar.bz2
 ISL_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(ISL_TARBALL)
-ISL_TARBALL_SHA256 = 412538bb65c799ac98e17e8cfcdacbb257a57362acfaaff254b0fcae970126d2
+ISL_TARBALL_SHA512 = aab3bddbda96b801d0f56d2869f943157aad52a6f6e6a61745edd740234c635c38231af20bc3f1a08d416a5e973a90e18249078ed8e4ae2f1d5de57658738e95
 ISL_BUILD_DIR = isl-$(ISL_VERSION)
 
 .fetch-isl-$(ISL_VERSION):
 	@$(RM) $(ISL_TARBALL)
 	$(WGET) $(ISL_TARBALL_URL)
-	@echo '$(ISL_TARBALL_SHA256)  $(ISL_TARBALL)' | $(SHA256SUM)
+	@echo '$(ISL_TARBALL_SHA512)  $(ISL_TARBALL)' | $(SHA512SUM)
 	@$(TOUCH) $@
 
 fetch-isl: .fetch-isl-$(ISL_VERSION)
@@ -940,10 +938,10 @@ distclean-isl: clean-isl
 ## GCC (GNU Compiler Collection)
 ##
 
-GCC_VERSION = 11.2.0
+GCC_VERSION = 14.2.0
 GCC_TARBALL = gcc-$(GCC_VERSION).tar.xz
 GCC_TARBALL_URL = http://ftp.gwdg.de/pub/misc/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
-GCC_TARBALL_SHA256 = d08edc536b54c372a1010ff6619dd274c0f1603aa49212ba20f7aa2cda36fa8b
+GCC_TARBALL_SHA512 = d6828a5702ff4b667cc3e1e7e9f180191041b7efb68ffdc54248a42aa1799f41db6743acfe9ab74ea59977ba06f425fcf943a9fe3a77f9db706fc6bdbd657c1a
 GCC_BUILD_DIR = gcc-$(GCC_VERSION)
 GCC_BUILD_FLAGS = --enable-cxx-flags=-fPIC --enable-languages=c,c++,fortran,lto --disable-multilib
 GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
@@ -951,7 +949,7 @@ GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
 .fetch-gcc-$(GCC_VERSION):
 	@$(RM) $(GCC_TARBALL)
 	$(WGET) $(GCC_TARBALL_URL)
-	@echo '$(GCC_TARBALL_SHA256)  $(GCC_TARBALL)' | $(SHA256SUM)
+	@echo '$(GCC_TARBALL_SHA512)  $(GCC_TARBALL)' | $(SHA512SUM)
 	@$(TOUCH) $@
 
 fetch-gcc: .fetch-gcc-$(GCC_VERSION) .fetch-gmp-$(GMP_VERSION) .fetch-mpfr-$(MPFR_VERSION) .fetch-mpc-$(MPC_VERSION) .fetch-isl-$(ISL_VERSION)
@@ -1123,11 +1121,11 @@ env-nvcuda-tools:
 ##
 ## Ninja - a small build system with a focus on speed
 ##
-NINJA_VERSION = 1.10.0
+NINJA_VERSION = 1.12.1
 NINJA_TARBALL = ninja-$(NINJA_VERSION).tar.gz
 NINJA_TARBALL_REMOTE = v$(NINJA_VERSION).tar.gz
 NINJA_TARBALL_URL = https://github.com/ninja-build/ninja/archive/$(NINJA_TARBALL_REMOTE)
-NINJA_TARBALL_SHA256 = 3810318b08489435f8efc19c05525e80a993af5a55baa0dfeae0465a9d45f99f
+NINJA_TARBALL_SHA256 = 821bdff48a3f683bc4bb3b6f0b5fe7b2d647cf65d52aeb63328c91a6c6df285a
 NINJA_BUILD_DIR = ninja-$(NINJA_VERSION)
 NINJA_CONFIGURE_FLAGS =
 NINJA_INSTALL_DIR = $(PREFIX)/ninja-$(NINJA_VERSION)

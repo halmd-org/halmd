@@ -5,14 +5,14 @@ Documentation of HAL’s MD package
    :maxdepth: 2
 
    readme
-   installation/index
+   publications
    usage/index
+   tutorials/index
    recipes/index
    modules/index
-   units
-   validation
    benchmarks
-   publications
+   validation
+   installation/index
    faq
    develop/index
    changelog

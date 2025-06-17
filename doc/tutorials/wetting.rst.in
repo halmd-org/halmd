@@ -1,7 +1,7 @@
 .. _tutorial-wetting:
 
-Tutorial: wetting and drying at a flat, smooth surface
-======================================================
+Wetting and drying of a flat, smooth surface
+============================================
 
 The wetting behaviour of a Lennard-Jones (LJ) fluid within a slit pore is
 simulated. The aim is to calculate the density profile :math:`\rho(x)`

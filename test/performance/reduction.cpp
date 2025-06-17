@@ -65,6 +65,7 @@ void reduce(cuda::memory::host::vector<T> const& h_input, cuda::memory::host::ve
     t1.record();
     // launch kernel
     kernel(g_input, g_output);
+    cuda::thread::synchronize();
     // record second event
     t2.record();
     t2.synchronize();
@@ -77,12 +78,13 @@ void reduce(cuda::memory::host::vector<T> const& h_input, cuda::memory::host::ve
     );
 
     float time = t2 - t1;
-    BOOST_TEST_MESSAGE("summation of " << h_input.size() << " * " << halmd::demangled_name<T>() << ": " << time << " s");
+    BOOST_TEST_MESSAGE("summation of " << h_input.size() << " * " << halmd::demangled_name<T>() << ": " << 1000 * time << " ms");
 }
 
 /*
  * helper functions to compare collections of integers, floats, and fixed vectors
  */
+// collection on integral type
 template <typename Iter1, typename Iter2>
 typename std::enable_if<std::is_integral<typename Iter1::value_type>::value, void>::type
 check_equal_collections(Iter1 it1, Iter1 end1, Iter2 it2, Iter2 end2)
@@ -90,6 +92,7 @@ check_equal_collections(Iter1 it1, Iter1 end1, Iter2 it2, Iter2 end2)
     BOOST_CHECK_EQUAL_COLLECTIONS(it1, end1, it2, end2);
 }
 
+// collection of floating-point type
 template <typename Iter1, typename Iter2>
 typename std::enable_if<std::is_floating_point<typename Iter1::value_type>::value, void>::type
 check_equal_collections(Iter1 it1, Iter1 end1, Iter2 it2, Iter2 end2)
@@ -101,8 +104,19 @@ check_equal_collections(Iter1 it1, Iter1 end1, Iter2 it2, Iter2 end2)
     }
 }
 
+// collection on fixed_vector on integral type
 template <typename Iter1, typename Iter2>
-typename std::enable_if<std::is_enum<decltype(Iter1::value_type::static_size)>::value, void>::type
+typename std::enable_if<std::is_enum<decltype(Iter1::value_type::static_size)>::value &&
+                        std::is_integral<typename Iter1::value_type::value_type>::value, void>::type
+check_equal_collections(Iter1 it1, Iter1 end1, Iter2 it2, Iter2 end2)
+{
+    BOOST_CHECK_EQUAL_COLLECTIONS(it1, end1, it2, end2);
+}
+
+// collection of fixed_vector on floating-point type
+template <typename Iter1, typename Iter2>
+typename std::enable_if<std::is_enum<decltype(Iter1::value_type::static_size)>::value &&
+                        std::is_floating_point<typename Iter1::value_type::value_type>::value, void>::type
 check_equal_collections(Iter1 it1, Iter1 end1, Iter2 it2, Iter2 end2)
 {
     typedef typename Iter1::value_type::value_type T;
@@ -173,24 +187,30 @@ BOOST_AUTO_TEST_CASE(type_int)
     sum_integers_test<int>();
 }
 
-/* FIXME comparison of fixed_vector<int> is not implemented in the above scheme
+BOOST_AUTO_TEST_CASE(type_fixed_vector_int_2)
+{
+    sum_integers_test<halmd::fixed_vector<int, 2>, int>();
+}
+
 BOOST_AUTO_TEST_CASE(type_fixed_vector_int_3)
 {
     sum_integers_test<halmd::fixed_vector<int, 3>, int>();
 }
-*/
 
-#ifdef USE_GPU_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE(type_float)
 {
     sum_reals_test<float>();
+}
+
+BOOST_AUTO_TEST_CASE(type_fixed_vector_float_2)
+{
+    sum_reals_test<halmd::fixed_vector<float, 2>, float>();
 }
 
 BOOST_AUTO_TEST_CASE(type_fixed_vector_float_3)
 {
     sum_reals_test<halmd::fixed_vector<float, 3>, float>();
 }
-#endif
 
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
 BOOST_AUTO_TEST_CASE(type_dsfloat)
@@ -198,9 +218,9 @@ BOOST_AUTO_TEST_CASE(type_dsfloat)
     sum_reals_test<halmd::dsfloat, double>();
 }
 
-BOOST_AUTO_TEST_CASE(type_fixed_vector_dsfloat_2)
+BOOST_AUTO_TEST_CASE(type_fixed_vector_dsfloat_3)
 {
-    sum_reals_test<halmd::fixed_vector<halmd::dsfloat, 2>, double>();
+    sum_reals_test<halmd::fixed_vector<halmd::dsfloat, 3>, double>();
 }
 #endif
 

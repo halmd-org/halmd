@@ -1,3 +1,5 @@
+.. _publications:
+
 Publications
 ************
 
@@ -32,11 +34,181 @@ Technical papers
     **185**, 1546 (2014) `[arXiv:1308.6382] <http://arxiv.org/abs/1308.6382>`_.
 
 
-
 Scientific research
 ===================
 
+**Liquid flow in amorphous nanopores**
+
+    The fluid flow in nanopores depends on the interaction with the pore
+    surfaces, but also on their atomic-scale morphology.  Matching the
+    molecular structures of pore walls and fluid minimises the surface slip,
+    with crystalline and amorphous walls producing distinct flow resistances.
+    Thus, surface morphology offers a means to control surface slip in
+    non-equilibrium molecular dynamics (NEMD) simulations and emphasize the
+    need for molecular-scale models to accurately capture fluid dynamics in
+    nanoporous materials.
+
+    G. Marcelli, T. Bottinelli Montandon, R. Ebrahimi Viand, and F. Höfling,
+    `Fluid flow inside slit-shaped nanopores: the role of surface morphology at
+    the molecular scale,
+    <https://doi.org/10.1063/5.0246573>`_
+    J. Chem. Phys. **162**, 104101 (2025).
+
+    .. figure:: _images/marcelli_flow_amorphous_slitpore.jpg
+        :align: center
+        :width: 50%
+
+        Liquid flow in a slit-shaped pore with amorphous walls
+        (courtesy of G. Marcelli)
+
+**Adaptive resolution simulation of open systems out of equilibrium**
+
+    The Adaptive Resolution Simulation (AdResS) technique permits molecular
+    dynamics simulations with open boundaries by a transparent coupling to
+    particle reservoirs. Translating the theoretical model of Bergmann and
+    Lebowitz for open systems out of equilibrium to AdResS yields NEMD
+    simulations of the unconstrained (NVE) dynamics of fluids with open
+    boundaries in a thermal gradient. A pressure gradient with an ensuing mass
+    flux is maintained if a permeable mebrane is used to resist the fluid flow.
+    Thermal isolation of the fluid and viscous dissipation cause a rise in
+    fluid temperature, consistent with fluid mechanics.
+
+    R. Ebrahimi Viand, F. Höfling, R. Klein, and L. Delle Site,
+    `Communication: Theory and Simulation of Open Systems out of Equilibrium,
+    <https://doi.org/10.1063/5.0014065>`_
+    J. Chem. Phys. **153**, 101102 (2020).
+
+    R. Ebrahimi Viand,
+    `Molecular dynamics simulation of open systems far from
+    equilibrium, <http://doi.org/10.17169/refubium-36507>`_
+    PhD thesis, Freie Universität Berlin (2022), supervised by F. Höfling.
+
+    .. figure:: _images/ebrahimi_viand_flowing_matter_2022.jpg
+        :align: center
+        :width: 50%
+
+        Liquid permeation of an arrangement of obstacles via boundary-driven
+        NEMD simulations (courtesy of F. Höfling).
+
+**Frequency-dependent transport coefficients in viscous liquids**
+
+    How friction in liquids emerges from conservative forces between atoms is a
+    crucial parameter for dynamic processes in liquid matter and soft
+    materials. Using energy-conserving molecular dynamics simulations of simple
+    and complex liquids, frequency-resolved coefficients of molecular friction
+    and shear viscosity are obtained from high-precision data for response
+    functions, covering several decades in time. This approach bridges
+    hydrodynamic long-time anomalies and a frictionless high-frequency regime.
+    Combining simulation data with theory shows that the friction felt by a
+    single molecule occurs abruptly below a certain frequency.
+
+    A. V. Straube, B. G. Kowalik, R. R. Netz, and F. Höfling,
+    `Rapid onset of molecular friction in liquids bridging between the
+    atomistic and hydrodynamic pictures,
+    <https://doi.org/10.1038/s42005-020-0389-0>`_
+    Commun. Phys. **3**, 126 (2020).
+
+    .. figure:: _images/straube_CommunPhys-2020.png
+        :align: center
+        :width: 50%
+
+        At the scale of a picosecond, the smooth, but irregular atomic
+        trajectories lead to the rapid onset of dissipation and friction
+        (journal cover in October 2020)
+
+
+**Critical dynamics and surface adsorption of symmetric binary fluids**
+
+    Binary liquids phase separate at certain thermodynamic conditions.
+    Continous demixing transitions occur along the so-called λ-line, where
+    critical opalescence, long-ranged correlations, and scaling behaviour are
+    observed. Confinement of the mixture to a slit pore leads to surface
+    enrichment of one component with corresponding adsorption profiles
+    exhibiting critical scaling. Diverging length and time scales challenge the
+    simulation of these phenomena and require substantial computational
+    resources. For a family of binary Lennard-Jones liquids, the partial
+    structure factors, mutual or inter-diffusion constants and the shear
+    viscosity were obtained in molecular dynamics simulations.
+
+    S. Roy and F. Höfling,
+    `Critical surface adsorption of confined binary liquids with locally
+    conserved mass and composition,
+    <https://doi.org/10.1080/00268976.2024.2391998>`_
+    Mol. Phys. **122**, e2391998 (2024).
+
+    S. Roy, S. Dietrich, and F. Höfling,
+    `Structure and dynamics of binary liquid mixtures near their continuous
+    demixing transitions,
+    <http://doi.org/10.1063/1.4963771>`_
+    J. Chem. Phys. **145**, 134505 (2016).
+
+    .. image:: _images/roy_symmetric_mixture_adsorption.jpg
+        :width: 45%
+    .. image:: _images/roy_symmetric_mixture_lambdaline.jpg
+        :width: 45%
+
+    Left: adsorption of a near-critical binary liquid to a slit pore.
+    Right: λ-line of demixing transitions of a symmetric binary liquid
+    (courtesy of S. Roy)
+
+**Cavitation in glass-like, amorphous solids**
+
+    Continous expansion of a dense, amorphous solid leads to the formation of
+    cavities and, eventually, failure. The picture depicts long-lived bubbles,
+    which exist near the thermodynamic coexistence of gas phase (yellow) and
+    glassy state (green). The study is based on extensive molecular dynamics
+    simulations for system sizes of up to one million particles over long time
+    spans.
+
+    P. Chaudhuri and J. Horbach,
+    `Structural inhomogeneities in glasses via cavitation,
+    <https://doi.org/10.1103/PhysRevB.94.094203>`_
+    Phys. Rev. B **94**, 094203 (2016).
+
+    P. Chaudhuri and J. Horbach,
+    `Phase separation in dense glassy liquids: effect of quenching protocols,
+    <http://doi.org/10.1088/1742-5468/2016/08/084005>`_
+    J. Stat. Mech. **8**, 084005 (2016).
+
+    .. figure:: _images/chaudhuri_cavitation_2016_JStatPhys-Fig6a.png
+        :align: center
+        :width: 50%
+
+        Cavitation bubbles in the expansion of an amorphous solid
+        (courtesy of P. Chaudhuri)
+
+
+**Adsorption kinetics of methane in metal-organic frameworks**
+
+    The high porosity and large surface area of metal-organic frameworks (MOFs)
+    makes them interesting for technical applications. In contact with gaseous
+    methane (CH₄), one observes that the methane condenses in and around the
+    MOF already for unusually low gas pressure. Molecular dynamics simulations
+    give insight into the kinetics of the adsorption process into a single
+    grain of IRMOF-1.
+
+    N. Höft,
+    `Computer simulations of phase behavior and adsorption kinetics
+    in metal-organic frameworks (MOFs),
+    <http://docserv.uni-duesseldorf.de/servlets/DocumentServlet?id=40553>`_
+    PhD thesis, Universität Düsseldorf (2016), supervised by J. Horbach.
+
+    For the phase diagram of CH₄ condensation, obtained via grand canonical
+    Monte Carlo simulations, see
+    N. Höft and J. Horbach,
+    `Condensation of methane in the metal–organic framework IRMOF-1: evidence
+    for two critical points, <https://doi.org/10.1021/jacs.5b04077>`_
+    J. Am. Chem. Soc. **137**, 10199 (2015).
+
+    .. figure:: _images/hoeft_thesis_CH4_IRMOF1.jpg
+        :align: center
+        :width: 45%
+
+        Adsorption of an IRMOF-1 grain supsended in a CH₄ droplet
+        (courtesy of N. Höft)
+
 **Mesoscopic structure of liquid–vapour interfaces**
+
     At the molecular scale, liquid–vapour interfaces are broadened and
     roughened by thermally excited capillary waves. These fluctuations give
     rise to a divergence of the interfacial structure factor at small
@@ -47,51 +219,33 @@ Scientific research
     computed on the fly of the simulations.
 
     F. Höfling and S. Dietrich,
-    `Enhanced wavelength-dependent surface tension of liquid-vapour interfaces,
-    <http://dx.doi.org/10.1209/0295-5075/109/46002>`_ EPL (Europhys. Lett.)
-    **109**, 46002 (2015) `[arXiv:1412.0568]. <http://arxiv.org/abs/1412.0568>`_
+    `Structure of liquid–vapor interfaces: perspectives from liquid state
+    theory, large-scale simulations, and potential grazing-incidence X-ray
+    diffraction, <https://doi.org/10.1063/5.0186955>`_
+    J. Chem. Phys. **160**, 104107 (2024).
 
-    .. image:: _images/interface_epl109.png
-        :alt: Snapshot of a liquid–vapour interface
+    F. Höfling and S. Dietrich,
+    `Enhanced wavelength-dependent surface tension of liquid-vapour interfaces,
+    <http://doi.org/10.1209/0295-5075/109/46002>`_
+    EPL (Europhys. Lett.) **109**, 46002 (2015).
+
+    .. figure:: _images/hoefling_interface_epl109.png
         :align: center
         :width: 50%
 
-**Critical dynamics of symmetric binary fluids**
-
-    S. Roy, S. Dietrich, and F. Höfling,
-    `Structure and dynamics of binary liquid mixtures near their continuous
-    demixing transitions, <http://dx.doi.org/10.1063/1.4963771>`_
-    J. Chem. Phys. **145**, 134505 (2016).
-
-**Cavitation in dense glassy liquids**
-
-    P. Chaudhuri and J. Horbach,
-    `Structural inhomogeneities in glasses via cavitation,
-    <https://doi.org/10.1103/PhysRevB.94.094203>`_
-    Phys. Rev. B **94**, 094203 (2016).
-
-    P. Chaudhuri and J. Horbach,
-    `Phase separation in dense glassy liquids: effect of quenching protocols,
-    <http://dx.doi.org/10.1088/1742-5468/2016/08/084005>`_
-    J. Stat. Mech. **8**, 084005 (2016).
-
-**Adsorption Kinetics in Metal-Organic Frameworks**
-
-    N. Höft,
-    `PhD thesis,
-    <http://docserv.uni-duesseldorf.de/servlets/DocumentServlet?id=40553>`_
-    Universität Düsseldorf (2016), supervised by J. Horbach.
+        Snapshot of a planar liquid–vapour interface
+        (courtesy of F. Höfling)
 
 **Non-equilibrium fluids**
 
     J. Bartnick, A. Kaiser, H. Löwen, and A. V. Ivlev,
     `Emerging activity in bilayered dispersions with wake-mediated interactions,
-    <http://dx.doi.org/10.1063/1.4953225>`_
+    <http://doi.org/10.1063/1.4953225>`_
     J. Chem. Phys. **144**, 224901 (2016).
 
     J. Bartnick, M. Heinen, A. V. Ivlev, and H. Löwen,
     `Structural correlations in diffusiophoretic colloidal mixtures with
     nonreciprocal interactions,
-    <http://dx.doi.org/10.1088/0953-8984/28/2/025102>`_
+    <http://doi.org/10.1088/0953-8984/28/2/025102>`_
     J. Phys.: Condens. Matter **28**, 025102 (2016).
 

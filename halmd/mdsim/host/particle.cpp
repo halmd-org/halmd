@@ -88,6 +88,19 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     std::fill(en_pot->begin(), en_pot->end(), 0);
     std::fill(stress_pot->begin(), stress_pot->end(), 0);
 
+#ifdef USE_HOST_SINGLE_PRECISION
+    if (typeid(float_type) == typeid(float)) {
+        LOG("using single floating-point precision");
+    }
+#else
+    if (typeid(float_type) == typeid(double)) {
+        LOG("using double floating-point precision");
+    }
+#endif
+    else {
+        LOG_ERROR("unknown floating-point precision");
+    }
+
     LOG("number of particles: " << nparticle_);
     LOG("number of particle species: " << nspecies_);
     LOG_DEBUG("capacity of data arrays: " << capacity_);
