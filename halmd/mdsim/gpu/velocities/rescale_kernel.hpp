@@ -44,7 +44,7 @@ struct rescale_wrapper
     typedef typename type_traits<4, float_type>::gpu::ptr_type ptr_type;
 
     // declare the rescale kernel function
-    cuda::function<void(ptr_type, float const*, uint, float, int*)> rescale;
+    cuda::function<void(ptr_type, float const*, uint, float, int*)> rescale_nve;
 
     static rescale_wrapper kernel;
 };

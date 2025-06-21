@@ -113,6 +113,7 @@ local function run_rescale_test(args)
     mdsim.velocities.rescale({
         particle = particle
       , target_energy = target_energy
+      , mode = "nve", per_particle = true
     }):set()
 
     log.info(("total energy after rescaling:     %.6f"):format(thermo:internal_energy()))
@@ -163,6 +164,7 @@ test["parameters"] = function(args)
     local rescale = mdsim.velocities.rescale({
         particle = particle
       , target_energy = target_energy
+      , mode = "nve", per_particle = true
     })
 
     -- query passed parameters

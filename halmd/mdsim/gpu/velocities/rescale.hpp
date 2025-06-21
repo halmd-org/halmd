@@ -43,10 +43,16 @@ class rescale
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
 
+    enum mode_selection {
+        nve = 1
+//      , isokinetic = 2
+    };
+
     // constructor
     rescale(
         std::shared_ptr<particle_type> particle
       , double target_energy
+      , mode_selection nve
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -65,6 +71,7 @@ private:
 
     std::shared_ptr<particle_type> particle_;
     float target_energy_;
+    mode_selection mode_;
     std::shared_ptr<logger> logger_;
 
     typedef utility::profiler::accumulator_type accumulator_type;

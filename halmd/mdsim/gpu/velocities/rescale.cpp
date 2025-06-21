@@ -31,11 +31,14 @@ template <int dimension, typename float_type>
 rescale<dimension, float_type>::rescale(
     std::shared_ptr<particle_type> particle
   , double target_energy
+  , mode_selection mode
   , std::shared_ptr<halmd::logger> logger
 )
   : particle_(particle)
+  , mode_(mode)
   , logger_(logger)
 {
+    LOG("mode of operation: " << ((mode_ == nve) ? "nve" : "none"));
     set_target_energy(target_energy);
 }
 
@@ -60,19 +63,24 @@ void rescale<dimension, float_type>::set()
     auto& velocity = *make_cache_mutable(particle_->velocity());
     cuda::memory::device::vector<int> retcode(1);
 
-    // configure and launch the rescale kernel
-    // This performs for each particle:
-    // (1) calculate total energy and scaling factor, (2) apply velocity scaling
-    configure_kernel(wrapper_type::kernel.rescale, particle_->dim(), true);
+    if (mode_ == nve) {
+        // configure and launch the rescale kernel
+        // This performs for each particle:
+        // (1) calculate total energy and scaling factor, (2) apply velocity scaling
+        configure_kernel(wrapper_type::kernel.rescale_nve, particle_->dim(), true);
 
-    wrapper_type::kernel.rescale(
-        velocity.data()               // velocities (device pointer)
-      , en_pot.data()                 // potential energy (device pointer)
-      , particle_->nparticle()        // number of particles
-      , target_energy_                // target energy per particle
-      , retcode.data()                // return code
-    );
-    // cuda::thread::synchronize();   // cuda::copy below is blocking
+        wrapper_type::kernel.rescale_nve(
+            velocity.data()               // velocities (device pointer)
+          , en_pot.data()                 // potential energy (device pointer)
+          , particle_->nparticle()        // number of particles
+          , target_energy_                // target energy per particle
+          , retcode.data()                // return code
+        );
+        // cuda::thread::synchronize();   // cuda::copy below is blocking
+    }
+    else {
+        LOG_ERROR("mode of operation is not yet supported");
+    }
 
     // obtain return code and test bits
     int r;
@@ -110,6 +118,7 @@ void rescale<dimension, float_type>::luaopen(lua_State* L)
               , def("rescale", &std::make_shared<rescale
                   , std::shared_ptr<particle_type>
                   , double
+                  , mode_selection
                   , std::shared_ptr<logger>
                 >)
             ]

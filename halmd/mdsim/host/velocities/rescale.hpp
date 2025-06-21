@@ -43,9 +43,15 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::size_type size_type;
 
+    enum mode_selection {
+        nve = 1
+//      , isokinetic = 2
+    };
+
     rescale(
         std::shared_ptr<particle_type> particle,
         double target_energy,
+        mode_selection mode,
         std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -61,6 +67,7 @@ public:
 private:
     std::shared_ptr<particle_type> particle_;
     float_type target_energy_;
+    mode_selection mode_;
     std::shared_ptr<logger> logger_;
 
     typedef utility::profiler::accumulator_type accumulator_type;

@@ -29,13 +29,16 @@ namespace velocities {
 
 template <int dimension, typename float_type>
 rescale<dimension, float_type>::rescale(
-    std::shared_ptr<particle_type> particle,
-    double target_energy,
-    std::shared_ptr<halmd::logger> logger
+    std::shared_ptr<particle_type> particle
+  , double target_energy
+  , mode_selection mode
+  , std::shared_ptr<halmd::logger> logger
 )
-  : particle_(particle),
-    logger_(logger)
+  : particle_(particle)
+  , mode_(mode)
+  , logger_(logger)
 {
+    LOG("mode of operation: " << ((mode_ == nve) ? "nve" : "none"));
     set_target_energy(target_energy);
 }
 
@@ -63,17 +66,23 @@ void rescale<dimension, float_type>::set()
         auto& v = velocity[i];
         float_type mass_ = mass[i];
         float_type en_kin = mass_ * inner_prod(v, v) / 2;
-        float_type en_pot = en_pot_array[i];
 
-        float_type target_total_energy = static_cast<float_type>(target_energy_);
-        float_type energy_diff = target_total_energy - en_pot;
+        float_type energy_diff;
+        if (mode_ == nve) {
+            float_type en_pot = en_pot_array[i];
+            energy_diff = target_energy_ - en_pot;
 
-        if (energy_diff < float_type(0)) {
-            LOG_ERROR("target energy (" << target_total_energy
-                      << ") is less than potential energy (" << en_pot
-                      << ") of particle #" << i
-                     );
-            throw std::runtime_error("target energy can not be matched by velocity rescaling");
+            if (target_energy_ < en_pot) {
+                LOG_ERROR("target energy (" << target_energy_
+                          << ") is less than potential energy (" << en_pot
+                          << ") of particle #" << i
+                         );
+                throw std::runtime_error("target energy can not be matched by velocity rescaling");
+            }
+        }
+        else {
+            energy_diff = target_energy_;
+            LOG_ERROR("mode of operation is not yet supported");
         }
 
         // safety guard: handle zero kinetic energy (i.e., v = 0)
@@ -91,7 +100,6 @@ void rescale<dimension, float_type>::set()
         }
     }
 }
-
 
 template <int dimension, typename float_type>
 void rescale<dimension, float_type>::luaopen(lua_State* L)
@@ -116,6 +124,7 @@ void rescale<dimension, float_type>::luaopen(lua_State* L)
               , def("rescale", &std::make_shared<rescale
                   , std::shared_ptr<particle_type>
                   , double
+                  , mode_selection
                   , std::shared_ptr<logger>
                 >)
             ]

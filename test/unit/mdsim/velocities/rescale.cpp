@@ -152,7 +152,7 @@ void rescale_test<modules_type>::test()
         << ", kinetic = " << en_kin << ", potential = " << en_pot);
 
     // apply velocity rescaling
-    rescale_type rescaler(particle, target_energy);
+    rescale_type rescaler(particle, target_energy, rescale_type::nve);
     rescaler.set();
 
     // test energy of each particle separately

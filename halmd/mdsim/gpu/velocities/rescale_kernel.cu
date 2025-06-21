@@ -34,7 +34,7 @@ template <
     typename ptr_type
   , typename vector_type
 >
-__global__ void rescale(ptr_type g_v, float const* g_en_pot, uint npart, float target_energy, int* retcode)
+__global__ void rescale_nve(ptr_type g_v, float const* g_en_pot, uint npart, float target_energy, int* retcode)
 {
     typedef typename vector_type::value_type float_type;
 
@@ -82,7 +82,7 @@ __global__ void rescale(ptr_type g_v, float const* g_en_pot, uint npart, float t
 // wrapper instantiation
 template <int dimension, typename float_type>
 rescale_wrapper<dimension, float_type> rescale_wrapper<dimension, float_type>::kernel = {
-    rescale_kernel::rescale<ptr_type, fixed_vector<float_type, dimension>>
+    rescale_kernel::rescale_nve<ptr_type, fixed_vector<float_type, dimension>>
 };
 
 // explicit instantiations
