@@ -90,9 +90,9 @@ end
 -- :param table args.r_cut: matrix with elements :math:`r_{\text{c}, ij}`
 -- :param number args.skin: neighbour list skin *(default: 0.5)*
 -- :param string args.algorithm: Preferred implementation of the neighbour list *(GPU variant only)*
--- :param string args.unroll_force_loop: Use 32 threads per particle in force computation *(GPU variant only)*
 -- :param number args.occupancy: Desired cell occupancy. Defaults to
 --   :class:`halmd.mdsim.defaults.occupancy()` *(GPU variant only)*
+-- :param boolean args.unroll_force_loop: Use 32 threads per particle in force computation *(GPU variant only)*
 -- :param boolean args.disable_binning: Disable use of binning module and
 --   construct neighbour lists from particle positions directly (*default:
 --   false*).
