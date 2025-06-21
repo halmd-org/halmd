@@ -91,6 +91,6 @@ end
 -- Parse command-line arguments.
 --
 function define_args(parser)
-    parser:add_argument("output,o", {type = "string", action = parser.substitute_date_time_action,
+    parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
         default = "lennard_jones_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 end
