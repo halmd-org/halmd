@@ -90,14 +90,23 @@ function main(args)
     -- select all particles
     local all_group = mdsim.particle_groups.all({particle = particle})
 
-    -- sample phase space
-    local phase_space = observables.phase_space({box = box, group = all_group})
-
-    -- write trajectory of particle groups to H5MD file
+    -- write trajectory of particle group to H5MD file
     local steps = math.ceil(args.time / args.timestep)
-    local traj_interval = args.sampling.trajectory or steps
-    if traj_interval > 0 then
-        phase_space:writer({file = file, fields = {"position", "image", "velocity"}, every = traj_interval})
+    local interval = args.sampling.trajectory or steps
+    if interval > 0 then
+        -- sample phase space
+        observables.phase_space({box = box, group = all_group})
+           :writer({file = file, fields = {"position", "image", "velocity"}, every = interval})
+    end
+
+    -- sample macroscopic state variables.
+    local interval = args.sampling.state_vars
+    if interval > 0 then
+        observables.thermodynamics({box = box, group = all_group})
+           :writer({
+                file = file, fields = { "potential_energy", "pressure", "temperature" }
+              , every = interval
+            })
     end
 
     -- sample initial state
