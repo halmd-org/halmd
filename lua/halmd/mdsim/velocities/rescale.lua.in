@@ -1,0 +1,112 @@
+--
+-- Copyright © 2025 Giorgia Marcelli
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+local log               = require("halmd.io.log")
+local utility           = require("halmd.utility")
+local module            = require("halmd.utility.module")
+
+---
+-- Rescale velocities
+-- ==================
+--
+-- This module rescales particle velocities to satisfy a selected constraint,
+-- depending on the mode of operation, such that a given target energy
+-- :math:`E_\text{target}` matches either
+--
+--  #. the total energy (micro-canonical, ``nve``) or
+--  #. the kinetic energy (``isokinetic``)
+--
+-- of either (a) the whole system or (b) each particle separately.
+--
+-- The rescale operation conserves the direction of velocities, but adjusts
+-- their magnitude. The scaling factor :math:`\lambda` is calculated as:
+--
+--    .. math::
+--        \lambda = \sqrt{\frac{E_\text{target} - \alpha E_\text{pot}}{E_\text{kin}}} \,,
+--
+-- where :math:`\alpha = 1` in the micro-canonical mode (1) and :math:`\alpha =
+-- 0` in the iso-kinetic mode (2). In case (a), the same factor
+-- :math:`\lambda` is applied to whole system (all particles) and the potential
+-- and kinetic energies, :math:`E_\text{pot}` and :math:`E_\text{kin}`, are
+-- averages over all particles, respectively (before rescaling).  In case (b),
+-- :math:`\lambda` is calculated for each particle separately, using the
+-- individual energy values.
+--
+
+--  C++ module binding
+local rescale = {
+    per_particle = assert(libhalmd.mdsim.velocities.rescale)
+}
+
+local mode_selection = { nve = 1 } -- TODO isokinetic = 2
+
+---
+-- Construct rescale module.
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param number args.target_energy: desired energy value (either total or kinetic energy)
+-- :param string args.mode: mode of operation (``nve`` or ``isokinetic``)
+-- :param boolean args.per_particle: perform rescaling per particle *(default: false)*
+--
+-- If the ``mode`` of operation is ``nve``, the target energy refers to the total energy.
+-- If the mode is ``isokinetic``, the target energy refers to the kinetic energy.
+--
+-- If the switch ``per_particle`` is true, the rescaling is performed for each particle
+-- separately, otherwise the same factor is applied to all particles.
+--
+-- .. method:: set()
+--
+--    Rescale particle velocities.
+--
+-- .. attribute:: target_energy
+--
+--    Target energy value *(assignable)*
+--
+--    In ``nve`` mode, it refers to the total energy (kinetic plus potential
+--    parts) whereas it refers to the kinetic energy in ``isokinetic`` mode.
+--
+local M = module(function(args)
+    local particle      = utility.assert_kwarg(args, "particle")
+    local target_energy = utility.assert_type(utility.assert_kwarg(args, "target_energy"), "number")
+    local mode          = utility.assert_type(utility.assert_kwarg(args, "mode"), "string")
+    local per_particle  = utility.assert_type(args.per_particle or false, "boolean")
+
+    local label  = assert(particle.label)
+    local logger = log.logger({label = ("rescale velocities (%s)"):format(label)})
+
+    mode = mode_selection[mode]     -- translate string to integer value (enum)
+    assert(mode, "unknown mode of operation: " .. args.mode)
+
+    -- Construct and return C++ instance
+    if per_particle then
+        return rescale.per_particle(particle, target_energy, mode, logger)
+    else
+        logger:error("system-wide velocity rescaling not yet supported")
+        -- local msv -- = thermodynamics(particle, all)
+        -- return rescale.all(msv, target_energy, mode, logger)
+    end
+end)
+
+rescale.all = function(msv, target_energy, mode, logger)
+
+end
+
+return M

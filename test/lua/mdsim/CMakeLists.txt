@@ -1,2 +1,3 @@
 add_subdirectory(positions)
 add_subdirectory(particle_groups)
+add_subdirectory(velocities)
