@@ -247,6 +247,13 @@ local M = module(function(args)
         end
         writer:write()
 
+        -- logging output
+        logger:info("location within output file: " .. table.concat(location, "/") .. "/")
+        local s = ""
+        for k,v in pairs(fields) do s = s .. ", " .. v end
+        logger:message("computing" .. string.sub(s, 2))
+
+        -- construct file writer
         writer = file:writer{location = location, mode = "append"}
 
         -- this table consists of thermodynamic variables that will need
