@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011-2013 Felix Höfling
+ * Copyright © 2011-2023 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -86,11 +86,11 @@ BOOST_AUTO_TEST_CASE( mie_host )
       , 2., 4.;
     uint_matrix_type index_m_array(ntype, ntype);
     index_m_array <<=
-        12, 12
-      , 12, 12;
+        12, 4
+      ,  4, 12;
     uint_matrix_type index_n_array(ntype, ntype);
     index_n_array <<=
-        4, 2
+        2, 2
       , 2, 6;
 
     // construct module
@@ -123,15 +123,15 @@ BOOST_AUTO_TEST_CASE( mie_host )
 
     // evaluate some points of potential and force
     typedef boost::array<float_type, 3> array_type;
-    const float_type tolerance = 5 * numeric_limits<float_type>::epsilon();
+    const float_type tolerance = 6 * numeric_limits<float_type>::epsilon();
 
-    // expected results (r, fval, en_pot) for ε=1, σ=1, m=12, n=4, rc=5σ
+    // expected results (r, fval, en_pot) for ε=1, σ=1, m=12, n=2, rc=5σ
     boost::array<array_type, 5> results_aa = {{
-        {{0.2, 2.929685e11, 9.765600000064e8}}
-      , {{0.5, 785408., 16320.00639998362}}
-      , {{1., 32., 0.006399983616}}
-      , {{2., -0.2470703125, -0.242623453884}}
-      , {{10., -0.00001599999952, 0.00599998362}}
+        {{0.5, 337553.0137048161, 7026.699262368106}}
+      , {{0.8, 460.1405827001969, 22.37362839697643}}
+      , {{1.0, 17.17162897326307, 0.06868650885955306}}
+      , {{2.0, -0.2133876744968482, -0.3601849862490435}}
+      , {{10.0, -0.0003434325792592018, 0.05151487988800715}}
     }};
 
     BOOST_FOREACH (array_type const& a, results_aa) {
@@ -142,13 +142,13 @@ BOOST_AUTO_TEST_CASE( mie_host )
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
     };
 
-    // interaction AB: ε=.5, σ=2, m=12, n=2, rc=5σ
+    // interaction AB: ε=.5, σ=2, m=4, n=2, rc=5σ
     boost::array<array_type, 5> results_ab = {{
-        {{0.2, 5.9999999999e14, 1.99999999980008e12}}
-      , {{0.5, 1.61061248e9, 3.355440007999999e7}}
-      , {{1., 98288., 8184.079999991808}}
-      , {{2., 5., 0.079999991808}}
-      , {{10., -0.00159999901696, 0.}}
+        {{0.5, 7936.0, 480.0768}}
+      , {{0.8, 449.21875, 65.7018}}
+      , {{1.0, 112.0, 24.0768}}
+      , {{2.0, 1.0, 0.0768}}
+      , {{10.0, -0.001472, 0.0}}
     }};
 
     BOOST_FOREACH (array_type const& a, results_ab) {
@@ -161,11 +161,11 @@ BOOST_AUTO_TEST_CASE( mie_host )
 
     // interaction BB: ε=.25, σ=4, m=12, n=6, rc=5σ
     boost::array<array_type, 5> results_bb = {{
-        {{0.2, 1.2287999904e18, 4.095999936e15}}
-      , {{0.5, 3.298528591872e12, 6.871921459200006e10}}
-      , {{1., 2.01302016e8, 1.6773120000063997e7}}
-      , {{2., 12192., 4032.000063995904}}
-      , {{10., -0.00024374673408, -0.00401522688}}
+        {{0.5, 3298528591872.0, 68719214592.00006}}
+      , {{0.8, 4577490234.375, 244125000.000064}}
+      , {{1.0, 201302016.0, 16773120.000064}}
+      , {{2.0, 12192.0, 4032.000063995904}}
+      , {{10.0, -0.00024374673408, -0.00401522688}}
     }};
 
     BOOST_FOREACH (array_type const& a, results_bb) {

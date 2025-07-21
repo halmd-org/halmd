@@ -16,6 +16,58 @@ Widom branch
 * provide the :mod:`Yukawa <halmd.mdsim.potential.pair.yukawa` pair potential,
   which corresponds to a screened Coulumb potential *(Felix Höfling)*
 
+Version 1.1.1
+=============
+
+**Bug fixes**
+
+* fix erroneous computation of
+  :mod:`density modes <halmd.observables.density_mode>` due to an issue with
+  the GPU reduction kernels *(Felix Höfling)*
+
+* fix bug in construction of
+  :mod:`simulation box writer <halmd.mdsim.box.writer>`, which caused a
+  modification of the ``location`` argument passed by the calling code
+  *(Felix Höfling)*
+
+**Improvements**
+
+* documentation: add tutorial and recipes on wetting films of a slit pore
+  *(Jung Nguyen)*
+
+* documentation: describe published science based on *HAL's MD package*, add
+  benchmark results for Nvidia H100 GPUs *(Felix Höfling)*
+
+* new Lua helper functions ``dirname()`` and ``abspath()`` in
+  :mod:`utility <halmd.utility>` make it easier to include Lua scripts, e.g.,
+  for system definition files *(Felix Höfling)*
+
+* improve logging output of several modules, differentiate logging levels of
+  :mod:`runtime profiler <halmd.utility.profiler>` *(Felix Höfling)*
+
+* improve robustness of construction of several modules for boundary cases of
+  parameter values: :mod:`particle <halmd.mdsim.particle>`, external potential
+  :mod:`planar_wall <halmd.mdsim.potentials.external.planar_wall>`, computation of
+  :mod:`density modes <halmd.observables.density_mode>` and
+  :mod:`time correlation functions <halmd.observables.dynamics.blocking_scheme>`
+  *(Felix Höfling)*
+
+* improve robustness of
+  :mod:`phase space writer <halmd.observables.phase_space.writer>` interface:
+  refuse construction on a fluctuating particle group, which is not yet
+  supported although foreseen by the H5MD file format *(Giorgia Marcelli)*
+
+**Internal changes**
+
+* add ``-debug`` suffix to name of HALMD binary if not building in CMake's
+  Release mode *(Felix Höfling)*
+
+* documentation: switch to LuaLaTeX in Sphinx configuration, convert plotting
+  scripts to Python 3, respect CMake switch ``GENERATE_DOC=OFF``
+  *(Felix Höfling, Max Orteu)*
+
+* support C++ compiler GCC 12 *(Felix Höfling)*
+
 
 Version 1.1.0
 =============
@@ -32,23 +84,38 @@ Version 1.1.0
 
 **New features**
 
+* examples: add a definition file and a user script for the simulation of
+  crystal grains of fcc metals at low temperatures. The simulation uses a
+  parametrisation of a modified Morse potential due to MacDonald and MacDonald
+  (1981) *(Felix Höfling)*
+
 * add a :mod:`custom <halmd.mdsim.potentials.pair.custom>` pair potential as a
-  template to be easily adjusted for user-specific pair potentials. *(Felix Höfing)*
+  template to be easily adjusted for user-specific pair potentials. *(Felix Höfling)*
 
 * add :mod:`cylinder <halmd.mdsim.geometries.cylinder>` geometry as a predicate
   for the particle group :mod:`region <halmd.mdsim.particle_groups.region>`.
   This enables the selection of particles inside or outside of a cylindrical
   domain of the simulation box. *(Felix Höfling)*
 
+* Lua interface: add module :mod:`constants <halmd.utility.constants>` to
+  provide some natural constants and unit conversion factors *(Felix Höfling)*
+
+* Lua interface: add :mod:`helper functions <halmd.utility>` ``concat(t1,t2)``
+  and ``repeat_element(x, n)`` and some BLAS level 1 operations on :mod:`numeric
+  Lua tables <halmd.numeric>` *(Viktor Skoblin)*
+
+* new logging level [INFO], which is between the standard level (MESSAGE) and
+  [DEBUG] and which is also contained in release builds. *(Felix Höfling)*
+
 **Improvements**
 
-* include the :mod:`Mie <halmd.mdsim.potentials.pair.mie>` potential as a
+* include the :mod:`Mie <halmd.mdsim.potentials.pair.mie>` pair potential as a
   renamed version of the deprecated :mod:`modified_lennard_jones
   <halmd.mdsim.potentials.pair.modified_lennard_jones>` potential. A
   transitional module is kept for backwards compatibility. *(Felix Höfling)*
 
-* more verbose logging output on potential parameters, units and truncation
-  schemes. *(Felix Höfling)*
+* generalise the :mod:`Morse <halmd.mdsim.potential.pair.morse` pair potential
+  to include a distortion parameter for the simulation of fcc metals *(Felix Höfling)*
 
 * new force algorithm to speed up calculation of truncated pair forces in case
   of small particle numbers. In such situations, GPU utilisation is increased
@@ -56,10 +123,20 @@ Version 1.1.0
   within a thread warp.  The algorithm is selected upon construction of the
   :mod:`neighbour <halmd.mdsim.neighbour>` module *(Jaslo Ziska)*
 
-* benchmark of the Kob-Andersen mixture: add a version for a tiny system,
-  decrease skin width and increase neighbour list occupancy  *(Felix Höfling)*
+* :ref:`benchmark <benchmarks>` of the Kob-Andersen mixture: add a version for
+  a tiny system, decrease skin width and increase neighbour list occupancy *(Felix Höfling)*
 
-* support CUDA SDK 11 and Nvidida GPUs Tesla A40 and A100 *(Jaslo Ziska)*
+* example scripts for liquids: factor out definition of interactions to make
+  them re-usable in different simulation scripts *(Felix Höfling)*
+
+* more verbose logging output on potential parameters, units and truncation
+  schemes. *(Felix Höfling)*
+
+* add default output parameters to :mod:`runtime estimator
+  <halmd.observables.runtime_estimate>` in order to simplify user scripts
+  *(Felix Höfling)*
+
+* support CUDA SDK 11.2 and Nvidida GPUs Tesla A40 and A100 *(Jaslo Ziska)*
 
 **Internal changes**
 
@@ -174,8 +251,8 @@ Version 1.0.0
 
 **Improvements**
 
-* usage documentation: add :ref:`tutorial <tutorial>` on diffusion in a simple
-  liquid *(Jake Atwell)*
+* usage documentation: add :ref:`tutorial <tutorial-diffusion>` on diffusion in
+  a simple liquid *(Jake Atwell)*
 
 * examples: simplify scripts for basic simulations of a one-component
   Lennard-Jones fluid *(Felix Höfling)*

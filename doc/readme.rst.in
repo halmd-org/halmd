@@ -46,6 +46,8 @@ Physics applications
 
 * with periodic, closed and open boundaries
 
+Science using *HAL's MD package* is highlighted in the :ref:`publication gallery <publications>`.
+
 
 Features
 ========
@@ -68,8 +70,6 @@ Features
 
 * extensibility by the generic and modular design
 
-* free software under LGPL-3+ license
-
 
 Technical features
 ------------------
@@ -85,6 +85,16 @@ Technical features
 * an integrated, lightweight `Lua <http://lua.org>`_ interpreter
 
 * modern, template-based C++ code taking advantage of `C++14 <http://en.wikipedia.org/wiki/C++14>`_
+
+
+Licence
+=======
+
+*HAL's MD package* is free software, developed and distributed under the
+`LGPL-3+ licence <https://www.gnu.org/licenses/lgpl-3.0.txt>`_. Please
+reference the technical papers listed in section `Publications <publications>`_
+and the website URL `<https://halmd.org>`_ in scientific publications based on
+the software.
 
 
 Historical footnote

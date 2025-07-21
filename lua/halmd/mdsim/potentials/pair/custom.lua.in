@@ -35,7 +35,7 @@ local adapters          = require("halmd.mdsim.potentials.pair.adapters")
 --
 -- .. math::
 --
---    U_\text{custom}\left(r_{ij}\right) = \text{FIXME (put LaTeX formula of the custom potential)}
+--    U^{(ij)}_\text{custom}\left(r\right) = \text{FIXME (put LaTeX formula of the custom potential)}
 --
 -- for the interaction between two particles of species :math:`i` and
 -- :math:`j`. The template assumes three potential parameters, named
@@ -58,8 +58,9 @@ local adapters          = require("halmd.mdsim.potentials.pair.adapters")
 --    test/unit/mdsim/potentials/pair/custom.cpp
 --
 -- The last file contains a unit test, where reference values for
--- :math:`U_\text{custom}(r)` must be provided for a number of distances
--- :math:`r` and a few combinations of potential parameters.
+-- :math:`U^{(ij)}_\text{custom}(r)` must be provided for a number of distances
+-- :math:`r` and a few combinations of potential parameters. The Python script
+-- ``compute_potential_reference.py`` in the same folder can generate such values.
 --
 
 -- grab C++ wrappers

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2013 Felix Höfling
+ * Copyright © 2008-2023 Felix Höfling
  * Copyright © 2008-2010 Peter Colberg
  * Copyright © 2020      Jaslo Ziska
  *
@@ -39,6 +39,11 @@ namespace pair {
 
 /**
  * define Mie potential and parameters
+ *
+ * @f[ U(r) = C(m, n) \epsilon \left[ (r/\sigma)^{-m} - (r/\sigma)^{-n}) \right] @f]
+ *
+ * with prefactor @f$ C(m, n) = \frac{m}{m - n} \left(\frac{m}{n}\right)^{n/(m-n)}$f@.
+ * The exponents @f$ m, n @f$ must be even and @f$ m > n @f$.
  */
 template <typename float_type_>
 class mie
@@ -97,8 +102,10 @@ public:
 
     std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
-        return mie_kernel::compute(rr, sigma_(a,b)*sigma_(a,b), epsilon_(a,b)
-                                                    , index_m_(a,b) / 2, index_n_(a,b) / 2);
+        return mie_kernel::compute(rr
+          , sigma_(a, b) * sigma_(a, b), epsilon_C_(a, b)
+          , index_m_(a, b) / 2, index_n_(a, b) / 2
+        );
     }
 
     /**
@@ -109,6 +116,8 @@ public:
 private:
     /** potential well depths in MD units */
     matrix_type epsilon_;
+    /** potential well depths times prefactor C(m,n) */
+    matrix_type epsilon_C_;
     /** pair separation in MD units */
     matrix_type sigma_;
     /** power law index of repulsion */

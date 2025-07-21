@@ -104,9 +104,10 @@ public:
         return smoothing_;
     }
 
+    // size of parameter arrays, must match number of particle species
     unsigned int size() const
     {
-        return offset_.size();
+        return epsilon_.size2();
     }
 
     /**

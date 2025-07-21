@@ -66,8 +66,8 @@ public:
      */
     blocking_scheme(
         std::shared_ptr<clock_type const> clock
-      , double maximum_lag_time
-      , double resolution
+      , time_type maximum_lag_time
+      , time_type resolution
       , unsigned int block_size
       , unsigned int shift = 0
       , unsigned int separation = 1

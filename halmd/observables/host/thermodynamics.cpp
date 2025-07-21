@@ -42,6 +42,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , volume_(volume ? volume : [=](){ return box->volume(); })
   , logger_(logger)
 {
+    LOG_INFO("current reference volume: " << volume_());
 }
 
 template <int dimension, typename float_type>

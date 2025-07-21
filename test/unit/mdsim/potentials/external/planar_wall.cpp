@@ -5,17 +5,18 @@
  * This file is part of HALMD.
  *
  * HALMD is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <halmd/config.hpp>
@@ -107,28 +108,28 @@ make_host_potential()
     typedef typename potential_type::vector_type vector_type;
 
     // define interaction parameters
-    unsigned int ntype = 2;  // test a binary mixture
+    unsigned int nspecies = 2;  // test a binary mixture
     unsigned int nwall = 3;  // 3 walls
 
-    typename potential_type::matrix_container_type cutoff(nwall, ntype);
+    typename potential_type::matrix_container_type cutoff(nwall, nspecies);
     cutoff <<=
         1., 2.
       , 10., 10.
       , 1e2, 1e2;
 
-    typename potential_type::matrix_container_type epsilon(nwall, ntype);
+    typename potential_type::matrix_container_type epsilon(nwall, nspecies);
     epsilon <<=
         1., 0.5
       , 2., 0.
       , 0., 1.;
 
-    typename potential_type::matrix_container_type sigma(nwall, ntype);
+    typename potential_type::matrix_container_type sigma(nwall, nspecies);
     sigma <<=
         1., 2.
       , 3., 1.
       , 2., 1.;
 
-    typename potential_type::matrix_container_type wetting(nwall, ntype);
+    typename potential_type::matrix_container_type wetting(nwall, nspecies);
     wetting <<=
         0.4, 0.
       , -1, 1.

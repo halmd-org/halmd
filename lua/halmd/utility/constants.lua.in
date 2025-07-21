@@ -1,0 +1,60 @@
+--
+-- Copyright © 2023  Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of
+-- the License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Lesser General Public License for more details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this program.  If not, see
+-- <http://www.gnu.org/licenses/>.
+--
+
+---
+-- Natural constants and conversion factors
+-- ========================================
+--
+local M = {}
+
+---
+-- The module holds a table with some natural constants and conversion factors
+-- for non-SI units
+--
+-- .. data:: kB
+--
+--    :value: 1.380649e-23
+--
+--    Boltzmann's constant in SI units (joule per kelvin)
+--
+-- .. data:: NA
+--
+--    :value: 6.02214076e23
+--
+--    Avogadro's number in SI units (particles per mole)
+--
+-- .. data:: eV
+--
+--    :value: 1.602176634e-19
+--
+--    1 electron volt in SI units (joule)
+--
+-- .. data:: Da
+--
+--    :value: 1.66053907e-27
+--
+--    1 Dalton (unified atomic mass) in SI units (kilograms)
+--
+M.kB = 1.380649e-23      -- Boltzmann's constant in SI units (joule per kelvin)
+M.NA = 6.02214076e23     -- Avogadro's number in SI units (particles per mole)
+M.eV = 1.602176634e-19   -- 1 eV in SI units (joule)
+M.Da = 1.66053907e-27    -- 1 Da (unified atomic mass) in SI units (kilograms)
+
+return M

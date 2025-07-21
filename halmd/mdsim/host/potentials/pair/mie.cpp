@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2013 Felix Höfling
+ * Copyright © 2008-2023 Felix Höfling
  * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
@@ -54,6 +54,7 @@ mie<float_type>::mie(
 )
   // allocate potential parameters
   : epsilon_(epsilon)
+  , epsilon_C_(epsilon)                              // multiply prefactor C below
   , sigma_(check_shape(sigma, epsilon))
   , index_m_(check_shape(index_m, epsilon))
   , index_m_2_(index_m_ / 2)
@@ -67,6 +68,7 @@ mie<float_type>::mie(
     LOG("index of repulsion: m = " << index_m_);
     LOG("index of attraction: n = " << index_n_);
 
+
     // check conditions on power law indices (after logging output)
     for (unsigned i = 0; i < index_m_.size1(); ++i) {
         for (unsigned j = 0; j < index_m_.size2(); ++j) {
@@ -77,6 +79,15 @@ mie<float_type>::mie(
             if (index_m_(i, j) <= index_n_(i, j)) {
                 throw std::logic_error("repulsive part of potential must be stronger than attraction");
             }
+        }
+    }
+
+    // compute prefactor C(m,n) and multiply with epsilon
+    for (unsigned i = 0; i < index_m_.size1(); ++i) {
+        for (unsigned j = 0; j < index_m_.size2(); ++j) {
+            float_type m = index_m_(i, j);  // promote to floating-point numbers
+            float_type n = index_n_(i, j);
+            epsilon_C_(i, j) *= m / (m - n) * std::pow(m / n, n / (m - n));
         }
     }
 }

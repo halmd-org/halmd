@@ -34,6 +34,6 @@ local potentials = require("halmd.mdsim.potentials")
 --    the next major release (2.0.0). Use the :mod:`Mie potential
 --    <halmd.mdsim.potentials.pair.mie>` instead.
 --
-log.warning("The pair potential \'modified_lennard_jones\' is deprecated, use the \'mie\' potential instead")
+log.warning("The pair potential \'modified_lennard_jones\' has been deprecated, use the \'mie\' potential instead")
 
 return potentials.pair.mie

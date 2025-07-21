@@ -153,7 +153,7 @@ wavevector<dimension>::wavevector(
     // determine unit cell in reciprocal lattice, 2π / L[i]
     // and number of grid points per dimension up to q_max
     vector_type unit_cell = element_div(vector_type(2 * M_PI), box_length_);
-    auto max_n = static_cast<index_type>(ceil(element_div(vector_type(q_max), unit_cell)));
+    auto max_n = static_cast<index_type>(floor(element_div(vector_type(q_max), unit_cell)));
 
     // apply wavevector filter for each Cartesian component,
     // max_n[j] = 0 implies q[j] = 0 below.

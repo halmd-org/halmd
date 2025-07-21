@@ -54,10 +54,10 @@ namespace gpu {
  */
 template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
-  : // allocate global device memory
+  : // store module parameters
     nparticle_(nparticle)
   , nspecies_(std::max(nspecies, 1u))
-  // set internal flags
+    // set internal flags
   , force_in_progress_(false)
   , force_zero_(true)
   , force_dirty_(true)
@@ -76,9 +76,9 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
         max_block_size |= max_block_size >> 8;
         max_block_size |= max_block_size >> 16;
         max_block_size++;
-        array_size_ = (nparticle_ + max_block_size - 1) / max_block_size;
+        array_size_ = nparticle_ > 0 ? (nparticle_ + max_block_size - 1) / max_block_size : 1;  // ensure array_size_ > 0
         array_size_ *= max_block_size;
-        size_t block_size = 128;
+        size_t block_size = 128;            // must be a power of 2, see, e.g., observables/gpu/density_mode.cpp
         size_t grid_size = array_size_ / block_size;
         while (grid_size > prop.max_grid_size().x && block_size <= prop.max_threads_per_block()/2) {
             block_size <<= 1;
@@ -142,7 +142,15 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     LOG_INFO("number of CUDA execution threads per block: " << dim_.threads_per_block());
 
     if (typeid(float_type) == typeid(float)) {
-        LOG("integrate using single precision");
+        LOG("using single floating-point precision");
+    }
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    else if (typeid(float_type) == typeid(dsfloat)) {
+        LOG("using double-single floating-point precision");
+    }
+#endif
+    else {
+        LOG_ERROR("unknown floating-point precision");
     }
 
     try {

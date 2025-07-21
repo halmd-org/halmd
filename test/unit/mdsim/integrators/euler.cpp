@@ -50,10 +50,10 @@
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/tools/cuda.hpp>
+# include <test/tools/dsfloat.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
-using namespace boost;
 using namespace halmd;
 using namespace std;
 
@@ -316,17 +316,6 @@ BOOST_AUTO_TEST_CASE( euler_host_3d_overdamped ) {
 #endif
 
 #ifdef HALMD_WITH_GPU
-
-// FIXME define numeric_limits for dsfloat
-// see, e.g., http://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
-template<typename T>
-struct dsfloat_aware_numeric_limits : public numeric_limits<T> {
-};
-template<>
-struct dsfloat_aware_numeric_limits<dsfloat> {
-    static dsfloat epsilon() { return std::pow(double(2), -44); }
-    static float min() { return std::numeric_limits<float>::min(); }
-};
 
 /**
  * Specify concretely which modules to use: Gpu modules.

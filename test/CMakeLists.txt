@@ -39,6 +39,9 @@ set(HALMD_TEST_CMAKE_BINARY_DIR "${CMAKE_BINARY_DIR}/test/cmake")
 
 # path to HALMD executable
 set(HALMD_EXECUTABLE "${CMAKE_BINARY_DIR}/halmd/halmd")
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(HALMD_EXECUTABLE "${HALMD_EXECUTABLE}-debug")
+endif()
 
 # run test based on HALMD executable only if binary was built successfully
 macro(halmd_add_test NAME)

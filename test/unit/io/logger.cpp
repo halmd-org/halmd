@@ -89,9 +89,11 @@ BOOST_FIXTURE_TEST_CASE( default_log_level, console )
 {
 #ifdef NDEBUG
     LOG("message");
+    LOG("info");
     LOG_DEBUG("debug");
-    BOOST_CHECK_EQUAL( count_lines(console::stream()), 1 );
+    BOOST_CHECK_EQUAL( count_lines(console::stream()), 2 );
 #else
+    LOG("info");
     LOG_DEBUG("debug");
     LOG_TRACE("trace");
     BOOST_CHECK_EQUAL( count_lines(console::stream()), 1 );

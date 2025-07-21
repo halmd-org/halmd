@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2023       Felix Höfling
  * Copyright © 2008-2010  Peter Colberg
  * Copyright © 2020       Jaslo Ziska
  *
@@ -37,7 +38,7 @@ namespace mie_kernel {
  * indices of potential parameters
  */
 enum {
-    EPSILON    /**< potential well depths in MD units */
+    EPSILON_C  /**< potential well depths in MD units */
   , SIGMA2     /**< square of pair separation */
   , INDEX_M_2  /**< half-value of index of repulsion */
   , INDEX_N_2  /**< half-value of index of attraction */
@@ -47,16 +48,16 @@ template<typename float_type>
 HALMD_GPU_ENABLED static inline tuple<float_type, float_type> compute(
     float_type const& rr
   , float_type const& sigma2
-  , float_type const& epsilon
+  , float_type const& epsilon_C
   , unsigned short const& m_2
   , unsigned short const& n_2)
 {
     float_type rri = sigma2 / rr;
     float_type rni = halmd::pow(rri, n_2);
     float_type rmni = (m_2 - n_2 == n_2) ? rni : halmd::pow(rri, m_2 - n_2);
-    float_type eps_rni = epsilon * rni;
-    float_type fval = 8 * rri * eps_rni * (m_2 * rmni - n_2) / sigma2;
-    float_type en_pot = 4 * eps_rni * (rmni - 1);
+    float_type eps_rni = epsilon_C * rni;
+    float_type fval = 2 * rri * eps_rni * (m_2 * rmni - n_2) / sigma2;
+    float_type en_pot = eps_rni * (rmni - 1);
 
     return make_tuple(fval, en_pot);
 }
@@ -90,14 +91,14 @@ public:
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
      *
      * @f{eqnarray*}{
-     *   - U'(r) / r &=& 4 r^{-2} \epsilon (\sigma/r)^{n} \left[ m (\sigma/r)^{m-n} - n \right] \\
-     *   U(r) &=& 4 \epsilon (\sigma/r)^{n} \left[ (\sigma/r)^{m-n} - 1 \right]
+     *   - U'(r) / r &=& C(m, n) r^{-2} \epsilon (\sigma/r)^{n} \left[ m (\sigma/r)^{m-n} - n \right] \\
+     *   U(r) &=& C(m, n) \epsilon (\sigma/r)^{n} \left[ (\sigma/r)^{m-n} - 1 \right]
      * @f}
      */
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
-        return compute(rr, pair_[SIGMA2], pair_[EPSILON]
+        return compute(rr, pair_[SIGMA2], pair_[EPSILON_C]
           , static_cast<unsigned short>(pair_[INDEX_M_2])
           , static_cast<unsigned short>(pair_[INDEX_N_2])
         );
