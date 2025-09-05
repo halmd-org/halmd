@@ -1,7 +1,7 @@
 --
--- Copyright © 20116     Manuel Dibak
+-- Copyright © 2016      Manuel Dibak
+-- Copyright © 2010-2025 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
--- Copyright © 2010      Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -22,7 +22,6 @@
 
 local clock             = require("halmd.mdsim.clock")
 local core              = require("halmd.mdsim.core")
-local numeric           = require("halmd.numeric")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
@@ -30,18 +29,26 @@ local random            = require("halmd.random")
 local utility           = require("halmd.utility")
 
 ---
--- Velocity Verlet with Andersen thermostat
--- ========================================
+-- Brownian dynamics via Euler-Maruyama scheme
+-- ===========================================
 --
--- This module implements the :doc:`Verlet algorithm <verlet>` with the Andersen thermostat.
+-- This module implements an integrator for (fully overdamped) Brownian
+-- dynamics of spherical particles, using the Euler–Maruyama scheme:
 --
--- .. warning::
+-- .. math::
 --
---    This integrator may cause a significant drift of the centre of mass velocity.
+--    \vec R_i(t + \tau) = \vec R_i(t) + (D_i / k_B T) \vec F_i(t) \tau
+--    + \sqrt{2 D_i \tau\,} \, \vec N_i
 --
---    For heating or cooling a system to a nominal temperature before
---    equilibration, we recommend the :class:`velocity-Verlet with Boltzmann
---    distribution <halmd.mdsim.integrators.verlet_nvt_boltzmann>` integrator.
+-- where :math:`\vec R_i(t)` and :math:`\vec F_i(t)` are the position and force
+-- vectors of particle :math:`i` at time :math:`t`, :math:`D_i` is its
+-- diffusion constant, :math:`\tau` is the timestep, and the :math:`\vec N_i`
+-- are independent random vectors, normally distributed with unit variance.
+-- The temperature of the (virtual) solvent is :math:`T`.
+--
+-- .. note::
+--
+--    This implementation does not include motion due to particle velocities.
 --
 
 -- grab C++ wrappers
@@ -53,8 +60,9 @@ local brownian_euler = assert(libhalmd.mdsim.integrators.brownian_euler)
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
--- :param number args.temperature: temperature of heat bath
 -- :param number args.timestep: integration timestep (defaults to :attr:`halmd.mdsim.clock.timestep`)
+-- :param table args.diffusion: vector with diffusion constants :math:`D_i` per species
+-- :param number args.temperature: solvent temperature
 --
 -- .. method:: set_timestep(timestep)
 --
@@ -65,23 +73,23 @@ local brownian_euler = assert(libhalmd.mdsim.integrators.brownian_euler)
 --    This method forwards to :meth:`halmd.mdsim.clock.set_timestep`,
 --    to ensure that all integrators use an identical time step.
 --
+-- .. method:: set_temperature(temperature)
+--
+--    Set solvent temperature.
+--
+--    :param number temperature: temperature value
+--
 -- .. attribute:: timestep
 --
 --    Integration time step.
 --
--- .. method:: set_temperature(temperature)
+-- .. attribute:: diffusion
 --
---    Set temperature of heat bath.
---
---    :param number temperature: temperature of heat bath
+--    Diffusion constants :math:`D_i` for each particle species.
 --
 -- .. attribute:: temperature
 --
---    Temperature of heat bath.
---
--- .. attribute:: diffusion
---
---    Diffusion parameters of shape (diffusion_disp, diffusion_rot)
+--    Solvent temperature (acting as a heat bath).
 --
 -- .. method:: disconnect()
 --
@@ -89,9 +97,8 @@ local brownian_euler = assert(libhalmd.mdsim.integrators.brownian_euler)
 --
 -- .. method:: integrate()
 --
---    First leapfrog half-step of velocity-Verlet algorithm.
---
---    By default this function is connected to :meth:`halmd.mdsim.core.on_integrate`.
+--    Perform the integration step and update particle positions. By default,
+--    this function is connected to :meth:`halmd.mdsim.core.on_integrate`.
 --
 local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
