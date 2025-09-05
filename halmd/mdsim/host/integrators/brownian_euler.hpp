@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_INTEGRATORS_BROWNIAN_HPP
-#define HALMD_MDSIM_HOST_INTEGRATORS_BROWNIAN_HPP
+#ifndef HALMD_MDSIM_HOST_INTEGRATORS_BROWNIAN_EULER_HPP
+#define HALMD_MDSIM_HOST_INTEGRATORS_BROWNIAN_EULER_HPP
 
 #include <lua.hpp>
 #include <memory>
@@ -38,7 +38,7 @@ namespace host {
 namespace integrators {
 
 template <int dimension, typename float_type>
-class brownian
+class brownian_euler
 {
 public:
     typedef host::particle<dimension, float_type> particle_type;
@@ -48,7 +48,7 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef boost::numeric::ublas::vector<float_type> scalar_container_type;
 
-    brownian(
+    brownian_euler(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<random_type> random
       , std::shared_ptr<box_type const> box
@@ -145,4 +145,4 @@ private:
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_INTEGRATORS_BROWNIAN_HPP */
+#endif /* ! HALMD_MDSIM_HOST_INTEGRATORS_BROWNIAN_EULER_HPP */

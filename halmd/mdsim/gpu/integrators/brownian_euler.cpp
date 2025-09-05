@@ -23,7 +23,7 @@
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/integrators/brownian.hpp>
+#include <halmd/mdsim/gpu/integrators/brownian_euler.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -34,7 +34,7 @@ namespace gpu {
 namespace integrators {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-brownian<dimension, float_type, RandomNumberGenerator>::brownian(
+brownian_euler<dimension, float_type, RandomNumberGenerator>::brownian_euler(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<random_type> random
   , std::shared_ptr<box_type const> box
@@ -65,7 +65,7 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
  * set integration timestep
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-void brownian<dimension, float_type, RandomNumberGenerator>::set_timestep(double timestep)
+void brownian_euler<dimension, float_type, RandomNumberGenerator>::set_timestep(double timestep)
 {
     timestep_ = timestep;
     LOG("integration timestep: " << float(timestep_));
@@ -75,7 +75,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::set_timestep(double
  * set temperature of the heat bath
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-void brownian<dimension, float_type, RandomNumberGenerator>::set_temperature(double temperature)
+void brownian_euler<dimension, float_type, RandomNumberGenerator>::set_temperature(double temperature)
 {
     temperature_ = temperature;
     LOG("temperature: " << float(temperature_));
@@ -100,7 +100,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::set_temperature(dou
  * perform Brownian integration: update positions from random distribution
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
+void brownian_euler<dimension, float_type, RandomNumberGenerator>::integrate()
 {
     LOG_TRACE("update positions")
 
@@ -138,7 +138,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
+void brownian_euler<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -147,20 +147,20 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
         [
             namespace_("integrators")
             [
-                class_<brownian>()
-                    .def("integrate", &brownian::integrate)
-                    .def("set_timestep", &brownian::set_timestep)
-                    .def("set_temperature", &brownian::set_temperature)
-                    .property("timestep", &brownian::timestep)
-                    .property("temperature", &brownian::temperature)
+                class_<brownian_euler>()
+                    .def("integrate", &brownian_euler::integrate)
+                    .def("set_timestep", &brownian_euler::set_timestep)
+                    .def("set_temperature", &brownian_euler::set_temperature)
+                    .property("timestep", &brownian_euler::timestep)
+                    .property("temperature", &brownian_euler::temperature)
                     .scope
                     [
                         class_<runtime>("runtime")
                             .def_readonly("integrate", &runtime::integrate)
                     ]
-                    .def_readonly("runtime", &brownian::runtime_)
+                    .def_readonly("runtime", &brownian_euler::runtime_)
 
-              , def("brownian", &std::make_shared<brownian
+              , def("brownian_euler", &std::make_shared<brownian_euler
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<random_type>
                   , std::shared_ptr<box_type const>
@@ -174,27 +174,27 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_brownian(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_brownian_euler(lua_State* L)
 {
 #ifdef USE_GPU_SINGLE_PRECISION
-    brownian<2, float, halmd::random::gpu::rand48>::luaopen(L);
-    brownian<3, float, halmd::random::gpu::rand48>::luaopen(L);
+    brownian_euler<2, float, halmd::random::gpu::rand48>::luaopen(L);
+    brownian_euler<3, float, halmd::random::gpu::rand48>::luaopen(L);
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-    brownian<2, dsfloat, halmd::random::gpu::rand48>::luaopen(L);
-    brownian<3, dsfloat, halmd::random::gpu::rand48>::luaopen(L);
+    brownian_euler<2, dsfloat, halmd::random::gpu::rand48>::luaopen(L);
+    brownian_euler<3, dsfloat, halmd::random::gpu::rand48>::luaopen(L);
 #endif
     return 0;
 }
 
 // explicit instantiation
 #ifdef USE_GPU_SINGLE_PRECISION
-template class brownian<2, float, halmd::random::gpu::rand48>;
-template class brownian<3, float, halmd::random::gpu::rand48>;
+template class brownian_euler<2, float, halmd::random::gpu::rand48>;
+template class brownian_euler<3, float, halmd::random::gpu::rand48>;
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-template class brownian<2, dsfloat, halmd::random::gpu::rand48>;
-template class brownian<3, dsfloat, halmd::random::gpu::rand48>;
+template class brownian_euler<2, dsfloat, halmd::random::gpu::rand48>;
+template class brownian_euler<3, dsfloat, halmd::random::gpu::rand48>;
 #endif
 
 } // namespace integrators

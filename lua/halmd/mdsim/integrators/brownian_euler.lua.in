@@ -45,7 +45,7 @@ local utility           = require("halmd.utility")
 --
 
 -- grab C++ wrappers
-local brownian = assert(libhalmd.mdsim.integrators.brownian)
+local brownian_euler = assert(libhalmd.mdsim.integrators.brownian_euler)
 
 ---
 -- Construct Brownian integrator
@@ -105,10 +105,10 @@ local M = module(function(args)
         timestep = assert(clock.timestep)
     end
     local rng = random.generator({memory = particle.memory})
-    local logger = log.logger({label = "brownian"})
+    local logger = log.logger({label = "brownian_euler"})
 
     -- construct instance
-    local self = brownian(particle, rng, box, timestep, temperature, diffusion, logger)
+    local self = brownian_euler(particle, rng, box, timestep, temperature, diffusion, logger)
 
     -- capture C++ method set_timestep
     local set_timestep = assert(self.set_timestep)

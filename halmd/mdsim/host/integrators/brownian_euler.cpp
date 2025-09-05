@@ -25,7 +25,7 @@
 #include <cmath>
 #include <memory>
 
-#include <halmd/mdsim/host/integrators/brownian.hpp>
+#include <halmd/mdsim/host/integrators/brownian_euler.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -38,7 +38,7 @@ namespace host {
 namespace integrators {
 
 template <int dimension, typename float_type>
-brownian<dimension, float_type>::brownian(
+brownian_euler<dimension, float_type>::brownian_euler(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<random_type> random
   , std::shared_ptr<box_type const> box
@@ -73,7 +73,7 @@ brownian<dimension, float_type>::brownian(
  * set integration timestep
  */
 template <int dimension, typename float_type>
-void brownian<dimension, float_type>::set_timestep(double timestep)
+void brownian_euler<dimension, float_type>::set_timestep(double timestep)
 {
     timestep_ = timestep;
     LOG("integration timestep: " << timestep_);
@@ -83,7 +83,7 @@ void brownian<dimension, float_type>::set_timestep(double timestep)
  * set temperature of the heat bath
  */
 template <int dimension, typename float_type>
-void brownian<dimension, float_type>::set_temperature(double temperature)
+void brownian_euler<dimension, float_type>::set_temperature(double temperature)
 {
     temperature_= temperature;
     LOG("temperature: " << temperature_);
@@ -100,7 +100,7 @@ void brownian<dimension, float_type>::set_temperature(double temperature)
  * @f$ r(t + \Delta t) = \mu F(t) + \sigma d vec{W} @f$
  */
 template <int dimension, typename float_type>
-void brownian<dimension, float_type>::integrate()
+void brownian_euler<dimension, float_type>::integrate()
 {
     LOG_TRACE("update positions")
 
@@ -151,7 +151,7 @@ void brownian<dimension, float_type>::integrate()
 }
 
 template <int dimension, typename float_type>
-void brownian<dimension, float_type>::luaopen(lua_State* L)
+void brownian_euler<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -160,20 +160,20 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("integrators")
             [
-                class_<brownian>()
-                    .def("integrate", &brownian::integrate)
-                    .def("set_timestep", &brownian::set_timestep)
-                    .def("set_temperature", &brownian::set_temperature)
-                    .property("timestep", &brownian::timestep)
-                    .property("temperature", &brownian::temperature_)
+                class_<brownian_euler>()
+                    .def("integrate", &brownian_euler::integrate)
+                    .def("set_timestep", &brownian_euler::set_timestep)
+                    .def("set_temperature", &brownian_euler::set_temperature)
+                    .property("timestep", &brownian_euler::timestep)
+                    .property("temperature", &brownian_euler::temperature_)
                     .scope
                     [
                         class_<runtime>("runtime")
                             .def_readonly("integrate", &runtime::integrate)
                     ]
-                    .def_readonly("runtime", &brownian::runtime_)
+                    .def_readonly("runtime", &brownian_euler::runtime_)
 
-              , def("brownian", &std::make_shared<brownian
+              , def("brownian_euler", &std::make_shared<brownian_euler
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<random_type>
                   , std::shared_ptr<box_type const>
@@ -187,25 +187,25 @@ void brownian<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_host_integrators_brownian(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_integrators_brownian_euler(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
-    brownian<3, double>::luaopen(L);
-    brownian<2, double>::luaopen(L);
+    brownian_euler<3, double>::luaopen(L);
+    brownian_euler<2, double>::luaopen(L);
 #else
-    brownian<3, float>::luaopen(L);
-    brownian<2, float>::luaopen(L);
+    brownian_euler<3, float>::luaopen(L);
+    brownian_euler<2, float>::luaopen(L);
 #endif
     return 0;
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class brownian<3, double>;
-template class brownian<2, double>;
+template class brownian_euler<3, double>;
+template class brownian_euler<2, double>;
 #else
-template class brownian<3, float>;
-template class brownian<2, float>;
+template class brownian_euler<3, float>;
+template class brownian_euler<2, float>;
 #endif
 
 } // namespace integrators

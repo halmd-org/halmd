@@ -64,8 +64,11 @@ function main(args)
     })
 
     -- add Brownian integrator
-    local integrator = mdsim.integrators.brownian({
-        box = box, particle = particle, timestep = args.timestep, temperature = args.temperature, diffusion = { args.diffusion }
+    local integrator = mdsim.integrators.brownian_euler({
+        box = box, particle = particle
+      , timestep = args.timestep
+      , diffusion = { args.diffusion }
+      , temperature = args.temperature
     })
 
     -- convert integration time to number of steps

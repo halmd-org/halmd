@@ -22,7 +22,7 @@
 
 #include <halmd/config.hpp>
 
-#define BOOST_TEST_MODULE brownian
+#define BOOST_TEST_MODULE brownian_euler
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
@@ -36,7 +36,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/forces/external.hpp>
-#include <halmd/mdsim/host/integrators/brownian.hpp>
+#include <halmd/mdsim/host/integrators/brownian_euler.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
@@ -52,7 +52,7 @@
 # include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/algorithm/gpu/apply_kernel.hpp>
 # include <halmd/mdsim/gpu/forces/external.hpp>
-# include <halmd/mdsim/gpu/integrators/brownian.hpp>
+# include <halmd/mdsim/gpu/integrators/brownian_euler.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
@@ -70,7 +70,7 @@ using namespace halmd;
 using namespace std;
 
 template <typename modules_type>
-struct brownian_free
+struct brownian_euler_free
 {
     typedef mdsim::clock clock_type;
 
@@ -111,13 +111,13 @@ struct brownian_free
     std::shared_ptr<position_type> position;
     std::shared_ptr<random_type> random;
 
-    brownian_free();
+    brownian_euler_free();
     void test();
 };
 
 /** solve the stochastic differential equation @f$ dr = \sqrt{2D} dW @f$ */
 template <typename modules_type>
-void brownian_free<modules_type>::test()
+void brownian_euler_free<modules_type>::test()
 {
     // construct blocking scheme module (contains the logic)
     observables::dynamics::blocking_scheme blocking_scheme(
@@ -166,7 +166,7 @@ void brownian_free<modules_type>::test()
  * Initialize integrator and dependencies, set basic parameters.
  */
 template <typename modules_type>
-brownian_free<modules_type>::brownian_free()
+brownian_euler_free<modules_type>::brownian_euler_free()
 {
     timestep = 0.015;
     maximum_lag_time = 7;
@@ -213,7 +213,7 @@ brownian_free<modules_type>::brownian_free()
 }
 
 template <typename modules_type>
-struct brownian_harmonic
+struct brownian_euler_harmonic
 {
     typedef mdsim::clock clock_type;
 
@@ -256,13 +256,13 @@ struct brownian_harmonic
     std::shared_ptr<potential_type> potential;
     std::shared_ptr<random_type> random;
 
-    brownian_harmonic();
+    brownian_euler_harmonic();
     void test();
 };
 
 /** solve the stochastic differential equation @f$ dr = -K r dt + \sqrt{2D} dW @f$ */
 template <typename modules_type>
-void brownian_harmonic<modules_type>::test()
+void brownian_euler_harmonic<modules_type>::test()
 {
     // construct blocking scheme module (contains the logic)
     observables::dynamics::blocking_scheme blocking_scheme(
@@ -315,7 +315,7 @@ void brownian_harmonic<modules_type>::test()
  * Initialize integrator and dependencies, set basic parameters.
  */
 template <typename modules_type>
-brownian_harmonic<modules_type>::brownian_harmonic()
+brownian_euler_harmonic<modules_type>::brownian_euler_harmonic()
 {
     timestep = 0.015;
     maximum_lag_time = 7;
@@ -365,7 +365,7 @@ struct host_modules_free
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
-    typedef mdsim::host::integrators::brownian<dimension, float_type> integrator_type;
+    typedef mdsim::host::integrators::brownian_euler<dimension, float_type> integrator_type;
     typedef halmd::random::host::random random_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
     typedef observables::host::samples::sample<dimension, float_type> sample_type;
@@ -384,7 +384,7 @@ struct host_modules_harmonic
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::host::potentials::external::harmonic<dimension, float_type> potential_type;
     typedef mdsim::host::forces::external<dimension, float_type, potential_type> force_type;
-    typedef mdsim::host::integrators::brownian<dimension, float_type> integrator_type;
+    typedef mdsim::host::integrators::brownian_euler<dimension, float_type> integrator_type;
     typedef halmd::random::host::random random_type;
     typedef observables::host::samples::sample<dimension, float_type> sample_type;
     typedef observables::host::phase_space<dimension, float_type> phase_space_type;
@@ -406,7 +406,7 @@ struct gpu_modules_free
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
-    typedef mdsim::gpu::integrators::brownian<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
+    typedef mdsim::gpu::integrators::brownian_euler<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef observables::gpu::samples::sample<dimension, float4> sample_type;
     typedef observables::gpu::phase_space<dimension, float_type> phase_space_type;
@@ -425,7 +425,7 @@ struct gpu_modules_harmonic
     typedef mdsim::gpu::potentials::external::harmonic<dimension, float> potential_type;
     typedef mdsim::gpu::forces::external<dimension, float_type, potential_type> force_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
-    typedef mdsim::gpu::integrators::brownian<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
+    typedef mdsim::gpu::integrators::brownian_euler<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
     typedef observables::gpu::samples::sample<dimension, float4> sample_type;
     typedef observables::gpu::phase_space<dimension, float_type> phase_space_type;
     typedef observables::gpu::dynamics::mean_square_displacement<dimension, float4> msd_type;
@@ -437,60 +437,60 @@ struct gpu_modules_harmonic
 #endif // HALMD_WITH_GPU
 
 #ifndef USE_HOST_SINGLE_PRECISION
-BOOST_AUTO_TEST_CASE(brownian_free_host_2d) {
-    brownian_free<host_modules_free<2, double>>().test();
+BOOST_AUTO_TEST_CASE(brownian_euler_free_host_2d) {
+    brownian_euler_free<host_modules_free<2, double>>().test();
 }
-BOOST_AUTO_TEST_CASE(brownian_free_host_3d) {
-    brownian_free<host_modules_free<3, double>>().test();
+BOOST_AUTO_TEST_CASE(brownian_euler_free_host_3d) {
+    brownian_euler_free<host_modules_free<3, double>>().test();
 }
-BOOST_AUTO_TEST_CASE(brownian_harmonic_host_2d) {
-    brownian_harmonic<host_modules_harmonic<2, double>>().test();
+BOOST_AUTO_TEST_CASE(brownian_euler_harmonic_host_2d) {
+    brownian_euler_harmonic<host_modules_harmonic<2, double>>().test();
 }
-BOOST_AUTO_TEST_CASE(brownian_harmonic_host_3d) {
-    brownian_harmonic<host_modules_harmonic<3, double>>().test();
+BOOST_AUTO_TEST_CASE(brownian_euler_harmonic_host_3d) {
+    brownian_euler_harmonic<host_modules_harmonic<3, double>>().test();
 }
 #else
-BOOST_AUTO_TEST_CASE(brownian_free_host_2d) {
-    brownian_free<host_modules_free<2, float>>().test();
+BOOST_AUTO_TEST_CASE(brownian_euler_free_host_2d) {
+    brownian_euler_free<host_modules_free<2, float>>().test();
 }
-BOOST_AUTO_TEST_CASE(brownian_free_host_3d) {
-    brownian_free<host_modules_free<3, float>>().test();
+BOOST_AUTO_TEST_CASE(brownian_euler_free_host_3d) {
+    brownian_euler_free<host_modules_free<3, float>>().test();
 }
-BOOST_AUTO_TEST_CASE(brownian_harmonic_host_2d) {
-    brownian_harmonic<host_modules_harmonic<2, float>>().test();
+BOOST_AUTO_TEST_CASE(brownian_euler_harmonic_host_2d) {
+    brownian_euler_harmonic<host_modules_harmonic<2, float>>().test();
 }
-BOOST_AUTO_TEST_CASE(brownian_harmonic_host_3d) {
-    brownian_harmonic<host_modules_harmonic<3, float>>().test();
+BOOST_AUTO_TEST_CASE(brownian_euler_harmonic_host_3d) {
+    brownian_euler_harmonic<host_modules_harmonic<3, float>>().test();
 }
 #endif
 
 #ifdef HALMD_WITH_GPU
 # ifdef USE_GPU_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_float_2d, set_cuda_device) {
-    brownian_free<gpu_modules_free<2, float>>().test();
+BOOST_FIXTURE_TEST_CASE(brownian_euler_free_gpu_float_2d, set_cuda_device) {
+    brownian_euler_free<gpu_modules_free<2, float>>().test();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_float_3d, set_cuda_device) {
-    brownian_free<gpu_modules_free<3, float>>().test();
+BOOST_FIXTURE_TEST_CASE(brownian_euler_free_gpu_float_3d, set_cuda_device) {
+    brownian_euler_free<gpu_modules_free<3, float>>().test();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_harmonic_gpu_float_2d, set_cuda_device) {
-    brownian_harmonic<gpu_modules_harmonic<2, float>>().test();
+BOOST_FIXTURE_TEST_CASE(brownian_euler_harmonic_gpu_float_2d, set_cuda_device) {
+    brownian_euler_harmonic<gpu_modules_harmonic<2, float>>().test();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_harmonic_gpu_float_3d, set_cuda_device) {
-    brownian_harmonic<gpu_modules_harmonic<3, float>>().test();
+BOOST_FIXTURE_TEST_CASE(brownian_euler_harmonic_gpu_float_3d, set_cuda_device) {
+    brownian_euler_harmonic<gpu_modules_harmonic<3, float>>().test();
 }
 # endif
 # ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_dsfloat_2d, set_cuda_device) {
-    brownian_free<gpu_modules_free<2, dsfloat>>().test();
+BOOST_FIXTURE_TEST_CASE(brownian_euler_free_gpu_dsfloat_2d, set_cuda_device) {
+    brownian_euler_free<gpu_modules_free<2, dsfloat>>().test();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_free_gpu_dsfloat_3d, set_cuda_device) {
-    brownian_free<gpu_modules_free<3, dsfloat>>().test();
+BOOST_FIXTURE_TEST_CASE(brownian_euler_free_gpu_dsfloat_3d, set_cuda_device) {
+    brownian_euler_free<gpu_modules_free<3, dsfloat>>().test();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_harmonic_gpu_dsfloat_2d, set_cuda_device) {
-    brownian_harmonic<gpu_modules_harmonic<2, dsfloat>>().test();
+BOOST_FIXTURE_TEST_CASE(brownian_euler_harmonic_gpu_dsfloat_2d, set_cuda_device) {
+    brownian_euler_harmonic<gpu_modules_harmonic<2, dsfloat>>().test();
 }
-BOOST_FIXTURE_TEST_CASE(brownian_harmonic_gpu_dsfloat_3d, set_cuda_device) {
-    brownian_harmonic<gpu_modules_harmonic<3, dsfloat>>().test();
+BOOST_FIXTURE_TEST_CASE(brownian_euler_harmonic_gpu_dsfloat_3d, set_cuda_device) {
+    brownian_euler_harmonic<gpu_modules_harmonic<3, dsfloat>>().test();
 }
 # endif
 #endif // HALMD_WITH_GPU

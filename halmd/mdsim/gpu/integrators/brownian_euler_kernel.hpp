@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_INTEGRATOR_BROWNIAN_KERNEL_HPP
-#define HALMD_MDSIM_GPU_INTEGRATOR_BROWNIAN_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_INTEGRATOR_BROWNIAN_EULER_KERNEL_HPP
+#define HALMD_MDSIM_GPU_INTEGRATOR_BROWNIAN_EULER_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -41,7 +41,7 @@ enum brownian_param {
 
 
 template <int dimension, typename float_type, typename rng_type>
-struct brownian_wrapper
+struct brownian_euler_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
@@ -60,7 +60,7 @@ struct brownian_wrapper
 
     integrate_kernel_type integrate;
 
-    static brownian_wrapper kernel;
+    static brownian_euler_wrapper kernel;
 };
 
 } // namespace integrators
@@ -68,4 +68,4 @@ struct brownian_wrapper
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_INTEGRATOR_BROWNIAN_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_INTEGRATOR_BROWNIAN_EULER_KERNEL_HPP */

@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_INTEGRATORS_BROWNIAN_HPP
-#define HALMD_MDSIM_GPU_INTEGRATORS_BROWNIAN_HPP
+#ifndef HALMD_MDSIM_GPU_INTEGRATORS_BROWNIAN_EULER_HPP
+#define HALMD_MDSIM_GPU_INTEGRATORS_BROWNIAN_EULER_HPP
 
 #include <lua.hpp>
 #include <memory>
@@ -29,7 +29,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/gpu/integrators/brownian_kernel.hpp>
+#include <halmd/mdsim/gpu/integrators/brownian_euler_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -40,7 +40,7 @@ namespace gpu {
 namespace integrators {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-class brownian
+class brownian_euler
 {
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
@@ -49,11 +49,11 @@ public:
     typedef boost::numeric::ublas::vector<float> scalar_container_type;     // cannot make cast from Lua numbers to dsfloat within ublas::vector
     typedef random::gpu::random<RandomNumberGenerator> random_type;
     typedef typename random_type::rng_type rng_type;
-    typedef brownian_wrapper<dimension, float_type, rng_type> wrapper_type;
+    typedef brownian_euler_wrapper<dimension, float_type, rng_type> wrapper_type;
 
     static void luaopen(lua_State* L);
 
-    brownian(
+    brownian_euler(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<random_type> random
       , std::shared_ptr<box_type const> box
@@ -131,4 +131,4 @@ private:
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_INTEGRATORS_BROWNIAN_HPP */
+#endif /* ! HALMD_MDSIM_GPU_INTEGRATORS_BROWNIAN_EULER_HPP */

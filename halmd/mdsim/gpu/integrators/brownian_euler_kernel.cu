@@ -23,7 +23,7 @@
 #include <cmath>
 
 #include <halmd/mdsim/gpu/box_kernel.cuh>
-#include <halmd/mdsim/gpu/integrators/brownian_kernel.hpp>
+#include <halmd/mdsim/gpu/integrators/brownian_euler_kernel.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/random/gpu/normal_distribution.cuh>
 #include <halmd/random/gpu/random_number_generator.cuh>
@@ -33,7 +33,7 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 namespace integrators {
-namespace brownian_kernel {
+namespace brownian_euler_kernel {
 
 template <
     int dimension
@@ -113,22 +113,22 @@ __global__ void integrate(
     rng[thread] = state;
 }
 
-} // namespace brownian_kernel
+} // namespace brownian_euler_kernel
 
 template <int dimension, typename float_type, typename rng_type>
-brownian_wrapper<dimension, float_type, rng_type>
-brownian_wrapper<dimension, float_type, rng_type>::kernel = {
-    brownian_kernel::integrate<dimension, float_type, ptr_type>
+brownian_euler_wrapper<dimension, float_type, rng_type>
+brownian_euler_wrapper<dimension, float_type, rng_type>::kernel = {
+    brownian_euler_kernel::integrate<dimension, float_type, ptr_type>
 };
 
 // explicit instantiation
 #ifdef USE_GPU_SINGLE_PRECISION
-template class brownian_wrapper<2, float, random::gpu::rand48_rng>;
-template class brownian_wrapper<3, float, random::gpu::rand48_rng>;
+template class brownian_euler_wrapper<2, float, random::gpu::rand48_rng>;
+template class brownian_euler_wrapper<3, float, random::gpu::rand48_rng>;
 #endif
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
-template class brownian_wrapper<2, dsfloat, random::gpu::rand48_rng>;
-template class brownian_wrapper<3, dsfloat, random::gpu::rand48_rng>;
+template class brownian_euler_wrapper<2, dsfloat, random::gpu::rand48_rng>;
+template class brownian_euler_wrapper<3, dsfloat, random::gpu::rand48_rng>;
 #endif
 
 } // namespace integrators
