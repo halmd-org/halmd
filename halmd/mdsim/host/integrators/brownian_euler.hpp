@@ -69,6 +69,11 @@ public:
     void set_timestep(double timestep);
 
     /**
+     * Set temperature of heat bath.
+     */
+    void set_temperature(double temperature);
+
+    /**
      * Returns integration time-step.
      */
     double timestep() const
@@ -77,9 +82,12 @@ public:
     }
 
     /**
-     * Set temperature of heat bath.
+     * Returns diffusion constants per species.
      */
-    void set_temperature(double temperature);
+    scalar_container_type const& diffusion() const
+    {
+        return diffusion_;
+    }
 
     /**
      * Returns temperature of heat bath.

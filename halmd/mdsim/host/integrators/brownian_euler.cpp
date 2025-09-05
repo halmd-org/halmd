@@ -56,7 +56,7 @@ brownian_euler<dimension, float_type>::brownian_euler(
   , logger_(logger)
 {
     if (diffusion_.size() != particle_->nspecies()) {
-        throw std::invalid_argument("diffusion constants have mismatching shape");
+        throw std::invalid_argument("shape of diffusion constants does not match number of species");
     }
 
     set_timestep(timestep);
@@ -165,6 +165,7 @@ void brownian_euler<dimension, float_type>::luaopen(lua_State* L)
                     .def("set_timestep", &brownian_euler::set_timestep)
                     .def("set_temperature", &brownian_euler::set_temperature)
                     .property("timestep", &brownian_euler::timestep)
+                    .property("diffusion", &brownian_euler::diffusion_)
                     .property("temperature", &brownian_euler::temperature_)
                     .scope
                     [

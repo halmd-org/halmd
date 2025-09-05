@@ -84,7 +84,15 @@ public:
     }
 
     /**
-     * Set temperature of heat bath.
+     * Returns diffusion constants per species.
+     */
+    scalar_container_type const& diffusion() const
+    {
+        return diffusion_;
+    }
+
+    /**
+     * Returns temperature of heat bath.
      */
     double temperature() const
     {
