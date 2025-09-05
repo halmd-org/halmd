@@ -42,9 +42,9 @@ local utility           = require("halmd.utility")
 --
 -- where :math:`\vec R_i(t)` and :math:`\vec F_i(t)` are the position and force
 -- vectors of particle :math:`i` at time :math:`t`, :math:`D_i` is its
--- diffusion constant, :math:`\tau` is the timestep, and the :math:`\vec N_i`
--- are independent random vectors, normally distributed with unit variance.
--- The temperature of the (virtual) solvent is :math:`T`.
+-- diffusion constant, and the :math:`\vec N_i` are independent random vectors,
+-- normally distributed with unit variance. The temperature of the (virtual)
+-- solvent is :math:`T` and :math:`\tau` is the timestep.
 --
 -- .. note::
 --

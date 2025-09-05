@@ -35,19 +35,19 @@ local module            = require("halmd.utility.module")
 --
 -- of either (a) the whole system or (b) each particle separately.
 --
--- The rescale operation conserves the direction of velocities, but adjusts
--- their magnitude. The scaling factor :math:`\lambda` is calculated as:
+-- The rescale operation conserves the direction of velocities, it adjusts
+-- only their magnitude. The scaling factor :math:`\lambda` is calculated as:
 --
 --    .. math::
 --        \lambda = \sqrt{\frac{E_\text{target} - \alpha E_\text{pot}}{E_\text{kin}}} \,,
 --
 -- where :math:`\alpha = 1` in the micro-canonical mode (1) and :math:`\alpha =
 -- 0` in the iso-kinetic mode (2). In case (a), the same factor
--- :math:`\lambda` is applied to whole system (all particles) and the potential
--- and kinetic energies, :math:`E_\text{pot}` and :math:`E_\text{kin}`, are
--- averages over all particles, respectively (before rescaling).  In case (b),
--- :math:`\lambda` is calculated for each particle separately, using the
--- individual energy values.
+-- :math:`\lambda` is applied to the whole system (all particles) and the
+-- potential and kinetic energies, :math:`E_\text{pot}` and
+-- :math:`E_\text{kin}`, are averages over all particles, respectively (before
+-- rescaling). In case (b), :math:`\lambda` is calculated for each particle
+-- separately, using the individual energy values.
 --
 
 --  C++ module binding
@@ -69,8 +69,9 @@ local mode_selection = { nve = 1 } -- TODO isokinetic = 2
 -- If the ``mode`` of operation is ``nve``, the target energy refers to the total energy.
 -- If the mode is ``isokinetic``, the target energy refers to the kinetic energy.
 --
--- If the switch ``per_particle`` is true, the rescaling is performed for each particle
--- separately, otherwise the same factor is applied to all particles.
+-- If the switch ``per_particle`` is set to ``true``, the rescaling is
+-- performed for each particle separately, otherwise the same factor is applied
+-- to all particles.
 --
 -- .. method:: set()
 --
