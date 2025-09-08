@@ -21,15 +21,25 @@
 #
 
 ##
-# Test simulation of mixture using two particle instances
+# Comparison of simulations of mixture using two particle instances and one particle instance
 #
 
 set(CMAKE_MODULE_PATH "@HALMD_TEST_CMAKE_BINARY_DIR@")
-
 include(execute_halmd)
 
-set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/two_particles")
+set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/equilibration")
 set(HALMD_WITH_GPU @HALMD_WITH_GPU@)
+
+# Path to the comparison script 
+set(COMPARE_PY "@CMAKE_CURRENT_BINARY_DIR@/compare_h5md.py")
+
+# Outputs produced above
+set(FILE_ONE "${OUTPUT_PREFIX}_one_particle.h5")
+set(FILE_TWO "${OUTPUT_PREFIX}_two_particles.h5")
+
+# FIXME
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
 
 if(DEFINED USE_HOST)
   if(HALMD_WITH_GPU)
@@ -49,31 +59,64 @@ endif()
 # prepare system state
 execute_halmd(
   "${BACKEND_OPTION}"
-  "@CMAKE_SOURCE_DIR@/test/integration/modularity/two_particles_equilibration.lua"
+  "@CMAKE_SOURCE_DIR@/test/integration/modularity/equilibration.lua"
   --verbose
   --output "${OUTPUT_PREFIX}"
   --dimension "${DIMENSION}"
   --particles 300,1
-  --time 0.1
+  --time 1
   --sampling trajectory=50
 )
 
 execute_halmd(
   "${BACKEND_OPTION}"
-  "@CMAKE_SOURCE_DIR@/test/integration/modularity/two_particles.lua"
+  "@CMAKE_SOURCE_DIR@/test/integration/modularity/two_particles_instance.lua"
   --verbose
-  --output "${OUTPUT_PREFIX}_continued"
+  --output "${OUTPUT_PREFIX}_two_particles"
   --input "${OUTPUT_PREFIX}.h5"
-  --time 0.1
-  --sampling trajectory=100 state-vars=19 correlation=7
+  --time 1
+  --sampling trajectory=100 state-vars=19 
+)
+execute_halmd(
+  "${BACKEND_OPTION}"
+  "@CMAKE_SOURCE_DIR@/test/integration/modularity/one_particle_instance.lua"
+  --verbose
+  --output "${OUTPUT_PREFIX}_one_particle"
+  --input "${OUTPUT_PREFIX}.h5"
+  --time 1
+  --sampling trajectory=100 state-vars=19 
 )
 
 # FIXME add specific checks of the result
 message(AUTHOR_WARNING "final checks not yet implemented")
 
+# Run numeric check + plots (remove --no-plot to actually render figures during CI)
+set(COMPARE_CMD
+  "${Python3_EXECUTABLE}" "${COMPARE_PY}"
+  "${FILE_ONE}" "${FILE_TWO}"
+  --tol 1e-2
+  --no-plot        # keep in CI; drop this if you want interactive plots
+)
+
+message(STATUS "Running: ${COMPARE_CMD}")
+execute_process(
+  COMMAND ${COMPARE_CMD}
+  RESULT_VARIABLE COMPARE_RV
+  OUTPUT_VARIABLE COMPARE_OUT
+  ERROR_VARIABLE  COMPARE_ERR
+)
+
+# Always print script output to the CMake log
+message(STATUS "compare_h5md.py stdout:\n${COMPARE_OUT}")
+if (COMPARE_ERR)
+  message(WARNING "compare_h5md.py stderr:\n${COMPARE_ERR}")
+endif()
+
 file(REMOVE
   "${OUTPUT_PREFIX}.h5"
   "${OUTPUT_PREFIX}.log"
-  "${OUTPUT_PREFIX}_continued.log"
-  "${OUTPUT_PREFIX}_continued.h5"
+  "${OUTPUT_PREFIX}_one_particle.log"
+  "${OUTPUT_PREFIX}_one_particle.h5"
+  "${OUTPUT_PREFIX}_two_particles.log"
+  "${OUTPUT_PREFIX}_two_particles.h5"
 )
