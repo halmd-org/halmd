@@ -1,128 +1,173 @@
 #!/usr/bin/env python3
 # compare_h5md.py
+
 import argparse
 import os
 import sys
 from pathlib import Path
+
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-# functions to help
-def get_time_values(f, grp_path, obs):
-    """Return (time, values) or (None, None) if missing."""
+# ---------- Helpers ----------
+def get_values(f, grp_path, obs):
+    """Return full value array (no reshaping) or None if missing."""
+    if grp_path not in f or obs not in f[grp_path]:
+        return None
+    node = f[grp_path][obs]
+    if "value" not in node:
+        return None
+    return np.asarray(node["value"], dtype=float)
+
+
+def get_time_series(f, grp_path, obs):
+    """Return (time, values) for 1-D observables in observables/*."""
     if grp_path not in f or obs not in f[grp_path]:
         return None, None
     node = f[grp_path][obs]
     if "value" not in node:
         return None, None
     v = np.asarray(node["value"], dtype=float).reshape(-1)
-
     if "time" in node:
         t = np.asarray(node["time"], dtype=float).reshape(-1)
     elif "step" in node:
         t = np.asarray(node["step"], dtype=float).reshape(-1)
     else:
         t = np.arange(v.shape[0], dtype=float)
-
-    n = min(len(t), len(v))
-    return t[:n], v[:n]
+    assert len(t) == len(v), "time and values must have same length"
+    return t, v
 
 
 def print_numeric_check(name1, name2, grp_label, obs, t1, v1, t2, v2, tol):
-
-    """print summary and return True if within tol, else False."""
-
-    n = min(v1.size, v2.size)
-    a, b = v1[:n], v2[:n]
-    diffs = np.abs(a - b)
-    same = np.allclose(a, b, atol=tol, rtol=0.0)        #returns True if two arrays are element-wise equal within a tolerance.
-    max_diff = float(diffs.max()) if n > 0 else np.nan
-    i_max = int(diffs.argmax()) if n > 0 else -1        #index where the max abs difference occurs
-    t_display = t1 if len(t1) >= n else np.arange(n)
-    t_at_max = float(t_display[i_max]) if n > 0 else np.nan
+    """Check 1-D series (observables)."""
+    assert v1.shape == v2.shape, f"{obs}: arrays must have same length"
+    n = v1.size
+    diffs = np.abs(v1 - v2)
+    same = np.allclose(v1, v2, atol=tol, rtol=0.0)
+    i_max = diffs.argmax()
+    t_at_max = float(t1[i_max]) if n > 0 else np.nan
 
     status = "OK" if same else "MISMATCH"
-    reason = f"(max |diff| {max_diff:.3e}{' ≤ ' if same else ' > '}{tol:g})"
+    reason = f"(max |Δ| {diffs[i_max]:.3e}{' ≤ ' if same else ' > '}{tol:g})"
     print(f"- {grp_label} | {obs}: {status} {reason}")
-    if n == 0:
-        print("no overlapping points (one series empty?).")
-    else:
-        mean1, mean2 = np.mean(a), np.mean(b)
-        print(f"length compared: {n}, max |diff| at index {i_max} ($t \sim$ {t_at_max:.6g})")
-        print(f"{name1} avg.={mean1:.6g}, {name2} avg.={mean2:.6g}, $\Delta =${abs(mean2-mean1):.6g}")
+    if n > 0:
+        mean1, mean2 = np.mean(v1), np.mean(v2)
+        print(f"    length={n}, max |Δ| at index {i_max} (t≈{t_at_max:.6g})")
+        print(f"    {name1} avg={mean1:.6g}, {name2} avg={mean2:.6g}, |Δavg|={abs(mean2-mean1):.6g}")
     return bool(same)
 
 
-def plot_comparison(name1, name2, grp_label, obs_list, series, show=True, save_prefix=None):
+def print_energy_per_particle_check(name1, name2, grp_label, e1, e2, tol):
+    """Compare potential energy per particle: arrays (nsteps, nparticles)."""
+    assert e1.shape == e2.shape, "Potential energy arrays must match in shape"
+    nsteps, npart = e1.shape
+    diffs = np.abs(e1 - e2)
+    max_diff = float(diffs.max())
+    mean_diff = float(diffs.mean())
+    same = max_diff <= tol
+
+    status = "OK" if same else "MISMATCH"
+    print(f"- {grp_label} | potential_energy: {status} (max |Δ| {max_diff:.3e} ≤ {tol:g}?)")
+    print(f"    mean |Δ|={mean_diff:.3e}, steps={nsteps}, particles={npart}")
+    return bool(same)
+
+
+def print_trajectory_check(name1, name2, grp_label, pos1, pos2, tol):
+    """Compare trajectories: arrays (nsteps, nparticles, ndim)."""
+    assert pos1.shape == pos2.shape, "Trajectory arrays must match in shape"
+    nsteps, npart, ndim = pos1.shape
+    diffs = np.linalg.norm(pos1 - pos2, axis=-1)  # per-particle distance per step
+    rmsd_per_step = np.sqrt(np.mean(diffs**2, axis=1))
+    max_rmsd = float(rmsd_per_step.max())
+    mean_rmsd = float(rmsd_per_step.mean())
+    same = max_rmsd <= tol
+
+    status = "OK" if same else "MISMATCH"
+    print(f"- {grp_label} | trajectory: {status} (max RMSD {max_rmsd:.3e} ≤ {tol:g}?)")
+    print(f"    mean RMSD={mean_rmsd:.3e}, steps={nsteps}, particles={npart}")
+    return bool(same)
+
+
+import matplotlib.cm as cm
+
+def plot_comparison(name1, name2, grp_label, series, show=True, save_prefix=None):
     """
-    series is dict[obs] = (t1, v1, t2, v2)
-    Creates rows: one per observable; 2 columns: overlay and absolute difference.
+    Plot comparisons:
+    - Observables (temperature, pressure, internal_energy, potential_energy 1D): overlay
+    - Particles/potential_energy (2D): mean per particle + heatmap of |Δ|
+    - Particles/position (3D): RMSD per step
     """
-    nrows = len(obs_list)
-    fig, axes = plt.subplots(nrows, 2, figsize=(11, 3.0 * nrows), sharex="col")
-    if nrows == 1:
-        axes = np.array([axes])
+    nplots = len(series)
+    fig, axes = plt.subplots(nplots, 1, figsize=(10, 4 * nplots))
+    if nplots == 1:
+        axes = [axes]
 
-    fig.suptitle(f"{grp_label} — {name1} vs {name2}", fontsize=13)
+    for ax, (obs, data) in zip(axes, series.items()):
+        if obs in ("temperature", "pressure", "internal_energy", "potential_energy"):
+            # ---------- Observables ----------
+            if isinstance(data, tuple) and len(data) == 4:
+                t1, v1, t2, v2 = data
+                ax.plot(t1, v1, label=name1)
+                ax.plot(t2, v2, "--", label=name2)
+                ax.set_title(f"{grp_label} | {obs}")
+                ax.set_xlabel("time")
+                ax.legend()
+            elif isinstance(data, tuple) and data[0].ndim == 2:
+                e1, e2 = data
+                mean1, mean2 = e1.mean(axis=1), e2.mean(axis=1)
+                diffs = np.abs(e1 - e2)
 
-    for r, obs in enumerate(obs_list):
-        t1, v1, t2, v2 = series[obs]
+                # plot mean trace
+                ax.plot(mean1, label=f"{name1} mean")
+                ax.plot(mean2, "--", label=f"{name2} mean")
+                ax.set_title(f"{grp_label} | Potential Energy (mean per particle)")
+                ax.set_xlabel("step")
+                ax.legend()
 
-        # Left: overlay
-        axL = axes[r, 0]
-        if len(t1) == len(v1) == len(t2) == len(v2) and np.allclose(t1, t2, atol=1e-12, rtol=0):
-            x1, x2 = t1, t2
-            axL.set_xlabel(r"time [$\sqrt{m/k}$]")
-        else:
-            x1 = np.arange(len(v1))
-            x2 = np.arange(len(v2))
-            axes[-1, 0].set_xlabel("index")
+                # add a heatmap of differences in a new figure
+                fig2, ax2 = plt.subplots(figsize=(8, 4))
+                im = ax2.imshow(diffs.T, aspect="auto", origin="lower",
+                                cmap=cm.viridis, interpolation="nearest")
+                ax2.set_title(f"{grp_label} | |ΔE| per particle")
+                ax2.set_xlabel("step")
+                ax2.set_ylabel("particle index")
+                fig2.colorbar(im, ax=ax2, label="|ΔE|")
+                plt.tight_layout()
+                if save_prefix:
+                    out = f"{save_prefix}_{grp_label.replace(' ', '')}_PE_heatmap.png"
+                    fig2.savefig(out, dpi=150)
+                    print(f"Saved figure: {out}")
+                if show:
+                    plt.show()
+                else:
+                    plt.close(fig2)
 
-        axL.plot(x1, v1, linewidth=2, label=name1)
-        axL.plot(x2, v2, linewidth=2, linestyle="--", label=name2)
-        axL.set_ylabel(obs.replace("_", " ").title(), fontsize=11)
-        axL.grid(True, linestyle="--", alpha=0.5)
-        if r == 0:
-            axL.legend(fontsize=9)
+        # ---------- Trajectories ----------
+        elif obs == "position":
+            pos1, pos2 = data
+            diffs = np.linalg.norm(pos1 - pos2, axis=-1)
+            rmsd_per_step = np.sqrt(np.mean(diffs**2, axis=1))
+            ax.plot(rmsd_per_step)
+            ax.set_title(f"{grp_label} | Trajectory RMSD per step")
+            ax.set_xlabel("step")
+            ax.set_ylabel("RMSD")
 
-        # Right: |\delta| with interpolation of file2 to file1's x
-        axR = axes[r, 1]
-        x = t1 if len(t1) > 0 else np.arange(len(v1))
-        if len(t2) > 1:
-            v2_interp = np.interp(x, t2 if len(t2) > 0 else np.arange(len(v2)), v2,
-                                  left=np.nan, right=np.nan)
-        else:
-            n = min(len(v1), len(v2))
-            x = x[:n]
-            v2_interp = v2[:n]
-        v1_trim = v1[:len(x)]
-        diff = np.abs(v2_interp - v1_trim)
-        axR.plot(x, diff, linewidth=1.8)
-        axR.axhline(0, lw=1, ls=":")
-        axR.set_ylabel(f"|$\Delta$ {obs.replace('_', ' ').title()}|", fontsize=11)
-        axR.grid(True, linestyle="--", alpha=0.5)
-        axes[-1, 1].set_xlabel(r"time [$\sqrt{m/k}$]" if len(t1) == len(v1) else "index")
-
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-
+    plt.tight_layout()
     if save_prefix:
         out = f"{save_prefix}_{grp_label.replace(' ', '')}.png"
         fig.savefig(out, dpi=150)
-        print(f"saved figure: {out}")
-
+        print(f"Saved figure: {out}")
     if show:
         plt.show()
     else:
         plt.close(fig)
 
 
+
 def parse_groups(s):
-    """
-    parse --groups string. Default is "observables/A:Group A,observables/B:Group B".
-    format: path[:label][,path[:label],...]
-    """
+    """Parse --groups string: path[:label][,path[:label],...]."""
     groups = {}
     for chunk in s.split(","):
         chunk = chunk.strip()
@@ -132,32 +177,43 @@ def parse_groups(s):
             path, label = chunk.split(":", 1)
         else:
             path = chunk
-            label = path.split("/")[-1]  # A, B, etc.
+            label = path.split("/")[-1]
         groups[path.strip()] = label.strip()
     return groups
 
 
+# ---------- Main ----------
 def main():
-    ap.add_argument("files", nargs=2, help="Two HDF5 files ...")
-    ap.add_argument("--groups", default="observables/A:Group A,observables/B:Group B", ...)
-    ap.add_argument("--observables", default="temperature,pressure,potential_energy,internal_energy", ...)
-    ap.add_argument("--tol", type=float, default=1e-2, ...)
-    ap.add_argument("--no-plot", action="store_true", ...)
-    ap.add_argument("--save-prefix", default=None, ...)
-
+    ap = argparse.ArgumentParser(
+        description="Compare H5MD observables and particle data between two files."
+    )
+    ap.add_argument("files", nargs=2, help="Two HDF5 files to compare")
+    ap.add_argument(
+        "--groups",
+        default="observables/A:ObsA,observables/B:ObsB,particles/A:PartA,particles/B:PartB",
+        help="Comma-separated group paths with optional labels."
+    )
+    ap.add_argument(
+        "--observables",
+        nargs='+',
+        default=("temperature", "pressure", "potential_energy", "internal_energy", "position"),
+        help="Observables/quantities to compare."
+    )
+    ap.add_argument("--tol", type=float, default=1e-2, help="Absolute tolerance.")
+    ap.add_argument("--no-plot", action="store_true", help="Skip plotting.")
+    ap.add_argument("--save-prefix", default=None, help="If set, save figures with this prefix.")
     args = ap.parse_args()
 
     file1, file2 = args.files
     name1, name2 = Path(file1).name, Path(file2).name
 
-    # sanity check (clearer errors in CI)
     for p in (file1, file2):
         if not Path(p).exists():
             print(f"ERROR: file not found: {p}", file=sys.stderr)
             return 5
 
     groups = parse_groups(args.groups)
-    obs_try = [o.strip() for o in args.observables.split(",") if o.strip()]
+    obs_try = args.observables
     tol = args.tol
 
     any_compared = False
@@ -165,44 +221,59 @@ def main():
 
     with h5py.File(file1, "r") as f1, h5py.File(file2, "r") as f2:
         for grp_path, grp_label in groups.items():
-            # collect common observables for this group
             common = []
             for obs in obs_try:
-                t1, v1 = get_time_values(f1, grp_path, obs)
-                t2, v2 = get_time_values(f2, grp_path, obs)
-                if t1 is not None and v1 is not None and t2 is not None and v2 is not None:
-                    common.append(obs)
+                if grp_path.startswith("observables/"):
+                    t1, v1 = get_time_series(f1, grp_path, obs)
+                    t2, v2 = get_time_series(f2, grp_path, obs)
+                    if v1 is not None and v2 is not None:
+                        common.append(obs)
+                else:  # particles/
+                    v1 = get_values(f1, grp_path, obs)
+                    v2 = get_values(f2, grp_path, obs)
+                    if v1 is not None and v2 is not None:
+                        common.append(obs)
 
             if not common:
                 print(f"\n[{grp_label}] No common observables to compare.")
                 continue
 
             print(f"\n--- Numeric check @ {grp_label} ({name1} vs {name2}, tol={tol:g}) ---")
-            # compute and print numeric check
             series = {}
             for obs in common:
-                t1, v1 = get_time_values(f1, grp_path, obs)
-                t2, v2 = get_time_values(f2, grp_path, obs)
-                series[obs] = (t1, v1, t2, v2)
+                if grp_path.startswith("observables/"):
+                    t1, v1 = get_time_series(f1, grp_path, obs)
+                    t2, v2 = get_time_series(f2, grp_path, obs)
+                    series[obs] = (t1, v1, t2, v2)
+                    ok = print_numeric_check(name1, name2, grp_label, obs, t1, v1, t2, v2, tol)
+                else:  # particles
+                    v1 = get_values(f1, grp_path, obs)
+                    v2 = get_values(f2, grp_path, obs)
+                    if obs == "potential_energy":
+                        series[obs] = (v1, v2)
+                        ok = print_energy_per_particle_check(name1, name2, grp_label, v1, v2, tol)
+                    elif obs == "position":
+                        series[obs] = (v1, v2)
+                        ok = print_trajectory_check(name1, name2, grp_label, v1, v2, tol)
+                    else:
+                        continue
 
-                ok = print_numeric_check(name1, name2, grp_label, obs, t1, v1, t2, v2, tol)
                 any_compared = True
                 if not ok:
                     any_mismatch = True
 
             if not args.no_plot:
                 plot_comparison(
-                    name1, name2, grp_label, common, series,
+                    name1, name2, grp_label, series,
                     show=(args.save_prefix is None), save_prefix=args.save_prefix
                 )
 
     if not any_compared:
-        print("ERROR: No observables were compared (no common data found).", file=sys.stderr)
-        return 4 # nothing was compared
+        print("ERROR: No observables were compared.", file=sys.stderr)
+        return 4
     if any_mismatch:
-        # Make CTest fail cleanly
-        return 2 # at least one observable faled the tolerance
-    return 0 # all compared obs where within tolerance
+        return 2
+    return 0
 
 
 if __name__ == "__main__":
