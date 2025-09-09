@@ -129,7 +129,7 @@ local function production(box, particle, samples, args)
       -- write phase space trajectory to H5MD file
       phase_space:writer({
           file = file
-        , fields = {"position", "velocity", "species", "mass"}
+        , fields = {"position", "velocity", "species", "mass", "potential_energy"}
         , every = args.sampling.trajectory
       })
 

@@ -117,6 +117,7 @@ local function restore(args)
               , particle = { p1, p2 }
               , potential = potential
               , label = label1 .. label2  -- FIXME do not infer logger from potential
+              , neighbour = { disable_binning = true }
               --, neighbour = neighbour
             })
         end
@@ -155,7 +156,7 @@ local function production(box, particle, args)
         local phase_space = observables.phase_space({box = box, group = group})
         phase_space:writer({
                 file = file
-              , fields = {"position", "velocity", "species", "mass"}
+              , fields = {"position", "velocity", "species", "mass", "potential_energy"}
               , every = args.sampling.trajectory
             })
 

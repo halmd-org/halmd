@@ -182,7 +182,7 @@ function define_args(parser)
     parser:add_argument("output,o", {type = "string", action = parser.action.substitute_date_time,
         default = "binary_mixture_equilibration_%Y%m%d_%H%M%S", help = "basename of output files"})
     parser:add_argument("overwrite", {type = "boolean", default = true, help = "overwrite output file"})
-
+    parser:add_argument("dimension", {type = "number", default = 3, help = "dimension of space"})
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {4000, 1000}, help = "number of particles"})
     parser:add_argument("density", {type = "number", default = 1.2, help = "particle number density"})
     parser:add_argument("ratios", {type = "vector", dtype = "number", action = function(args, key, value)
