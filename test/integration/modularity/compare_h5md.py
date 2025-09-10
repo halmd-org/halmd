@@ -69,16 +69,16 @@ def print_energy_per_particle_check(name1, name2, grp_label, e1, e2, tol):
     same = max_diff <= tol
 
     status = "OK" if same else "MISMATCH"
-    print(f"- {grp_label} | potential_energy: {status} (max |Δ| {max_diff:.3e} ≤ {tol:g}?)")
-    print(f"    mean |Δ|={mean_diff:.3e}, steps={nsteps}, particles={npart}")
+    print(fr"- {grp_label} | potential_energy: {status} (max $|\Delta|$ {max_diff:.3e} ≤ {tol:g}?)")
+    print(fr"    mean $|\Delta|=${mean_diff:.3e}, steps={nsteps}, particles={npart}")
     return bool(same)
 
 
-def print_trajectory_check(name1, name2, grp_label, pos1, pos2, tol):
+def print_trajectory_check(name1, name2, grp_label, pos1, pos2, tol, top_k=5):
     """Compare trajectories: arrays (nsteps, nparticles, ndim)."""
     assert pos1.shape == pos2.shape, "Trajectory arrays must match in shape"
     nsteps, npart, ndim = pos1.shape
-    diffs = np.linalg.norm(pos1 - pos2, axis=-1)  # per-particle distance per step
+    diffs = np.linalg.norm(pos1 - pos2, axis=-1)  # shape (nsteps, npart)
     rmsd_per_step = np.sqrt(np.mean(diffs**2, axis=1))
     max_rmsd = float(rmsd_per_step.max())
     mean_rmsd = float(rmsd_per_step.mean())
@@ -87,17 +87,23 @@ def print_trajectory_check(name1, name2, grp_label, pos1, pos2, tol):
     status = "OK" if same else "MISMATCH"
     print(f"- {grp_label} | trajectory: {status} (max RMSD {max_rmsd:.3e} ≤ {tol:g}?)")
     print(f"    mean RMSD={mean_rmsd:.3e}, steps={nsteps}, particles={npart}")
+
+    # per-particle summary to find culprits
+    max_per_particle = diffs.max(axis=0)              # length = npart
+    worst_idx = np.argsort(-max_per_particle)[:top_k] # top-K largest
+    tops = ", ".join(f"p{int(i)}: {max_per_particle[i]:.3e}" for i in worst_idx)
+    print(f"    top {top_k} deviating particles (max ‖Δr‖): {tops}")
     return bool(same)
 
 
 import matplotlib.cm as cm
 
-def plot_comparison(name1, name2, grp_label, series, show=True, save_prefix=None):
+def plot_comparison(name1, name2, grp_label, series, show=True, save_prefix=None, top_k=5):
     """
     Plot comparisons:
-    - Observables (temperature, pressure, internal_energy, potential_energy 1D): overlay
-    - Particles/potential_energy (2D): mean per particle + heatmap of |Δ|
-    - Particles/position (3D): RMSD per step
+    - Observables (temperature, pressure, internal_energy, potential_energy 1D): overlay (no title)
+    - Particles/potential_energy (2D): only the mean per particle (no heatmap)
+    - Particles/position (3D): per-particle ‖Δr‖ over time for top-K deviators; also a bar chart of max ‖Δr‖ per particle
     """
     nplots = len(series)
     fig, axes = plt.subplots(nplots, 1, figsize=(10, 4 * nplots))
@@ -105,54 +111,58 @@ def plot_comparison(name1, name2, grp_label, series, show=True, save_prefix=None
         axes = [axes]
 
     for ax, (obs, data) in zip(axes, series.items()):
+        # ---------- Observables (1D) ----------
         if obs in ("temperature", "pressure", "internal_energy", "potential_energy"):
-            # ---------- Observables ----------
             if isinstance(data, tuple) and len(data) == 4:
                 t1, v1, t2, v2 = data
                 ax.plot(t1, v1, label=name1)
                 ax.plot(t2, v2, "--", label=name2)
-                ax.set_title(f"{grp_label} | {obs}")
+                ax.set_ylabel(f"{grp_label} · {obs}")
                 ax.set_xlabel("time")
                 ax.legend()
+
             elif isinstance(data, tuple) and data[0].ndim == 2:
+                # potential_energy per particle (2D): plot only mean per particle over steps
                 e1, e2 = data
                 mean1, mean2 = e1.mean(axis=1), e2.mean(axis=1)
-                diffs = np.abs(e1 - e2)
-
-                # plot mean trace
                 ax.plot(mean1, label=f"{name1} mean")
                 ax.plot(mean2, "--", label=f"{name2} mean")
-                ax.set_title(f"{grp_label} | Potential Energy (mean per particle)")
+                ax.set_ylabel(f"{grp_label} · potential_energy (mean / particle)")
                 ax.set_xlabel("step")
                 ax.legend()
 
-                # add a heatmap of differences in a new figure
-                fig2, ax2 = plt.subplots(figsize=(8, 4))
-                im = ax2.imshow(diffs.T, aspect="auto", origin="lower",
-                                cmap=cm.viridis, interpolation="nearest")
-                ax2.set_title(f"{grp_label} | |ΔE| per particle")
-                ax2.set_xlabel("step")
-                ax2.set_ylabel("particle index")
-                fig2.colorbar(im, ax=ax2, label="|ΔE|")
-                plt.tight_layout()
-                if save_prefix:
-                    out = f"{save_prefix}_{grp_label.replace(' ', '')}_PE_heatmap.png"
-                    fig2.savefig(out, dpi=150)
-                    print(f"Saved figure: {out}")
-                if show:
-                    plt.show()
-                else:
-                    plt.close(fig2)
-
-        # ---------- Trajectories ----------
+        # ---------- Trajectories (3D) ----------
         elif obs == "position":
             pos1, pos2 = data
-            diffs = np.linalg.norm(pos1 - pos2, axis=-1)
-            rmsd_per_step = np.sqrt(np.mean(diffs**2, axis=1))
-            ax.plot(rmsd_per_step)
-            ax.set_title(f"{grp_label} | Trajectory RMSD per step")
+            diffs = np.linalg.norm(pos1 - pos2, axis=-1)  # (nsteps, npart)
+            nsteps, npart = diffs.shape
+
+            # 1) time-series of top-K deviating particles (no title)
+            max_per_particle = diffs.max(axis=0)
+            top_idx = np.argsort(-max_per_particle)[:top_k]
+            for i in range(npart):
+                if i in set(top_idx):
+                    ax.plot(diffs[:, i], linewidth=2, label=f"p{i}")   # highlight
+                else:
+                    ax.plot(diffs[:, i], alpha=0.15, linewidth=0.8)     # faint background
+            ax.set_ylabel(f"{grp_label} · ‖Δr‖ per particle")
             ax.set_xlabel("step")
-            ax.set_ylabel("RMSD")
+            ax.legend(title="top deviators", loc="upper right", ncol=2, fontsize=8)
+
+            # 2) separate figure: bar chart of max deviation per particle (helps spot culprits)
+            fig2, ax2 = plt.subplots(figsize=(10, 3.5))
+            ax2.bar(np.arange(npart), max_per_particle)
+            ax2.set_xlabel("particle index")
+            ax2.set_ylabel("max ‖Δr‖ over time")
+            plt.tight_layout()
+            if save_prefix:
+                out2 = f"{save_prefix}_{grp_label.replace(' ', '')}_position_maxdev.png"
+                fig2.savefig(out2, dpi=150)
+                print(f"Saved figure: {out2}")
+            if show:
+                plt.show()
+            else:
+                plt.close(fig2)
 
     plt.tight_layout()
     if save_prefix:
@@ -199,9 +209,12 @@ def main():
         default=("temperature", "pressure", "potential_energy", "internal_energy", "position"),
         help="Observables/quantities to compare."
     )
-    ap.add_argument("--tol", type=float, default=1e-2, help="Absolute tolerance.")
-    ap.add_argument("--no-plot", action="store_true", help="Skip plotting.")
-    ap.add_argument("--save-prefix", default=None, help="If set, save figures with this prefix.")
+    ap.add_argument("--tol", type=float, default=1e-2, help="absolute tolerance")
+    ap.add_argument("--no-plot", action="store_true", help="skip plotting")
+    ap.add_argument("--save-prefix", default=None, help="save figures with this prefix")
+    # (optional) how many most-deviant particles to highlight in the time-series plot
+    ap.add_argument("--top-k", type=int, default=5, help="ttop-K most deviant particles in trajectory plots")
+    
     args = ap.parse_args()
 
     file1, file2 = args.files
@@ -254,7 +267,8 @@ def main():
                         ok = print_energy_per_particle_check(name1, name2, grp_label, v1, v2, tol)
                     elif obs == "position":
                         series[obs] = (v1, v2)
-                        ok = print_trajectory_check(name1, name2, grp_label, v1, v2, tol)
+                        ok = print_trajectory_check(name1, name2, grp_label, v1, v2, tol, top_k=args.top_k)
+
                     else:
                         continue
 
@@ -265,7 +279,7 @@ def main():
             if not args.no_plot:
                 plot_comparison(
                     name1, name2, grp_label, series,
-                    show=(args.save_prefix is None), save_prefix=args.save_prefix
+                    show=(args.save_prefix is None), save_prefix=args.save_prefix, top_k=args.top_k
                 )
 
     if not any_compared:
