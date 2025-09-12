@@ -1,5 +1,6 @@
 /*
  * Copyright © 2016 Daniel Kirchner
+ * Copyright © 2025 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -84,6 +85,16 @@ public:
     virtual cache<> cache_observer() const = 0;
 
     /**
+    * set lock on array data
+    */
+    virtual void lock() = 0;
+
+    /**
+    * remove lock on array data
+    */
+    virtual void unlock() = 0;
+
+    /**
      * set data from lua table
      *
      * @param object lua table containing the data
@@ -114,7 +125,7 @@ public:
       , unsigned int size
       , std::function<void()> update_function = std::function<void()>()
     )
-      : nparticle_(nparticle), data_(size), update_function_(update_function)
+      : nparticle_(nparticle), data_(size), update_function_(update_function), locked_(false)
     {
         if (!update_function_) {
             update_function_ = [](){};
@@ -147,6 +158,9 @@ public:
      */
     cache<raw_array<T>>& mutable_data()
     {
+        if (locked_) {
+            throw std::logic_error(std::string("write attempt on locked particle data"));
+        }
         return data_;
     }
 
@@ -157,8 +171,25 @@ public:
      */
     cache<raw_array<T>> const& data() const
     {
-        update_function_();
+        // bypass update function if particle array is locked
+        if (!locked_) {
+            update_function_();
+        }
         return data_;
+    }
+
+    /**
+    * set lock on array data
+    */
+    virtual void lock() {
+        locked_ = true;
+    }
+
+    /**
+    * remove lock on array data
+    */
+    virtual void unlock() {
+        locked_ = false;
     }
 
     /**
@@ -221,6 +252,8 @@ private:
     cache<raw_array<T>> data_;
     /** optional update function */
     std::function<void()> update_function_;
+    /** true if data are locked */
+    bool locked_;
 };
 
 template<typename T>

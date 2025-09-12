@@ -1,6 +1,6 @@
 /*
  * Copyright © 2016      Daniel Kirchner
- * Copyright © 2010-2016 Felix Höfling
+ * Copyright © 2010-2025 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
  *
@@ -129,7 +129,7 @@ public:
     }
 
     /**
-     * get data from named particle array with iterator
+     * get data from named particle array by copying to iterator
      *
      * @param name identifier of the particle array
      * @param first output iterator
@@ -144,18 +144,23 @@ public:
     }
 
     /**
-     * set data in named particle array with iterator
+     * set data in named particle array by copying from iterator
      *
      * @param name identifier of the particle array
      * @param first input iterator
      * @return input iterator
      *
-     * throws an exception if the array does not exist or has an invalid type
+     * throws an exception if the array does not exist, has an invalid type, or
+     * is locked
      */
     template <typename T, typename iterator_type>
     iterator_type set_data(std::string const& name, iterator_type const& first)
-    {
+    try { // 'function try block'
         return particle_array::cast<T>(get_array(name))->set_data(first);
+    }
+    catch (std::exception const&) {
+        LOG_ERROR(std::string("no write access to ") + name + " data");
+        throw;
     }
 
     /**
@@ -178,13 +183,28 @@ public:
      * @param name identifier of the particle array
      * @return non-const reference to the data
      *
-     * throws an exception if the array does not exist or has an invalid type
+     * throws an exception if the array does not exist, has an invalid type, or
+     * is locked
      */
     template<typename T>
     cache<raw_array<T>>& mutable_data(std::string const& name)
-    {
+    try { // 'function try block'
         return particle_array::cast<T>(get_array(name))->mutable_data();
     }
+    catch (std::exception const&) {
+        LOG_ERROR(std::string("no write access to ") + name + " data");
+        throw;
+    }
+
+    /**
+     * Lock data of a named particle array.
+     */
+    void lock(std::string const& name);
+
+    /**
+     * Release lock on data of a named particle array.
+     */
+    void unlock(std::string const& name);
 
     /**
      * Returns const reference to particle positions.

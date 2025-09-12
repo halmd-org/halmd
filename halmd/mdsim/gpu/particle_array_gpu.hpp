@@ -1,5 +1,6 @@
 /*
  * Copyright © 2017 Daniel Kirchner
+ * Copyright © 2025 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -90,6 +91,16 @@ public:
     virtual cache<> cache_observer() const = 0;
 
     /**
+    * set lock on array data
+    */
+    virtual void lock() = 0;
+
+    /**
+    * remove lock on array data
+    */
+    virtual void unlock() = 0;
+
+    /**
      * return number of particles
      */
     virtual size_t nparticle() const = 0;
@@ -131,10 +142,11 @@ public:
       , ghost_init_type const& ghost_init_value
       , std::function<void()> update_function = std::function<void()>()
     )
-      : data_(size)
+      : nparticle_(nparticle)
+      , data_(size)
       , update_function_(update_function)
+      , locked_(false)
       , init_type_(InitType::VALUE)
-      , nparticle_(nparticle)
     {
         // due to a bug in clang moving this to the default argument initialization
         // above results in a compiler crash
@@ -154,10 +166,11 @@ public:
       , unsigned int size
       , std::function<void()> update_function = std::function<void()>()
     )
-      : data_(size)
+      : nparticle_(nparticle)
+      , data_(size)
       , update_function_(update_function)
+      , locked_(false)
       , init_type_(InitType::ZERO)
-      , nparticle_(nparticle)
     {
         // due to a bug in clang moving this to the default argument initialization
         // above results in a compiler crash
@@ -174,12 +187,18 @@ public:
 
     cache<gpu_vector_type>& mutable_data()
     {
+        if (locked_) {
+            throw std::logic_error(std::string("write attempt on locked particle data"));
+        }
         return data_;
     }
 
     cache<gpu_vector_type> const& data() const
     {
-        update_function_();
+        // bypass update function if particle array is locked
+        if (!locked_) {
+            update_function_();
+        }
         return data_;
     }
 
@@ -223,15 +242,38 @@ public:
         return data_;
     }
 
+    /**
+    * set lock on array data
+    */
+    virtual void lock() {
+        locked_ = true;
+    }
+
+    /**
+    * remove lock on array data
+    */
+    virtual void unlock() {
+        locked_ = false;
+    }
+
 private:
     void initialize_();
 
-    cache<gpu_vector_type> data_;
-    std::function<void()> update_function_;
-    InitType init_type_;
-    base_value_type init_value_;
-    base_value_type ghost_init_value_;
+    /** number of particles */
     size_t nparticle_;
+    /** cached GPU memory array*/
+    cache<gpu_vector_type> data_;
+    /** optional update function */
+    std::function<void()> update_function_;
+    /** true if data are locked */
+    bool locked_;
+
+    /** kind of data initialisation */
+    InitType init_type_;
+    /** value for data initialisation */
+    base_value_type init_value_;
+    /** value for data initialisation of ghost particles */
+    base_value_type ghost_init_value_;
 };
 
 } // namespace gpu

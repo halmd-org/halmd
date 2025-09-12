@@ -1,6 +1,6 @@
 /*
  * Copyright © 2016      Daniel Kirchner
- * Copyright © 2010-2016 Felix Höfling
+ * Copyright © 2010-2025 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
  *
@@ -163,11 +163,28 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     LOG_DEBUG("capacity of data arrays: " << array_size_);
 }
 
+// the following class methods use the module-specific logger,
+// which is not available in the header file
+
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::aux_enable()
 {
     LOG_DEBUG("enable computation of auxiliary variables");
     aux_enabled_ = true;
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::lock(std::string const& name)
+{
+    LOG_TRACE(name + " data locked");
+    get_gpu_array(name)->lock();
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::unlock(std::string const& name)
+{
+    LOG_TRACE(name + " data unlocked");
+    get_gpu_array(name)->unlock();
 }
 
 /**
