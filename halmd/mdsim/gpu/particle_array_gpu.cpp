@@ -68,7 +68,7 @@ ValueType particle_array_gpu<T>::value_type() const
 template<typename T>
 std::shared_ptr<particle_array_gpu<T>> particle_array_gpu<T>::cast(std::shared_ptr<particle_array_gpu_base> base)
 {
-    if(base->value_type() != ValueTypeTrait<T>::value) {
+    if (base->value_type() != ValueTypeTrait<T>::value) {
         throw std::runtime_error("invalid cast");
     }
     return std::static_pointer_cast<particle_array_gpu<T>>(base);
@@ -82,7 +82,7 @@ cuda::config get_default_config(size_t n) {
         block_size <<= 1;
         grid_size = (grid_size + 1) >> 1;
     }
-    if(grid_size * block_size != n) {
+    if (grid_size * block_size != n) {
         throw std::runtime_error("misaligned particle array");
     }
     return device::validate(cuda::config(grid_size, block_size));
@@ -253,7 +253,7 @@ void particle_array_gpu<T>::set_host_data(cuda::memory::host::vector<uint8_t> co
 }
 
 template<typename T>
-void particle_array_gpu<T>::initialize()
+void particle_array_gpu<T>::initialize_()
 {
     switch(init_type_) {
         case InitType::ZERO:

@@ -44,7 +44,7 @@ particle_array_host<T>::~particle_array_host()
 template<typename T>
 std::shared_ptr<particle_array_host<T>> particle_array_host<T>::cast(std::shared_ptr<particle_array_host_base> base)
 {
-    if(base->type() != typeid(T)) {
+    if (base->type() != typeid(T)) {
         throw std::runtime_error("invalid cast");
     }
     return std::static_pointer_cast<particle_array_host>(base);
@@ -77,7 +77,6 @@ luaponte::object particle_array_host<T>::get_lua(lua_State *L) const
     }
     return table;
 }
-
 
 template class particle_array_host<float>;
 template class particle_array_host<fixed_vector<float, 2>>;

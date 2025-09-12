@@ -57,9 +57,8 @@ enum class InitType : unsigned int {
 class particle_array_gpu_base
 {
 public:
-    virtual ~particle_array_gpu_base()
-    {
-    }
+    virtual ~particle_array_gpu_base() {}
+
     virtual ValueType value_type() const = 0;
     /**
      * get memory
@@ -131,7 +130,8 @@ public:
       , init_type const& init_value
       , ghost_init_type const& ghost_init_value
       , std::function<void()> update_function = std::function<void()>()
-    ) : data_(size)
+    )
+      : data_(size)
       , update_function_(update_function)
       , init_type_(InitType::VALUE)
       , nparticle_(nparticle)
@@ -145,7 +145,7 @@ public:
         static_assert(sizeof(ghost_init_type) == sizeof(base_value_type), "invalid size of ghost initialization value");
         memcpy(&init_value_, &init_value, sizeof(base_value_type));
         memcpy(&ghost_init_value_, &ghost_init_value, sizeof(base_value_type));
-        initialize();
+        initialize_();
     }
 
     particle_array_gpu(
@@ -153,7 +153,8 @@ public:
       , unsigned int nparticle
       , unsigned int size
       , std::function<void()> update_function = std::function<void()>()
-    ) : data_(size)
+    )
+      : data_(size)
       , update_function_(update_function)
       , init_type_(InitType::ZERO)
       , nparticle_(nparticle)
@@ -163,7 +164,7 @@ public:
         if (!update_function_) {
             update_function_ = []{};
         }
-        initialize();
+        initialize_();
     }
 
     static std::shared_ptr<particle_array_gpu> cast(std::shared_ptr<particle_array_gpu_base> base);
@@ -223,7 +224,7 @@ public:
     }
 
 private:
-    void initialize();
+    void initialize_();
 
     cache<gpu_vector_type> data_;
     std::function<void()> update_function_;

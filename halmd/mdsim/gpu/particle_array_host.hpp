@@ -23,7 +23,6 @@
 
 #include <typeinfo>
 #include <halmd/io/logger.hpp>
-#include <halmd/utility/cache.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/mdsim/gpu/particle_array_gpu.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
@@ -36,7 +35,7 @@ namespace gpu {
 // stress tensor wrapper
 template<typename T>
 class stress_tensor_wrapper
-        : public T
+  : public T
 {
 public:
     template<typename... Args>
@@ -47,9 +46,7 @@ public:
 class particle_array_host_base
 {
 public:
-    virtual ~particle_array_host_base()
-    {
-    }
+    virtual ~particle_array_host_base() {}
 
     virtual std::type_info const& type() const = 0;
 
@@ -81,7 +78,6 @@ public:
     virtual bool coalesced() const = 0;
 
     virtual std::shared_ptr<particle_array_gpu_base> parent() const = 0;
-
 };
 
 namespace detail {
@@ -94,6 +90,7 @@ struct particle_array_host_helper
     {
         return *reinterpret_cast<const T*>(&memory[offset]);
     }
+
     static void set(cuda::memory::host::vector<uint8_t>& memory, size_t offset, T const& value)
     {
         *reinterpret_cast<T*>(&memory[offset]) = value;
@@ -127,6 +124,7 @@ class particle_array_host : public particle_array_host_base
 {
     typedef detail::particle_array_host_helper<T_> helper;
     typedef typename helper::type T;
+
 public:
     particle_array_host(std::shared_ptr<particle_array_gpu_base> const& parent, size_t offset, size_t stride, bool coalesced = false);
     virtual ~particle_array_host();

@@ -90,7 +90,8 @@ public:
     void rearrange(cuda::memory::device::vector<unsigned int> const& g_index);
 
     /** grid and block dimensions for CUDA calls */
-    cuda::config const& dim() const {
+    cuda::config const& dim() const
+    {
         return dim_;
     }
 
@@ -170,7 +171,8 @@ public:
      * throws an exception if the array does not exist or has an invalid type
      */
     template<typename T>
-    cache<typename particle_array_gpu<T>::gpu_vector_type> const &data(const std::string &name) const {
+    cache<typename particle_array_gpu<T>::gpu_vector_type> const &data(const std::string &name) const
+    {
         return particle_array_gpu<T>::cast(get_gpu_array(name))->data();
     }
 

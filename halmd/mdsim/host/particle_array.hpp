@@ -46,9 +46,9 @@ public:
      */
     template<typename T>
     static inline std::shared_ptr<particle_array_typed<T>> create(
-      unsigned int nparticle
-    , unsigned int size
-    , std::function<void()> update_function = std::function<void()>()
+        unsigned int nparticle
+      , unsigned int size
+      , std::function<void()> update_function = std::function<void()>()
     );
 
     /**
@@ -110,9 +110,10 @@ public:
      * @param update_function optional update function
      */
     particle_array_typed(
-      unsigned int nparticle
-    , unsigned int size
-    , std::function<void()> update_function = std::function<void()>())
+        unsigned int nparticle
+      , unsigned int size
+      , std::function<void()> update_function = std::function<void()>()
+    )
       : nparticle_(nparticle), data_(size), update_function_(update_function)
     {
         if (!update_function_) {
@@ -139,7 +140,6 @@ public:
         return cache<>(data_);
     }
 
-
     /**
      * obtain non-const reference to the stored data
      *
@@ -149,6 +149,7 @@ public:
     {
         return data_;
     }
+
     /**
      * obtain const reference to the stored data
      *
@@ -173,6 +174,7 @@ public:
         }
         return input;
     }
+
     /**
      * get data with iterator
      */
@@ -195,6 +197,7 @@ public:
             (*output)[i] = luaponte::object_cast<T>(table[i+1]);
         }
     }
+
     /**
      * convert data to lua table
      *
@@ -210,6 +213,7 @@ public:
         }
         return table;
     }
+
 private:
     /** number of particles */
     unsigned int nparticle_;
