@@ -242,12 +242,24 @@ local M = module(function(args)
           , "table")
         local every = args.every
 
+        -- logging output
+        local s = ""
+        for k,v in pairs(fields) do s = s .. ", " .. v end
+        logger:message("sampling" .. string.sub(s, 2))
+        logger:info(("sampling interval: %d"):format(every))
+        logger:info("location within output file: " .. table.concat(location, "/") .. "/")
+
         if group.fluctuating then
-            logger:error("writing a selection of particles with fluctuating number is not yet supported")
+            logger:error("sampling a fluctuating selection of particles is not yet supported")
             error("Aborting", 2)
         end
 
+        -- construct file writer
         local writer = file:writer({location = location, mode = "append"})
+
+        -- store box information
+        box:writer({file = file, location = location}) -- box is fixed in time
+--        box:writer({writer = writer}) -- box is variable in time
 
         -- this table consists of data fields that will need an update of the
         -- auxiliary variables during force calculation
@@ -267,10 +279,6 @@ local M = module(function(args)
                 aux = true
             end
         end
-
-        -- store box information
-        box:writer({file = file, location = location}) -- box is fixed in time
---        box:writer({writer = writer}) -- box is variable in time
 
         -- sequence of signal connections
         local conn = {}
