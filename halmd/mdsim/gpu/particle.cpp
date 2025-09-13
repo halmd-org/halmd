@@ -241,14 +241,12 @@ void particle<dimension, float_type>::update_force_(bool with_aux)
             }
             aux_enabled_ = true;  // turn on computation of aux variables
         }
-        LOG_TRACE("request force" << std::string(aux_enabled_ ? " and auxiliary variables" : ""));
+        LOG_DEBUG("update force" << std::string(aux_enabled_ ? " and auxiliary variables" : ""));
 
         force_zero_ = true;       // tell first force module to reset the force
         on_force_();              // compute forces
         force_dirty_ = false;     // mark force cache as clean
-        if (aux_enabled_) {
-            aux_dirty_ = false;   // aux cache is clean only if requested
-        }
+        aux_dirty_ = !aux_enabled_;   // aux cache is clean only if requested
         aux_enabled_ = false;     // disable aux variables for next call
     }
     on_append_force_();

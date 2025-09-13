@@ -194,7 +194,7 @@ end
 --
 -- .. method:: aux_enable()
 --
---    Enable the computation of auxliliary variables in the next on_force()
+--    Enable the computation of auxiliary variables in the next on_force()
 --    step. These are: ``stress_pot`` and ``potential_energy`` and derived
 --    properties (such as the internal energy or the virial). The auxiliary
 --    variables should be activated like this::
