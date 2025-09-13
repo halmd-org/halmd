@@ -1,5 +1,6 @@
 --
--- Copyright © 2010-2012  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2025 Felix Höfling
+-- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -248,12 +249,23 @@ local M = module(function(args)
 
         local writer = file:writer({location = location, mode = "append"})
 
+        -- this table consists of data fields that will need an update of the
+        -- auxiliary variables during force calculation
+        local aux_table = {
+            potential_energy = true
+          , potential_stress_tensor = true
+        }
+
         -- register data fields with writer,
         -- the keys of 'field' may either be strings (dictionary) or numbers (table),
         -- in the latter case, the value string is assigned to the group name
+        local aux = false
         for k,v in pairs(fields) do
             local name = (type(k) == "string") and k or v
             writer:on_write(phase_space:data(v), {name})
+            if aux_table[name] then
+                aux = true
+            end
         end
 
         -- store box information
@@ -266,6 +278,9 @@ local M = module(function(args)
 
         -- connect writer to sampler
         if every and every > 0 then
+            if aux then
+                table.insert(conn, sampler:on_prepare(function() particle:aux_enable() end, every, 0))
+            end
             table.insert(conn, sampler:on_sample(writer.write, every, clock.step))
         else
             table.insert(conn, sampler:on_start(writer.write))
