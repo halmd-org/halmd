@@ -1,4 +1,5 @@
 --
+-- Copyright © 2025      Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -29,8 +30,9 @@ local utility           = require("halmd.utility")
 -- Velocity Verlet
 -- ===============
 --
--- This NVE-ensemble integrator implements the velocity-Verlet algorithm in
--- `J. Chem. Phys. 76, 637 <http://dx.doi.org/10.1063/1.442716>`_ (1982).
+-- This symplectic integrator implements the velocity-Verlet algorithm for
+-- Hamiltonian dynamics (NVE ensemble), see `J. Chem. Phys. 76, 637
+-- <http://dx.doi.org/10.1063/1.442716>`_ (1982).
 --
 -- The algorithm consists of a first half-step
 --
@@ -77,13 +79,25 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 --
 -- .. method:: integrate()
 --
---    Calculate first half-step.
+--    Calculate first half-step (propagate velocities and positions).
 --
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_integrate`.
 --
+-- .. method:: prepend_integrate()
+--
+--    Update forces if necessary and lock data.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_prepend_integrate`.
+--
+-- .. method:: append_integrate()
+--
+--    Release force lock.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_append_integrate`.
+--
 -- .. method:: finalize()
 --
---    Calculate second half-step.
+--    Calculate second half-step (propagate velocities).
 --
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
@@ -115,7 +129,9 @@ local M = module(function(args)
 
     -- connect integrator to core and profiler
     table.insert(conn, clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end))
+    table.insert(conn, core:on_prepend_integrate(function() self:prepend_integrate() end))
     table.insert(conn, core:on_integrate(function() self:integrate() end))
+    table.insert(conn, core:on_append_integrate(function() self:append_integrate() end))
     table.insert(conn, core:on_finalize(function() self:finalize() end))
 
     local runtime = assert(self.runtime)

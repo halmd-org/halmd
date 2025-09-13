@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2025       Felix Höfling
  * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
@@ -54,7 +55,19 @@ void verlet<dimension, float_type>::set_timestep(double timestep)
 
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
+ *
+ * access and lock force arrays in 'prepend' step
+ * to ensure consistent data accross multiple integrators
  */
+template <int dimension, typename float_type>
+void verlet<dimension, float_type>::prepend_integrate()
+{
+    // data access triggers a recalculation if needed,
+    // typically, the force update appears in finalize()
+    particle_->force();
+    particle_->lock("force");
+}
+
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
@@ -77,6 +90,14 @@ void verlet<dimension, float_type>::integrate()
         r += v * timestep_;
         (*image)[i] += box_->reduce_periodic(r);
     }
+}
+
+template <int dimension, typename float_type>
+void verlet<dimension, float_type>::append_integrate()
+{
+    // release force lock after all integrator instances have completed their
+    // integrate() step
+    particle_->unlock("force");
 }
 
 /**
@@ -111,7 +132,9 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
             namespace_("integrators")
             [
                 class_<verlet>()
+                    .def("prepend_integrate", &verlet::prepend_integrate)
                     .def("integrate", &verlet::integrate)
+                    .def("append_integrate", &verlet::append_integrate)
                     .def("finalize", &verlet::finalize)
                     .def("set_timestep", &verlet::set_timestep)
                     .property("timestep", &verlet::timestep)
