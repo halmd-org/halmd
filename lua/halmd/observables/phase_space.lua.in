@@ -129,6 +129,7 @@ local phase_space = assert(libhalmd.observables.phase_space)
 --
 --    The particle group used by the sampler.
 --
+--
 -- .. class:: writer(args)
 --
 --    Write trajectory of particle group to file.
@@ -180,58 +181,33 @@ local M = module(function(args)
         self.acquire = function(self, name, gpu)
             return phase_space:acquire(name, gpu or false)
         end
-
-        self.acquire_position = function(self)
-            return phase_space:acquire("position", true)
-        end
-
-        self.acquire_velocity = function(self)
-            return phase_space:acquire("velocity", true)
-        end
-
-        self.acquire_species = function(self)
-            return phase_space:acquire("species", false)
-        end
-
-        self.acquire_mass = function(self)
-            return phase_space:acquire("mass", false)
-        end
     else
         self.acquire = function(self, name)
             return phase_space:acquire(name)
         end
-
-        self.acquire_position = function(self)
-            return phase_space:acquire("position")
-        end
-
-        self.acquire_velocity = function(self)
-            return phase_space:acquire("velocity")
-        end
-
-        self.acquire_species = function(self)
-            return phase_space:acquire("species")
-        end
-
-        self.acquire_mass = function(self)
-            return phase_space:acquire("mass")
-        end
     end
 
-    self.position = function(self)
-        return phase_space:data("position")
-    end
+    -- define module methods to access data fields to be used, e.g., by writers
+    -- and correlation functions
+    local fields = {
+        "position", "velocity", "species", "mass"
+      , "potential_energy", "potential_stress_tensor"
+    }
 
-    self.velocity = function(self)
-        return phase_space:data("velocity")
-    end
+    for i,name in ipairs(fields) do
+        self[name] = function(self)
+            return phase_space:data(name)
+        end
 
-    self.species = function(self)
-        return phase_space:data("species")
-    end
-
-    self.mass = function(self)
-        return phase_space:data("mass")
+        if particle.memory == "gpu" then
+            self["acquire_" .. name] = function(self)
+                return phase_space:acquire(name, true)
+            end
+        else
+            self["acquire_" .. name] = function(self)
+                return phase_space:acquire(name)
+            end
+        end
     end
 
     self.writer = function(self, args)
@@ -246,7 +222,9 @@ local M = module(function(args)
         local s = ""
         for k,v in pairs(fields) do s = s .. ", " .. v end
         logger:message("sampling" .. string.sub(s, 2))
-        logger:info(("sampling interval: %d"):format(every))
+        if every then
+            logger:info(("sampling interval: %d"):format(every))
+        end
         logger:info("location within output file: " .. table.concat(location, "/") .. "/")
 
         if group.fluctuating then
