@@ -125,7 +125,7 @@ public:
       , unsigned int size
       , std::function<void()> update_function = std::function<void()>()
     )
-      : nparticle_(nparticle), data_(size), update_function_(update_function), locked_(false)
+      : nparticle_(nparticle), data_(size), update_function_(update_function), locked_(0)
     {
         if (!update_function_) {
             update_function_ = [](){};
@@ -179,17 +179,20 @@ public:
     }
 
     /**
-    * set lock on array data
+    * set (increment) lock on array data
     */
     virtual void lock() {
-        locked_ = true;
+        ++locked_;
     }
 
     /**
-    * remove lock on array data
+    * remove (decrement) lock on array data
     */
     virtual void unlock() {
-        locked_ = false;
+        if (!locked_) {
+            throw std::logic_error(std::string("attempt to release lock on unlocked particle data"));
+        }
+        --locked_;
     }
 
     /**
@@ -252,8 +255,13 @@ private:
     cache<raw_array<T>> data_;
     /** optional update function */
     std::function<void()> update_function_;
-    /** true if data are locked */
-    bool locked_;
+    /**
+     *  locked_ is non-zero if array data are locked
+     *
+     *  the use of a numeric counter rather than a
+     *  boolean enables nested locking
+     */
+    unsigned int locked_;
 };
 
 template<typename T>
