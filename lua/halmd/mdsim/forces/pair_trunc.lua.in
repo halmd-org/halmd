@@ -45,6 +45,7 @@ local pair_trunc = assert(libhalmd.mdsim.forces.pair_trunc)
 -- :param args.potential: instance of :mod:`halmd.mdsim.potentials`
 -- :param args.neighbour: instance of :mod:`halmd.mdsim.neighbour` or a table of keyword arguments (optional)
 -- :param number args.weight: weight of the auxiliary variables *(default: 1)*
+-- :param string args.label: instance label *(optional)*
 --
 -- The module computes the truncated potential forces excerted by the particles
 -- of the second `particle` instance on those of the first one. The two
@@ -83,6 +84,10 @@ local pair_trunc = assert(libhalmd.mdsim.forces.pair_trunc)
 -- .. attribute:: potential
 --
 --    Instance of :mod:`halmd.mdsim.potentials`.
+--
+-- .. attribute:: label
+--
+--    Label of force instance.
 --
 -- .. method:: disconnect()
 --
@@ -125,7 +130,8 @@ local M = module(function(args)
         error("mismatch of memory locations of 'particle' and 'potential'", 2)
     end
 
-    local logger = assert(potential.logger)
+    local label = args.label or potential.description
+    local logger = log.logger({label = ("pair force (%s)"):format(label)})
 
     -- If no instance of a neighbour list was passed, create a default one. In
     -- this case, a user-supplied table with keyword arguments is passed on to
@@ -144,6 +150,10 @@ local M = module(function(args)
     -- construct force module
     local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, weight, logger)
 
+    -- attach label as read-only property
+    self.label = property(function(self)
+        return label
+    end)
     -- attach potential instance as read-only Lua property
     self.potential = property(function(self)
         return potential

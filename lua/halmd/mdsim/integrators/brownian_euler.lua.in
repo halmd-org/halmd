@@ -63,6 +63,7 @@ local brownian_euler = assert(libhalmd.mdsim.integrators.brownian_euler)
 -- :param number args.timestep: integration timestep (defaults to :attr:`halmd.mdsim.clock.timestep`)
 -- :param table args.diffusion: vector with diffusion constants :math:`D_i` per species
 -- :param number args.temperature: solvent temperature
+-- :param string args.label: instance label *(default: ``particle.label``)*
 --
 -- .. method:: set_timestep(timestep)
 --
@@ -93,6 +94,10 @@ local brownian_euler = assert(libhalmd.mdsim.integrators.brownian_euler)
 --
 -- .. method:: disconnect()
 --
+-- .. attribute:: label
+--
+--    Label of integrator instance.
+--
 --    Disconnect integrator from core and profiler.
 --
 -- .. method:: integrate()
@@ -112,7 +117,8 @@ local M = module(function(args)
         timestep = assert(clock.timestep)
     end
     local rng = random.generator({memory = particle.memory})
-    local logger = log.logger({label = "brownian_euler"})
+    local label = args.label and tostring(args.label) or particle.label
+    local logger = log.logger({label = ("brownian_euler (%s)"):format(label)})
 
     -- construct instance
     local self = brownian_euler(particle, rng, box, timestep, temperature, diffusion, logger)
@@ -123,6 +129,11 @@ local M = module(function(args)
     self.set_timestep = function(self, timestep)
         return clock:set_timestep(timestep)
     end
+
+    -- attach label as read-only property
+    self.label = property(function(self)
+        return label
+    end)
 
     -- sequence of signal connections
     local conn = {}

@@ -59,6 +59,7 @@ local h5 = assert(libhalmd.h5)
 -- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
 -- :param number args.temperature: temperature of heat bath
 -- :param number args.resonance_frequency: coupling frequency of the thermostat
+-- :param string args.label: instance label *(default: ``particle.label``)*
 --
 -- .. method:: set_timestep(timestep)
 --
@@ -138,6 +139,10 @@ local h5 = assert(libhalmd.h5)
 --
 --    Return internal energy of thermostat variables divided by `particle.nparticle`.
 --
+-- .. attribute:: label
+--
+--    Label of integrator instance.
+--
 -- .. method:: disconnect()
 --
 --    Disconnect integrator from core and profiler.
@@ -187,7 +192,8 @@ local M = module(function(args)
     local temperature = utility.assert_kwarg(args, "temperature")
     local resonance_frequency = utility.assert_kwarg(args, "resonance_frequency")
 
-    local logger = log.logger({label = "verlet_nvt_hoover"})
+    local label = args.label and tostring(args.label) or particle.label
+    local logger = log.logger({label = ("verlet_nvt_hoover (%s)"):format(label)})
 
     local self = verlet_nvt_hoover(particle, box, timestep, temperature, resonance_frequency, logger)
 
@@ -232,6 +238,11 @@ local M = module(function(args)
             local name = (type(k) == "string") and k or v
             writer:on_write(assert(self[v]), {name})
         end
+
+        -- attach label as read-only property
+        self.label = property(function(self)
+            return label
+        end)
 
         -- sequence of signal connections
         local conn = {}

@@ -54,6 +54,7 @@ local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_anderse
 -- :param number args.temperature: temperature of heat bath
 -- :param number args.rate: collision rate
 -- :param number args.timestep: integration timestep (defaults to :attr:`halmd.mdsim.clock.timestep`)
+-- :param string args.label: instance label *(default: ``particle.label``)*
 --
 -- .. method:: set_timestep(timestep)
 --
@@ -81,6 +82,10 @@ local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_anderse
 -- .. attribute:: collision_rate
 --
 --    Collision rate with the heat bath.
+--
+-- .. attribute:: label
+--
+--    Label of integrator instance.
 --
 -- .. method:: disconnect()
 --
@@ -122,7 +127,8 @@ local M = module(function(args)
         timestep = assert(clock.timestep)
     end
     local rng = random.generator({memory = particle.memory})
-    local logger = log.logger({label = "verlet_nvt_andersen"})
+    local label = args.label and tostring(args.label) or particle.label
+    local logger = log.logger({label = ("verlet_nvt_andersen (%s)"):format(label)})
 
     -- construct instance
     local self = verlet_nvt_andersen(particle, box, rng, timestep, temperature, rate, logger)
@@ -133,6 +139,10 @@ local M = module(function(args)
     self.set_timestep = function(self, timestep)
         return clock:set_timestep(timestep)
     end
+    -- attach label as read-only property
+    self.label = property(function(self)
+        return label
+    end)
 
     -- sequence of signal connections
     local conn = {}

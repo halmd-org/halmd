@@ -59,6 +59,7 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
+-- :param string args.label: instance label *(default: ``particle.label``)*
 --
 -- .. method:: set_timestep(timestep)
 --
@@ -72,6 +73,10 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 -- .. attribute:: timestep
 --
 --    Integration time step in MD units.
+--
+-- .. attribute:: label
+--
+--    Label of integrator instance.
 --
 -- .. method:: disconnect()
 --
@@ -112,7 +117,8 @@ local M = module(function(args)
         timestep = assert(clock.timestep)
     end
 
-    local logger = log.logger({label = "verlet"})
+    local label = args.label and tostring(args.label) or particle.label
+    local logger = log.logger({label = ("verlet (%s)"):format(label)})
 
     local self = verlet(particle, box, timestep, logger)
 
@@ -122,6 +128,11 @@ local M = module(function(args)
     self.set_timestep = function(self, timestep)
         clock:set_timestep(timestep)
     end
+
+    -- attach label as read-only property
+    self.label = property(function(self)
+        return label
+    end)
 
     -- sequence of signal connections
     local conn = {}

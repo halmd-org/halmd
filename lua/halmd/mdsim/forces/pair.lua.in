@@ -38,6 +38,7 @@ local pair_trunc    = require("halmd.mdsim.forces.pair_trunc")
 -- :param args.potential: instance of :mod:`halmd.mdsim.potentials`
 -- :param args.neighbour: instance of :mod:`halmd.mdsim.neighbour` or a table of keyword arguments (optional)
 -- :param number args.weight: weight of the auxiliary variables *(default: 1)*
+-- :param string args.label: instance label *(optional)*
 --
 -- The module computes the potential forces excerted by the particles
 -- of the second `particle` instance on those of the first one. The two
@@ -65,6 +66,10 @@ local pair_trunc    = require("halmd.mdsim.forces.pair_trunc")
 -- .. attribute:: potential
 --
 --    Instance of :mod:`halmd.mdsim.potentials`.
+--
+-- .. attribute:: label
+--
+--    Label of force instance.
 --
 -- .. method:: disconnect()
 --

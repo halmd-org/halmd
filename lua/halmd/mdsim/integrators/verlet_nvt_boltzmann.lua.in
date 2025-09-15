@@ -59,6 +59,7 @@ local function round(x) return math.floor(x + 0.5) end
 -- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
 -- :param number args.temperature: temperature of Boltzmann distribution
 -- :param number args.rate: nominal coupling rate
+-- :param string args.label: instance label *(default: ``particle.label``)*
 --
 -- .. method:: set_timestep(timestep)
 --
@@ -119,6 +120,10 @@ local function round(x) return math.floor(x + 0.5) end
 --
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
+-- .. attribute:: label
+--
+--    Label of integrator instance.
+--
 -- .. method:: disconnect()
 --
 --    Disconnect integrator from core and profiler.
@@ -137,7 +142,8 @@ local M = module(function(args)
     end
 
     local rng = random.generator({memory = particle.memory})
-    local logger = log.logger({label = "verlet_nvt_boltzmann"})
+    local label = args.label and tostring(args.label) or particle.label
+    local logger = log.logger({label = ("verlet_nvt_boltzmann (%s)"):format(label)})
 
     local self = verlet(particle, box, timestep, logger)
 
@@ -149,7 +155,8 @@ local M = module(function(args)
     end
 
     -- couple to bath roughly at given rate
-    local bath = boltzmann(particle, rng, temperature, logger)
+    local bath_logger = log.logger({label = ("boltzmann (%s)"):format(label)})
+    local bath = boltzmann(particle, rng, temperature, bath_logger)
     local interval = math.max(1, round(1 / (rate * timestep)))
     local rate = 1 / (interval * timestep)
     local finalize
@@ -175,6 +182,11 @@ local M = module(function(args)
 
     logger:message(("coupling interval: %d steps"):format(self.interval))
     logger:message(("coupling rate: %g per unit time"):format(self.rate))
+
+     -- attach label as read-only property
+    self.label = property(function(self)
+        return label
+    end)
 
     -- sequence of signal connections
     local conn = {}

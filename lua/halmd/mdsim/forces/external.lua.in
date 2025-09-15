@@ -21,11 +21,12 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local core              = require("halmd.mdsim.core")
-local utility           = require("halmd.utility")
-local device            = require("halmd.utility.device")
-local module            = require("halmd.utility.module")
-local profiler          = require("halmd.utility.profiler")
+local log      = require("halmd.io.log")
+local core     = require("halmd.mdsim.core")
+local utility  = require("halmd.utility")
+local device   = require("halmd.utility.device")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
 
 ---
 -- External Potential Force
@@ -43,7 +44,8 @@ local external = assert(libhalmd.mdsim.forces.external)
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :mod:`halmd.mdsim.box`
 -- :param args.potential: instance of :mod:`halmd.mdsim.potentials.external`
---
+-- :param string args.label: instance label *(optional)*
+
 -- The module computes the force on the particles due to an external potential.
 -- Recomputation is triggered by the signals `on_force` and `on_prepend_force`
 -- of `args.particle`.
@@ -51,6 +53,10 @@ local external = assert(libhalmd.mdsim.forces.external)
 -- .. attribute:: potential
 --
 --    Instance of :mod:`halmd.mdsim.potentials.external`.
+--
+-- .. attribute:: label
+--
+--    Label of force instance
 --
 -- .. method:: disconnect()
 --
@@ -75,7 +81,8 @@ local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
     local box = utility.assert_kwarg(args, "box")
     local potential = utility.assert_kwarg(args, "potential")
-    local logger = assert(potential.logger)
+    local label = args.label or potential.description
+    local logger = log.logger({label = ("pair force (%s)"):format(label)})
 
     if particle.memory ~= potential.memory then
         error("mismatching memory locations of 'particle' and 'potential'", 2)
@@ -83,6 +90,11 @@ local M = module(function(args)
 
     -- construct force module
     local self = external(potential, particle, box, logger)
+
+    -- attach label as read-only property
+    self.label = property(function(self)
+        return label
+    end)
 
     -- sequence of signal connections
     local conn = {}
