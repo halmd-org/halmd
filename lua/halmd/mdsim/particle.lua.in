@@ -155,6 +155,13 @@ end
 --    particles in initial order, use :meth:`get_reverse_id` to retrieve a map
 --    from particle IDs to current particle indices in memory.
 --
+-- .. note::
+--
+--    The :class:<phase space `halmd.observables.phase_space`> sampler offers
+--    an alternative interface to access the particle data in their initial,
+--    fixed order. This approach is suggested for repeated access to particle
+--    data due to its better runtime performance.
+--
 -- .. method:: get(name)
 --
 --    Returns particle data identified by the name of the particle array.
