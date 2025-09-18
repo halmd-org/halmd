@@ -102,8 +102,19 @@ set_mass(chain_type const& mass)
 }
 
 /**
- * First leapfrog half-step of velocity-Verlet algorithm
- */
+* First leapfrog half-step of velocity-Verlet algorithm
+* access and lock force arrays in 'prepend' step to ensure consistent data across multiple integrators
+*/
+ 
+template <int dimension, typename float_type>
+void verlet_nvt_hoover<dimension, float_type>::prepend_integrate()
+{
+    // data access triggers a recalculation if needed,
+    // typically, the force update appears in finalize()
+    particle_->force();
+    particle_->lock("force");
+}
+
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
@@ -128,6 +139,14 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
         r += v * timestep_;
         (*image)[i] += box_->reduce_periodic(r);
     }
+}
+
+template <int dimension, typename float_type>
+void verlet_nvt_hoover<dimension, float_type>::append_integrate()
+{
+    // release force lock after all integrator instances have completed their
+    // integrate() step
+    particle_->unlock("force");
 }
 
 /**
@@ -260,7 +279,9 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
             namespace_("integrators")
             [
                 class_<verlet_nvt_hoover>()
+                    .def("prepend_integrate", &verlet_nvt_hoover::prepend_integrate)
                     .property("integrate", &wrap_integrate<verlet_nvt_hoover>)
+                    .def("prepend_integrate", &verlet_nvt_hoover::append_integrate)
                     .property("finalize", &wrap_finalize<verlet_nvt_hoover>)
                     .property("timestep", &verlet_nvt_hoover::timestep)
                     .property("temperature", &verlet_nvt_hoover::temperature)

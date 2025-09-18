@@ -55,7 +55,9 @@ public:
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
+    void prepend_integrate();
     void integrate();
+    void append_integrate();
     void set_timestep(double timestep);
 
     //! returns integration time step

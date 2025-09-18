@@ -107,6 +107,18 @@ local h5 = assert(libhalmd.h5)
 --
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_integrate`.
 --
+-- .. method:: prepend_integrate()
+--
+--    Update forces if necessary and lock data.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_prepend_integrate`.
+--
+-- .. method:: append_integrate()
+--
+--    Release force lock.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_append_integrate`.
+--
 -- .. method:: finalize()
 --
 --    Calculate second half-step.
@@ -236,8 +248,10 @@ local M = module(function(args)
 
     -- connect integrator to core and profiler
     table.insert(conn, clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end))
-    table.insert(conn, core:on_integrate(self.integrate))
-    table.insert(conn, core:on_finalize(self.finalize))
+    table.insert(conn, core:on_prepend_integrate(function() self:prepend_integrate() end))
+    table.insert(conn, core:on_integrate(function() self:integrate() end))
+    table.insert(conn, core:on_append_integrate(function() self:append_integrate() end))
+    table.insert(conn, core:on_finalize(function() self:finalize() end))
 
     local runtime = assert(self.runtime)
     table.insert(conn, profiler:on_profile(runtime.integrate,

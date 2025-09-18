@@ -67,7 +67,9 @@ public:
     /**
      * First leapfrog half-step of velocity-Verlet algorithm
      */
+    void prepend_integrate();
     void integrate();
+    void append_integrate();
 
     /**
      * Second leapfrog half-step of velocity-Verlet algorithm

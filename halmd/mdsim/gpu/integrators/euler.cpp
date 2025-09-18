@@ -57,7 +57,19 @@ void euler<dimension, float_type>::set_timestep(double timestep)
 {
     timestep_ = timestep;
 }
+/**
 
+ * access and lock force arrays in 'prepend' step
+ * to ensure consistent data across multiple integrators
+ */
+template <int dimension, typename float_type>
+void euler<dimension, float_type>::prepend_integrate()
+{
+    // data access triggers a recalculation if needed,
+    // typically, the force update appears in finalize()
+    particle_->force();
+    particle_->lock("force");
+}
 /**
  * perform Euler integration: update positions from velocities
  */
@@ -90,6 +102,14 @@ void euler<dimension, float_type>::integrate()
     }
 }
 
+template <int dimension, typename float_type>
+void euler<dimension, float_type>::append_integrate()
+{
+    // release force lock after all integrator instances have completed their
+    // integrate() step
+    particle_->unlock("force");
+}
+
 template <typename integrator_type>
 static std::function<void ()>
 wrap_integrate(std::shared_ptr<integrator_type> self)
@@ -119,7 +139,9 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
             namespace_("integrators")
             [
                 class_<euler>()
+                    .def("prepend_integrate", &euler::prepend_integrate)
                     .property("integrate", &wrap_integrate<euler>)
+                    .def("append_integrate", &euler::append_integrate)
                     .property("timestep", &euler::timestep)
                     .def("set_timestep", &euler::set_timestep)
                     .scope

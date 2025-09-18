@@ -130,7 +130,9 @@ local M = module(function(args)
 
     -- connect integrator to core and profiler
     table.insert(conn, clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end))
+    table.insert(conn, core:on_prepend_integrate(function() self:prepend_integrate() end))
     table.insert(conn, core:on_integrate(function() self:integrate() end))
+    table.insert(conn, core:on_append_integrate(function() self:append_integrate() end))
 
     local runtime = assert(self.runtime)
     table.insert(conn, profiler:on_profile(runtime.integrate, "Brownian integration step"))

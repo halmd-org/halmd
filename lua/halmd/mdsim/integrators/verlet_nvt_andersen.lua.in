@@ -92,9 +92,21 @@ local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_anderse
 --
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_integrate`.
 --
+-- .. method:: prepend_integrate()
+--
+--    Update forces if necessary and lock data.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_prepend_integrate`.
+--
+-- .. method:: append_integrate()
+--
+--    Release force lock.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_append_integrate`.
+--
 -- .. method:: finalize()
 --
---    Second leapfrog half-step of velocity-Verlet algorithm.
+--    Calculate second half-step (propagate velocities).
 --
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
@@ -128,7 +140,9 @@ local M = module(function(args)
 
     -- connect integrator to core and profiler
     table.insert(conn, clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end))
+    table.insert(conn, core:on_prepend_integrate(function() self:prepend_integrate() end))
     table.insert(conn, core:on_integrate(function() self:integrate() end))
+    table.insert(conn, core:on_append_integrate(function() self:append_integrate() end))
     table.insert(conn, core:on_finalize(function() self:finalize() end))
 
     local runtime = assert(self.runtime)

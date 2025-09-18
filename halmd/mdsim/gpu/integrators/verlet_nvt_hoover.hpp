@@ -63,7 +63,9 @@ public:
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
+    void prepend_integrate();
     void integrate();
+    void append_integrate();
     void finalize();
     void set_timestep(double timestep);
     void set_temperature(double temperature);

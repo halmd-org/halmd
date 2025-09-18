@@ -101,6 +101,18 @@ local function round(x) return math.floor(x + 0.5) end
 --
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_integrate`.
 --
+-- .. method:: prepend_integrate()
+--
+--    Update forces if necessary and lock data.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_prepend_integrate`.
+--
+-- .. method:: append_integrate()
+--
+--    Release force lock.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_append_integrate`.
+--
 -- .. method:: finalize()
 --
 --    Calculate second half-step, or assign velocities from Boltzmann distribution.
@@ -170,7 +182,9 @@ local M = module(function(args)
 
     -- connect integrator to core and profiler
     table.insert(conn, clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end))
+    table.insert(conn, core:on_prepend_integrate(function() self:prepend_integrate() end))
     table.insert(conn, core:on_integrate(function() self:integrate() end))
+    table.insert(conn, core:on_append_integrate(function() self:append_integrate() end))
     table.insert(conn, core:on_finalize(finalize))
     table.insert(conn, profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet"))
     table.insert(conn, profiler:on_profile(self.runtime.finalize, "second half-step of velocity-Verlet"))

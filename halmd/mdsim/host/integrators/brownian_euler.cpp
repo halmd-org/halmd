@@ -99,6 +99,20 @@ void brownian_euler<dimension, float_type>::set_temperature(double temperature)
  *
  * @f$ r(t + \Delta t) = \mu F(t) + \sigma d vec{W} @f$
  */
+
+ /**
+ * access and lock force arrays in 'prepend' step
+ * to ensure consistent data across multiple integrators
+ */
+template <int dimension, typename float_type>
+void brownian_euler<dimension, float_type>::prepend_integrate()
+{
+    // data access triggers a recalculation if needed,
+    // typically, the force update appears in finalize()
+    particle_->force();
+    particle_->lock("force");
+}
+
 template <int dimension, typename float_type>
 void brownian_euler<dimension, float_type>::integrate()
 {
@@ -151,6 +165,14 @@ void brownian_euler<dimension, float_type>::integrate()
 }
 
 template <int dimension, typename float_type>
+void brownian_euler<dimension, float_type>::append_integrate()
+{
+    // release force lock after all integrator instances have completed their
+    // integrate() step
+    particle_->unlock("force");
+}
+
+template <int dimension, typename float_type>
 void brownian_euler<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -161,7 +183,9 @@ void brownian_euler<dimension, float_type>::luaopen(lua_State* L)
             namespace_("integrators")
             [
                 class_<brownian_euler>()
+                    .def("prepend_integrate", &brownian_euler::prepend_integrate)
                     .def("integrate", &brownian_euler::integrate)
+                    .def("append_integrate", &brownian_euler::append_integrate)
                     .def("set_timestep", &brownian_euler::set_timestep)
                     .def("set_temperature", &brownian_euler::set_temperature)
                     .property("timestep", &brownian_euler::timestep)

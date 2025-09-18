@@ -76,6 +76,17 @@ local euler = assert(libhalmd.mdsim.integrators.euler)
 --
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_integrate`.
 --
+-- .. method:: prepend_integrate()
+--
+--    Update forces if necessary and lock data.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_prepend_integrate`.
+--
+-- .. method:: append_integrate()
+--
+--    Release force lock.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_append_integrate`.
 local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
     local box = utility.assert_kwarg(args, "box")
@@ -102,7 +113,9 @@ local M = module(function(args)
     self.disconnect = utility.signal.disconnect(conn, "integrator")
 
     -- connect integrator to core
+    table.insert(conn, core:on_prepend_integrate(function() self:prepend_integrate() end))
     table.insert(conn, core:on_integrate(function() self:integrate() end))
+    table.insert(conn, core:on_append_integrate(function() self:append_integrate() end))
     table.insert(conn, clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end))
 
     local runtime = assert(self.runtime)

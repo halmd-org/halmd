@@ -68,6 +68,22 @@ void verlet_nvt_andersen<dimension, float_type>::set_temperature(double temperat
     LOG("temperature of heat bath: " << temperature_);
 }
 
+/**
+ * First leapfrog half-step of velocity-Verlet algorithm
+ *
+ * access and lock force arrays in 'prepend' step
+ * to ensure consistent data across multiple integrators
+ */
+template <int dimension, typename float_type>
+void verlet_nvt_andersen<dimension, float_type>::prepend_integrate()
+{
+    // data access triggers a recalculation if needed,
+    // typically, the force update appears in finalize()
+    particle_->force();
+    particle_->lock("force");
+}
+
+
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::integrate()
 {
@@ -91,6 +107,18 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
         (*image)[i] += box_->reduce_periodic(r);
     }
 }
+
+template <int dimension, typename float_type>
+void verlet_nvt_andersen<dimension, float_type>::append_integrate()
+{
+    // release force lock after all integrator instances have completed their
+    // integrate() step
+    particle_->unlock("force");
+}
+
+/**
+ * Second leapfrog half-step of velocity-Verlet algorithm
+ */
 
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::finalize()
@@ -147,7 +175,9 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
             namespace_("integrators")
             [
                 class_<verlet_nvt_andersen>()
+                    .def("prepend_integrate", &verlet_nvt_andersen::prepend_integrate)
                     .def("integrate", &verlet_nvt_andersen::integrate)
+                    .def("append_integrate", &verlet_nvt_andersen::append_integrate)
                     .def("finalize", &verlet_nvt_andersen::finalize)
                     .def("set_timestep", &verlet_nvt_andersen::set_timestep)
                     .def("set_temperature", &verlet_nvt_andersen::set_temperature)

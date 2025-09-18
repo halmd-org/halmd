@@ -73,7 +73,18 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_temp
 
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
+ *
+ * access and lock force arrays in 'prepend' step
+ * to ensure consistent data across multiple integrators
  */
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::prepend_integrate()
+{   // data access triggers a recalculation if needed,
+    // typically, the force update appears in finalize()
+    particle_->force();
+    particle_->lock("force");
+}
+
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrate()
 {
@@ -103,6 +114,13 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrat
         LOG_ERROR("failed to stream first leapfrog step on GPU");
         throw;
     }
+}
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::append_integrate()
+{
+    // release force lock after all integrator instances have completed their
+    // integrate() step
+    particle_->unlock("force");
 }
 
 /**
@@ -152,7 +170,9 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::luaopen(
             namespace_("integrators")
             [
                 class_<verlet_nvt_andersen>()
+                    .def("prepend_integrate", &verlet_nvt_andersen::prepend_integrate)
                     .def("integrate", &verlet_nvt_andersen::integrate)
+                    .def("append_integrate", &verlet_nvt_andersen::append_integrate)
                     .def("finalize", &verlet_nvt_andersen::finalize)
                     .def("set_timestep", &verlet_nvt_andersen::set_timestep)
                     .def("set_temperature", &verlet_nvt_andersen::set_temperature)

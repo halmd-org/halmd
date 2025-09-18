@@ -96,6 +96,21 @@ void brownian_euler<dimension, float_type, RandomNumberGenerator>::set_temperatu
     LOG_INFO("mobility constants: " << mobility);
 }
 
+
+
+ /**
+ * access and lock force arrays in 'prepend' step
+ * to ensure consistent data across multiple integrators
+ */
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void brownian_euler<dimension, float_type, RandomNumberGenerator>::prepend_integrate()
+{
+    // Ensure force array is materialized and keep it stable during integrate()
+    particle_->force();
+    particle_->lock("force");
+}
+
+
 /**
  * perform Brownian integration: update positions from random distribution
  */
@@ -136,7 +151,13 @@ void brownian_euler<dimension, float_type, RandomNumberGenerator>::integrate()
         throw;
     }
 }
-
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void brownian_euler<dimension, float_type, RandomNumberGenerator>::append_integrate()
+{
+     // release force lock after all integrator instances have completed their
+    // integrate() step
+    particle_->unlock("force");
+}
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void brownian_euler<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
@@ -148,7 +169,9 @@ void brownian_euler<dimension, float_type, RandomNumberGenerator>::luaopen(lua_S
             namespace_("integrators")
             [
                 class_<brownian_euler>()
+                    .def("prepend_integrate", &brownian_euler::prepend_integrate)
                     .def("integrate", &brownian_euler::integrate)
+                    .def("append_integrate", &brownian_euler::append_integrate)
                     .def("set_timestep", &brownian_euler::set_timestep)
                     .def("set_temperature", &brownian_euler::set_temperature)
                     .property("timestep", &brownian_euler::timestep)
