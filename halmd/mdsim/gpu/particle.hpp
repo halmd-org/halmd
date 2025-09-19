@@ -78,14 +78,14 @@ public:
     typedef en_pot_type gpu_en_pot_type;
     typedef float gpu_stress_pot_type;
 
-    typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_vector_type position_array_type;
-    typedef typename particle_array_gpu<gpu_vector_type>::gpu_vector_type image_array_type;
-    typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_vector_type velocity_array_type;
+    typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_array_type position_array_type;
+    typedef typename particle_array_gpu<gpu_vector_type>::gpu_array_type image_array_type;
+    typedef typename particle_array_gpu<gpu_hp_vector_type>::gpu_array_type velocity_array_type;
     typedef cuda::memory::device::vector<unsigned int> id_array_type;
-    typedef cuda::memory::device::vector<unsigned int>  reverse_id_array_type;
-    typedef typename particle_array_gpu<gpu_vector_type>::gpu_vector_type force_array_type;
-    typedef typename particle_array_gpu<float>::gpu_vector_type en_pot_array_type;
-    typedef typename particle_array_gpu<float>::gpu_vector_type stress_pot_array_type;
+    typedef cuda::memory::device::vector<unsigned int> reverse_id_array_type;
+    typedef typename particle_array_gpu<gpu_vector_type>::gpu_array_type force_array_type;
+    typedef typename particle_array_gpu<float>::gpu_array_type en_pot_array_type;
+    typedef typename particle_array_gpu<float>::gpu_array_type stress_pot_array_type;
 
     void rearrange(cuda::memory::device::vector<unsigned int> const& g_index);
 
@@ -176,7 +176,7 @@ public:
      * throws an exception if the array does not exist or has an invalid type
      */
     template<typename T>
-    cache<typename particle_array_gpu<T>::gpu_vector_type> const &data(const std::string &name) const
+    cache<typename particle_array_gpu<T>::gpu_array_type> const &data(const std::string &name) const
     {
         return particle_array_gpu<T>::cast(get_gpu_array(name))->data();
     }
@@ -191,7 +191,7 @@ public:
      * is locked
      */
     template<typename T>
-    cache<typename particle_array_gpu<T>::gpu_vector_type>& mutable_data(const std::string &name)
+    cache<typename particle_array_gpu<T>::gpu_array_type>& mutable_data(const std::string &name)
     try { // 'function try block'
         return particle_array_gpu<T>::cast(get_gpu_array(name))->mutable_data();
     }

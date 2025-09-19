@@ -92,7 +92,7 @@ template<typename T>
 struct particle_array_gpu_helper
 {
     static cuda::memory::host::vector<uint8_t> get_host_memory(
-      cache<typename particle_array_gpu<T>::gpu_vector_type> const& data
+      cache<typename particle_array_gpu<T>::gpu_array_type> const& data
     )
     {
         cuda::memory::host::vector<uint8_t> mem(data->size() * sizeof(T));
@@ -100,7 +100,7 @@ struct particle_array_gpu_helper
     }
 
     static cuda::memory::host::vector<uint8_t> get_host_data(
-      cache<typename particle_array_gpu<T>::gpu_vector_type> const& data
+      cache<typename particle_array_gpu<T>::gpu_array_type> const& data
     )
     {
         auto const& g_input = read_cache(data);
@@ -111,7 +111,7 @@ struct particle_array_gpu_helper
     }
 
     static void set_host_data(
-        cache<typename particle_array_gpu<T>::gpu_vector_type>& data
+        cache<typename particle_array_gpu<T>::gpu_array_type>& data
       , cuda::memory::host::vector<uint8_t> const& mem
     )
     {
@@ -121,7 +121,7 @@ struct particle_array_gpu_helper
     }
 
     static void initialize_value(
-        cache<typename particle_array_gpu<T>::gpu_vector_type>& data
+        cache<typename particle_array_gpu<T>::gpu_array_type>& data
       , T const& init_value
       , T const& ghost_init_value
       , unsigned int nparticle
@@ -133,7 +133,7 @@ struct particle_array_gpu_helper
     }
 
     static void initialize_zero(
-        cache<typename particle_array_gpu<T>::gpu_vector_type>& data
+        cache<typename particle_array_gpu<T>::gpu_array_type>& data
       , unsigned int nparticle
     )
     {
@@ -144,7 +144,7 @@ struct particle_array_gpu_helper
     template<typename U = T>
     static typename std::enable_if<std::is_same<U, unsigned int>::value>::type
     initialize_iota(
-        cache<typename particle_array_gpu<T>::gpu_vector_type>& data
+        cache<typename particle_array_gpu<T>::gpu_array_type>& data
       , unsigned int nparticle
     )
     {
@@ -155,7 +155,7 @@ struct particle_array_gpu_helper
     template<typename U = T>
     static typename std::enable_if<!std::is_same<U, unsigned int>::value>::type
     initialize_iota(
-        cache<typename particle_array_gpu<T>::gpu_vector_type>& data
+        cache<typename particle_array_gpu<T>::gpu_array_type>& data
       , unsigned int nparticle
     )
     {
@@ -171,7 +171,7 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     typedef typename particle_array_gpu<T>::base_value_type base_value_type;
 
     static cuda::memory::host::vector<uint8_t> get_host_memory(
-        cache<typename particle_array_gpu<T>::gpu_vector_type> const& data
+        cache<typename particle_array_gpu<T>::gpu_array_type> const& data
     )
     {
         cuda::memory::host::vector<uint8_t> mem(data->size() * sizeof(base_value_type));
@@ -180,7 +180,7 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     }
 
     static cuda::memory::host::vector<uint8_t> get_host_data(
-        cache<typename particle_array_gpu<T>::gpu_vector_type> const& data
+        cache<typename particle_array_gpu<T>::gpu_array_type> const& data
     )
     {
         cuda::memory::device::vector<base_value_type> const& g_input = read_cache(data);
@@ -191,7 +191,7 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     }
 
     static void set_host_data(
-        cache<typename particle_array_gpu<T>::gpu_vector_type>& data, cuda::memory::host::vector<uint8_t> const& mem
+        cache<typename particle_array_gpu<T>::gpu_array_type>& data, cuda::memory::host::vector<uint8_t> const& mem
     )
     {
         cuda::memory::device::vector<base_value_type> &output = *make_cache_mutable(data);
@@ -200,7 +200,7 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     }
 
     static void initialize_value(
-        cache<typename particle_array_gpu<T>::gpu_vector_type>& data
+        cache<typename particle_array_gpu<T>::gpu_array_type>& data
       , base_value_type const& init_value
       , base_value_type const& ghost_init_value
       , unsigned int nparticle
@@ -212,7 +212,7 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     }
 
     static void initialize_zero(
-        cache<typename particle_array_gpu<T>::gpu_vector_type>& data
+        cache<typename particle_array_gpu<T>::gpu_array_type>& data
       , unsigned int nparticle
     )
     {
@@ -221,7 +221,7 @@ struct particle_array_gpu_helper<fixed_vector<dsfloat, dimension>>
     }
 
     static void initialize_iota(
-        cache<typename particle_array_gpu<T>::gpu_vector_type>& data
+        cache<typename particle_array_gpu<T>::gpu_array_type>& data
       , unsigned int nparticle
     )
     {

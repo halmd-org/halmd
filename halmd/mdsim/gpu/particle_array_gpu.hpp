@@ -110,7 +110,7 @@ template<typename T>
 struct particle_array_gpu_traits
 {
     typedef T base_value_type;
-    typedef cuda::memory::device::vector<T> gpu_vector_type;
+    typedef cuda::memory::device::vector<T> gpu_array_type;
 };
 
 #ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
@@ -118,7 +118,7 @@ template<size_t dimension>
 struct particle_array_gpu_traits<fixed_vector<dsfloat, dimension> >
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type base_value_type;
-    typedef dsfloat_vector<cuda::memory::device::vector<base_value_type>> gpu_vector_type;
+    typedef dsfloat_vector<cuda::memory::device::vector<base_value_type>> gpu_array_type;
 };
 
 template<>
@@ -131,7 +131,7 @@ class particle_array_gpu : public particle_array_gpu_base
 {
 public:
     typedef typename particle_array_gpu_traits<T>::base_value_type base_value_type;
-    typedef typename particle_array_gpu_traits<T>::gpu_vector_type gpu_vector_type;
+    typedef typename particle_array_gpu_traits<T>::gpu_array_type gpu_array_type;
 
     template<typename init_type, typename ghost_init_type>
     particle_array_gpu(
@@ -185,7 +185,7 @@ public:
     virtual ~particle_array_gpu();
     virtual ValueType value_type() const;
 
-    cache<gpu_vector_type>& mutable_data()
+    cache<gpu_array_type>& mutable_data()
     {
         if (locked_) {
             throw std::logic_error(std::string("write attempt on locked particle data"));
@@ -193,7 +193,7 @@ public:
         return data_;
     }
 
-    cache<gpu_vector_type> const& data() const
+    cache<gpu_array_type> const& data() const
     {
         // bypass update function if particle array is locked
         if (!locked_) {
@@ -265,7 +265,7 @@ private:
     /** number of particles */
     size_t nparticle_;
     /** cached GPU memory array*/
-    cache<gpu_vector_type> data_;
+    cache<gpu_array_type> data_;
     /** optional update function */
     std::function<void()> update_function_;
     /**
