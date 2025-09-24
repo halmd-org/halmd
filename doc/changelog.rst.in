@@ -3,6 +3,24 @@
 Changelog
 *********
 
+Version 1.2.0
+=============
+
+**New features**
+
+* Add :mod:`Brownian integrator <halmd.mdsim.integrators.brownian_euler>` for
+  fully overdamped particle motion using the Euler–Maruyama scheme
+  *(Manuel Dibak, Jake Atwell, Jaslo Ziska, Max Orteu)*
+
+**Bug fixes**
+
+* fix error in the internal logic of the force update if multiple
+  :mod:`integrator <halmd.mdsim.integrators>` instances were used concurrently,
+  like in set-ups of the test suite ``integration/modularity/two_particles``.
+  Standard simulations using one integrator and a single instance of
+  :mod:`particle <halmd.mdsim.particle>` were not affected.
+  *(Felix Höfling, Giorgia Marcelli)*
+
 Version 1.1.1
 =============
 
