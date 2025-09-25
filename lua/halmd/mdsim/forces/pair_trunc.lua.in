@@ -21,11 +21,12 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
+local log      = require("halmd.io.log")
 local mdsim    = require("halmd.mdsim")
+local utility  = require("halmd.utility")
 local device   = require("halmd.utility.device")
 local module   = require("halmd.utility.module")
 local profiler = require("halmd.utility.profiler")
-local utility  = require("halmd.utility")
 
 ---
 -- Truncated Pair Force
