@@ -57,7 +57,7 @@ void verlet<dimension, float_type>::set_timestep(double timestep)
  * First leapfrog half-step of velocity-Verlet algorithm
  *
  * access and lock force arrays in 'prepend' step
- * to ensure consistent data accross multiple integrators
+ * to ensure consistent data across multiple integrators
  */
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::prepend_integrate()

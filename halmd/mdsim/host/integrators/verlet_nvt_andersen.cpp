@@ -83,7 +83,6 @@ void verlet_nvt_andersen<dimension, float_type>::prepend_integrate()
     particle_->lock("force");
 }
 
-
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::integrate()
 {
@@ -119,7 +118,6 @@ void verlet_nvt_andersen<dimension, float_type>::append_integrate()
 /**
  * Second leapfrog half-step of velocity-Verlet algorithm
  */
-
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::finalize()
 {

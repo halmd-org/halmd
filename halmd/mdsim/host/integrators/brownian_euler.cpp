@@ -98,9 +98,7 @@ void brownian_euler<dimension, float_type>::set_temperature(double temperature)
  * perform Brownian integration: update positions with random displacement
  *
  * @f$ r(t + \Delta t) = \mu F(t) + \sigma d vec{W} @f$
- */
-
- /**
+ *
  * access and lock force arrays in 'prepend' step
  * to ensure consistent data across multiple integrators
  */

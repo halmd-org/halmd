@@ -57,8 +57,10 @@ void euler<dimension, float_type>::set_timestep(double timestep)
 {
     timestep_ = timestep;
 }
-/**
 
+/**
+ * perform Euler integration: update positions from velocities
+ *
  * access and lock force arrays in 'prepend' step
  * to ensure consistent data across multiple integrators
  */
@@ -70,9 +72,7 @@ void euler<dimension, float_type>::prepend_integrate()
     particle_->force();
     particle_->lock("force");
 }
-/**
- * perform Euler integration: update positions from velocities
- */
+
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::integrate()
 {

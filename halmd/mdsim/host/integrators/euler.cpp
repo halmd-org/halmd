@@ -60,6 +60,10 @@ void euler<dimension, float_type>::set_timestep(double timestep)
 }
 
 /**
+ * perform Euler integration: update positions from velocities
+ *
+ * @f$ r(t + \Delta t) = r(t) + v(t) \Delta t @f$
+ *
  * access and lock force arrays in 'prepend' step
  * to ensure consistent data across multiple integrators
  */
@@ -72,12 +76,6 @@ void euler<dimension, float_type>::prepend_integrate()
     particle_->lock("force");
 }
 
-
-/**
- * perform Euler integration: update positions from velocities
- *
- * @f$ r(t + \Delta t) = r(t) + v(t) \Delta t @f$
- */
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::integrate()
 {
@@ -135,7 +133,7 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
             namespace_("integrators")
             [
                 class_<euler>()
-                     .def("prepend_integrate", &euler::prepend_integrate)
+                    .def("prepend_integrate", &euler::prepend_integrate)
                     .property("integrate", &wrap_integrate<euler>)
                     .def("append_integrate", &euler::append_integrate)
                     .property("timestep", &euler::timestep)

@@ -79,7 +79,8 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_temp
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::prepend_integrate()
-{   // data access triggers a recalculation if needed,
+{
+    // data access triggers a recalculation if needed,
     // typically, the force update appears in finalize()
     particle_->force();
     particle_->lock("force");
@@ -115,6 +116,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrat
         throw;
     }
 }
+
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::append_integrate()
 {

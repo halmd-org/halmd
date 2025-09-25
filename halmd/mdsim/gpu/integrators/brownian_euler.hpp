@@ -62,7 +62,7 @@ public:
       , scalar_container_type const& diffusion
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
-    // lock/unlock forces
+
     void prepend_integrate();
     void integrate();
     void append_integrate();

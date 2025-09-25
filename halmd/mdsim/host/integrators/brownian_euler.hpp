@@ -64,6 +64,7 @@ public:
     void prepend_integrate();
     void integrate();
     void append_integrate();
+
     /**
      * Set integration time-step.
      */

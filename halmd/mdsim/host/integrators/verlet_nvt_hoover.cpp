@@ -94,18 +94,18 @@ void verlet_nvt_hoover<dimension, float_type>::set_temperature(double temperatur
 }
 
 template <int dimension, typename float_type>
-void verlet_nvt_hoover<dimension, float_type>::
-set_mass(chain_type const& mass)
+void verlet_nvt_hoover<dimension, float_type>::set_mass(chain_type const& mass)
 {
     mass_xi_ = mass;
     LOG_INFO("`mass' of heat bath variables: " << mass_xi_);
 }
 
 /**
-* First leapfrog half-step of velocity-Verlet algorithm
-* access and lock force arrays in 'prepend' step to ensure consistent data across multiple integrators
-*/
- 
+ * First leapfrog half-step of velocity-Verlet algorithm
+ *
+ * access and lock force arrays in 'prepend' step
+ * to ensure consistent data across multiple integrators
+ */
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::prepend_integrate()
 {
@@ -281,7 +281,7 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
                 class_<verlet_nvt_hoover>()
                     .def("prepend_integrate", &verlet_nvt_hoover::prepend_integrate)
                     .property("integrate", &wrap_integrate<verlet_nvt_hoover>)
-                    .def("prepend_integrate", &verlet_nvt_hoover::append_integrate)
+                    .def("append_integrate", &verlet_nvt_hoover::append_integrate)
                     .property("finalize", &wrap_finalize<verlet_nvt_hoover>)
                     .property("timestep", &verlet_nvt_hoover::timestep)
                     .property("temperature", &verlet_nvt_hoover::temperature)

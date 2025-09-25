@@ -96,9 +96,9 @@ void brownian_euler<dimension, float_type, RandomNumberGenerator>::set_temperatu
     LOG_INFO("mobility constants: " << mobility);
 }
 
-
-
- /**
+/**
+ * perform Brownian integration: update positions from random distribution
+ *
  * access and lock force arrays in 'prepend' step
  * to ensure consistent data across multiple integrators
  */
@@ -110,10 +110,6 @@ void brownian_euler<dimension, float_type, RandomNumberGenerator>::prepend_integ
     particle_->lock("force");
 }
 
-
-/**
- * perform Brownian integration: update positions from random distribution
- */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void brownian_euler<dimension, float_type, RandomNumberGenerator>::integrate()
 {
@@ -151,13 +147,15 @@ void brownian_euler<dimension, float_type, RandomNumberGenerator>::integrate()
         throw;
     }
 }
+
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void brownian_euler<dimension, float_type, RandomNumberGenerator>::append_integrate()
 {
-     // release force lock after all integrator instances have completed their
+    // release force lock after all integrator instances have completed their
     // integrate() step
     particle_->unlock("force");
 }
+
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void brownian_euler<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
