@@ -82,7 +82,7 @@ local M = module(function(args)
     local box = utility.assert_kwarg(args, "box")
     local potential = utility.assert_kwarg(args, "potential")
     local label = args.label or potential.description
-    local logger = log.logger({label = ("pair force (%s)"):format(label)})
+    local logger = log.logger({label = ("external force (%s)"):format(label)})
 
     if particle.memory ~= potential.memory then
         error("mismatching memory locations of 'particle' and 'potential'", 2)

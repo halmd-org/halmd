@@ -38,7 +38,7 @@ namespace forces {
 namespace external_kernel {
 
 /**
- * Compute pair forces, potential energy, and stress tensor for all particles
+ * Compute external forces, potential energy, and stress tensor for all particles
  */
 template <
     bool do_aux               //< compute auxiliary variables in addition to force

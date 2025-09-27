@@ -103,7 +103,7 @@ local M = module(function(args)
         timestep = assert(clock.timestep)
     end
     local label = args.label and tostring(args.label) or particle.label
-    local logger = log.logger({label = ("verlet (%s)"):format(label)})
+    local logger = log.logger({label = ("euler (%s)"):format(label)})
 
     local self = euler(particle, box, timestep, logger)
 

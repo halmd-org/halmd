@@ -105,7 +105,7 @@ private:
     /** compute forces with auxiliary variables */
     void compute_aux_();
 
-    /** pair potential */
+    /** external potential */
     std::shared_ptr<potential_type const> potential_;
     /** state of first system */
     std::shared_ptr<particle_type> particle_;
