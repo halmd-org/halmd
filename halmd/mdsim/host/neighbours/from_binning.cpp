@@ -50,7 +50,6 @@ from_binning<dimension, float_type>::from_binning(
   // dependency injection
   : particle1_(particle1)
   , particle2_(particle2)
-  , binning1_(binning.first)
   , binning2_(binning.second)
   , displacement1_(displacement.first)
   , displacement2_(displacement.second)
@@ -122,42 +121,26 @@ void from_binning<dimension, float_type>::update()
     // the order of calls is setup at the Lua level, and it allows us to
     // pass binning as a const dependency.
 
+    auto const& position1 = read_cache(particle1_->position());
+    auto const& cell2 = read_cache(binning2_->cell());
+    size_type nparticle1 = particle1_->nparticle();
+    cell_size_type const& ncell = binning2_->ncell();
+
+    auto neighbour = make_cache_mutable(neighbour_);
+
     LOG_DEBUG("update neighbour lists");
 
     scoped_timer_type timer(runtime_.update);
 
-    cell_size_type const& ncell = binning1_->ncell();
-    cell_size_type i;
-    for (i[0] = 0; i[0] < ncell[0]; ++i[0]) {
-        for (i[1] = 0; i[1] < ncell[1]; ++i[1]) {
-            if (dimension == 3) {
-                for (i[2] = 0; i[2] < ncell[2]; ++i[2]) {
-                    update_cell_neighbours(i);
-                }
-            }
-            else {
-                update_cell_neighbours(i);
-            }
-        }
-    }
-}
+    for (size_type i = 0; i < nparticle1; ++i) {
+        // load first particle
+        vector_type const& r1 = position1[i];
+        cell_size_type idx = binning2_->index(r1);
 
-/**
- * Update neighbour lists for a single cell
- */
-template <int dimension, typename float_type>
-void from_binning<dimension, float_type>::update_cell_neighbours(cell_size_type const& i)
-{
-    cell_array_type const& cell1 = read_cache(binning1_->cell());
-    cell_array_type const& cell2 = read_cache(binning2_->cell());
+        // clear particle's neighbour list
+        (*neighbour)[i].clear();
 
-    auto neighbour = make_cache_mutable(neighbour_);
-    cell_size_type const& ncell = binning1_->ncell();
-
-    for (size_t p : cell1(i)) {
-        // empty neighbour list of particle
-        (*neighbour)[p].clear();
-
+        // update neighbour list by iterating over all neighbouring cells
         cell_diff_type j;
         for (j[0] = -1; j[0] <= 1; ++j[0]) {
             for (j[1] = -1; j[1] <= 1; ++j[1]) {
@@ -168,8 +151,8 @@ void from_binning<dimension, float_type>::update_cell_neighbours(cell_size_type 
                             goto self;
                         }
                         // update neighbour list of particle
-                        cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell) + j), ncell);
-                        compute_cell_neighbours<false>(p, cell2(k));
+                        cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(idx + ncell) + j), ncell);
+                        add_neighbours<false>(i, cell2(k));
                     }
                 }
                 else {
@@ -178,23 +161,23 @@ void from_binning<dimension, float_type>::update_cell_neighbours(cell_size_type 
                         goto self;
                     }
                     // update neighbour list of particle
-                    cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell) + j), ncell);
-                    compute_cell_neighbours<false>(p, cell2(k));
+                    cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(idx + ncell) + j), ncell);
+                    add_neighbours<false>(i, cell2(k));
                 }
             }
         }
 self:
         // visit this cell
-        compute_cell_neighbours<true>(p, cell2(i));
+        add_neighbours<true>(i, cell2(idx));
     }
 }
 
 /**
- * Update neighbour list of particle
+ * Add neighbours of particle i from particles in cell c
  */
 template <int dimension, typename float_type>
 template <bool same_cell>
-void from_binning<dimension, float_type>::compute_cell_neighbours(size_t i, cell_list const& c)
+void from_binning<dimension, float_type>::add_neighbours(size_t i, cell_list const& c)
 {
     auto neighbour = make_cache_mutable(neighbour_);
 

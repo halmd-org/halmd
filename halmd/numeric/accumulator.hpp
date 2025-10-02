@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2016       Felix Höfling
  * Copyright © 2013       Nicolas Höft
  * Copyright © 2008-2010  Peter Colberg
  *
@@ -67,6 +68,12 @@ public:
      */
     HALMD_GPU_ENABLED accumulator()
       : n_(0), m_(0), v_(0) {}
+
+    /**
+     * initialize accumulator with pre-accumulated data: mean, variance, count
+     */
+    HALMD_GPU_ENABLED accumulator(T const& mean, T const& variance, size_type count)
+      : n_(count), m_(mean), v_(variance * count) {}
 
     /**
      * copy accumulator

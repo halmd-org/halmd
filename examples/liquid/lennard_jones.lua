@@ -112,6 +112,27 @@ function main(args)
         })
     end
 
+    -- measure chemical potential
+    -- 1) construct module including test particles
+    -- 2) define interactions with real particles
+    -- 3) setup result writer
+    if args.chemical_potential.temperature then
+        local param = args.chemical_potential
+        local chemical_potential = observables.chemical_potential({
+            box = box
+          , particle = particle
+          , temperature = param.temperature
+          , test_particles = { param.test_particles }
+          , position = "lattice"
+        })
+
+        chemical_potential:add_force({"pair_trunc"
+          , particle = particle, potential = potential, trunc = trunc
+        })
+
+        chemical_potential:writer({file = file, every = args.sampling.state_vars})
+    end
+
     -- set up wavevectors, compute density modes and static structure factor
     local density_mode
     local interval = args.sampling.structure
@@ -229,4 +250,8 @@ function define_args(parser)
     local wavevector = parser:add_argument_group("wavevector", {help = "wavevector shells in reciprocal space"})
     observables.utility.wavevector.add_options(wavevector, {tolerance = 0.01, max_count = 7})
     observables.utility.semilog_grid.add_options(wavevector, {maximum = 15, decimation = 0})
+
+    local chemical_potential = parser:add_argument_group("chemical-potential", {help = "sampling of chemical potential"})
+    chemical_potential:add_argument("temperature", {type = "number", help = "temperature"})
+    chemical_potential:add_argument("test-particles", {type = "number", default = 100000, help = "number of test particles"})
 end

@@ -47,7 +47,7 @@ local device = assert(libhalmd.utility.gpu.device)
 -- to compute prohibitive mode. This allows scheduling one process per GPU.
 --
 -- .. warning::
--- 
+--
 --    The ``nvlock`` tool is broken with recent NVIDIA drivers, e.g., later
 --    than version 346.
 --

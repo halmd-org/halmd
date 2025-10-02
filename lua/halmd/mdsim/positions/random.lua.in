@@ -1,7 +1,6 @@
 --
--- Copyright © 2010  Felix Höfling
--- Copyright © 2013  Nicolas Höft
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2016 Arthur Straube
+-- Copyright © 2016 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -21,25 +20,25 @@
 --
 
 local log               = require("halmd.io.log")
+local halmd_random      = require("halmd.random")
 local utility           = require("halmd.utility")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
 
 -- grab C++ wrappers
-local lattice = assert(libhalmd.mdsim.positions.lattice)
-
-
----
--- Lattice
--- =======
---
--- This module places particles on a face-centred cubic (fcc) lattice.
--- Optionally, the lattice may be restricted to a cuboid ("slab") centred and
--- aligned with the simulation box.
---
+local random = assert(libhalmd.mdsim.positions.random)
 
 ---
--- Construct lattice module
+-- Random
+-- ======
+--
+-- This module randomly places particles within the box sampling a uniform
+-- distribution.  Optionally, the volume may be restricted to a cuboid ("slab")
+-- centred and aligned with the simulation box.
+--
+
+---
+-- Construct random module
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
@@ -58,7 +57,7 @@ local lattice = assert(libhalmd.mdsim.positions.lattice)
 --
 -- .. method:: set()
 --
---    Set all particle positions on an fcc lattice.
+--    Assign random positions to all particles.
 --
 -- .. method:: disconnect()
 --
@@ -75,18 +74,21 @@ local M = module(function(args)
         slab[i] = 1
     end
 
-    -- construct module logger
-    local logger = args.logger or log.logger({label = "lattice"})
+    -- construct or grab random number generator (a singleton)
+    local rng = halmd_random.generator({memory = particle.memory})
 
-    local self = lattice(particle, box, slab, logger)
+    -- construct module logger
+    local logger = args.logger or log.logger({label = "random positions"})
+
+    local self = random(particle, box, rng, slab, logger)
 
     -- sequence of signal connections
     local conn = {}
-    self.disconnect = utility.signal.disconnect(conn, "lattice module")
+    self.disconnect = utility.signal.disconnect(conn, "random positions module")
 
     -- connect to profiler
     local runtime = assert(self.runtime)
-    table.insert(conn, profiler:on_profile(runtime.set, "setting particle positions on lattice"))
+    table.insert(conn, profiler:on_profile(runtime.set, "setting random particle positions"))
 
     return self
 end)

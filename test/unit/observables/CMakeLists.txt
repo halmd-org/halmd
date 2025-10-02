@@ -111,4 +111,26 @@ if(HALMD_WITH_GPU)
   endif()
 endif()
 
+# Lua tests for module chemical_potential
+configure_file(
+  chemical_potential.cmake.in
+  test_unit_observables_chemical_potential.cmake
+  @ONLY
+)
+
+add_test(unit/observables/chemical_potential/lua/host/2d
+  ${CMAKE_COMMAND} -DDIMENSION=2 -DUSE_HOST=1 -P test_unit_observables_chemical_potential.cmake
+)
+add_test(unit/observables/chemical_potential/lua/host/3d
+  ${CMAKE_COMMAND} -DDIMENSION=3 -DUSE_HOST=1 -P test_unit_observables_chemical_potential.cmake
+)
+if(HALMD_WITH_GPU)
+  add_test(unit/observables/chemical_potential/lua/gpu/2d
+    ${CMAKE_COMMAND} -DDIMENSION=2 -P test_unit_observables_chemical_potential.cmake
+  )
+  add_test(unit/observables/chemical_potential/lua/gpu/3d
+    ${CMAKE_COMMAND} -DDIMENSION=3 -P test_unit_observables_chemical_potential.cmake
+  )
+endif()
+
 add_subdirectory(utility)

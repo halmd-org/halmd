@@ -1,4 +1,6 @@
 halmd_add_library(halmd_observables_gpu
+  chemical_potential.cpp
+  chemical_potential_kernel.cu
   density_mode.cpp
   density_mode_kernel.cu
   phase_space.cpp
@@ -7,6 +9,7 @@ halmd_add_library(halmd_observables_gpu
   thermodynamics_kernel.cu
 )
 halmd_add_modules(
+  libhalmd_observables_gpu_chemical_potential
   libhalmd_observables_gpu_density_mode
   libhalmd_observables_gpu_phase_space
   libhalmd_observables_gpu_thermodynamics

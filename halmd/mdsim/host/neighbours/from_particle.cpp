@@ -96,14 +96,14 @@ from_particle<dimension, float_type>::lists()
 template <int dimension, typename float_type>
 void from_particle<dimension, float_type>::update()
 {
-    auto neighbour = make_cache_mutable(neighbour_);
-
     position_array_type const& position1 = read_cache(particle1_->position());
     position_array_type const& position2 = read_cache(particle2_->position());
     species_array_type const& species1 = read_cache(particle1_->species());
     species_array_type const& species2 = read_cache(particle2_->species());
     size_type nparticle1 = particle1_->nparticle();
     size_type nparticle2 = particle2_->nparticle();
+
+    auto neighbour = make_cache_mutable(neighbour_);
 
     LOG_DEBUG("update neighbour lists");
 

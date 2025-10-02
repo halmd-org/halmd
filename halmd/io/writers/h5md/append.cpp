@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2014 Felix Höfling
+ * Copyright © 2013-2016 Felix Höfling
  * Copyright © 2011      Peter Colberg
  *
  * This file is part of HALMD.
@@ -168,6 +168,33 @@ connection append::on_write_averaged(
 
     H5::DataSet value_dataset, error_dataset, count_dataset;
     return on_write_.connect( [=]() mutable {
+        write_dataset(value_dataset, group, "value", value_slot);
+        write_dataset(error_dataset, group, "error", error_slot);
+        write_dataset(count_dataset, group, "count", count_slot);
+    });
+}
+
+template <typename T>
+connection append::on_write_accumulator(
+    subgroup_type& group
+  , std::function<halmd::accumulator<T> const& ()> const& slot
+  , vector<string> const& location
+)
+{
+    if (location.size() < 1) {
+        throw invalid_argument("dataset location");
+    }
+    group = h5xx::open_group(group_, boost::join(location, "/"));
+    h5xx::link(step_dataset_, group, "step");
+    h5xx::link(time_dataset_, group, "time");
+
+    H5::DataSet value_dataset, error_dataset, count_dataset;
+    return on_write_.connect( [=]() mutable {
+        auto const& acc = slot();
+        // lambdas are not implicitly converted to std::function
+        std::function<T ()> value_slot = [=]() { return mean(acc); };
+        std::function<T ()> error_slot = [=]() { return error_of_mean(acc); };
+        std::function<uint64_t ()> count_slot = [=]() { return count(acc); };
         write_dataset(value_dataset, group, "value", value_slot);
         write_dataset(error_dataset, group, "error", error_slot);
         write_dataset(count_dataset, group, "count", count_slot);
@@ -377,6 +404,8 @@ void append::luaopen(lua_State* L)
                         .def("on_write", &append::on_write_averaged<fixed_vector<double, 2>>, pure_out_value(_2))
                         .def("on_write", &append::on_write_averaged<fixed_vector<double, 3>>, pure_out_value(_2))
                         .def("on_write", &append::on_write_averaged<fixed_vector<double, 6>>, pure_out_value(_2))
+
+                        .def("on_write", &append::on_write_accumulator<double>, pure_out_value(_2))
 
                         .def("on_prepend_write", &append::on_prepend_write)
                         .def("on_append_write", &append::on_append_write)

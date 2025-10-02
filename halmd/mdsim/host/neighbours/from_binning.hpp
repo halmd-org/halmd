@@ -120,7 +120,6 @@ private:
 
     std::shared_ptr<particle_type const> particle1_;
     std::shared_ptr<particle_type const> particle2_;
-    std::shared_ptr<binning_type> binning1_;
     std::shared_ptr<binning_type> binning2_;
     std::shared_ptr<displacement_type> displacement1_;
     std::shared_ptr<displacement_type> displacement2_;
@@ -128,9 +127,9 @@ private:
     std::shared_ptr<logger> logger_;
 
     void update();
-    void update_cell_neighbours(cell_size_type const& i);
+
     template <bool same_cell>
-    void compute_cell_neighbours(size_t i, cell_list const& c);
+    void add_neighbours(size_t i, cell_list const& c);
 
     /** neighbour lists */
     cache<array_type> neighbour_;

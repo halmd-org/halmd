@@ -188,7 +188,7 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("positions")
             [
-                class_<lattice>()
+                class_<lattice, _Base>()
                     .property("slab", &lattice::slab)
                     .def("set", &lattice::set)
                     .scope

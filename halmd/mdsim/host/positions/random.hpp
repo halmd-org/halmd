@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2016 Arthur Straube
+ * Copyright © 2016 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -18,17 +19,17 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_POSITIONS_LATTICE_HPP
-#define HALMD_MDSIM_HOST_POSITIONS_LATTICE_HPP
+#ifndef HALMD_MDSIM_HOST_POSITIONS_RANDOM_HPP
+#define HALMD_MDSIM_HOST_POSITIONS_RANDOM_HPP
 
 #include <lua.hpp>
 #include <memory>
-#include <vector>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/position.hpp>
+#include <halmd/random/host/random.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -37,32 +38,52 @@ namespace host {
 namespace positions {
 
 template <int dimension, typename float_type>
-class lattice
+class random
   : public position
 {
     typedef mdsim::host::position _Base;
 
 public:
     typedef host::particle<dimension, float_type> particle_type;
+    typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef typename particle_type::vector_type position_type;
-    typedef typename box_type::vector_type vector_type;     // always values of type double
+    typedef halmd::random::host::random rng_type;
 
-    static void luaopen(lua_State* L);
-
-    lattice(
+    random(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
+      , std::shared_ptr<rng_type> rng
       , vector_type const& slab
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
+
+    /**
+     * Sample random particle positions uniformly within slab centred around origin.
+     */
     void set();
 
+    /**
+     * Return slab extents as fractions of box edges.
+     */
     vector_type const& slab() const { return slab_; }
 
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
+
 private:
-    typedef typename particle_type::position_array_type position_array_type;
-    typedef typename particle_type::image_array_type image_array_type;
+    /** system state */
+    std::shared_ptr<particle_type> particle_;
+    /** simulation domain */
+    std::shared_ptr<box_type const> box_;
+    /** random number generator */
+    std::shared_ptr<rng_type> rng_;
+    /** module logger */
+    std::shared_ptr<logger> logger_;
+
+    /** slab extents for each direction as fraction of the edge lengths of the box */
+    vector_type slab_;
 
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;
@@ -71,22 +92,6 @@ private:
     {
         accumulator_type set;
     };
-
-    std::shared_ptr<particle_type> particle_;
-    std::shared_ptr<box_type const> box_;
-    std::shared_ptr<logger> logger_;
-    /** slab extents for each direction as fraction of the edge length of the box */
-    vector_type slab_;
-
-    /**
-     *  assign range of particle positions [first, last) to fcc lattice
-     *  of extents 'length' with origin at 'offset'
-     */
-    template <typename position_iterator>
-    void fcc(
-        position_iterator first, position_iterator last
-      , position_type const& length, position_type const& offset
-    );
 
     /** profiling runtime accumulators */
     runtime runtime_;
@@ -97,4 +102,4 @@ private:
 } // namespace positions
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_POSITIONS_LATTICE_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POSITIONS_RANDOM_HPP */

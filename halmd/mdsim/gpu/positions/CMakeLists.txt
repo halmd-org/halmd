@@ -1,7 +1,10 @@
 halmd_add_library(halmd_mdsim_gpu_positions
   lattice.cpp
   lattice_kernel.cu
+  random.cpp
+  random_kernel.cu
 )
 halmd_add_modules(
   libhalmd_mdsim_gpu_positions_lattice
+  libhalmd_mdsim_gpu_positions_random
 )

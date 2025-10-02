@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014      Felix Höfling
+ * Copyright © 2014-2016 Felix Höfling
  * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -28,6 +28,7 @@
 
 #include <h5xx/h5xx.hpp>
 #include <halmd/mdsim/clock.hpp>
+#include <halmd/numeric/accumulator.hpp>
 #include <halmd/utility/signal.hpp>
 
 namespace halmd {
@@ -91,6 +92,13 @@ public:
       , std::function<T ()> const& value_slot
       , std::function<T ()> const& error_slot
       , std::function<uint64_t ()> const& count_slot
+      , std::vector<std::string> const& location
+    );
+    /** connect data slot for writing an halmd::accumulator dataset, return created HDF5 group by reference */
+    template <typename T>
+    connection on_write_accumulator(
+        subgroup_type& group
+      , std::function<halmd::accumulator<T> const& ()> const& slot
       , std::vector<std::string> const& location
     );
     /** connect slot called before writing */

@@ -174,10 +174,6 @@ void profiler::luaopen(lua_State* L)
                 .def("on_prepend_profile", &profiler::on_prepend_profile)
                 .def("on_append_profile", &profiler::on_append_profile)
                 .def("profile", &profiler::profile)
-                .scope
-                [
-                    class_<accumulator_type>("accumulator")
-                ]
         ]
     ];
 }

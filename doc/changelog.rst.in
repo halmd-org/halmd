@@ -3,14 +3,8 @@
 Changelog
 *********
 
-Version 1.2.0
-=============
-
-**New features**
-
-* Add :mod:`Brownian integrator <halmd.mdsim.integrators.brownian_euler>` for
-  fully overdamped particle motion using the Euler–Maruyama scheme
-  *(Manuel Dibak, Jake Atwell, Jaslo Ziska, Max Orteu)*
+Version 1.2.0 (preview)
+=======================
 
 **Bug fixes**
 
@@ -20,6 +14,35 @@ Version 1.2.0
   Standard simulations using one integrator and a single instance of
   :mod:`particle <halmd.mdsim.particle>` were not affected.
   *(Felix Höfling, Giorgia Marcelli)*
+
+**New features**
+
+* Add :mod:`Brownian integrator <halmd.mdsim.integrators.brownian_euler>` for
+  fully overdamped particle motion using the Euler–Maruyama scheme
+  *(Manuel Dibak, Jake Atwell, Jaslo Ziska, Max Orteu)*
+
+* Add :mod:`Yukawa pair potential <halmd.mdsim.potentials.pair.yukawa>`,
+  which corresponds to a screened Coulumb potential *(Felix Höfling)*
+
+* Add the (excess) :mod:`chemical potential <halmd.observables.chemical_potential>`
+  as a computable observable, which uses Widom's particle insertion method.
+  *(Felix Höfling)*
+
+* Add module for :mod:`uniformly random <halmd.mdsim.positions.random>`
+  initialisation of particle positions within the simulation box or subdomain
+  *(Felix Höfling)*
+
+**Improvements**
+
+* In host implementation of the :mod:`neighbour list <halmd.mdsim.neighbour>`
+  construction ``from_binning``, relax constraints on the binning geometry of
+  different particle instances. Under the hoods, this was made possible by
+  moving from a cell-oriented to a particle-oriented loop. *(Arthur Straube,
+  Felix Höfling)*
+
+* Add Lua bindings to the numerical ``accumulator`` class, making it useable
+  in file writers, e.g., when storing results for observables.
+
 
 Version 1.1.1
 =============
