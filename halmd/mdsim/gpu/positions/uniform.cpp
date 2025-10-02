@@ -50,7 +50,7 @@ uniform<dimension, float_type, RandomNumberGenerator>::uniform(
   , slab_(slab)
 {
     // FIXME replace slab by future 'geometry' modules from Nicolas
-    if (*min_element(slab_.begin(), slab_.end()) <= 0 ||
+    if (*min_element(slab_.begin(), slab_.end()) < 0 ||
         *max_element(slab_.begin(), slab_.end()) > 1
        ) {
         throw std::logic_error("slab extents must be a fraction between 0 and 1");
@@ -132,14 +132,27 @@ using halmd::random::gpu::rand48;
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_positions_uniform(lua_State* L)
 {
+#ifdef USE_GPU_SINGLE_PRECISION
     uniform<3, float, rand48>::luaopen(L);
     uniform<2, float, rand48>::luaopen(L);
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+    uniform<3, dsfloat, rand48>::luaopen(L);
+    uniform<2, dsfloat, rand48>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifdef USE_GPU_SINGLE_PRECISION
 template class uniform<3, float, rand48>;
 template class uniform<2, float, rand48>;
+#endif
+#ifdef USE_GPU_DOUBLE_SINGLE_PRECISION
+template class uniform<3, dsfloat, rand48>;
+template class uniform<2, dsfloat, rand48>;
+#endif
+
 
 } // namespace positions
 } // namespace gpu

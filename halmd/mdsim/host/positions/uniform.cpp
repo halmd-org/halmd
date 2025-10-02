@@ -49,7 +49,7 @@ uniform<dimension, float_type>::uniform(
   , slab_(slab)
 {
     // FIXME replace slab by future 'geometry' modules from Nicolas
-    if (*min_element(slab_.begin(), slab_.end()) <= 0 ||
+    if (*min_element(slab_.begin(), slab_.end()) < 0 ||
         *max_element(slab_.begin(), slab_.end()) > 1
        ) {
         throw std::logic_error("slab extents must be a fraction between 0 and 1");
