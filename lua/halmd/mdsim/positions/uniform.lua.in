@@ -19,18 +19,18 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
-local log               = require("halmd.io.log")
-local halmd_random      = require("halmd.random")
-local utility           = require("halmd.utility")
-local module            = require("halmd.utility.module")
-local profiler          = require("halmd.utility.profiler")
+local log      = require("halmd.io.log")
+local random   = require("halmd.random")
+local utility  = require("halmd.utility")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
 
 -- grab C++ wrappers
-local random = assert(libhalmd.mdsim.positions.random)
+local uniform = assert(libhalmd.mdsim.positions.uniform)
 
 ---
--- Random
--- ======
+-- Uniformly random
+-- ================
 --
 -- This module randomly places particles within the box sampling a uniform
 -- distribution.  Optionally, the volume may be restricted to a cuboid ("slab")
@@ -38,7 +38,7 @@ local random = assert(libhalmd.mdsim.positions.random)
 --
 
 ---
--- Construct random module
+-- Construct uniform position module
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
@@ -57,7 +57,7 @@ local random = assert(libhalmd.mdsim.positions.random)
 --
 -- .. method:: set()
 --
---    Assign random positions to all particles.
+--    Randomly assign uniformly distributed positions to all particles.
 --
 -- .. method:: disconnect()
 --
@@ -75,20 +75,20 @@ local M = module(function(args)
     end
 
     -- construct or grab random number generator (a singleton)
-    local rng = halmd_random.generator({memory = particle.memory})
+    local rng = random.generator({memory = particle.memory})
 
     -- construct module logger
-    local logger = args.logger or log.logger({label = "random positions"})
+    local logger = args.logger or log.logger({label = "uniformly random positions"})
 
-    local self = random(particle, box, rng, slab, logger)
+    local self = uniform(particle, box, rng, slab, logger)
 
     -- sequence of signal connections
     local conn = {}
-    self.disconnect = utility.signal.disconnect(conn, "random positions module")
+    self.disconnect = utility.signal.disconnect(conn, "uniform positions module")
 
     -- connect to profiler
     local runtime = assert(self.runtime)
-    table.insert(conn, profiler:on_profile(runtime.set, "setting random particle positions"))
+    table.insert(conn, profiler:on_profile(runtime.set, "setting uniformly random particle positions"))
 
     return self
 end)

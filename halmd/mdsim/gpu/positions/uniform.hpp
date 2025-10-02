@@ -19,8 +19,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POSITIONS_RANDOM_HPP
-#define HALMD_MDSIM_GPU_POSITIONS_RANDOM_HPP
+#ifndef HALMD_MDSIM_GPU_POSITIONS_UNIFORM_HPP
+#define HALMD_MDSIM_GPU_POSITIONS_UNIFORM_HPP
 
 #include <lua.hpp>
 #include <memory>
@@ -41,7 +41,7 @@ namespace positions {
  * Sample random particle positions uniformly within slab centred around origin.
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-class random
+class uniform
   : public position
 {
     typedef mdsim::gpu::position _Base;
@@ -52,7 +52,7 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef halmd::random::gpu::random<RandomNumberGenerator> rng_type;
 
-    random(
+    uniform(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<rng_type> rng
@@ -105,4 +105,4 @@ private:
 } // namespace positions
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POSITIONS_RANDOM_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POSITIONS_UNIFORM_HPP */

@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POSITIONS_RANDOM_KERNEL_HPP
-#define HALMD_MDSIM_GPU_POSITIONS_RANDOM_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_POSITIONS_UNIFORM_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POSITIONS_UNIFORM_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
@@ -34,13 +34,13 @@ namespace gpu {
 namespace positions {
 
 template <int dimension, typename rng_type>
-struct random_wrapper
+struct uniform_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
 
     cuda::function<void (float4*, unsigned int, unsigned int, vector_type, rng_type)> uniform;
 
-    static random_wrapper kernel;
+    static uniform_wrapper kernel;
 };
 
 } // namespace positions
@@ -48,4 +48,4 @@ struct random_wrapper
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POSITIONS_RANDOM_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POSITIONS_UNIFORM_KERNEL_HPP */

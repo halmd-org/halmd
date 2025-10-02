@@ -1,6 +1,6 @@
 /*
- * Copyright © 2017 Arthur Straube
- * Copyright © 2017 Felix Höfling
+ * Copyright © 2016 Arthur Straube
+ * Copyright © 2016 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -23,19 +23,18 @@
 #include <cmath>
 #include <functional>
 
-#include <halmd/mdsim/gpu/positions/random.hpp>
-#include <halmd/mdsim/gpu/positions/random_kernel.hpp>
+#include <halmd/mdsim/host/positions/uniform.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace std;
 
 namespace halmd {
 namespace mdsim {
-namespace gpu {
+namespace host {
 namespace positions {
 
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-random<dimension, float_type, RandomNumberGenerator>::random(
+template <int dimension, typename float_type>
+uniform<dimension, float_type>::uniform(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<rng_type> rng
@@ -61,44 +60,35 @@ random<dimension, float_type, RandomNumberGenerator>::random(
     }
 }
 
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-void random<dimension, float_type, RandomNumberGenerator>::set()
+template <int dimension, typename float_type>
+void uniform<dimension, float_type>::set()
 {
     auto position = make_cache_mutable(particle_->position());
     auto image = make_cache_mutable(particle_->image());
 
-    LOG_TRACE("randomly distributing positions of " << position->size() << " particles");
+    LOG_TRACE("uniformly distributing random positions of " << position->size() << " particles");
 
     scoped_timer_type timer(runtime_.set);
 
     // edge lengths of cuboid slab centred around the origin
-    vector_type slab_length = element_prod(static_cast<vector_type>(box_->length()), slab_);
+    vector_type length = element_prod(box_->length(), slab_);
 
-    try {
-        auto& random_kernel = random_wrapper<dimension, typename rng_type::rng_type>::kernel.uniform;
-
-        random_kernel.configure(rng_->rng().dim.grid, rng_->rng().dim.block);
-        random_kernel(
-            position->data()
-          , particle_->nparticle()
-          , particle_->dim().threads()
-          , slab_length
-          , rng_->rng().rng()
-        );
-
-        cuda::thread::synchronize();
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to generate random particle positions on GPU");
-        throw;
+    // iterate over all particles
+    for (auto &r : *position) {
+        // assign to each component uniform random values from [-1/2, 1/2)
+        for (unsigned int i = 0; i < dimension; ++i) {
+            r[i] = rng_->uniform<float_type>() - float_type(.5);
+        }
+        // scale each component by slab size
+        r = element_prod(r, length);
     }
 
     // reset particle image vectors
-    cuda::memset(image->begin(), image->begin() + image->capacity(), 0);
+    fill(image->begin(), image->end(), 0);
 }
 
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-void random<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
+template <int dimension, typename float_type>
+void uniform<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -107,16 +97,16 @@ void random<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
         [
             namespace_("positions")
             [
-                class_<random, _Base>()
-                    .property("slab", &random::slab)
-                    .def("set", &random::set)
+                class_<uniform, _Base>()
+                    .property("slab", &uniform::slab)
+                    .def("set", &uniform::set)
                     .scope
                     [
                         class_<runtime>("runtime")
                             .def_readonly("set", &runtime::set)
                     ]
-                    .def_readonly("runtime", &random::runtime_)
-              , def("random", &std::make_shared<random
+                    .def_readonly("runtime", &uniform::runtime_)
+              , def("uniform", &std::make_shared<uniform
                   , std::shared_ptr<particle_type>
                     , std::shared_ptr<box_type const>
                     , std::shared_ptr<rng_type>
@@ -128,20 +118,28 @@ void random<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
     ];
 }
 
-using halmd::random::gpu::rand48;
-
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_positions_random(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_positions_uniform(lua_State* L)
 {
-    random<3, float, rand48>::luaopen(L);
-    random<2, float, rand48>::luaopen(L);
+#ifndef USE_HOST_SINGLE_PRECISION
+    uniform<3, double>::luaopen(L);
+    uniform<2, double>::luaopen(L);
+#else
+    uniform<3, float>::luaopen(L);
+    uniform<2, float>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
-template class random<3, float, rand48>;
-template class random<2, float, rand48>;
+#ifndef USE_HOST_SINGLE_PRECISION
+template class uniform<3, double>;
+template class uniform<2, double>;
+#else
+template class uniform<3, float>;
+template class uniform<2, float>;
+#endif
 
 } // namespace positions
-} // namespace gpu
+} // namespace host
 } // namespace mdsim
 } // namespace halmd

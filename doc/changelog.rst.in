@@ -28,7 +28,7 @@ Version 1.2.0 (preview)
   as a computable observable, which uses Widom's particle insertion method.
   *(Felix Höfling)*
 
-* Add module for :mod:`uniformly random <halmd.mdsim.positions.random>`
+* Add module for :mod:`uniformly random <halmd.mdsim.positions.uniform>`
   initialisation of particle positions within the simulation box or subdomain
   *(Felix Höfling)*
 

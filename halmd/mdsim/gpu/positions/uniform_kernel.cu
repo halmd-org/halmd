@@ -18,7 +18,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/positions/random_kernel.hpp>
+#include <halmd/mdsim/gpu/positions/uniform_kernel.hpp>
 #include <halmd/random/gpu/random_number_generator.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
@@ -32,10 +32,10 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 namespace positions {
-namespace random_kernel {
+namespace uniform_kernel {
 
 /**
- * generate random positions within slab centred around the origin
+ * generate uniformly random positions within slab centred around the origin
  *
  * work in single precision, reset high precision part of dsfloat
  */
@@ -74,15 +74,15 @@ __global__ void uniform(
     rng[GTID] = state;
 }
 
-} // namespace random_kernel
+} // namespace uniform_kernel
 
 template <int dimension, typename rng_type>
-random_wrapper<dimension, rng_type> random_wrapper<dimension, rng_type>::kernel = {
-    random_kernel::uniform<fixed_vector<float, dimension>, rng_type>
+uniform_wrapper<dimension, rng_type> uniform_wrapper<dimension, rng_type>::kernel = {
+    uniform_kernel::uniform<fixed_vector<float, dimension>, rng_type>
 };
 
-template class random_wrapper<3, random::gpu::rand48_rng>;
-template class random_wrapper<2, random::gpu::rand48_rng>;
+template class uniform_wrapper<3, random::gpu::rand48_rng>;
+template class uniform_wrapper<2, random::gpu::rand48_rng>;
 
 } // namespace positions
 } // namespace gpu
