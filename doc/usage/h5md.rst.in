@@ -4,15 +4,15 @@ H5MD data files
 Why H5MD?
 =========
 
-The `H5MD <http://nongnu.org/h5md>`_ file format presents a unique standard to
+The `H5MD <https://h5md.nongnu.org>`_ file format presents a unique standard to
 store data for and from molecular simulations along with derived quantities
 such as physical observables.
 
 H5MD builds on the technology of the "Hierarchical Data Format 5" `(HDF5)
-<http://hdfgroup.org/HDF5>`_ , which is a well established scientific file
+<https://hdfgroup.org/HDF5>`_ , which is a well established scientific file
 format, with bindings for C, C++, Fortran, Python and support by Matlab,
 Mathematica, … An excellent overview is found in the documentation of the
-project `HDF5 for Python <http://docs.h5py.org>`_.
+project `HDF5 for Python <https://docs.h5py.org>`_.
 
 .. Note::
 
@@ -53,7 +53,7 @@ or this way::
 Using Python and h5py
 ---------------------
 
-`h5py <http://www.h5py.org>`_ is a Python module wrapping the HDF5 library. It
+`h5py <https://www.h5py.org>`_ is a Python module wrapping the HDF5 library. It
 is based on NumPy, which implements a MATLAB-like interface to
 multi-dimensional arrays.  This is where the H5MD format reveals its true
 strength, as NumPy allows arbitrary transformations of HDF5 datasets, all while
@@ -76,6 +76,6 @@ Attributes may be read with the ``attrs`` class member::
 
 
 For further information, refer to the `Numpy and Scipy Documentation
-<http://docs.scipy.org/doc/>`_ and the `HDF5 for Python Documentation
-<http://docs.h5py.org>`_.
+<https://docs.scipy.org/doc/>`_ and the `HDF5 for Python Documentation
+<https://docs.h5py.org>`_.
 
