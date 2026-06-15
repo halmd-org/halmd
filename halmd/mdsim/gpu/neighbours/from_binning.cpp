@@ -76,6 +76,13 @@ from_binning<dimension, float_type>::from_binning(
   , unroll_force_loop_(options.second)
   , device_properties_(device::get())
 {
+    if (preferred_algorithm_ == shared_mem) {
+        LOG_INFO("using algorithm with shared memory prefetching");
+    }
+    if (unroll_force_loop_) {
+        LOG_INFO("using small system optimisation: unroll force loop");
+    }
+
     for (size_t i = 0; i < r_cut.size1(); ++i) {
         for (size_t j = 0; j < r_cut.size2(); ++j) {
             rr_cut_skin_(i, j) = std::pow(r_cut(i, j) + r_skin_, 2);
