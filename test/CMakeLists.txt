@@ -1,3 +1,7 @@
+# default options for Boost.Test executables,
+# separate with '--' from positional arguments
+set(BOOST_TEST_ARGS "--log_level=test_suite --")
+
 #
 # Define dynamic Boost Test linking flag if needed.
 #
