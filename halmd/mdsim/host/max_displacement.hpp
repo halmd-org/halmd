@@ -27,6 +27,7 @@
 #include <memory>
 #include <vector>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -49,6 +50,7 @@ public:
     max_displacement(
         std::shared_ptr<particle_type const> particle
       , std::shared_ptr<box_type const> box
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
     void zero();
     float_type compute();
@@ -76,6 +78,8 @@ private:
     cache<> position_cache_;
     /** the last calculated displacement */
     float_type displacement_;
+    /** module logger */
+    std::shared_ptr<logger> logger_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };

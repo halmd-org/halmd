@@ -39,6 +39,7 @@ template <int dimension, typename float_type>
 max_displacement<dimension, float_type>::max_displacement(
     std::shared_ptr<particle_type const> particle
   , std::shared_ptr<box_type const> box
+  , std::shared_ptr<logger> logger
 )
   // dependency injection
   : particle_(particle)
@@ -50,6 +51,7 @@ max_displacement<dimension, float_type>::max_displacement(
   , g_rr_(dim_reduce_.blocks_per_grid())
   , h_rr_(g_rr_.size())
   , displacement_(0)
+  , logger_(logger)
 {
 }
 
@@ -124,6 +126,7 @@ void max_displacement<dimension, float_type>::luaopen(lua_State* L)
           , def("max_displacement", &std::make_shared<max_displacement
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
+                  , std::shared_ptr<logger>
               >)
         ]
     ];

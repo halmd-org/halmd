@@ -231,11 +231,11 @@ local M = module(function(args)
     local displacement = args.displacement
     if not displacement then
         if particle[1] == particle[2] then
-            displacement = mdsim.max_displacement({box = box, particle = particle[1]})
+            displacement = mdsim.max_displacement({box = box, particle = particle[1], logger = logger})
         else
             displacement = {
-                mdsim.max_displacement({box = box, particle = particle[1]})
-              , mdsim.max_displacement({box = box, particle = particle[2]})
+                mdsim.max_displacement({box = box, particle = particle[1], logger = logger})
+              , mdsim.max_displacement({box = box, particle = particle[2], logger = logger})
             }
         end
     end

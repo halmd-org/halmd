@@ -1,4 +1,5 @@
 --
+-- Copyright © 2026  Felix Höfling
 -- Copyright © 2013  Nicolas Höft
 -- Copyright © 2011  Peter Colberg
 --
@@ -19,6 +20,7 @@
 -- <http://www.gnu.org/licenses/>.
 --
 
+local log      = require("halmd.io.log")
 local utility  = require("halmd.utility")
 local module   = require("halmd.utility.module")
 local profiler = require("halmd.utility.profiler")
@@ -43,6 +45,7 @@ local max_displacement = assert(libhalmd.mdsim.max_displacement)
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
+-- :param args.logger: instance of :class:`halmd.io.log.logger` (*optional*)
 --
 -- .. attribute:: particle
 --
@@ -57,15 +60,19 @@ local M = module(function(args)
     local box      = utility.assert_kwarg(args, "box")
     local particle = utility.assert_kwarg(args, "particle")
 
-    local self = max_displacement(particle, box)
-
     local label = (" (%s)"):format(assert(particle.label))
+    local logger   = args and args.logger or log.logger({label = "maximum displacement" .. label})
+
+    local self = max_displacement(particle, box, logger)
 
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, "max_displacement module")
 
     -- store particle instance as Lua property
     self.particle = property(function(self) return particle end)
+
+    -- store logger instance
+    self.logger = property(function() return logger end)
 
     -- connect module to profiler
     local runtime = assert(self.runtime)

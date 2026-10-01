@@ -21,6 +21,7 @@
 #ifndef HALMD_MDSIM_GPU_MAX_DISPLACEMENT_HPP
 #define HALMD_MDSIM_GPU_MAX_DISPLACEMENT_HPP
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/max_displacement_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -49,6 +50,7 @@ public:
     max_displacement(
         std::shared_ptr<particle_type const> particle
       , std::shared_ptr<box_type const> box
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
     void zero();
     float_type compute();
@@ -82,6 +84,8 @@ private:
     cache<> position_cache_;
     /** the last calculated displacement */
     float_type displacement_;
+    /** module logger */
+    std::shared_ptr<logger> logger_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };
