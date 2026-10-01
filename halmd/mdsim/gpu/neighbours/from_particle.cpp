@@ -113,12 +113,15 @@ from_particle<dimension, float_type>::g_neighbour()
 
     auto current_cache = std::tie(reverse_id_cache1, reverse_id_cache2);
 
-    if (neighbour_cache_ != current_cache || float(displacement1_->compute()) > float(r_skin_ / 2)
-        || float(displacement2_->compute()) > float(r_skin_ / 2)) {
+    if (neighbour_cache_ != current_cache
+         || (float)displacement1_->compute() + (float)displacement2_->compute() > r_skin_
+       ) {
         on_prepend_update_();
         update();
         displacement1_->zero();
-        displacement2_->zero();
+        if (displacement1_ != displacement2_) {
+            displacement2_->zero();
+        }
         neighbour_cache_ = current_cache;
         on_append_update_();
     }
