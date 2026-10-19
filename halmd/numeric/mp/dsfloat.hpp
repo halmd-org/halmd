@@ -138,11 +138,30 @@ struct dsfloat
 
 /**
  * Returns "high" and "low" single precision floating-point tuple
+ *
+ * Kept out-of-line on GCC 12 to avoid a miscompilation specific to that
+ * compiler series (observed with 12.2.0 at -O2, other GCC versions and
+ * Clang are unaffected): once inlined into one of the dsfloat pack
+ * functions in cuda_vector_converter.hpp, the store to the "lo"
+ * component of the result is silently dropped for some instantiations,
+ * degrading double-single precision to plain single precision. Device
+ * codegen (ptxas) is unaffected and always inlines this as before.
  */
-inline HALMD_GPU_ENABLED tuple<float, float> split(dsfloat const& v)
+#if defined(__CUDA_ARCH__)
+# define HALMD_SPLIT_DSFLOAT_NOINLINE
+#elif defined(__GNUC__) && !defined(__clang__) && __GNUC__ == 12
+# define HALMD_SPLIT_DSFLOAT_NOINLINE __attribute__((noinline))
+#else
+# define HALMD_SPLIT_DSFLOAT_NOINLINE
+#endif
+
+inline HALMD_GPU_ENABLED HALMD_SPLIT_DSFLOAT_NOINLINE
+tuple<float, float> split(dsfloat const& v)
 {
     return make_tuple(v.hi, v.lo);
 }
+
+#undef HALMD_SPLIT_DSFLOAT_NOINLINE
 
 /**
  * Addition by assignment
