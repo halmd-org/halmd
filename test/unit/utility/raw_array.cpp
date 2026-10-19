@@ -317,7 +317,14 @@ static void test_move_assignment(halmd::raw_array<T>& array)
     BOOST_CHECK_EQUAL( array3.begin(), array3.end() );
 
     // assign xvalue reference of self
+#if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 13)
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wself-move"
+#endif
     array2 = std::move(array2);
+#if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 13)
+# pragma GCC diagnostic pop
+#endif
 
     BOOST_CHECK_EQUAL( array2.size(), size2 );
     BOOST_CHECK_EQUAL( array2.capacity(), capacity2 );
