@@ -150,7 +150,6 @@ end
 --   from matplotlib import pyplot as plot
 --
 --   matplotlib.rc('figure', figsize=(6, 5))
---   matplotlib.rc('text', usetex=True)
 --   matplotlib.rc('font', size=12)
 --
 --   # Lennard Jones potential
@@ -202,7 +201,6 @@ end
 --   from matplotlib import pyplot as plot
 --
 --   matplotlib.rc('figure', figsize=(6, 5))
---   matplotlib.rc('text', usetex=True)
 --   matplotlib.rc('font', size=12)
 --
 --   # Lennard Jones potential
