@@ -429,8 +429,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_double_int_converter, pair_type, dou
         }
         scalar_type v = index_to_value<scalar_type>()(i);
         h_input[i] <<= tie(u, v);
-//        BOOST_CHECK(get<1>(h_input[i]).x != 0);                                 // tests for a potential compiler bug of GCC 12
-//        float4 hi, lo; tie(hi, lo) <<= tie(u, v); BOOST_TEST_MESSAGE("(hi, lo)= (" << hi.x << ", " << lo.x << ")");
+        BOOST_CHECK(get<1>(h_input[i]).x != 0);                                 // regression check for a GCC 12 -O2 miscompilation (see dsfloat.hpp's split())
     }
 
     for (size_t i = 0; i < size; ++i) {

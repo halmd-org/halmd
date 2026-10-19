@@ -11,7 +11,7 @@ mass, temperature, and current/charge.
 
 For example, an interaction range specified as ":math:`\sigma = 1`" of the
 Lennard-Jones potential may be interpreted as :math:`\sigma = 1\,\text{m}`,
-:math:`\sigma = 1\,\text{pm}`, or even :math:`\sigma = 3.4\,Å` (for
+:math:`\sigma = 1\,\text{pm}`, or even :math:`\sigma = 3.4\,\text{Å}` (for
 argon). Another more abstract interpretation of ":math:`\sigma = 1`" is that
 all lengths are measured relative to :math:`\sigma`.
 
