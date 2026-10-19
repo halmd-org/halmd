@@ -119,6 +119,7 @@ local function restore(args)
               , label = label1 .. label2  -- FIXME do not infer logger from potential
               , neighbour = { disable_binning = true }
               --, neighbour = neighbour
+              , weight = (label1 == label2) and 1 or 0.5  -- avoid double-counting AB/BA cross energy
             })
         end
     end
