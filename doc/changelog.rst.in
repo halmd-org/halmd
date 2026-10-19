@@ -3,6 +3,14 @@
 Changelog
 *********
 
+Version 1.1.2
+=============
+
+**Internal changes**
+
+* address a few build warnings and (irrelevant) test failures under certain,
+  newer tool chain configurations. *(Felix Höfling)*
+
 Version 1.1.1
 =============
 
