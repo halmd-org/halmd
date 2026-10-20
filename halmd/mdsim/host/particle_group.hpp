@@ -266,11 +266,11 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
     }
 
     auto const& ordered = read_cache(group.ordered());
-    auto position = make_cache_mutable(particle_dst.position());
-    auto image    = make_cache_mutable(particle_dst.image());
-    auto velocity = make_cache_mutable(particle_dst.velocity());
-    auto species  = make_cache_mutable(particle_dst.species());
-    auto mass     = make_cache_mutable(particle_dst.mass());
+    auto position = make_cache_mutable(particle_dst.mutable_position());
+    auto image    = make_cache_mutable(particle_dst.mutable_image());
+    auto velocity = make_cache_mutable(particle_dst.mutable_velocity());
+    auto species  = make_cache_mutable(particle_dst.mutable_species());
+    auto mass     = make_cache_mutable(particle_dst.mutable_mass());
 
     auto const& position_src = read_cache(particle_src.position());
     auto const& image_src    = read_cache(particle_src.image());

@@ -171,10 +171,10 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_trunc<dimension, float_type, potential_type>::check_cache()
 {
-    cache<position_array_type> const& position1_cache = particle1_->position();
-    cache<position_array_type> const& position2_cache = particle2_->position();
-    cache<species_array_type> const& species1_cache = particle1_->species();
-    cache<species_array_type> const& species2_cache = particle2_->species();
+    auto const& position1_cache = particle1_->position();
+    auto const& position2_cache = particle2_->position();
+    auto const& species1_cache = particle1_->species();
+    auto const& species2_cache = particle2_->species();
 
     auto current_state = std::tie(position1_cache, position2_cache, species1_cache, species2_cache);
 
@@ -193,10 +193,10 @@ inline void pair_trunc<dimension, float_type, potential_type>::apply()
     // process slot functions associated with signal
     on_prepend_apply_();
 
-    cache<position_array_type> const& position1_cache = particle1_->position();
-    cache<position_array_type> const& position2_cache = particle2_->position();
-    cache<species_array_type> const& species1_cache = particle1_->species();
-    cache<species_array_type> const& species2_cache = particle2_->species();
+    auto const& position1_cache = particle1_->position();
+    auto const& position2_cache = particle2_->position();
+    auto const& species1_cache = particle1_->species();
+    auto const& species2_cache = particle2_->species();
 
     auto current_state = std::tie(position1_cache, position2_cache, species1_cache, species2_cache);
 

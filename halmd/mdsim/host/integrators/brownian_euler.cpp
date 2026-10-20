@@ -121,8 +121,8 @@ void brownian_euler<dimension, float_type>::integrate()
     auto const& species = read_cache(particle_->species());
 
     // invalidate the particle caches only after accessing the force!
-    auto position = make_cache_mutable(particle_->position());
-    auto image    = make_cache_mutable(particle_->image());
+    auto position = make_cache_mutable(particle_->mutable_position());
+    auto image    = make_cache_mutable(particle_->mutable_image());
 
     scoped_timer_type timer(runtime_.integrate);
 

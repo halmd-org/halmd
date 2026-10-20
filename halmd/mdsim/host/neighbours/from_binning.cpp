@@ -77,8 +77,8 @@ template <int dimension, typename float_type>
 cache<std::vector<typename from_binning<dimension, float_type>::neighbour_list>> const&
 from_binning<dimension, float_type>::lists()
 {
-    cache<reverse_id_array_type> const& reverse_id_cache1 = particle1_->reverse_id();
-    cache<reverse_id_array_type> const& reverse_id_cache2 = particle2_->reverse_id();
+    auto const& reverse_id_cache1 = particle1_->reverse_id();
+    auto const& reverse_id_cache2 = particle2_->reverse_id();
 
     auto current_cache = std::tie(reverse_id_cache1, reverse_id_cache2);
 

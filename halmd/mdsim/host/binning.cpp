@@ -76,7 +76,7 @@ template <int dimension, typename float_type>
 cache<typename binning<dimension, float_type>::array_type> const&
 binning<dimension, float_type>::cell()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
+    auto const& position_cache = particle_->position();
     if (cell_cache_ != position_cache) {
         update();
         cell_cache_ = position_cache;

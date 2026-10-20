@@ -67,7 +67,7 @@ double thermodynamics<dimension, float_type>::volume() const
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_kin()
 {
-    cache<velocity_array_type> const& velocity_cache = particle_->velocity();
+    auto const& velocity_cache = particle_->velocity();
     cache<size_type> const& group_cache = group_->size();
 
     if (en_kin_cache_ != std::tie(velocity_cache, group_cache)) {
@@ -86,7 +86,7 @@ template <int dimension, typename float_type>
 typename thermodynamics<dimension, float_type>::vector_type const&
 thermodynamics<dimension, float_type>::total_force()
 {
-    cache<force_array_type> const& force_cache = particle_->force();
+    auto const& force_cache = particle_->force();
     cache<size_type> const& group_cache = group_->size();
 
     if (force_cache_ != std::tie(force_cache, group_cache)) {
@@ -105,7 +105,7 @@ template <int dimension, typename float_type>
 typename thermodynamics<dimension, float_type>::vector_type const&
 thermodynamics<dimension, float_type>::v_cm()
 {
-    cache<velocity_array_type> const& velocity_cache = particle_->velocity();
+    auto const& velocity_cache = particle_->velocity();
     cache<size_type> const& group_cache = group_->size();
 
     if (v_cm_cache_ != std::tie(velocity_cache, group_cache)) {
@@ -124,7 +124,7 @@ template <int dimension, typename float_type>
 typename thermodynamics<dimension, float_type>::vector_type const&
 thermodynamics<dimension, float_type>::r_cm()
 {
-    cache<velocity_array_type> const& position_cache = particle_->position();
+    auto const& position_cache = particle_->position();
     cache<size_type> const& group_cache = group_->size();
 
     if (r_cm_cache_ != std::tie(position_cache, group_cache)) {
@@ -142,7 +142,7 @@ thermodynamics<dimension, float_type>::r_cm()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::mean_mass()
 {
-    cache<velocity_array_type> const& velocity_cache = particle_->velocity();
+    auto const& velocity_cache = particle_->velocity();
     cache<size_type> const& group_cache = group_->size();
 
     if (v_cm_cache_ != std::tie(velocity_cache, group_cache)) {
@@ -160,7 +160,7 @@ double thermodynamics<dimension, float_type>::mean_mass()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_pot()
 {
-    cache<en_pot_array_type> const& en_pot_cache = particle_->potential_energy();
+    auto const& en_pot_cache = particle_->potential_energy();
     cache<size_type> const& group_cache = group_->size();
 
     if (en_pot_cache_ != std::tie(en_pot_cache, group_cache)) {
@@ -178,7 +178,7 @@ double thermodynamics<dimension, float_type>::en_pot()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial()
 {
-    cache<stress_pot_array_type> const& stress_pot_cache = particle_->stress_pot();
+    auto const& stress_pot_cache = particle_->stress_pot();
     cache<size_type> const& group_cache = group_->size();
 
     if (virial_cache_ != std::tie(stress_pot_cache, group_cache)) {
@@ -197,8 +197,8 @@ template <int dimension, typename float_type>
 typename thermodynamics<dimension, float_type>::stress_tensor_type const&
 thermodynamics<dimension, float_type>::stress_tensor()
 {
-    cache<stress_pot_array_type> const& stress_pot_cache = particle_->stress_pot();
-    cache<velocity_array_type> const& velocity_cache = particle_->velocity();
+    auto const& stress_pot_cache = particle_->stress_pot();
+    auto const& velocity_cache = particle_->velocity();
     cache<size_type> const& group_cache = group_->size();
 
     if (stress_tensor_cache_ != std::tie(stress_pot_cache, velocity_cache, group_cache)) {

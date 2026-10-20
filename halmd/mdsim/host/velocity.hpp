@@ -35,7 +35,7 @@ namespace host {
 template <typename particle_type>
 inline void rescale_velocity(particle_type& particle, double factor)
 {
-    auto velocity = make_cache_mutable(particle.velocity());
+    auto velocity = make_cache_mutable(particle.mutable_velocity());
     for (unsigned int i = 0; i < particle.nparticle(); i++) {
         (*velocity)[i] *= factor;
     }
@@ -47,7 +47,7 @@ inline void rescale_velocity(particle_type& particle, double factor)
 template <typename particle_type>
 inline void rescale_velocity_group(particle_type& particle, particle_group& group, double factor)
 {
-    auto velocity = make_cache_mutable(particle.velocity());
+    auto velocity = make_cache_mutable(particle.mutable_velocity());
     for (typename particle_group::size_type i : *group.unordered()) {
         (*velocity)[i] *= factor;
     }
@@ -59,7 +59,7 @@ inline void rescale_velocity_group(particle_type& particle, particle_group& grou
 template <typename particle_type>
 inline void shift_velocity(particle_type& particle, fixed_vector<double, particle_type::velocity_type::static_size> const& delta)
 {
-    auto velocity = make_cache_mutable(particle.velocity());
+    auto velocity = make_cache_mutable(particle.mutable_velocity());
     for (unsigned int i = 0; i < particle.nparticle(); i++) {
         (*velocity)[i] += delta;
     }
@@ -71,7 +71,7 @@ inline void shift_velocity(particle_type& particle, fixed_vector<double, particl
 template <typename particle_type>
 inline void shift_velocity_group(particle_type& particle, particle_group& group, fixed_vector<double, particle_type::velocity_type::static_size> const& delta)
 {
-    auto velocity = make_cache_mutable(particle.velocity());
+    auto velocity = make_cache_mutable(particle.mutable_velocity());
     for (typename particle_group::size_type i : *group.unordered()) {
         (*velocity)[i] += delta;
     }
@@ -83,7 +83,7 @@ inline void shift_velocity_group(particle_type& particle, particle_group& group,
 template <typename particle_type>
 inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double, particle_type::velocity_type::static_size> const& delta, double factor)
 {
-    auto velocity = make_cache_mutable(particle.velocity());
+    auto velocity = make_cache_mutable(particle.mutable_velocity());
     for (unsigned int i = 0; i < particle.nparticle(); i++) {
         (*velocity)[i] += delta;
         (*velocity)[i] *= factor;
@@ -96,7 +96,7 @@ inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double,
 template <typename particle_type>
 inline void shift_rescale_velocity_group(particle_type& particle, particle_group& group, fixed_vector<double, particle_type::velocity_type::static_size> const& delta, double factor)
 {
-    auto velocity = make_cache_mutable(particle.velocity());
+    auto velocity = make_cache_mutable(particle.mutable_velocity());
     for (typename particle_group::size_type i : *group.unordered()) {
         auto& v = (*velocity)[i];
         v += delta;

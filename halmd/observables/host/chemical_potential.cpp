@@ -60,7 +60,7 @@ chemical_potential<dimension, float_type>::chemical_potential(
     set_position();
 
     // assign particle species' according to values in ntest_particle_
-    auto species = make_cache_mutable(test_particle_->species());
+    auto species = make_cache_mutable(test_particle_->mutable_species());
     auto it = species->begin();
     unsigned int s = 0;
     for (unsigned int n : ntest_particle_) {     // iterate over species counts
@@ -84,7 +84,7 @@ typename chemical_potential<dimension, float_type>::result_type const&
 chemical_potential<dimension, float_type>::sample()
 {
     // check cache of potential_energy, this may trigger a recalculation of the energy
-    cache<en_pot_array_type> const& en_pot_cache = test_particle_->potential_energy();
+    auto const& en_pot_cache = test_particle_->potential_energy();
 
     if (mu_ex_cache_ != en_pot_cache) {
         LOG_TRACE("sample excess chemical potential");

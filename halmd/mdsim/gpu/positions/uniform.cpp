@@ -64,8 +64,8 @@ uniform<dimension, float_type, RandomNumberGenerator>::uniform(
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void uniform<dimension, float_type, RandomNumberGenerator>::set()
 {
-    auto position = make_cache_mutable(particle_->position());
-    auto image = make_cache_mutable(particle_->image());
+    auto position = make_cache_mutable(particle_->mutable_position());
+    auto image = make_cache_mutable(particle_->mutable_image());
 
     LOG_TRACE("uniformly distribute random positions of " << position->size() << " particles");
 

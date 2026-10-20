@@ -59,7 +59,7 @@ void rescale<dimension, float_type>::set()
 
     LOG_DEBUG("rescale particle velocities to match target energy, for each particle");
 
-    auto& velocity = *make_cache_mutable(particle_->velocity());
+    auto& velocity = *make_cache_mutable(particle_->mutable_velocity());
 
     for (size_type i = 0; i < particle_->nparticle(); ++i)
     {

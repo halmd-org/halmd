@@ -87,7 +87,7 @@ region_species<dimension, float_type, geometry_type>::mask()
 template <int dimension, typename float_type, typename geometry_type>
 void region_species<dimension, float_type, geometry_type>::update_mask_()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
+    auto const& position_cache = particle_->position();
     if (position_cache != mask_cache_) {
         auto const& position = read_cache(position_cache);
 

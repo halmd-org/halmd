@@ -94,9 +94,9 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the force!
-    auto position = make_cache_mutable(particle_->position());
-    auto image = make_cache_mutable(particle_->image());
-    auto velocity = make_cache_mutable(particle_->velocity());
+    auto position = make_cache_mutable(particle_->mutable_position());
+    auto image = make_cache_mutable(particle_->mutable_image());
+    auto velocity = make_cache_mutable(particle_->mutable_velocity());
 
     for (size_type i = 0; i < nparticle; ++i) {
         vector_type& v = (*velocity)[i];
@@ -129,7 +129,7 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     // invalidate the particle caches after accessing the force!
-    auto velocity = make_cache_mutable(particle_->velocity());
+    auto velocity = make_cache_mutable(particle_->mutable_velocity());
 
     // cache random numbers
     float_type rng_cache = 0;

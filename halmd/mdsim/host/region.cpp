@@ -72,7 +72,7 @@ region<dimension, float_type, geometry_type>::mask()
 template <int dimension, typename float_type, typename geometry_type>
 void region<dimension, float_type, geometry_type>::update_()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
+    auto const& position_cache = particle_->position();
     if (position_cache != mask_cache_) {
         LOG_TRACE("update region");
 

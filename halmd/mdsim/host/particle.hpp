@@ -217,7 +217,7 @@ public:
     /**
      * Returns non-const reference to particle positions.
      */
-    cache<position_array_type>& position()
+    cache<position_array_type>& mutable_position()
     {
         return mutable_data<position_type>("position");
     }
@@ -233,7 +233,7 @@ public:
     /**
      * Returns const reference to particle images.
      */
-    cache<image_array_type>& image()
+    cache<image_array_type>& mutable_image()
     {
         return mutable_data<image_type>("image");
     }
@@ -249,7 +249,7 @@ public:
     /**
      * Returns non-const reference to particle velocities.
      */
-    cache<velocity_array_type>& velocity()
+    cache<velocity_array_type>& mutable_velocity()
     {
         return mutable_data<velocity_type>("velocity");
     }
@@ -265,7 +265,7 @@ public:
     /**
      * Returns non-const reference to particle IDs.
      */
-    cache<id_array_type>& id()
+    cache<id_array_type>& mutable_id()
     {
         return mutable_data<id_type>("id");
     }
@@ -281,7 +281,7 @@ public:
     /**
      * Returns non-const reference to particle reverse IDs.
      */
-    cache<reverse_id_array_type>& reverse_id()
+    cache<reverse_id_array_type>& mutable_reverse_id()
     {
         return mutable_data<reverse_id_type>("reverse_id");
     }
@@ -297,7 +297,7 @@ public:
     /**
      * Returns non-const reference to particle species.
      */
-    cache<species_array_type>& species()
+    cache<species_array_type>& mutable_species()
     {
         return mutable_data<species_type>("species");
     }
@@ -313,14 +313,15 @@ public:
     /**
      * Returns non-const reference to particle masses.
      */
-    cache<mass_array_type>& mass()
+    cache<mass_array_type>& mutable_mass()
     {
         return mutable_data<mass_type>("mass");
     }
+
     /**
      * Returns const reference to particle force.
      */
-    cache<force_array_type> const& force()
+    cache<force_array_type> const& force() const
     {
         return data<force_type>("force");
     }
@@ -336,7 +337,7 @@ public:
     /**
      * Returns const reference to potential energy of particles.
      */
-    cache<en_pot_array_type> const& potential_energy()
+    cache<en_pot_array_type> const& potential_energy() const
     {
         return data<en_pot_type>("potential_energy");
     }
@@ -352,7 +353,7 @@ public:
     /**
      * Returns const reference to potential part of stress tensor.
      */
-    cache<stress_pot_array_type> const& stress_pot()
+    cache<stress_pot_array_type> const& stress_pot() const
     {
         return data<stress_pot_type>("potential_stress_tensor");
     }

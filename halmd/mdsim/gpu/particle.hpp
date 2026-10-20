@@ -221,7 +221,7 @@ public:
     /**
      * Returns non-const reference to particle positions and species.
      */
-    cache<position_array_type>& position()
+    cache<position_array_type>& mutable_position()
     {
         return mutable_data<gpu_position_type>("position");
     }
@@ -237,7 +237,7 @@ public:
     /**
      * Returns non-const reference to particle images.
      */
-    cache<image_array_type>& image()
+    cache<image_array_type>& mutable_image()
     {
         return mutable_data<gpu_image_type>("image");
     }
@@ -253,7 +253,7 @@ public:
     /**
      * Returns non-const reference to particle velocities and masses.
      */
-    cache<velocity_array_type>& velocity()
+    cache<velocity_array_type>& mutable_velocity()
     {
         return mutable_data<gpu_velocity_type>("velocity");
     }
@@ -269,7 +269,7 @@ public:
     /**
      * Returns non-const reference to particle IDs.
      */
-    cache<id_array_type>& id()
+    cache<id_array_type>& mutable_id()
     {
         return id_;
     }
@@ -285,7 +285,7 @@ public:
     /**
      * Returns non-const reference to particle reverse IDs.
      */
-    cache<reverse_id_array_type>& reverse_id()
+    cache<reverse_id_array_type>& mutable_reverse_id()
     {
         return reverse_id_;
     }
@@ -293,7 +293,7 @@ public:
     /**
      * Returns const reference to particle force.
      */
-    cache<force_array_type> const& force()
+    cache<force_array_type> const& force() const
     {
         return data<gpu_force_type>("force");
     }
@@ -309,7 +309,7 @@ public:
     /**
      * Returns const reference to potential energy of particles.
      */
-    cache<en_pot_array_type> const& potential_energy()
+    cache<en_pot_array_type> const& potential_energy() const
     {
         return data<gpu_en_pot_type>("potential_energy");
     }
@@ -325,10 +325,11 @@ public:
     /**
      * Returns const reference to potential part of stress tensor.
      */
-    cache<stress_pot_array_type> const& stress_pot()
+    cache<stress_pot_array_type> const& stress_pot() const
     {
         return data<gpu_stress_pot_type>("potential_stress_tensor");
     }
+
     /**
      * Returns non-const reference to potential part of stress tensor.
      */
@@ -629,7 +630,7 @@ set_id(particle_type& particle, iterator_type const& first)
     for (size_t i = 0; i < particle.nparticle(); i++) {
         id[i] = *input++;
     }
-    auto output = make_cache_mutable(particle.id());
+    auto output = make_cache_mutable(particle.mutable_id());
     cuda::copy(id.begin(), id.end(), output->begin());
     return input;
 }
@@ -663,7 +664,7 @@ set_reverse_id(particle_type& particle, iterator_type const& first)
     for (size_t i = 0; i < particle.nparticle(); i++) {
         reverse_id[i] = *input++;
     }
-    auto output = make_cache_mutable(particle.reverse_id());
+    auto output = make_cache_mutable(particle.mutable_reverse_id());
     cuda::copy(reverse_id.begin(), reverse_id.end(), output->begin());
     return input;
 }

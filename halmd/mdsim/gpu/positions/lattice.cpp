@@ -67,8 +67,8 @@ lattice<dimension, float_type>::lattice(
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
-    auto position = make_cache_mutable(particle_->position());
-    auto image = make_cache_mutable(particle_->image());
+    auto position = make_cache_mutable(particle_->mutable_position());
+    auto image = make_cache_mutable(particle_->mutable_image());
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
     gpu_vector_type length = static_cast<gpu_vector_type>(element_prod(box_->length(), slab_));

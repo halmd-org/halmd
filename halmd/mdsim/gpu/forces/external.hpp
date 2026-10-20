@@ -156,7 +156,7 @@ external<dimension, float_type, potential_type>::external(
 template <int dimension, typename float_type, typename potential_type>
 inline void external<dimension, float_type, potential_type>::check_cache()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
+    auto const& position_cache = particle_->position();
 
     if (force_cache_ != position_cache) {
         particle_->mark_force_dirty();
@@ -173,7 +173,7 @@ inline void external<dimension, float_type, potential_type>::apply()
     // process slot functions associated with signal
     on_prepend_apply_();
 
-    cache<position_array_type> const& position_cache = particle_->position();
+    auto const& position_cache = particle_->position();
 
     if (particle_->aux_enabled()) {
         compute_aux_();

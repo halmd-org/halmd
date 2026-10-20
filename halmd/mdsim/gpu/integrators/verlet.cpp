@@ -82,9 +82,9 @@ void verlet<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the force!
-    auto position = make_cache_mutable(particle_->position());
-    auto velocity = make_cache_mutable(particle_->velocity());
-    auto image = make_cache_mutable(particle_->image());
+    auto position = make_cache_mutable(particle_->mutable_position());
+    auto velocity = make_cache_mutable(particle_->mutable_velocity());
+    auto image = make_cache_mutable(particle_->mutable_image());
 
     try {
         configure_kernel(wrapper_->integrate, particle_->dim(), true);
@@ -124,7 +124,7 @@ void verlet<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     // invalidate the particle caches after accessing the force!
-    auto velocity = make_cache_mutable(particle_->velocity());
+    auto velocity = make_cache_mutable(particle_->mutable_velocity());
 
     try {
         configure_kernel(wrapper_->finalize, particle_->dim(), true);

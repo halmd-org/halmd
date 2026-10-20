@@ -126,9 +126,9 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the force!
-    auto position = make_cache_mutable(particle_->position());
-    auto image = make_cache_mutable(particle_->image());
-    auto velocity = make_cache_mutable(particle_->velocity());
+    auto position = make_cache_mutable(particle_->mutable_position());
+    auto image = make_cache_mutable(particle_->mutable_image());
+    auto velocity = make_cache_mutable(particle_->mutable_velocity());
 
     propagate_chain();
 
@@ -163,7 +163,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     // invalidate the particle caches after accessing the force!
-    auto velocity = make_cache_mutable(particle_->velocity());
+    auto velocity = make_cache_mutable(particle_->mutable_velocity());
 
     // loop over all particles
     for (size_type i = 0; i < nparticle; ++i) {
@@ -186,7 +186,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
-    auto velocity = make_cache_mutable(particle_->velocity());
+    auto velocity = make_cache_mutable(particle_->mutable_velocity());
 
     scoped_timer_type timer(runtime_.propagate);
 

@@ -51,7 +51,7 @@ max_displacement<dimension, float_type>::max_displacement(
 template <int dimension, typename float_type>
 void max_displacement<dimension, float_type>::zero()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
+    auto const& position_cache = particle_->position();
     position_array_type const& position = read_cache(position_cache);
 
     LOG_TRACE("zero maximum squared displacement");
@@ -68,7 +68,7 @@ void max_displacement<dimension, float_type>::zero()
 template <int dimension, typename float_type>
 float_type max_displacement<dimension, float_type>::compute()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
+    auto const& position_cache = particle_->position();
 
     if (position_cache != position_cache_) {
         position_array_type const& position = read_cache(position_cache);

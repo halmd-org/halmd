@@ -63,8 +63,8 @@ uniform<dimension, float_type>::uniform(
 template <int dimension, typename float_type>
 void uniform<dimension, float_type>::set()
 {
-    auto position = make_cache_mutable(particle_->position());
-    auto image = make_cache_mutable(particle_->image());
+    auto position = make_cache_mutable(particle_->mutable_position());
+    auto image = make_cache_mutable(particle_->mutable_image());
 
     LOG_TRACE("uniformly distributing random positions of " << position->size() << " particles");
 

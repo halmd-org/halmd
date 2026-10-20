@@ -86,8 +86,8 @@ void euler<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the velocity!
-    auto position = make_cache_mutable(particle_->position());
-    auto image = make_cache_mutable(particle_->image());
+    auto position = make_cache_mutable(particle_->mutable_position());
+    auto image = make_cache_mutable(particle_->mutable_image());
 
     for (size_type i = 0 ; i < nparticle; ++i) {
         vector_type& r = (*position)[i];

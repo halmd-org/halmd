@@ -153,8 +153,8 @@ external<dimension, float_type, potential_type>::external(
 template <int dimension, typename float_type, typename potential_type>
 inline void external<dimension, float_type, potential_type>::check_cache()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
-    cache<species_array_type> const& species_cache = particle_->species();
+    auto const& position_cache = particle_->position();
+    auto const& species_cache = particle_->species();
 
     auto current_state = std::tie(position_cache, species_cache);
 
@@ -173,8 +173,8 @@ inline void external<dimension, float_type, potential_type>::apply()
     // process slot functions associated with signal
     on_prepend_apply_();
 
-    cache<position_array_type> const& position_cache = particle_->position();
-    cache<species_array_type> const& species_cache = particle_->species();
+    auto const& position_cache = particle_->position();
+    auto const& species_cache = particle_->species();
 
     auto current_state = std::tie(position_cache, species_cache);
 
