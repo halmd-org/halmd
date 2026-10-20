@@ -110,7 +110,7 @@ public:
             throw std::runtime_error("invalid sample data type");
         }
         auto const& group = read_cache(particle_group_->ordered());
-        auto data = make_cache_mutable(array_->mutable_data());
+        auto data = array_->mutable_data();
         auto const& sample_data = std::static_pointer_cast<sample_type const>(sample)->data();
 
         std::size_t id = 0;
@@ -266,8 +266,8 @@ public:
         }
 
         auto const& group = read_cache(this->particle_group_->ordered());
-        auto particle_position = make_cache_mutable(this->array_->mutable_data());
-        auto particle_image = make_cache_mutable(image_array_->mutable_data());
+        auto particle_position = this->array_->mutable_data();
+        auto particle_image = image_array_->mutable_data();
 
         auto const& sample_position = std::static_pointer_cast<sample_type const>(sample)->data();
 

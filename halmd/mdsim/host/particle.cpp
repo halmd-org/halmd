@@ -61,17 +61,17 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , aux_enabled_(true) // enable auxiliary variables by default to allow sampling of initial state
 {
     // register and allocate named particle arrays
-    auto position = make_cache_mutable(register_data<position_type>("position")->mutable_data());
-    auto image = make_cache_mutable(register_data<image_type>("image")->mutable_data());
-    auto velocity = make_cache_mutable(register_data<velocity_type>("velocity")->mutable_data());
-    auto id = make_cache_mutable(register_data<id_type>("id")->mutable_data());
-    auto reverse_id = make_cache_mutable(register_data<reverse_id_type>("reverse_id")->mutable_data());
-    auto species = make_cache_mutable(register_data<species_type>("species")->mutable_data());
-    auto mass = make_cache_mutable(register_data<mass_type>("mass")->mutable_data());
-    auto force = make_cache_mutable(register_data<force_type>("force", [this]() { this->update_force_(); })->mutable_data());
-    auto en_pot = make_cache_mutable(register_data<en_pot_type>("potential_energy", [this]() { this->update_force_(true); })->mutable_data());
-    auto stress_pot = make_cache_mutable(
-            register_data<stress_pot_type>("potential_stress_tensor", [this]() { this->update_force_(true); })->mutable_data());
+    auto position = register_data<position_type>("position")->mutable_data();
+    auto image = register_data<image_type>("image")->mutable_data();
+    auto velocity = register_data<velocity_type>("velocity")->mutable_data();
+    auto id = register_data<id_type>("id")->mutable_data();
+    auto reverse_id = register_data<reverse_id_type>("reverse_id")->mutable_data();
+    auto species = register_data<species_type>("species")->mutable_data();
+    auto mass = register_data<mass_type>("mass")->mutable_data();
+    auto force = register_data<force_type>("force", [this]() { this->update_force_(); })->mutable_data();
+    auto en_pot = register_data<en_pot_type>("potential_energy", [this]() { this->update_force_(true); })->mutable_data();
+    auto stress_pot =
+            register_data<stress_pot_type>("potential_stress_tensor", [this]() { this->update_force_(true); })->mutable_data();
 
     // initialize particle arrays
     std::fill(position->begin(), position->end(), 0);
@@ -140,13 +140,13 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
 {
     scoped_timer_type timer(runtime_.rearrange);
 
-    auto position = make_cache_mutable(mutable_data<position_type>("position"));
-    auto image = make_cache_mutable(mutable_data<image_type>("image"));
-    auto velocity = make_cache_mutable(mutable_data<velocity_type>("velocity"));
-    auto id = make_cache_mutable(mutable_data<id_type>("id"));
-    auto reverse_id = make_cache_mutable(mutable_data<reverse_id_type>("reverse_id"));
-    auto species = make_cache_mutable(mutable_data<species_type>("species"));
-    auto mass = make_cache_mutable(mutable_data<mass_type>("mass"));
+    auto position = mutable_data<position_type>("position");
+    auto image = mutable_data<image_type>("image");
+    auto velocity = mutable_data<velocity_type>("velocity");
+    auto id = mutable_data<id_type>("id");
+    auto reverse_id = mutable_data<reverse_id_type>("reverse_id");
+    auto species = mutable_data<species_type>("species");
+    auto mass = mutable_data<mass_type>("mass");
 
     permute(position->begin(), position->begin() + nparticle_, index.begin());
     permute(image->begin(), image->begin() + nparticle_, index.begin());

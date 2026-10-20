@@ -152,16 +152,16 @@ public:
     }
 
     /**
-     * obtain non-const reference to the stored data
+     * obtain write access to the stored data
      *
-     * @return non-const reference to the cached raw array
+     * @return write access to the cached raw array
      */
-    cache<raw_array<T>>& mutable_data()
+    cache_proxy<raw_array<T>> mutable_data()
     {
         if (locked_) {
             throw std::logic_error(std::string("write attempt on locked particle data"));
         }
-        return data_;
+        return make_cache_mutable(data_);
     }
 
     /**
@@ -201,7 +201,7 @@ public:
     template <typename iterator_type>
     iterator_type set_data(iterator_type const& first)
     {
-        auto output = make_cache_mutable(mutable_data());
+        auto output = mutable_data();
         iterator_type input = first;
         for (unsigned int i = 0; i < nparticle_; i++) {
             (*output)[i] = *input++;
@@ -226,7 +226,7 @@ public:
      */
     virtual void set_lua(luaponte::object table)
     {
-        auto output = make_cache_mutable(mutable_data());
+        auto output = mutable_data();
         for (unsigned int i = 0; i < nparticle_; i++) {
             (*output)[i] = luaponte::object_cast<T>(table[i+1]);
         }

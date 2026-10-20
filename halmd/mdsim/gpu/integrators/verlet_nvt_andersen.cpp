@@ -95,9 +95,9 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrat
     scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the force!
-    auto position = make_cache_mutable(particle_->mutable_position());
-    auto velocity = make_cache_mutable(particle_->mutable_velocity());
-    auto image = make_cache_mutable(particle_->mutable_image());
+    auto position = particle_->mutable_position();
+    auto velocity = particle_->mutable_velocity();
+    auto image = particle_->mutable_image();
 
     try {
         configure_kernel(wrapper_type::kernel.integrate, particle_->dim(), true);
@@ -137,7 +137,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize
     scoped_timer_type timer(runtime_.finalize);
 
     // invalidate the particle caches after accessing the force!
-    auto velocity = make_cache_mutable(particle_->mutable_velocity());
+    auto velocity = particle_->mutable_velocity();
 
     try {
         // use CUDA execution dimensions of 'random' since

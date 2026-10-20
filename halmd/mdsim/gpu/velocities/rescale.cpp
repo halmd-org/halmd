@@ -60,7 +60,7 @@ void rescale<dimension, float_type>::set()
     LOG_DEBUG("rescale particle velocities to match target energy, for each particle");
 
     // access particle velocity array
-    auto& velocity = *make_cache_mutable(particle_->mutable_velocity());
+    auto& velocity = *particle_->mutable_velocity();
     cuda::memory::device::vector<int> retcode(1);
 
     if (mode_ == nve) {

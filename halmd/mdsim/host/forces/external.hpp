@@ -196,7 +196,7 @@ inline void external<dimension, float_type, potential_type>::apply()
 template <int dimension, typename float_type, typename potential_type>
 inline void external<dimension, float_type, potential_type>::compute_()
 {
-    auto force = make_cache_mutable(particle_->mutable_force());
+    auto force = particle_->mutable_force();
 
     position_array_type const& position = read_cache(particle_->position());
     species_array_type const& species   = *particle_->species();
@@ -231,9 +231,9 @@ inline void external<dimension, float_type, potential_type>::compute_()
 template <int dimension, typename float_type, typename potential_type>
 inline void external<dimension, float_type, potential_type>::compute_aux_()
 {
-    auto force      = make_cache_mutable(particle_->mutable_force());
-    auto en_pot     = make_cache_mutable(particle_->mutable_potential_energy());
-    auto stress_pot = make_cache_mutable(particle_->mutable_stress_pot());
+    auto force      = particle_->mutable_force();
+    auto en_pot     = particle_->mutable_potential_energy();
+    auto stress_pot = particle_->mutable_stress_pot();
 
     position_array_type const& position = read_cache(particle_->position());
     species_array_type const& species   = *particle_->species();

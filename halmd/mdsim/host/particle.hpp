@@ -178,16 +178,16 @@ public:
     }
 
     /**
-     * Returns non-const reference to the data of a named particle array.
+     * Returns write access to the data of a named particle array.
      *
      * @param name identifier of the particle array
-     * @return non-const reference to the data
+     * @return write access to the data
      *
      * throws an exception if the array does not exist, has an invalid type, or
      * is locked
      */
     template<typename T>
-    cache<raw_array<T>>& mutable_data(std::string const& name)
+    cache_proxy<raw_array<T>> mutable_data(std::string const& name)
     try { // 'function try block'
         return particle_array::cast<T>(get_array(name))->mutable_data();
     }
@@ -215,15 +215,15 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle positions.
+     * Returns write access to particle positions.
      */
-    cache<position_array_type>& mutable_position()
+    cache_proxy<position_array_type> mutable_position()
     {
         return mutable_data<position_type>("position");
     }
 
     /**
-     * Returns non-const reference to particle images.
+     * Returns const reference to particle images.
      */
     cache<image_array_type> const& image() const
     {
@@ -231,9 +231,9 @@ public:
     }
 
     /**
-     * Returns const reference to particle images.
+     * Returns write access to particle images.
      */
-    cache<image_array_type>& mutable_image()
+    cache_proxy<image_array_type> mutable_image()
     {
         return mutable_data<image_type>("image");
     }
@@ -247,9 +247,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle velocities.
+     * Returns write access to particle velocities.
      */
-    cache<velocity_array_type>& mutable_velocity()
+    cache_proxy<velocity_array_type> mutable_velocity()
     {
         return mutable_data<velocity_type>("velocity");
     }
@@ -263,9 +263,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle IDs.
+     * Returns write access to particle IDs.
      */
-    cache<id_array_type>& mutable_id()
+    cache_proxy<id_array_type> mutable_id()
     {
         return mutable_data<id_type>("id");
     }
@@ -279,9 +279,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle reverse IDs.
+     * Returns write access to particle reverse IDs.
      */
-    cache<reverse_id_array_type>& mutable_reverse_id()
+    cache_proxy<reverse_id_array_type> mutable_reverse_id()
     {
         return mutable_data<reverse_id_type>("reverse_id");
     }
@@ -295,9 +295,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle species.
+     * Returns write access to particle species.
      */
-    cache<species_array_type>& mutable_species()
+    cache_proxy<species_array_type> mutable_species()
     {
         return mutable_data<species_type>("species");
     }
@@ -311,9 +311,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle masses.
+     * Returns write access to particle masses.
      */
-    cache<mass_array_type>& mutable_mass()
+    cache_proxy<mass_array_type> mutable_mass()
     {
         return mutable_data<mass_type>("mass");
     }
@@ -327,9 +327,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle force.
+     * Returns write access to particle force.
      */
-    cache<force_array_type>& mutable_force()
+    cache_proxy<force_array_type> mutable_force()
     {
         return mutable_data<force_type>("force");
     }
@@ -343,9 +343,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to potential energy of particles.
+     * Returns write access to potential energy of particles.
      */
-    cache<en_pot_array_type>& mutable_potential_energy()
+    cache_proxy<en_pot_array_type> mutable_potential_energy()
     {
         return mutable_data<en_pot_type>("potential_energy");
     }
@@ -359,9 +359,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to potential part of stress tensor.
+     * Returns write access to potential part of stress tensor.
      */
-    cache<stress_pot_array_type>& mutable_stress_pot()
+    cache_proxy<stress_pot_array_type> mutable_stress_pot()
     {
         return mutable_data<stress_pot_type>("potential_stress_tensor");
     }

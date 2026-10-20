@@ -185,12 +185,12 @@ public:
     virtual ~particle_array_gpu();
     virtual ValueType value_type() const;
 
-    cache<gpu_array_type>& mutable_data()
+    cache_proxy<gpu_array_type> mutable_data()
     {
         if (locked_) {
             throw std::logic_error(std::string("write attempt on locked particle data"));
         }
-        return data_;
+        return make_cache_mutable(data_);
     }
 
     cache<gpu_array_type> const& data() const

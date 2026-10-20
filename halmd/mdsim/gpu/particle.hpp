@@ -182,16 +182,16 @@ public:
     }
 
     /**
-     * Returns non-const reference to the data of a named particle array.
+     * Returns write access to the data of a named particle array.
      *
      * @param name identifier of the particle array
-     * @return non-const reference to the array
+     * @return write access to the array
      *
      * throws an exception if the array does not exist, has an invalid type, or
      * is locked
      */
     template<typename T>
-    cache<typename particle_array_gpu<T>::gpu_array_type>& mutable_data(const std::string &name)
+    cache_proxy<typename particle_array_gpu<T>::gpu_array_type> mutable_data(const std::string &name)
     try { // 'function try block'
         return particle_array_gpu<T>::cast(get_gpu_array(name))->mutable_data();
     }
@@ -219,9 +219,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle positions and species.
+     * Returns write access to particle positions and species.
      */
-    cache<position_array_type>& mutable_position()
+    cache_proxy<position_array_type> mutable_position()
     {
         return mutable_data<gpu_position_type>("position");
     }
@@ -235,9 +235,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle images.
+     * Returns write access to particle images.
      */
-    cache<image_array_type>& mutable_image()
+    cache_proxy<image_array_type> mutable_image()
     {
         return mutable_data<gpu_image_type>("image");
     }
@@ -251,9 +251,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle velocities and masses.
+     * Returns write access to particle velocities and masses.
      */
-    cache<velocity_array_type>& mutable_velocity()
+    cache_proxy<velocity_array_type> mutable_velocity()
     {
         return mutable_data<gpu_velocity_type>("velocity");
     }
@@ -267,11 +267,11 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle IDs.
+     * Returns write access to particle IDs.
      */
-    cache<id_array_type>& mutable_id()
+    cache_proxy<id_array_type> mutable_id()
     {
-        return id_;
+        return make_cache_mutable(id_);
     }
 
     /**
@@ -283,11 +283,11 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle reverse IDs.
+     * Returns write access to particle reverse IDs.
      */
-    cache<reverse_id_array_type>& mutable_reverse_id()
+    cache_proxy<reverse_id_array_type> mutable_reverse_id()
     {
-        return reverse_id_;
+        return make_cache_mutable(reverse_id_);
     }
 
     /**
@@ -299,9 +299,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle force.
+     * Returns write access to particle force.
      */
-    cache<force_array_type>& mutable_force()
+    cache_proxy<force_array_type> mutable_force()
     {
         return mutable_data<gpu_force_type>("force");
     }
@@ -315,9 +315,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to potential energy of particles.
+     * Returns write access to potential energy of particles.
      */
-    cache<en_pot_array_type>& mutable_potential_energy()
+    cache_proxy<en_pot_array_type> mutable_potential_energy()
     {
         return mutable_data<gpu_en_pot_type>("potential_energy");
     }
@@ -331,9 +331,9 @@ public:
     }
 
     /**
-     * Returns non-const reference to potential part of stress tensor.
+     * Returns write access to potential part of stress tensor.
      */
-    cache<stress_pot_array_type>& mutable_stress_pot()
+    cache_proxy<stress_pot_array_type> mutable_stress_pot()
     {
         return mutable_data<gpu_stress_pot_type>("potential_stress_tensor");
     }
@@ -630,7 +630,7 @@ set_id(particle_type& particle, iterator_type const& first)
     for (size_t i = 0; i < particle.nparticle(); i++) {
         id[i] = *input++;
     }
-    auto output = make_cache_mutable(particle.mutable_id());
+    auto output = particle.mutable_id();
     cuda::copy(id.begin(), id.end(), output->begin());
     return input;
 }
@@ -664,7 +664,7 @@ set_reverse_id(particle_type& particle, iterator_type const& first)
     for (size_t i = 0; i < particle.nparticle(); i++) {
         reverse_id[i] = *input++;
     }
-    auto output = make_cache_mutable(particle.mutable_reverse_id());
+    auto output = particle.mutable_reverse_id();
     cuda::copy(reverse_id.begin(), reverse_id.end(), output->begin());
     return input;
 }

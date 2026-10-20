@@ -193,9 +193,9 @@ void particle<dimension, float_type>::unlock(std::string const& name)
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::rearrange(cuda::memory::device::vector<unsigned int> const& g_index)
 {
-    auto g_position = make_cache_mutable(mutable_data<gpu_position_type>("position"));
-    auto g_image = make_cache_mutable(mutable_data<gpu_image_type>("image"));
-    auto g_velocity = make_cache_mutable(mutable_data<gpu_velocity_type>("velocity"));
+    auto g_position = mutable_data<gpu_position_type>("position");
+    auto g_image = mutable_data<gpu_image_type>("image");
+    auto g_velocity = mutable_data<gpu_velocity_type>("velocity");
 
     scoped_timer_type timer(runtime_.rearrange);
 

@@ -301,9 +301,9 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
     }
 
     auto const& ordered = read_cache(group.ordered());
-    auto position = make_cache_mutable(particle_dst.mutable_position());
-    auto image    = make_cache_mutable(particle_dst.mutable_image());
-    auto velocity = make_cache_mutable(particle_dst.mutable_velocity());
+    auto position = particle_dst.mutable_position();
+    auto image    = particle_dst.mutable_image();
+    auto velocity = particle_dst.mutable_velocity();
 
     cuda::texture<float4> t_r(read_cache(particle_src.position()));
     cuda::texture<aligned_vector_type> t_image(read_cache(particle_src.image()));

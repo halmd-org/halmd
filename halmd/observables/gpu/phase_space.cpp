@@ -397,10 +397,10 @@ public:
 
         // reduce positions on GPU
         typedef typename mdsim::type_traits<dimension, scalar_type>::gpu::coalesced_vector_type gpu_vector_type;
-        auto position = make_cache_mutable(mdsim::gpu::particle_array_gpu<
+        auto position = mdsim::gpu::particle_array_gpu<
           typename mdsim::gpu::particle<dimension, float_type>::gpu_hp_vector_type
-          >::cast(this->array_->parent())->mutable_data());
-        auto image = make_cache_mutable(mdsim::gpu::particle_array_gpu<gpu_vector_type>::cast(image_array_->parent())->mutable_data());
+          >::cast(this->array_->parent())->mutable_data();
+        auto image = mdsim::gpu::particle_array_gpu<gpu_vector_type>::cast(image_array_->parent())->mutable_data();
         auto const& group = read_cache(this->particle_group_->ordered());
         try {
             cuda::texture<float4> r(*position);
@@ -529,7 +529,7 @@ public:
 
         auto const& group = read_cache(particle_group_->ordered());
 
-        auto data = make_cache_mutable(array_->mutable_data());
+        auto data = array_->mutable_data();
         try {
             cuda::texture<sample_data_type> input(sample->data());
 
@@ -709,8 +709,8 @@ public:
         phase_space_sampler_gpu_typed<dimension, data_type, float4>::set(sample);
 
         // reduce positions on GPU
-        auto position = make_cache_mutable(this->array_->mutable_data());
-        auto image = make_cache_mutable(image_array_->mutable_data());
+        auto position = this->array_->mutable_data();
+        auto image = image_array_->mutable_data();
         auto const& group = read_cache(this->particle_group_->ordered());
         try {
             cuda::texture<float4> r(*position);

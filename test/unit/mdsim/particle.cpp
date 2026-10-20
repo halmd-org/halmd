@@ -163,21 +163,21 @@ make_stress_array_from_iterator_range(
 template <typename particle_type, typename iterator_type>
 void set_force(particle_type& particle, iterator_type const& first, iterator_type const& last)
 {
-    auto force = halmd::make_cache_mutable(particle.mutable_force());
+    auto force = particle.mutable_force();
     make_array_from_iterator_range(*force, first, last);
 }
 
 template <typename particle_type, typename iterator_type>
 void set_potential_energy(particle_type& particle, iterator_type const& first, iterator_type const& last)
 {
-    auto en_pot = halmd::make_cache_mutable(particle.mutable_potential_energy());
+    auto en_pot = particle.mutable_potential_energy();
     make_array_from_iterator_range(*en_pot, first, last);
 }
 
 template <typename particle_type, typename iterator_type>
 void set_stress_pot(particle_type& particle, iterator_type const& first, iterator_type const& last)
 {
-    auto stress_pot = halmd::make_cache_mutable(particle.mutable_stress_pot());
+    auto stress_pot = particle.mutable_stress_pot();
     make_stress_array_from_iterator_range<particle_type>(*stress_pot, first, last);
 }
 

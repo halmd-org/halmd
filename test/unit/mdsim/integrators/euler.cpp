@@ -272,7 +272,7 @@ void host_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_
 {
     // copy -r[i] to v[i]
     auto const& position = read_cache(particle->position());
-    auto velocity = make_cache_mutable(particle->mutable_velocity());
+    auto velocity = particle->mutable_velocity();
     std::transform(
         position.begin(), position.end()
       , velocity->begin()
@@ -345,7 +345,7 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
     typedef apply_wrapper<negate_, vector_type, float4, vector_type, float4> apply_negate_wrapper;
 
     cuda::memory::device::vector<float4> const& position = read_cache(particle->position());
-    cuda::memory::device::vector<float4>& velocity = *make_cache_mutable(particle->mutable_velocity());
+    cuda::memory::device::vector<float4>& velocity = *particle->mutable_velocity();
 
     // copy -g_r[i] to g_v[i]
     //

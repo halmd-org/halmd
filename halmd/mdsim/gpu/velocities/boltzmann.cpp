@@ -69,7 +69,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set_temperature(do
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 {
-    auto velocity = make_cache_mutable(particle_->mutable_velocity());
+    auto velocity = particle_->mutable_velocity();
 
     scoped_timer_type timer(runtime_.set);
 

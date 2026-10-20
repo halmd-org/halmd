@@ -118,8 +118,8 @@ void brownian_euler<dimension, float_type, RandomNumberGenerator>::integrate()
     force_array_type const& force = read_cache(particle_->force());
 
     // invalidate the particle caches only after accessing the force!
-    auto position = make_cache_mutable(particle_->mutable_position());
-    auto image = make_cache_mutable(particle_->mutable_image());
+    auto position = particle_->mutable_position();
+    auto image = particle_->mutable_image();
 
     scoped_timer_type timer(runtime_.integrate);
 

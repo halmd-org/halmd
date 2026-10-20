@@ -60,7 +60,7 @@ chemical_potential<dimension, float_type>::chemical_potential(
     set_position();
 
     // assign particle species' according to values in ntest_particle_
-    auto species = make_cache_mutable(test_particle_->mutable_species());
+    auto species = test_particle_->mutable_species();
     auto it = species->begin();
     unsigned int s = 0;
     for (unsigned int n : ntest_particle_) {     // iterate over species counts

@@ -57,7 +57,7 @@ void boltzmann<dimension, float_type>::set()
 
     LOG_DEBUG("assign Boltzmann-distributed velocities");
 
-    auto velocity = make_cache_mutable(particle_->mutable_velocity());
+    auto velocity = particle_->mutable_velocity();
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
 

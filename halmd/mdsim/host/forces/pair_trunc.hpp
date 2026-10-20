@@ -218,7 +218,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::apply()
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_trunc<dimension, float_type, potential_type>::compute_()
 {
-    auto force = make_cache_mutable(particle1_->mutable_force());
+    auto force = particle1_->mutable_force();
 
     neighbour_array_type const& lists    = *neighbour_->lists();
     position_array_type const& position1 = read_cache(particle1_->position());
@@ -270,9 +270,9 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
 {
-    auto force      = make_cache_mutable(particle1_->mutable_force());
-    auto en_pot     = make_cache_mutable(particle1_->mutable_potential_energy());;
-    auto stress_pot = make_cache_mutable(particle1_->mutable_stress_pot());;
+    auto force      = particle1_->mutable_force();
+    auto en_pot     = particle1_->mutable_potential_energy();
+    auto stress_pot = particle1_->mutable_stress_pot();
 
     neighbour_array_type const& lists    = *neighbour_->lists();
     position_array_type const& position1 = read_cache(particle1_->position());

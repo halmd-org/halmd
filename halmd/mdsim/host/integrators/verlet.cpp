@@ -79,9 +79,9 @@ void verlet<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     // invalidate the particle caches after accessing the force!
-    auto position = make_cache_mutable(particle_->mutable_position());
-    auto image = make_cache_mutable(particle_->mutable_image());
-    auto velocity = make_cache_mutable(particle_->mutable_velocity());
+    auto position = particle_->mutable_position();
+    auto image = particle_->mutable_image();
+    auto velocity = particle_->mutable_velocity();
 
     for (size_type i = 0; i < nparticle; ++i) {
         vector_type& v = (*velocity)[i];
@@ -114,7 +114,7 @@ void verlet<dimension, float_type>::finalize()
     scoped_timer_type timer(runtime_.finalize);
 
     // invalidate the particle caches after accessing the force!
-    auto velocity = make_cache_mutable(particle_->mutable_velocity());
+    auto velocity = particle_->mutable_velocity();
 
     for (size_type i = 0; i < nparticle; ++i) {
         (*velocity)[i] += force[i] * timestep_half_ / mass[i];

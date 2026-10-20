@@ -221,7 +221,7 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_()
     position_array_type const& position1 = read_cache(particle1_->position());
     position_array_type const& position2 = read_cache(particle2_->position());
     neighbour_array_type const& g_neighbour = read_cache(neighbour_->g_neighbour());
-    auto force = make_cache_mutable(particle1_->mutable_force());
+    auto force = particle1_->mutable_force();
 
     cuda::texture<float4> t_r2(position2);
 
@@ -278,9 +278,9 @@ inline void pair_trunc<dimension, float_type, potential_type>::compute_aux_()
     position_array_type const& position1 = read_cache(particle1_->position());
     position_array_type const& position2 = read_cache(particle2_->position());
     neighbour_array_type const& g_neighbour = read_cache(neighbour_->g_neighbour());
-    auto force = make_cache_mutable(particle1_->mutable_force());
-    auto en_pot = make_cache_mutable(particle1_->mutable_potential_energy());
-    auto stress_pot = make_cache_mutable(particle1_->mutable_stress_pot());
+    auto force = particle1_->mutable_force();
+    auto en_pot = particle1_->mutable_potential_energy();
+    auto stress_pot = particle1_->mutable_stress_pot();
 
     cuda::texture<float4> t_r2(position2);
 
